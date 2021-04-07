@@ -1,0 +1,8 @@
+coverage:
+  range: 70..90 # First number represents red, and second represents green.
+  status:
+    patch: false
+    project:
+      default:
+        # Allow going dows 1% before being a failure.
+        threshold: 1%

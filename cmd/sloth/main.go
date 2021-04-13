@@ -41,7 +41,7 @@ func Run(ctx context.Context, args []string, stdin io.Reader, stdout, stderr io.
 	config.Stdin = stdin
 	config.Stdout = stdout
 	config.Stderr = stderr
-	config.Logger = getLogger(*config, stderr)
+	config.Logger = getLogger(*config)
 
 	// Execute command.
 	err = cmds[cmdName].Run(ctx, *config)
@@ -53,14 +53,14 @@ func Run(ctx context.Context, args []string, stdin io.Reader, stdout, stderr io.
 }
 
 // getLogger returns the application logger.
-func getLogger(config commands.RootConfig, stderr io.Writer) log.Logger {
+func getLogger(config commands.RootConfig) log.Logger {
 	if config.NoLog {
 		return log.Noop
 	}
 
 	// If not logger disabled use logrus logger.
 	logrusLog := logrus.New()
-	logrusLog.Out = stderr // By default logger goes to stderr (so it can split stdout prints).
+	logrusLog.Out = config.Stderr // By default logger goes to stderr (so it can split stdout prints).
 	logrusLogEntry := logrus.NewEntry(logrusLog)
 
 	if config.Debug {

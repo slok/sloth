@@ -157,7 +157,18 @@ func TestModelValidationSpec(t *testing.T) {
 				s.PageAlertMeta.Name = ""
 				return s
 			},
-			expErrMessage: "Key: 'SLO.PageAlertMeta.Name' Error:Field validation for 'Name' failed on the 'required' tag",
+			expErrMessage: "Key: 'SLO.PageAlertMeta.Name' Error:Field validation for 'Name' failed on the 'required_if_enabled' tag",
+		},
+
+		"SLO page alert fields are not required if disabled .": {
+			slo: func() prometheus.SLO {
+				s := getGoodSLO()
+				s.PageAlertMeta.Name = ""
+				s.PageAlertMeta.Disable = true
+				s.PageAlertMeta.Labels = map[string]string{}
+				s.PageAlertMeta.Annotations = map[string]string{}
+				return s
+			},
 		},
 
 		"SLO warning alert name is required.": {
@@ -166,7 +177,18 @@ func TestModelValidationSpec(t *testing.T) {
 				s.WarningAlertMeta.Name = ""
 				return s
 			},
-			expErrMessage: "Key: 'SLO.WarningAlertMeta.Name' Error:Field validation for 'Name' failed on the 'required' tag",
+			expErrMessage: "Key: 'SLO.WarningAlertMeta.Name' Error:Field validation for 'Name' failed on the 'required_if_enabled' tag",
+		},
+
+		"SLO warning alert fields are not required if disabled .": {
+			slo: func() prometheus.SLO {
+				s := getGoodSLO()
+				s.WarningAlertMeta.Name = ""
+				s.WarningAlertMeta.Disable = true
+				s.WarningAlertMeta.Labels = map[string]string{}
+				s.WarningAlertMeta.Annotations = map[string]string{}
+				return s
+			},
 		},
 
 		"SLO page alert labels should be valid prometheus keys.": {

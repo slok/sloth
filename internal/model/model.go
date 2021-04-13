@@ -16,6 +16,7 @@ type SLO interface {
 	GetSLI() SLI
 	GetTimeWindow() time.Duration
 	GetObjective() float64
+	Validate() error
 }
 
 // AlertSeverity is the type of alert.

@@ -21,7 +21,7 @@ func (CustomSLI) IsSLI() {}
 
 type AlertMeta struct {
 	Disable     bool
-	Name        string            `validate:"required"`
+	Name        string            `validate:"required_if_enabled"`
 	Labels      map[string]string `validate:"dive,keys,prom_label_key,endkeys,required,prom_label_value"`
 	Annotations map[string]string `validate:"dive,keys,prom_annot_key,endkeys,required"`
 }
@@ -49,12 +49,12 @@ func (s SLO) Validate() error {
 var modelSpecValidate = func() *validator.Validate {
 	v := validator.New()
 
-	// Prometheus validators.
-	// More info here: https://github.com/prometheus/prometheus/blob/df80dc4d3970121f2f76cba79050983ffb3cdbb0/pkg/rulefmt/rulefmt.go#L188-L208
+	// Mor information on prometheus validators logic: https://github.com/prometheus/prometheus/blob/df80dc4d3970121f2f76cba79050983ffb3cdbb0/pkg/rulefmt/rulefmt.go#L188-L208
 	mustRegisterValidation(v, "prom_expr", validatePromExpression)
 	mustRegisterValidation(v, "prom_label_key", validatePromLabelKey)
 	mustRegisterValidation(v, "prom_label_value", validatePromLabelValue)
 	mustRegisterValidation(v, "prom_annot_key", validatePromAnnotKey)
+	mustRegisterValidation(v, "required_if_enabled", validateRequiredEnabledAlertName)
 
 	return v
 }()
@@ -128,4 +128,17 @@ func validatePromExpression(fl validator.FieldLevel) bool {
 
 	_, err = promqlparser.ParseExpr(tplB.String())
 	return err == nil
+}
+
+func validateRequiredEnabledAlertName(fl validator.FieldLevel) bool {
+	alertMeta, ok := fl.Parent().Interface().(AlertMeta)
+	if !ok {
+		return false
+	}
+
+	if alertMeta.Disable {
+		return true
+	}
+
+	return alertMeta.Name != ""
 }

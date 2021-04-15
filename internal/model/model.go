@@ -38,9 +38,15 @@ type MWMBAlert struct {
 	Severity       AlertSeverity
 }
 
-// MWMBAlertGroup is a group of the "same" alert splitted into
-// two alerts of page and ticket severities.
+// MWMBAlertGroup what represents all the alerts of an SLO.
+// ITs divided into two groups that are made of 2 alerts:
+// - Page & quick: Critical alerts that trigger in high rate burn in short term.
+// - Page & slow: Critical alerts that trigger in high-normal rate burn in medium term.
+// - Ticket & slow: Warning alerts that trigger in normal rate burn in medium term.
+// - Ticket & slow: Warning alerts that trigger in slow rate burn in long term.
 type MWMBAlertGroup struct {
-	PageAlerts   []MWMBAlert
-	TicketAlerts []MWMBAlert
+	PageQuick   MWMBAlert
+	PageSlow    MWMBAlert
+	TicketQuick MWMBAlert
+	TicketSlow  MWMBAlert
 }

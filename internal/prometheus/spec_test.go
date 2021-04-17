@@ -7,14 +7,13 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/slok/sloth/internal/model"
 	"github.com/slok/sloth/internal/prometheus"
 )
 
 func TestYAMLoadSpec(t *testing.T) {
 	tests := map[string]struct {
 		specYaml string
-		expModel []model.SLO
+		expModel []prometheus.SLO
 		expErr   bool
 	}{
 		"Empty spec should fail.": {
@@ -98,8 +97,8 @@ slos:
       ticket_alert:
         disable: true
 `,
-			expModel: []model.SLO{
-				prometheus.SLO{
+			expModel: []prometheus.SLO{
+				{
 					ID:         "slo1",
 					Service:    "test-svc",
 					TimeWindow: 30 * 24 * time.Hour,
@@ -139,7 +138,7 @@ slos:
 						},
 					},
 				},
-				prometheus.SLO{
+				{
 					ID:         "slo2",
 					Service:    "test-svc",
 					TimeWindow: 30 * 24 * time.Hour,

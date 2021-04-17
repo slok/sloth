@@ -4,56 +4,91 @@ import (
 	"context"
 	"fmt"
 	"time"
-
-	"github.com/slok/sloth/internal/model"
 )
+
+// Severity is the type of alert.
+type Severity int
+
+const (
+	UnknownAlertSeverity Severity = iota
+	PageAlertSeverity
+	TicketAlertSeverity
+)
+
+// MWMBAlert represents a multiwindow, multi-burn rate alert.
+type MWMBAlert struct {
+	ID             string
+	ShortWindow    time.Duration
+	LongWindow     time.Duration
+	BurnRateFactor float64
+	ErrorBudget    float64
+	Severity       Severity
+}
+
+// MWMBAlertGroup what represents all the alerts of an SLO.
+// ITs divided into two groups that are made of 2 alerts:
+// - Page & quick: Critical alerts that trigger in high rate burn in short term.
+// - Page & slow: Critical alerts that trigger in high-normal rate burn in medium term.
+// - Ticket & slow: Warning alerts that trigger in normal rate burn in medium term.
+// - Ticket & slow: Warning alerts that trigger in slow rate burn in long term.
+type MWMBAlertGroup struct {
+	PageQuick   MWMBAlert
+	PageSlow    MWMBAlert
+	TicketQuick MWMBAlert
+	TicketSlow  MWMBAlert
+}
 
 type generator bool
 
 // AlertGenerator knows how to generate all the required alerts based on an SLO.
-// The generated alerts are generic and don't depend on any specific implementation.
+// The generated alerts are generic and don't depend on any specific SLO implementation.
 const AlertGenerator = generator(false)
 
-func (g generator) GenerateMWMBAlerts(ctx context.Context, slo model.SLO) (*model.MWMBAlertGroup, error) {
-	if slo.GetTimeWindow() != 30*24*time.Hour {
+type SLO struct {
+	ID         string
+	TimeWindow time.Duration
+	Objective  float64
+}
+
+func (g generator) GenerateMWMBAlerts(ctx context.Context, slo SLO) (*MWMBAlertGroup, error) {
+	if slo.TimeWindow != 30*24*time.Hour {
 		return nil, fmt.Errorf("only 30 day SLO time window is supported")
 	}
 
-	errorBudget := 100 - slo.GetObjective()
+	errorBudget := 100 - slo.Objective
 
-	sloID := slo.GetID()
-	group := model.MWMBAlertGroup{
-		PageQuick: model.MWMBAlert{
-			ID:             fmt.Sprintf("%s-page-quick", sloID),
+	group := MWMBAlertGroup{
+		PageQuick: MWMBAlert{
+			ID:             fmt.Sprintf("%s-page-quick", slo.ID),
 			ShortWindow:    windowPageQuickShort,
 			LongWindow:     windowPageQuickLong,
 			BurnRateFactor: speedPageQuick,
 			ErrorBudget:    errorBudget,
-			Severity:       model.PageAlertSeverity,
+			Severity:       PageAlertSeverity,
 		},
-		PageSlow: model.MWMBAlert{
-			ID:             fmt.Sprintf("%s-page-slow", sloID),
+		PageSlow: MWMBAlert{
+			ID:             fmt.Sprintf("%s-page-slow", slo.ID),
 			ShortWindow:    windowPageSlowShort,
 			LongWindow:     windowPageSlowLong,
 			BurnRateFactor: speedPageSlow,
 			ErrorBudget:    errorBudget,
-			Severity:       model.PageAlertSeverity,
+			Severity:       PageAlertSeverity,
 		},
-		TicketQuick: model.MWMBAlert{
-			ID:             fmt.Sprintf("%s-ticket-quick", sloID),
+		TicketQuick: MWMBAlert{
+			ID:             fmt.Sprintf("%s-ticket-quick", slo.ID),
 			ShortWindow:    windowTicketQuickShort,
 			LongWindow:     windowTicketQuickLong,
 			BurnRateFactor: speedTicketQuick,
 			ErrorBudget:    errorBudget,
-			Severity:       model.TicketAlertSeverity,
+			Severity:       TicketAlertSeverity,
 		},
-		TicketSlow: model.MWMBAlert{
-			ID:             fmt.Sprintf("%s-ticket-slow", sloID),
+		TicketSlow: MWMBAlert{
+			ID:             fmt.Sprintf("%s-ticket-slow", slo.ID),
 			ShortWindow:    windowTicketSlowShort,
 			LongWindow:     windowTicketSlowLong,
 			BurnRateFactor: speedTicketSlow,
 			ErrorBudget:    errorBudget,
-			Severity:       model.TicketAlertSeverity,
+			Severity:       TicketAlertSeverity,
 		},
 	}
 

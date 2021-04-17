@@ -1,5 +1,15 @@
 ---
-
 run:
+  timeout: 3m
   build-tags:
     - integration
+
+linters:
+  enable:
+    - depguard
+    - godot
+    - golint
+    - goimports
+    - misspell
+# issues:
+#   exclude-use-default: false

@@ -39,7 +39,7 @@ type RootConfig struct {
 	Logger log.Logger
 }
 
-// NewRootConfig initializes the main root configuration
+// NewRootConfig initializes the main root configuration.
 func NewRootConfig(app *kingpin.Application) *RootConfig {
 	c := &RootConfig{}
 

@@ -8,17 +8,15 @@ import (
 	"github.com/go-playground/validator/v10"
 	prommodel "github.com/prometheus/common/model"
 	promqlparser "github.com/prometheus/prometheus/promql/parser"
-
-	"github.com/slok/sloth/internal/model"
 )
 
+// CustomSLI reprensents an SLI with custom error and total expressions.
 type CustomSLI struct {
 	ErrorQuery string `validate:"required,prom_expr"`
 	TotalQuery string `validate:"required,prom_expr"`
 }
 
-func (CustomSLI) IsSLI() {}
-
+// AlertMeta is the metadata of an alert settings.
 type AlertMeta struct {
 	Disable     bool
 	Name        string            `validate:"required_if_enabled"`
@@ -26,6 +24,7 @@ type AlertMeta struct {
 	Annotations map[string]string `validate:"dive,keys,prom_annot_key,endkeys,required"`
 }
 
+// SLO represents a service level objective configuration.
 type SLO struct {
 	ID               string    `validate:"required"`
 	Service          string    `validate:"required"`
@@ -37,11 +36,7 @@ type SLO struct {
 	WarningAlertMeta AlertMeta
 }
 
-func (s SLO) GetID() string                { return s.ID }
-func (s SLO) GetService() string           { return s.Service }
-func (s SLO) GetSLI() model.SLI            { return s.SLI }
-func (s SLO) GetTimeWindow() time.Duration { return s.TimeWindow }
-func (s SLO) GetObjective() float64        { return s.Objective }
+// Validate validates the SLO.
 func (s SLO) Validate() error {
 	return modelSpecValidate.Struct(s)
 }

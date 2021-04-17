@@ -6,8 +6,6 @@ import (
 	"time"
 
 	"github.com/ghodss/yaml"
-
-	"github.com/slok/sloth/internal/model"
 )
 
 // SpecVersionV1 is the Prometheus V1 ID version.
@@ -46,7 +44,7 @@ type yamlSpecLoader bool
 // YAMLSpecLoader knows how to load YAML specs and converts them to a model.
 const YAMLSpecLoader = yamlSpecLoader(false)
 
-func (y yamlSpecLoader) LoadSpec(ctx context.Context, data []byte) ([]model.SLO, error) {
+func (y yamlSpecLoader) LoadSpec(ctx context.Context, data []byte) ([]SLO, error) {
 	if len(data) == 0 {
 		return nil, fmt.Errorf("spec is required")
 	}
@@ -75,8 +73,8 @@ func (y yamlSpecLoader) LoadSpec(ctx context.Context, data []byte) ([]model.SLO,
 	return m, nil
 }
 
-func (yamlSpecLoader) mapSpecToModel(spec specV1) ([]model.SLO, error) {
-	models := make([]model.SLO, 0, len(spec.SLOs))
+func (yamlSpecLoader) mapSpecToModel(spec specV1) ([]SLO, error) {
+	models := make([]SLO, 0, len(spec.SLOs))
 	for _, specSLO := range spec.SLOs {
 		slo := SLO{
 			ID:         specSLO.Name,

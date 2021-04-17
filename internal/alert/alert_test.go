@@ -8,30 +8,16 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/slok/sloth/internal/alert"
-	"github.com/slok/sloth/internal/model"
 )
-
-type testSLO struct {
-	ID         string
-	TimeWindow time.Duration
-	Objective  float64
-}
-
-func (t testSLO) GetID() string                { return t.ID }
-func (t testSLO) GetService() string           { return "" }
-func (t testSLO) GetSLI() model.SLI            { return nil }
-func (t testSLO) GetTimeWindow() time.Duration { return t.TimeWindow }
-func (t testSLO) GetObjective() float64        { return t.Objective }
-func (t testSLO) Validate() error              { return nil }
 
 func TestGenerateMWMBAlerts(t *testing.T) {
 	tests := map[string]struct {
-		slo       model.SLO
-		expAlerts *model.MWMBAlertGroup
+		slo       alert.SLO
+		expAlerts *alert.MWMBAlertGroup
 		expErr    bool
 	}{
 		"Generating alerts different to 30 day time window should fail.": {
-			slo: testSLO{
+			slo: alert.SLO{
 				ID:         "test",
 				TimeWindow: 31 * 24 * time.Hour,
 				Objective:  99.9,
@@ -40,44 +26,44 @@ func TestGenerateMWMBAlerts(t *testing.T) {
 		},
 
 		"Generating a 30 day time window alerts should generate the alerts correctly.": {
-			slo: testSLO{
+			slo: alert.SLO{
 				ID:         "test",
 				TimeWindow: 30 * 24 * time.Hour,
 				Objective:  99.9,
 			},
-			expAlerts: &model.MWMBAlertGroup{
-				PageQuick: model.MWMBAlert{
+			expAlerts: &alert.MWMBAlertGroup{
+				PageQuick: alert.MWMBAlert{
 					ID:             "test-page-quick",
 					ShortWindow:    5 * time.Minute,
 					LongWindow:     1 * time.Hour,
 					BurnRateFactor: 14.4,
 					ErrorBudget:    0.09999999999999432,
-					Severity:       model.PageAlertSeverity,
+					Severity:       alert.PageAlertSeverity,
 				},
-				PageSlow: model.MWMBAlert{
+				PageSlow: alert.MWMBAlert{
 					ID:             "test-page-slow",
 					ShortWindow:    30 * time.Minute,
 					LongWindow:     6 * time.Hour,
 					BurnRateFactor: 6,
 					ErrorBudget:    0.09999999999999432,
-					Severity:       model.PageAlertSeverity,
+					Severity:       alert.PageAlertSeverity,
 				},
 
-				TicketQuick: model.MWMBAlert{
+				TicketQuick: alert.MWMBAlert{
 					ID:             "test-ticket-quick",
 					ShortWindow:    2 * time.Hour,
 					LongWindow:     1 * 24 * time.Hour,
 					BurnRateFactor: 3,
 					ErrorBudget:    0.09999999999999432,
-					Severity:       model.TicketAlertSeverity,
+					Severity:       alert.TicketAlertSeverity,
 				},
-				TicketSlow: model.MWMBAlert{
+				TicketSlow: alert.MWMBAlert{
 					ID:             "test-ticket-slow",
 					ShortWindow:    6 * time.Hour,
 					LongWindow:     3 * 24 * time.Hour,
 					BurnRateFactor: 1,
 					ErrorBudget:    0.09999999999999432,
-					Severity:       model.TicketAlertSeverity,
+					Severity:       alert.TicketAlertSeverity,
 				},
 			},
 		},

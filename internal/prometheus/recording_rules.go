@@ -9,7 +9,7 @@ import (
 
 	"github.com/prometheus/prometheus/pkg/rulefmt"
 
-	"github.com/slok/sloth/internal/model"
+	"github.com/slok/sloth/internal/alert"
 )
 
 // genFunc knows how to generate an SLI recording rule for a specific time window.
@@ -19,9 +19,11 @@ type sliRecordingRulesGenerator struct {
 	genFunc genFunc
 }
 
+// SLIRecordingRulesGenerator knows how to generate the SLI prometheus recording rules
+// form an SLO. Normally these rules are used by the SLO alerts.
 var SLIRecordingRulesGenerator = sliRecordingRulesGenerator{genFunc: defaultSLIRecordGenerator}
 
-func (s sliRecordingRulesGenerator) GenerateSLIRecordingRules(ctx context.Context, slo SLO, alerts model.MWMBAlertGroup) ([]rulefmt.Rule, error) {
+func (s sliRecordingRulesGenerator) GenerateSLIRecordingRules(ctx context.Context, slo SLO, alerts alert.MWMBAlertGroup) ([]rulefmt.Rule, error) {
 	extraLabels := map[string]string{
 		"sloth_slo":     slo.ID,
 		"sloth_service": slo.Service,

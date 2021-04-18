@@ -57,8 +57,7 @@ const (
 
 func defaultSLIRecordGenerator(slo SLO, window time.Duration) (*rulefmt.Rule, error) {
 	// Generate our first level of template by assembling the error and total expressions.
-	sliExprTpl := fmt.Sprintf(`
-(%s)
+	sliExprTpl := fmt.Sprintf(`(%s)
 /
 (%s)
 `, slo.SLI.ErrorQuery, slo.SLI.TotalQuery)

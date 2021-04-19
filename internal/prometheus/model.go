@@ -7,6 +7,7 @@ import (
 
 	"github.com/go-playground/validator/v10"
 	prommodel "github.com/prometheus/common/model"
+	"github.com/prometheus/prometheus/pkg/rulefmt"
 	promqlparser "github.com/prometheus/prometheus/promql/parser"
 )
 
@@ -136,4 +137,10 @@ func validateRequiredEnabledAlertName(fl validator.FieldLevel) bool {
 	}
 
 	return alertMeta.Name != ""
+}
+
+// SLORules are the prometheus rules required by an SLO.
+type SLORules struct {
+	RecordingRules []rulefmt.Rule
+	AlertRules     []rulefmt.Rule
 }

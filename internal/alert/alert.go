@@ -15,6 +15,17 @@ const (
 	TicketAlertSeverity
 )
 
+func (s Severity) String() string {
+	switch s {
+	case PageAlertSeverity:
+		return "page"
+	case TicketAlertSeverity:
+		return "ticket"
+	default:
+		return "unknown"
+	}
+}
+
 // MWMBAlert represents a multiwindow, multi-burn rate alert.
 type MWMBAlert struct {
 	ID             string

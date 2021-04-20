@@ -99,7 +99,8 @@ slos:
 `,
 			expModel: []prometheus.SLO{
 				{
-					ID:         "slo1",
+					ID:         "test-svc-slo1",
+					Name:       "slo1",
 					Service:    "test-svc",
 					TimeWindow: 30 * 24 * time.Hour,
 					SLI: prometheus.CustomSLI{
@@ -139,7 +140,8 @@ slos:
 					},
 				},
 				{
-					ID:         "slo2",
+					ID:         "test-svc-slo2",
+					Name:       "slo2",
 					Service:    "test-svc",
 					TimeWindow: 30 * 24 * time.Hour,
 					SLI: prometheus.CustomSLI{

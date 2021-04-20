@@ -2,6 +2,7 @@ package prometheus
 
 import (
 	"bytes"
+	"fmt"
 	"text/template"
 	"time"
 
@@ -28,6 +29,7 @@ type AlertMeta struct {
 // SLO represents a service level objective configuration.
 type SLO struct {
 	ID               string    `validate:"required"`
+	Name             string    `validate:"required"`
 	Service          string    `validate:"required"`
 	SLI              CustomSLI `validate:"required"`
 	TimeWindow       time.Duration
@@ -40,6 +42,21 @@ type SLO struct {
 // Validate validates the SLO.
 func (s SLO) Validate() error {
 	return modelSpecValidate.Struct(s)
+}
+
+// GetSLIErrorMetric returns the SLI error metric.
+func (s SLO) GetSLIErrorMetric(window time.Duration) string {
+	return fmt.Sprintf(sliErrorMetricFmt, timeDurationToPromStr(window))
+}
+
+// GetSLOIDPromLabels returns the ID labels of an SLO, these can be used to identify
+// an SLO recorded metrics and alerts.
+func (s SLO) GetSLOIDPromLabels() map[string]string {
+	return map[string]string{
+		sloIDLabelName:      s.ID,
+		sloNameLabelName:    s.Name,
+		sloServiceLabelName: s.Service,
+	}
 }
 
 var modelSpecValidate = func() *validator.Validate {

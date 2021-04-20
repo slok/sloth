@@ -12,11 +12,11 @@ import (
 	"github.com/slok/sloth/internal/alert"
 )
 
-// genFunc knows how to generate an SLI recording rule for a specific time window.
-type genFunc func(slo SLO, window time.Duration) (*rulefmt.Rule, error)
+// sliRulesgenFunc knows how to generate an SLI recording rule for a specific time window.
+type sliRulesgenFunc func(slo SLO, window time.Duration) (*rulefmt.Rule, error)
 
 type sliRecordingRulesGenerator struct {
-	genFunc genFunc
+	genFunc sliRulesgenFunc
 }
 
 // SLIRecordingRulesGenerator knows how to generate the SLI prometheus recording rules
@@ -24,11 +24,6 @@ type sliRecordingRulesGenerator struct {
 var SLIRecordingRulesGenerator = sliRecordingRulesGenerator{genFunc: defaultSLIRecordGenerator}
 
 func (s sliRecordingRulesGenerator) GenerateSLIRecordingRules(ctx context.Context, slo SLO, alerts alert.MWMBAlertGroup) ([]rulefmt.Rule, error) {
-	extraLabels := map[string]string{
-		"sloth_slo":     slo.ID,
-		"sloth_service": slo.Service,
-	}
-
 	// Get the windows we need the recording rules.
 	windows := getAlertGroupWindows(alerts)
 	windows = append(windows, slo.TimeWindow) // Add the total time window as a handy helper.
@@ -40,10 +35,6 @@ func (s sliRecordingRulesGenerator) GenerateSLIRecordingRules(ctx context.Contex
 		if err != nil {
 			return nil, fmt.Errorf("could not create %q SLO rule for window %s: %w", slo.ID, window, err)
 		}
-
-		// Add extra SLO labels.
-		rule.Labels = mergeLabels(rule.Labels, extraLabels)
-
 		rules = append(rules, *rule)
 	}
 
@@ -51,8 +42,7 @@ func (s sliRecordingRulesGenerator) GenerateSLIRecordingRules(ctx context.Contex
 }
 
 const (
-	tplKeyWindow  = "window"
-	sliMetricName = "slo:sli_error:ratio_rate%s"
+	tplKeyWindow = "window"
 )
 
 func defaultSLIRecordGenerator(slo SLO, window time.Duration) (*rulefmt.Rule, error) {
@@ -77,14 +67,14 @@ func defaultSLIRecordGenerator(slo SLO, window time.Duration) (*rulefmt.Rule, er
 		return nil, fmt.Errorf("could not render SLI expression template: %w", err)
 	}
 
-	// Add extra labels to rule.
-	ruleLabels := mergeLabels(slo.Labels, map[string]string{
-		"window": strWindow,
-	})
-
 	return &rulefmt.Rule{
-		Record: fmt.Sprintf(sliMetricName, strWindow),
+		Record: slo.GetSLIErrorMetric(window),
 		Expr:   b.String(),
-		Labels: ruleLabels,
+		Labels: mergeLabels(
+			slo.Labels,
+			slo.GetSLOIDPromLabels(),
+			map[string]string{
+				sloWindowLabelName: strWindow,
+			}),
 	}, nil
 }

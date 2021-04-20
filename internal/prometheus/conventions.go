@@ -5,4 +5,5 @@ const (
 	sloNameLabelName    = "sloth_slo"
 	sloIDLabelName      = "sloth_id"
 	sloServiceLabelName = "sloth_service"
+	sloWindowLabelName  = "sloth_window"
 )

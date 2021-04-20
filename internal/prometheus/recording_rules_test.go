@@ -43,6 +43,7 @@ func TestGenerateSLIRecordingRules(t *testing.T) {
 		"Having and SLO with invalid expression should fail.": {
 			slo: prometheus.SLO{
 				ID:         "test",
+				Name:       "test-name",
 				Service:    "test-svc",
 				TimeWindow: 30 * 24 * time.Hour,
 				SLI: prometheus.CustomSLI{
@@ -60,6 +61,7 @@ func TestGenerateSLIRecordingRules(t *testing.T) {
 		"Having and wrong variablein the expression should fail.": {
 			slo: prometheus.SLO{
 				ID:         "test",
+				Name:       "test-name",
 				Service:    "test-svc",
 				TimeWindow: 30 * 24 * time.Hour,
 				SLI: prometheus.CustomSLI{
@@ -77,6 +79,7 @@ func TestGenerateSLIRecordingRules(t *testing.T) {
 		"Having and SLO an its mwmb alerts should create the recording rules.": {
 			slo: prometheus.SLO{
 				ID:         "test",
+				Name:       "test-name",
 				Service:    "test-svc",
 				TimeWindow: 30 * 24 * time.Hour,
 				SLI: prometheus.CustomSLI{
@@ -95,8 +98,9 @@ func TestGenerateSLIRecordingRules(t *testing.T) {
 					Labels: map[string]string{
 						"kind":          "test",
 						"sloth_service": "test-svc",
-						"sloth_slo":     "test",
-						"window":        "5m",
+						"sloth_slo":     "test-name",
+						"sloth_id":      "test",
+						"sloth_window":  "5m",
 					},
 				},
 				{
@@ -105,8 +109,9 @@ func TestGenerateSLIRecordingRules(t *testing.T) {
 					Labels: map[string]string{
 						"kind":          "test",
 						"sloth_service": "test-svc",
-						"sloth_slo":     "test",
-						"window":        "30m",
+						"sloth_slo":     "test-name",
+						"sloth_id":      "test",
+						"sloth_window":  "30m",
 					},
 				},
 				{
@@ -115,8 +120,9 @@ func TestGenerateSLIRecordingRules(t *testing.T) {
 					Labels: map[string]string{
 						"kind":          "test",
 						"sloth_service": "test-svc",
-						"sloth_slo":     "test",
-						"window":        "1h",
+						"sloth_slo":     "test-name",
+						"sloth_id":      "test",
+						"sloth_window":  "1h",
 					},
 				},
 				{
@@ -125,8 +131,9 @@ func TestGenerateSLIRecordingRules(t *testing.T) {
 					Labels: map[string]string{
 						"kind":          "test",
 						"sloth_service": "test-svc",
-						"sloth_slo":     "test",
-						"window":        "2h",
+						"sloth_slo":     "test-name",
+						"sloth_id":      "test",
+						"sloth_window":  "2h",
 					},
 				},
 				{
@@ -135,8 +142,9 @@ func TestGenerateSLIRecordingRules(t *testing.T) {
 					Labels: map[string]string{
 						"kind":          "test",
 						"sloth_service": "test-svc",
-						"sloth_slo":     "test",
-						"window":        "6h",
+						"sloth_slo":     "test-name",
+						"sloth_id":      "test",
+						"sloth_window":  "6h",
 					},
 				},
 				{
@@ -145,8 +153,9 @@ func TestGenerateSLIRecordingRules(t *testing.T) {
 					Labels: map[string]string{
 						"kind":          "test",
 						"sloth_service": "test-svc",
-						"sloth_slo":     "test",
-						"window":        "1d",
+						"sloth_slo":     "test-name",
+						"sloth_id":      "test",
+						"sloth_window":  "1d",
 					},
 				},
 				{
@@ -155,8 +164,9 @@ func TestGenerateSLIRecordingRules(t *testing.T) {
 					Labels: map[string]string{
 						"kind":          "test",
 						"sloth_service": "test-svc",
-						"sloth_slo":     "test",
-						"window":        "3d",
+						"sloth_slo":     "test-name",
+						"sloth_id":      "test",
+						"sloth_window":  "3d",
 					},
 				},
 				{
@@ -165,8 +175,9 @@ func TestGenerateSLIRecordingRules(t *testing.T) {
 					Labels: map[string]string{
 						"kind":          "test",
 						"sloth_service": "test-svc",
-						"sloth_slo":     "test",
-						"window":        "30d",
+						"sloth_slo":     "test-name",
+						"sloth_id":      "test",
+						"sloth_window":  "30d",
 					},
 				},
 			},
@@ -175,6 +186,7 @@ func TestGenerateSLIRecordingRules(t *testing.T) {
 		"An SLO alert with duplicated time windows should appear once and sorted.": {
 			slo: prometheus.SLO{
 				ID:         "test",
+				Name:       "test-name",
 				Service:    "test-svc",
 				TimeWindow: 30 * 24 * time.Hour,
 				SLI: prometheus.CustomSLI{
@@ -198,8 +210,9 @@ func TestGenerateSLIRecordingRules(t *testing.T) {
 					Labels: map[string]string{
 						"kind":          "test",
 						"sloth_service": "test-svc",
-						"sloth_slo":     "test",
-						"window":        "1h",
+						"sloth_slo":     "test-name",
+						"sloth_id":      "test",
+						"sloth_window":  "1h",
 					},
 				},
 				{
@@ -208,8 +221,9 @@ func TestGenerateSLIRecordingRules(t *testing.T) {
 					Labels: map[string]string{
 						"kind":          "test",
 						"sloth_service": "test-svc",
-						"sloth_slo":     "test",
-						"window":        "2h",
+						"sloth_slo":     "test-name",
+						"sloth_id":      "test",
+						"sloth_window":  "2h",
 					},
 				},
 				{
@@ -218,8 +232,9 @@ func TestGenerateSLIRecordingRules(t *testing.T) {
 					Labels: map[string]string{
 						"kind":          "test",
 						"sloth_service": "test-svc",
-						"sloth_slo":     "test",
-						"window":        "3h",
+						"sloth_slo":     "test-name",
+						"sloth_id":      "test",
+						"sloth_window":  "3h",
 					},
 				},
 				{
@@ -228,8 +243,9 @@ func TestGenerateSLIRecordingRules(t *testing.T) {
 					Labels: map[string]string{
 						"kind":          "test",
 						"sloth_service": "test-svc",
-						"sloth_slo":     "test",
-						"window":        "30d",
+						"sloth_slo":     "test-name",
+						"sloth_id":      "test",
+						"sloth_window":  "30d",
 					},
 				},
 			},

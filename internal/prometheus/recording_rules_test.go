@@ -266,3 +266,108 @@ func TestGenerateSLIRecordingRules(t *testing.T) {
 		})
 	}
 }
+
+func TestGenerateMetaRecordingRules(t *testing.T) {
+	tests := map[string]struct {
+		slo        prometheus.SLO
+		alertGroup alert.MWMBAlertGroup
+		expRules   []rulefmt.Rule
+		expErr     bool
+	}{
+		"Having and SLO an its mwmb alerts should create the metadata recording rules.": {
+			slo: prometheus.SLO{
+				ID:         "test",
+				Name:       "test-name",
+				Service:    "test-svc",
+				Objective:  99.9,
+				TimeWindow: 30 * 24 * time.Hour,
+				Labels: map[string]string{
+					"kind": "test",
+				},
+			},
+			alertGroup: getAlertGroup(),
+			expRules: []rulefmt.Rule{
+				{
+					Record: "slo:objective:ratio",
+					Expr:   "vector(0.9990000000000001)",
+					Labels: map[string]string{
+						"kind":          "test",
+						"sloth_service": "test-svc",
+						"sloth_slo":     "test-name",
+						"sloth_id":      "test",
+					},
+				},
+				{
+					Record: "slo:error_budget:ratio",
+					Expr:   "vector(1-0.9990000000000001)",
+					Labels: map[string]string{
+						"kind":          "test",
+						"sloth_service": "test-svc",
+						"sloth_slo":     "test-name",
+						"sloth_id":      "test",
+					},
+				},
+				{
+					Record: "slo:time_period:days",
+					Expr:   "vector(30)",
+					Labels: map[string]string{
+						"kind":          "test",
+						"sloth_service": "test-svc",
+						"sloth_slo":     "test-name",
+						"sloth_id":      "test",
+					},
+				},
+				{
+					Record: "slo:current_burn_rate:ratio",
+					Expr: `slo:sli_error:ratio_rate5m{sloth_id="test", sloth_service="test-svc", sloth_slo="test-name"}
+/ on(sloth_id, sloth_slo, sloth_service) group_left
+slo:error_budget:ratio{sloth_id="test", sloth_service="test-svc", sloth_slo="test-name"}
+`,
+					Labels: map[string]string{
+						"kind":          "test",
+						"sloth_service": "test-svc",
+						"sloth_slo":     "test-name",
+						"sloth_id":      "test",
+					},
+				},
+				{
+					Record: "slo:period_burn_rate:ratio",
+					Expr: `slo:sli_error:ratio_rate30d{sloth_id="test", sloth_service="test-svc", sloth_slo="test-name"}
+/ on(sloth_id, sloth_slo, sloth_service) group_left
+slo:error_budget:ratio{sloth_id="test", sloth_service="test-svc", sloth_slo="test-name"}
+`,
+					Labels: map[string]string{
+						"kind":          "test",
+						"sloth_service": "test-svc",
+						"sloth_slo":     "test-name",
+						"sloth_id":      "test",
+					},
+				},
+				{
+					Record: "slo:period_error_budget_remaining:ratio",
+					Expr:   `1 - slo:period_burn_rate:ratio{sloth_id="test", sloth_service="test-svc", sloth_slo="test-name"}`,
+					Labels: map[string]string{
+						"kind":          "test",
+						"sloth_service": "test-svc",
+						"sloth_slo":     "test-name",
+						"sloth_id":      "test",
+					},
+				},
+			},
+		},
+	}
+
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			assert := assert.New(t)
+
+			gotRules, err := prometheus.MetadataRecordingRulesGenerator.GenerateMetadataRecordingRules(context.TODO(), test.slo, test.alertGroup)
+
+			if test.expErr {
+				assert.Error(err)
+			} else if assert.NoError(err) {
+				assert.Equal(test.expRules, gotRules)
+			}
+		})
+	}
+}

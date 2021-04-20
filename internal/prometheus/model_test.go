@@ -10,7 +10,8 @@ import (
 
 func getGoodSLO() prometheus.SLO {
 	return prometheus.SLO{
-		ID:      "slo1",
+		ID:      "slo1-id",
+		Name:    "slo1",
 		Service: "test-svc",
 		SLI: prometheus.CustomSLI{
 			ErrorQuery: `sum(rate(grpc_server_handled_requests_count{job="myapp",code=~"Internal|Unavailable"}[{{ .window }}]))`,
@@ -68,6 +69,15 @@ func TestModelValidationSpec(t *testing.T) {
 				return s
 			},
 			expErrMessage: "Key: 'SLO.ID' Error:Field validation for 'ID' failed on the 'required' tag",
+		},
+
+		"SLO Name is required.": {
+			slo: func() prometheus.SLO {
+				s := getGoodSLO()
+				s.Name = ""
+				return s
+			},
+			expErrMessage: "Key: 'SLO.Name' Error:Field validation for 'Name' failed on the 'required' tag",
 		},
 
 		"SLO Service is required.": {

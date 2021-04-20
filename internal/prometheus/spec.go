@@ -77,7 +77,8 @@ func (yamlSpecLoader) mapSpecToModel(spec specV1) ([]SLO, error) {
 	models := make([]SLO, 0, len(spec.SLOs))
 	for _, specSLO := range spec.SLOs {
 		slo := SLO{
-			ID:         specSLO.Name,
+			ID:         fmt.Sprintf("%s-%s", spec.Service, specSLO.Name),
+			Name:       specSLO.Name,
 			Service:    spec.Service,
 			TimeWindow: 30 * 24 * time.Hour, // Default and for now the only one supported.
 			SLI: CustomSLI{

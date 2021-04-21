@@ -7,7 +7,6 @@ import (
 	"text/template"
 	"time"
 
-	prommodel "github.com/prometheus/common/model"
 	"github.com/prometheus/prometheus/pkg/rulefmt"
 
 	"github.com/slok/sloth/internal/alert"
@@ -101,11 +100,7 @@ func (m metadataRecordingRulesGenerator) GenerateMetadataRecordingRules(ctx cont
 
 	sloObjectiveRatio := slo.Objective / 100
 
-	filterLabelSet := prommodel.LabelSet{}
-	for k, v := range slo.GetSLOIDPromLabels() {
-		filterLabelSet[prommodel.LabelName(k)] = prommodel.LabelValue(v)
-	}
-	sloFilter := filterLabelSet.String()
+	sloFilter := labelsToPromFilter(slo.GetSLOIDPromLabels())
 
 	var currentBurnRateExpr bytes.Buffer
 	err := burnRateRecordingExprTpl.Execute(&currentBurnRateExpr, map[string]string{

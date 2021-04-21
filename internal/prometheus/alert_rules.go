@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"text/template"
 
-	prommodel "github.com/prometheus/common/model"
 	"github.com/prometheus/prometheus/pkg/rulefmt"
 
 	"github.com/slok/sloth/internal/alert"
@@ -51,11 +50,7 @@ func (s sloAlertRulesGenerator) GenerateSLOAlertRules(ctx context.Context, slo S
 
 func defaultSLOAlertGenerator(slo SLO, sloAlert AlertMeta, quick, slow alert.MWMBAlert) (*rulefmt.Rule, error) {
 	// Generate the filter labels based on the SLO ids.
-	sliIDFilters := slo.GetSLOIDPromLabels()
-	metricFilters := prommodel.LabelSet{}
-	for k, v := range sliIDFilters {
-		metricFilters[prommodel.LabelName(k)] = prommodel.LabelValue(v)
-	}
+	metricFilter := labelsToPromFilter(slo.GetSLOIDPromLabels())
 
 	// Render the alert template.
 	tplData := struct {
@@ -71,7 +66,7 @@ func defaultSLOAlertGenerator(slo SLO, sloAlert AlertMeta, quick, slow alert.MWM
 		SlowQuickBurnFactor  float64
 		WindowLabel          string
 	}{
-		MetricFilter:         metricFilters.String(),
+		MetricFilter:         metricFilter,
 		ErrorBudgetRatio:     quick.ErrorBudget / 100, // Any(quick or slow) should work because are the same.
 		QuickShortMetric:     slo.GetSLIErrorMetric(quick.ShortWindow),
 		QuickShortBurnFactor: quick.BurnRateFactor,

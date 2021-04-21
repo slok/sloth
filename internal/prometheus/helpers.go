@@ -20,6 +20,15 @@ func mergeLabels(ms ...map[string]string) map[string]string {
 	return res
 }
 
+func labelsToPromFilter(labels map[string]string) string {
+	metricFilters := prommodel.LabelSet{}
+	for k, v := range labels {
+		metricFilters[prommodel.LabelName(k)] = prommodel.LabelValue(v)
+	}
+
+	return metricFilters.String()
+}
+
 // Pretty simple durations for prometheus.
 func timeDurationToPromStr(t time.Duration) string {
 	return prommodel.Duration(t).String()

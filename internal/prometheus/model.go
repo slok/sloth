@@ -158,6 +158,7 @@ func validateRequiredEnabledAlertName(fl validator.FieldLevel) bool {
 
 // SLORules are the prometheus rules required by an SLO.
 type SLORules struct {
-	RecordingRules []rulefmt.Rule
-	AlertRules     []rulefmt.Rule
+	SLIErrorRecRules []rulefmt.Rule
+	MetadataRecRules []rulefmt.Rule
+	AlertRules       []rulefmt.Rule
 }

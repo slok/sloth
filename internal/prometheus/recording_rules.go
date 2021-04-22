@@ -71,11 +71,12 @@ func defaultSLIRecordGenerator(slo SLO, window time.Duration) (*rulefmt.Rule, er
 		Record: slo.GetSLIErrorMetric(window),
 		Expr:   b.String(),
 		Labels: mergeLabels(
-			slo.Labels,
 			slo.GetSLOIDPromLabels(),
 			map[string]string{
 				sloWindowLabelName: strWindow,
-			}),
+			},
+			slo.Labels,
+		),
 	}, nil
 }
 
@@ -86,7 +87,7 @@ type metadataRecordingRulesGenerator bool
 const MetadataRecordingRulesGenerator = metadataRecordingRulesGenerator(false)
 
 func (m metadataRecordingRulesGenerator) GenerateMetadataRecordingRules(ctx context.Context, slo SLO, alerts alert.MWMBAlertGroup) ([]rulefmt.Rule, error) {
-	labels := mergeLabels(slo.Labels, slo.GetSLOIDPromLabels())
+	labels := mergeLabels(slo.GetSLOIDPromLabels(), slo.Labels)
 
 	// Metatada Recordings.
 	const (

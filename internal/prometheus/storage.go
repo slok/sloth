@@ -8,11 +8,14 @@ import (
 	prommodel "github.com/prometheus/common/model"
 	"github.com/prometheus/prometheus/pkg/rulefmt"
 	"gopkg.in/yaml.v2"
+
+	"github.com/slok/sloth/internal/log"
 )
 
-func NewIOWriterGroupedRulesYAMLRepo(writer io.Writer) IOWriterGroupedRulesYAMLRepo {
+func NewIOWriterGroupedRulesYAMLRepo(writer io.Writer, logger log.Logger) IOWriterGroupedRulesYAMLRepo {
 	return IOWriterGroupedRulesYAMLRepo{
 		writer: writer,
+		logger: logger.WithValues(log.Kv{"svc": "storage.IOWriter", "format": "yaml"}),
 	}
 }
 
@@ -20,6 +23,7 @@ func NewIOWriterGroupedRulesYAMLRepo(writer io.Writer) IOWriterGroupedRulesYAMLR
 // grouped in an IOWriter in YAML format, that is compatible with Prometheus.
 type IOWriterGroupedRulesYAMLRepo struct {
 	writer io.Writer
+	logger log.Logger
 }
 
 type StorageSLO struct {
@@ -46,10 +50,17 @@ func (i IOWriterGroupedRulesYAMLRepo) storeGrouped(slos []StorageSLO) error {
 
 	ruleGroups := ruleGroupsYAMLv2{}
 	for _, slo := range slos {
-		if len(slo.Rules.RecordingRules) > 0 {
+		if len(slo.Rules.SLIErrorRecRules) > 0 {
 			ruleGroups.Groups = append(ruleGroups.Groups, ruleGroupYAMLv2{
-				Name:  fmt.Sprintf("sloth-slo-recordings-%s", slo.SLO.ID),
-				Rules: slo.Rules.RecordingRules,
+				Name:  fmt.Sprintf("sloth-slo-sli-recordings-%s", slo.SLO.ID),
+				Rules: slo.Rules.SLIErrorRecRules,
+			})
+		}
+
+		if len(slo.Rules.MetadataRecRules) > 0 {
+			ruleGroups.Groups = append(ruleGroups.Groups, ruleGroupYAMLv2{
+				Name:  fmt.Sprintf("sloth-slo-meta-recordings-%s", slo.SLO.ID),
+				Rules: slo.Rules.MetadataRecRules,
 			})
 		}
 
@@ -72,6 +83,8 @@ func (i IOWriterGroupedRulesYAMLRepo) storeGrouped(slos []StorageSLO) error {
 	if err != nil {
 		return fmt.Errorf("could not write top disclaimer: %w", err)
 	}
+
+	i.logger.WithValues(log.Kv{"groups": len(ruleGroups.Groups)}).Infof("Prometheus rules written")
 
 	return nil
 }

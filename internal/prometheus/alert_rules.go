@@ -100,8 +100,8 @@ func defaultSLOAlertGenerator(slo SLO, sloAlert AlertMeta, quick, slow alert.MWM
 	return &rulefmt.Rule{
 		Alert:       sloAlert.Name,
 		Expr:        expr.String(),
-		Annotations: mergeLabels(sloAlert.Annotations, extraAnnotations),
-		Labels:      mergeLabels(sloAlert.Labels, extraLabels),
+		Annotations: mergeLabels(extraAnnotations, sloAlert.Annotations),
+		Labels:      mergeLabels(extraLabels, sloAlert.Labels),
 	}, nil
 }
 

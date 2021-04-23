@@ -193,7 +193,7 @@ func TestIntegrationAppServiceGenerate(t *testing.T) {
 								},
 								{
 									Record: "slo:sli_error:ratio_rate30d",
-									Expr:   "(rate(my_metric{error=\"true\"}[30d]))\n/\n(rate(my_metric[30d]))\n",
+									Expr:   "max(avg_over_time(slo:sli_error:ratio_rate5m{sloth_id=\"test-id\", sloth_service=\"test-svc\", sloth_slo=\"test-name\"}[30d]))",
 									Labels: map[string]string{
 										"test_label":    "label_1",
 										"sloth_service": "test-svc",

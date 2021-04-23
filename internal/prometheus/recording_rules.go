@@ -13,7 +13,7 @@ import (
 )
 
 // sliRulesgenFunc knows how to generate an SLI recording rule for a specific time window.
-type sliRulesgenFunc func(slo SLO, window time.Duration) (*rulefmt.Rule, error)
+type sliRulesgenFunc func(slo SLO, window time.Duration, alerts alert.MWMBAlertGroup) (*rulefmt.Rule, error)
 
 type sliRecordingRulesGenerator struct {
 	genFunc sliRulesgenFunc
@@ -31,7 +31,7 @@ func (s sliRecordingRulesGenerator) GenerateSLIRecordingRules(ctx context.Contex
 	// Generate the rules
 	rules := make([]rulefmt.Rule, 0, len(windows))
 	for _, window := range windows {
-		rule, err := s.genFunc(slo, window)
+		rule, err := s.genFunc(slo, window, alerts)
 		if err != nil {
 			return nil, fmt.Errorf("could not create %q SLO rule for window %s: %w", slo.ID, window, err)
 		}
@@ -45,12 +45,23 @@ const (
 	tplKeyWindow = "window"
 )
 
-func defaultSLIRecordGenerator(slo SLO, window time.Duration) (*rulefmt.Rule, error) {
+func defaultSLIRecordGenerator(slo SLO, window time.Duration, alerts alert.MWMBAlertGroup) (*rulefmt.Rule, error) {
 	// Generate our first level of template by assembling the error and total expressions.
 	sliExprTpl := fmt.Sprintf(`(%s)
 /
 (%s)
 `, slo.SLI.ErrorQuery, slo.SLI.TotalQuery)
+
+	// The total window (e.g 30d) query has a lot of impact on Prometheus, as an optimization use
+	// the shortest (e.g 5m) SLI recording rule metric as the source of the metric:
+	// We get the average over time of the ratios calculated on the shortest
+	// SLI recording rule window in the full time period window.
+	// We also use max to remove the labels that will be set by the recording rule.
+	if window == slo.TimeWindow {
+		shortWindowSLIRec := slo.GetSLIErrorMetric(alerts.PageQuick.ShortWindow)
+		filter := labelsToPromFilter(slo.GetSLOIDPromLabels())
+		sliExprTpl = fmt.Sprintf("max(avg_over_time(%s%s[{{.%s}}]))", shortWindowSLIRec, filter, tplKeyWindow)
+	}
 
 	// Render with our templated data.
 	tpl, err := template.New("sliExpr").Option("missingkey=error").Parse(sliExprTpl)

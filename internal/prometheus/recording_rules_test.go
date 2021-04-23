@@ -171,7 +171,7 @@ func TestGenerateSLIRecordingRules(t *testing.T) {
 				},
 				{
 					Record: "slo:sli_error:ratio_rate30d",
-					Expr:   "(rate(my_metric[30d]{error=\"true\"}))\n/\n(rate(my_metric[30d]))\n",
+					Expr:   "max(avg_over_time(slo:sli_error:ratio_rate5m{sloth_id=\"test\", sloth_service=\"test-svc\", sloth_slo=\"test-name\"}[30d]))",
 					Labels: map[string]string{
 						"kind":          "test",
 						"sloth_service": "test-svc",
@@ -239,7 +239,7 @@ func TestGenerateSLIRecordingRules(t *testing.T) {
 				},
 				{
 					Record: "slo:sli_error:ratio_rate30d",
-					Expr:   "(rate(my_metric[30d]{error=\"true\"}))\n/\n(rate(my_metric[30d]))\n",
+					Expr:   "max(avg_over_time(slo:sli_error:ratio_rate3h{sloth_id=\"test\", sloth_service=\"test-svc\", sloth_slo=\"test-name\"}[30d]))",
 					Labels: map[string]string{
 						"kind":          "test",
 						"sloth_service": "test-svc",

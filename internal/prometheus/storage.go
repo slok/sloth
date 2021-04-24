@@ -35,7 +35,7 @@ type StorageSLO struct {
 // split and store as 2 different groups the alerts and the recordings, if true
 // it will be save as a single group.
 func (i IOWriterGroupedRulesYAMLRepo) StoreSLOs(ctx context.Context, slos []StorageSLO) error {
-	err := i.storeGrouped(slos)
+	err := i.storeGrouped(ctx, slos)
 	if err != nil {
 		return fmt.Errorf("could not store SLOS: %w", err)
 	}
@@ -43,7 +43,7 @@ func (i IOWriterGroupedRulesYAMLRepo) StoreSLOs(ctx context.Context, slos []Stor
 	return nil
 }
 
-func (i IOWriterGroupedRulesYAMLRepo) storeGrouped(slos []StorageSLO) error {
+func (i IOWriterGroupedRulesYAMLRepo) storeGrouped(ctx context.Context, slos []StorageSLO) error {
 	if len(slos) == 0 {
 		return fmt.Errorf("slo rules required")
 	}
@@ -84,7 +84,8 @@ func (i IOWriterGroupedRulesYAMLRepo) storeGrouped(slos []StorageSLO) error {
 		return fmt.Errorf("could not write top disclaimer: %w", err)
 	}
 
-	i.logger.WithValues(log.Kv{"groups": len(ruleGroups.Groups)}).Infof("Prometheus rules written")
+	logger := i.logger.WithCtxValues(ctx)
+	logger.WithValues(log.Kv{"groups": len(ruleGroups.Groups)}).Infof("Prometheus rules written")
 
 	return nil
 }

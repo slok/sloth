@@ -3,6 +3,7 @@ package prometheus
 import (
 	"bytes"
 	"fmt"
+	"regexp"
 	"text/template"
 	"time"
 
@@ -14,8 +15,8 @@ import (
 
 // CustomSLI reprensents an SLI with custom error and total expressions.
 type CustomSLI struct {
-	ErrorQuery string `validate:"required,prom_expr"`
-	TotalQuery string `validate:"required,prom_expr"`
+	ErrorQuery string `validate:"required,prom_expr,template_vars"`
+	TotalQuery string `validate:"required,prom_expr,template_vars"`
 }
 
 // AlertMeta is the metadata of an alert settings.
@@ -62,12 +63,13 @@ func (s SLO) GetSLOIDPromLabels() map[string]string {
 var modelSpecValidate = func() *validator.Validate {
 	v := validator.New()
 
-	// Mor information on prometheus validators logic: https://github.com/prometheus/prometheus/blob/df80dc4d3970121f2f76cba79050983ffb3cdbb0/pkg/rulefmt/rulefmt.go#L188-L208
+	// More information on prometheus validators logic: https://github.com/prometheus/prometheus/blob/df80dc4d3970121f2f76cba79050983ffb3cdbb0/pkg/rulefmt/rulefmt.go#L188-L208
 	mustRegisterValidation(v, "prom_expr", validatePromExpression)
 	mustRegisterValidation(v, "prom_label_key", validatePromLabelKey)
 	mustRegisterValidation(v, "prom_label_value", validatePromLabelValue)
 	mustRegisterValidation(v, "prom_annot_key", validatePromAnnotKey)
 	mustRegisterValidation(v, "required_if_enabled", validateRequiredEnabledAlertName)
+	mustRegisterValidation(v, "template_vars", validateTemplateVars)
 
 	return v
 }()
@@ -154,6 +156,19 @@ func validateRequiredEnabledAlertName(fl validator.FieldLevel) bool {
 	}
 
 	return alertMeta.Name != ""
+}
+
+var tplWindowRegex = regexp.MustCompile(fmt.Sprintf(`{{ *\.%s *}}`, tplKeyWindow))
+
+// validateTemplateVars implements validator.CustomTypeFunc by validating
+// an SLI template has all the required fields.
+func validateTemplateVars(fl validator.FieldLevel) bool {
+	v, ok := fl.Field().Interface().(string)
+	if !ok {
+		return false
+	}
+
+	return tplWindowRegex.MatchString(v)
 }
 
 // SLORules are the prometheus rules required by an SLO.

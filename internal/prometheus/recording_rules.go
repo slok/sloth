@@ -46,22 +46,16 @@ const (
 )
 
 func defaultSLIRecordGenerator(slo SLO, window time.Duration, alerts alert.MWMBAlertGroup) (*rulefmt.Rule, error) {
+	// Optimize the the rules that are for the total period time window.
+	if window == slo.TimeWindow {
+		return optimizedSLIRecordGenerator(slo, window, alerts.PageQuick.ShortWindow)
+	}
+
 	// Generate our first level of template by assembling the error and total expressions.
 	sliExprTpl := fmt.Sprintf(`(%s)
 /
 (%s)
 `, slo.SLI.ErrorQuery, slo.SLI.TotalQuery)
-
-	// The total window (e.g 30d) query has a lot of impact on Prometheus, as an optimization use
-	// the shortest (e.g 5m) SLI recording rule metric as the source of the metric:
-	// We get the average over time of the ratios calculated on the shortest
-	// SLI recording rule window in the full time period window.
-	// We also use max to remove the labels that will be set by the recording rule.
-	if window == slo.TimeWindow {
-		shortWindowSLIRec := slo.GetSLIErrorMetric(alerts.PageQuick.ShortWindow)
-		filter := labelsToPromFilter(slo.GetSLOIDPromLabels())
-		sliExprTpl = fmt.Sprintf("max(avg_over_time(%s%s[{{.%s}}]))", shortWindowSLIRec, filter, tplKeyWindow)
-	}
 
 	// Render with our templated data.
 	tpl, err := template.New("sliExpr").Option("missingkey=error").Parse(sliExprTpl)
@@ -88,6 +82,48 @@ func defaultSLIRecordGenerator(slo SLO, window time.Duration, alerts alert.MWMBA
 			},
 			slo.Labels,
 		),
+	}, nil
+}
+
+// optimizedSLIRecordGenerator gets a SLI recording rule from other SLI recording rules. This optimization
+// will make Prometheus consume less CPU and memory, however the result will be less accurate. Used wisely
+// is a good tradeoff. For example on calculating informative metrics like total period window (30d).
+//
+// The way this optimization is made is using one SLI recording rule (the one with the shortest window to
+// reduce the downsampling, e.g 5m) and make an average over time on that rule for the window time range.
+func optimizedSLIRecordGenerator(slo SLO, window, shortWindow time.Duration) (*rulefmt.Rule, error) {
+	if window == shortWindow {
+		return nil, fmt.Errorf("can't optimize using the same shortwindow as the window to optimize")
+	}
+
+	shortWindowSLIRec := slo.GetSLIErrorMetric(shortWindow)
+	filter := labelsToPromFilter(slo.GetSLOIDPromLabels())
+	// Use `max() without` to remove the window label and don't lose the rest (we are setting window in our rule).
+	sliExprTpl := fmt.Sprintf("max(avg_over_time(%s%s[{{.%s}}])) without(%s)", shortWindowSLIRec, filter, tplKeyWindow, sloWindowLabelName)
+
+	// Render with our templated data.
+	tpl, err := template.New("sliExpr").Option("missingkey=error").Parse(sliExprTpl)
+	if err != nil {
+		return nil, fmt.Errorf("could not create SLI expression template data: %w", err)
+	}
+
+	strWindow := timeDurationToPromStr(window)
+	var b bytes.Buffer
+	err = tpl.Execute(&b, map[string]string{
+		tplKeyWindow: strWindow,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("could not render SLI expression template: %w", err)
+	}
+
+	return &rulefmt.Rule{
+		Record: slo.GetSLIErrorMetric(window),
+		Expr:   b.String(),
+		// The SLO labels will be obtained from the source SLI recording rule.
+		// We only need to set the window.
+		Labels: map[string]string{
+			sloWindowLabelName: strWindow,
+		},
 	}, nil
 }
 

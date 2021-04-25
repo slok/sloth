@@ -23,6 +23,13 @@ func TestIOWriterGroupedRulesYAMLRepoStore(t *testing.T) {
 			expErr: true,
 		},
 
+		"Having 0 SLO rules generated should fail.": {
+			slos: []prometheus.StorageSLO{
+				{},
+			},
+			expErr: true,
+		},
+
 		"Having a single SLI recording rule should render correctly.": {
 			slos: []prometheus.StorageSLO{
 				{

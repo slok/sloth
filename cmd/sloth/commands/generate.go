@@ -15,8 +15,10 @@ import (
 )
 
 type generateCommand struct {
-	slosInput string
-	slosOut   string
+	slosInput         string
+	slosOut           string
+	disableRecordings bool
+	disableAlerts     bool
 }
 
 // NewGenerateCommand returns the generate command.
@@ -26,6 +28,8 @@ func NewGenerateCommand(app *kingpin.Application) Command {
 	cmd := promCmd.Command("generate", "Generates SLOs.")
 	cmd.Flag("input", "SLO spec input file path.").Short('i').Required().StringVar(&c.slosInput)
 	cmd.Flag("out", "Generated rules output file path. If `-` it will use stdout.").Short('o').Default("-").StringVar(&c.slosOut)
+	cmd.Flag("disable-recordings", "Disables recording rules generation.").BoolVar(&c.disableRecordings)
+	cmd.Flag("disable-alerts", "Disables alert rules generation.").BoolVar(&c.disableAlerts)
 
 	return c
 }
@@ -51,12 +55,26 @@ func (g generateCommand) Run(ctx context.Context, config RootConfig) error {
 		return fmt.Errorf("could not load SLOs spec: %w", err)
 	}
 
+	// Disable recording rules if required.
+	var sliRuleGen generateprometheus.SLIRecordingRulesGenerator = generateprometheus.NoopSLIRecordingRulesGenerator
+	var metaRuleGen generateprometheus.MetadataRecordingRulesGenerator = generateprometheus.NoopMetadataRecordingRulesGenerator
+	if !g.disableRecordings {
+		sliRuleGen = prometheus.SLIRecordingRulesGenerator
+		metaRuleGen = prometheus.MetadataRecordingRulesGenerator
+	}
+
+	// Disable alert rules if required.
+	var alertRuleGen generateprometheus.SLOAlertRulesGenerator = generateprometheus.NoopSLOAlertRulesGenerator
+	if !g.disableAlerts {
+		alertRuleGen = prometheus.SLOAlertRulesGenerator
+	}
+
 	// Generate.
 	controller, err := generateprometheus.NewService(generateprometheus.ServiceConfig{
 		AlertGenerator:              alert.AlertGenerator,
-		SLIRecordingRulesGenerator:  prometheus.SLIRecordingRulesGenerator,
-		MetaRecordingRulesGenerator: prometheus.MetadataRecordingRulesGenerator,
-		SLOAlertRulesGenerator:      prometheus.SLOAlertRulesGenerator,
+		SLIRecordingRulesGenerator:  sliRuleGen,
+		MetaRecordingRulesGenerator: metaRuleGen,
+		SLOAlertRulesGenerator:      alertRuleGen,
 		Logger:                      config.Logger,
 	})
 	if err != nil {

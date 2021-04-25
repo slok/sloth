@@ -5,39 +5,10 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/ghodss/yaml"
+	"gopkg.in/yaml.v2"
+
+	prometheusv1 "github.com/slok/sloth/pkg/prometheus/api/v1"
 )
-
-// SpecVersionV1 is the Prometheus V1 ID version.
-const SpecVersionV1 = "prometheus/v1"
-
-type alertSpec struct {
-	Disable     bool              `json:"disable"`
-	Labels      map[string]string `json:"labels"`
-	Annotations map[string]string `json:"annotations"`
-}
-
-type specV1 struct {
-	Version string            `json:"version"`
-	Service string            `json:"service"`
-	Labels  map[string]string `json:"labels"`
-	SLOs    []struct {
-		Name      string            `json:"name"`
-		Objective float64           `json:"objective"`
-		Labels    map[string]string `json:"labels"`
-		SLI       struct {
-			ErrorQuery string `json:"error_query"`
-			TotalQuery string `json:"total_query"`
-		} `json:"sli"`
-		Alerting struct {
-			Name        string            `json:"name" validate:"required"`
-			Labels      map[string]string `json:"labels"`
-			Annotations map[string]string `json:"annotations"`
-			PageAlert   *alertSpec        `json:"page_alert"`
-			TicketAlert *alertSpec        `json:"ticket_alert"`
-		} `json:"alerting,omitempty"`
-	} `json:"slos"`
-}
 
 type yamlSpecLoader bool
 
@@ -49,15 +20,15 @@ func (y yamlSpecLoader) LoadSpec(ctx context.Context, data []byte) ([]SLO, error
 		return nil, fmt.Errorf("spec is required")
 	}
 
-	s := specV1{}
+	s := prometheusv1.Spec{}
 	err := yaml.Unmarshal(data, &s)
 	if err != nil {
 		return nil, fmt.Errorf("could not unmarshall YAML spec correctly: %w", err)
 	}
 
 	// Check version.
-	if s.Version != SpecVersionV1 {
-		return nil, fmt.Errorf("invalid spec version, should be %q", SpecVersionV1)
+	if s.Version != prometheusv1.Version {
+		return nil, fmt.Errorf("invalid spec version, should be %q", prometheusv1.Version)
 	}
 
 	// Check at least we have one SLO.
@@ -73,7 +44,7 @@ func (y yamlSpecLoader) LoadSpec(ctx context.Context, data []byte) ([]SLO, error
 	return m, nil
 }
 
-func (yamlSpecLoader) mapSpecToModel(spec specV1) ([]SLO, error) {
+func (yamlSpecLoader) mapSpecToModel(spec prometheusv1.Spec) ([]SLO, error) {
 	models := make([]SLO, 0, len(spec.SLOs))
 	for _, specSLO := range spec.SLOs {
 		slo := SLO{

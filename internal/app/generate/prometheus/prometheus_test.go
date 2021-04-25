@@ -193,13 +193,9 @@ func TestIntegrationAppServiceGenerate(t *testing.T) {
 								},
 								{
 									Record: "slo:sli_error:ratio_rate30d",
-									Expr:   "max(avg_over_time(slo:sli_error:ratio_rate5m{sloth_id=\"test-id\", sloth_service=\"test-svc\", sloth_slo=\"test-name\"}[30d]))",
+									Expr:   "max(avg_over_time(slo:sli_error:ratio_rate5m{sloth_id=\"test-id\", sloth_service=\"test-svc\", sloth_slo=\"test-name\"}[30d])) without(sloth_window)",
 									Labels: map[string]string{
-										"test_label":    "label_1",
-										"sloth_service": "test-svc",
-										"sloth_slo":     "test-name",
-										"sloth_id":      "test-id",
-										"sloth_window":  "30d",
+										"sloth_window": "30d",
 									},
 								},
 							},

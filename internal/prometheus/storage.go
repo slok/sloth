@@ -12,6 +12,12 @@ import (
 	"github.com/slok/sloth/internal/log"
 )
 
+var (
+	// ErrNoSLORules will be used when there are no rules to store. The upper layer
+	// could ignore or handle the error in cases where there wasn't an output.
+	ErrNoSLORules = fmt.Errorf("0 SLO Prometheus rules generated")
+)
+
 func NewIOWriterGroupedRulesYAMLRepo(writer io.Writer, logger log.Logger) IOWriterGroupedRulesYAMLRepo {
 	return IOWriterGroupedRulesYAMLRepo{
 		writer: writer,
@@ -37,7 +43,7 @@ type StorageSLO struct {
 func (i IOWriterGroupedRulesYAMLRepo) StoreSLOs(ctx context.Context, slos []StorageSLO) error {
 	err := i.storeGrouped(ctx, slos)
 	if err != nil {
-		return fmt.Errorf("could not store SLOS: %w", err)
+		return err
 	}
 
 	return nil
@@ -70,6 +76,12 @@ func (i IOWriterGroupedRulesYAMLRepo) storeGrouped(ctx context.Context, slos []S
 				Rules: slo.Rules.AlertRules,
 			})
 		}
+	}
+
+	// If we don't have anything to store, error so we can increase the reliability
+	// because maybe this was due to an unintended error (typos, misconfig, too many disable...).
+	if len(ruleGroups.Groups) == 0 {
+		return ErrNoSLORules
 	}
 
 	// Convert to YAML (Prometheus rule format).

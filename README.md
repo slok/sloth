@@ -26,6 +26,7 @@ _At this moment Sloth is focused on Prometheus, however depending on the demand 
 - Customization of labels, disabling different type of alerts...
 - Creates a single way of declaring your rules as an spec and in Prometheus metrics
 - Automatic Grafana dashboard to see all your SLOs state.
+- Single binary and easy to use CLI.
 
 ## Get Sloth
 
@@ -88,12 +89,15 @@ slos:
 Create the prometheus rules (recordings and alerts):
 
 ```bash
-prometheus generate -i ./k8s-apiserver-slo.yml  > ./sloth-gen/k8s-apiserver-slo.yml
+prometheus generate -i ./k8s-apiserver-slo.yml  -o ./sloth-gen/k8s-apiserver-slo.yml
 ```
 
 ## The SLO spec
 
-TODO
+- Prometheus:
+  - [v1](pkg/prometheus/api/v1)
+
+For specific examples, check [examples](examples/).
 
 ## Prometheus metrics
 

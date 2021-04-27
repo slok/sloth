@@ -64,8 +64,9 @@ slos:
       category: test
     objective: 99.99
     sli:
-      error_query: test_expr_error_1
-      total_query: test_expr_total_1
+      events:
+        error_query: test_expr_error_1
+        total_query: test_expr_total_1
     alerting:
       name: testAlert
       labels:
@@ -89,8 +90,8 @@ slos:
       category: test2
     objective: 99.9
     sli:
-      error_query: test_expr_error_2
-      total_query: test_expr_total_2
+      raw:
+        error_ratio_query: test_expr_ratio_2
     alerting:
       page_alert:
         disable: true
@@ -103,9 +104,11 @@ slos:
 					Name:       "slo1",
 					Service:    "test-svc",
 					TimeWindow: 30 * 24 * time.Hour,
-					SLI: prometheus.CustomSLI{
-						ErrorQuery: "test_expr_error_1",
-						TotalQuery: "test_expr_total_1",
+					SLI: prometheus.SLI{
+						Events: &prometheus.SLIEvents{
+							ErrorQuery: "test_expr_error_1",
+							TotalQuery: "test_expr_total_1",
+						},
 					},
 					Objective: 99.99,
 					Labels: map[string]string{
@@ -144,9 +147,10 @@ slos:
 					Name:       "slo2",
 					Service:    "test-svc",
 					TimeWindow: 30 * 24 * time.Hour,
-					SLI: prometheus.CustomSLI{
-						ErrorQuery: "test_expr_error_2",
-						TotalQuery: "test_expr_total_2",
+					SLI: prometheus.SLI{
+						Raw: &prometheus.SLIRaw{
+							ErrorRatioQuery: "test_expr_ratio_2",
+						},
 					},
 					Objective: 99.9,
 					Labels: map[string]string{

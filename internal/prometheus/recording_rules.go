@@ -21,7 +21,7 @@ type sliRecordingRulesGenerator struct {
 
 // SLIRecordingRulesGenerator knows how to generate the SLI prometheus recording rules
 // form an SLO. Normally these rules are used by the SLO alerts.
-var SLIRecordingRulesGenerator = sliRecordingRulesGenerator{genFunc: defaultSLIRecordGenerator}
+var SLIRecordingRulesGenerator = sliRecordingRulesGenerator{genFunc: factorySLIRecordGenerator}
 
 func (s sliRecordingRulesGenerator) GenerateSLIRecordingRules(ctx context.Context, slo SLO, alerts alert.MWMBAlertGroup) ([]rulefmt.Rule, error) {
 	// Get the windows we need the recording rules.
@@ -45,17 +45,58 @@ const (
 	tplKeyWindow = "window"
 )
 
-func defaultSLIRecordGenerator(slo SLO, window time.Duration, alerts alert.MWMBAlertGroup) (*rulefmt.Rule, error) {
-	// Optimize the the rules that are for the total period time window.
-	if window == slo.TimeWindow {
+func factorySLIRecordGenerator(slo SLO, window time.Duration, alerts alert.MWMBAlertGroup) (*rulefmt.Rule, error) {
+	switch {
+	// Optimize the rules that are for the total period time window.
+	case window == slo.TimeWindow:
 		return optimizedSLIRecordGenerator(slo, window, alerts.PageQuick.ShortWindow)
+	// Event based SLI.
+	case slo.SLI.Events != nil:
+		return eventsSLIRecordGenerator(slo, window, alerts)
+	// Raw based SLI.
+	case slo.SLI.Raw != nil:
+		return rawSLIRecordGenerator(slo, window, alerts)
 	}
 
+	return nil, fmt.Errorf("invalid SLI type")
+}
+
+func rawSLIRecordGenerator(slo SLO, window time.Duration, alerts alert.MWMBAlertGroup) (*rulefmt.Rule, error) {
+	// Render with our templated data.
+	sliExprTpl := fmt.Sprintf(`(%s)`, slo.SLI.Raw.ErrorRatioQuery)
+	tpl, err := template.New("sliExpr").Option("missingkey=error").Parse(sliExprTpl)
+	if err != nil {
+		return nil, fmt.Errorf("could not create SLI expression template data: %w", err)
+	}
+
+	strWindow := timeDurationToPromStr(window)
+	var b bytes.Buffer
+	err = tpl.Execute(&b, map[string]string{
+		tplKeyWindow: strWindow,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("could not render SLI expression template: %w", err)
+	}
+
+	return &rulefmt.Rule{
+		Record: slo.GetSLIErrorMetric(window),
+		Expr:   b.String(),
+		Labels: mergeLabels(
+			slo.GetSLOIDPromLabels(),
+			map[string]string{
+				sloWindowLabelName: strWindow,
+			},
+			slo.Labels,
+		),
+	}, nil
+}
+
+func eventsSLIRecordGenerator(slo SLO, window time.Duration, alerts alert.MWMBAlertGroup) (*rulefmt.Rule, error) {
 	// Generate our first level of template by assembling the error and total expressions.
 	sliExprTpl := fmt.Sprintf(`(%s)
 /
 (%s)
-`, slo.SLI.ErrorQuery, slo.SLI.TotalQuery)
+`, slo.SLI.Events.ErrorQuery, slo.SLI.Events.TotalQuery)
 
 	// Render with our templated data.
 	tpl, err := template.New("sliExpr").Option("missingkey=error").Parse(sliExprTpl)

@@ -20,43 +20,57 @@ slos:
   - name: "requests-availability"
     objective: 99.9
     sli:
-      error_query: sum(rate(apiserver_request_total{code=~"5..", code="429"}[{{.window}}]))
-      total_query: sum(rate(apiserver_request_total[{{.window}}]))
-    alerting:
-      name: K8sApiserverAvailabilityAlert
-      labels:
-        category: "availability"
-      annotations:
-        runbook: "https://github.com/kubernetes-monitoring/kubernetes-mixin/tree/master/runbook.md#alert-name-kubeapierrorshigh"
-      page_alert:
-        labels:
-          severity: critical
-      ticket_alert:
-        labels:
-          severity: warning
+```
 
-  - name: "requests-latency"
-    objective: 99
-    sli:
-      error_query: |
-        (
-          sum(rate(apiserver_request_duration_seconds_count{verb!="WATCH"}[{{.window}}]))
-          -
-          sum(rate(apiserver_request_duration_seconds_bucket{le="0.4",verb!="WATCH"}[{{.window}}]))
-        )
-      total_query: sum(rate(apiserver_request_duration_seconds_count{verb!="WATCH"}[{{.window}}]))
-    alerting:
-      name: K8sApiserverLatencyAlert
+```
+events:
+```
+
+```
+error_query: sum(rate(apiserver_request_total{code=~"5..", code="429"}[{{.window}}]))
+      total_query: sum(rate(apiserver_request_total[{{.window}}]))
+  alerting:
+    name: K8sApiserverAvailabilityAlert
+    labels:
+      category: "availability"
+    annotations:
+      runbook: "https://github.com/kubernetes-monitoring/kubernetes-mixin/tree/master/runbook.md#alert-name-kubeapierrorshigh"
+    page_alert:
       labels:
-        category: "latency"
-      annotations:
-        runbook: "https://github.com/kubernetes-monitoring/kubernetes-mixin/tree/master/runbook.md#alert-name-kubeapilatencyhigh"
-      page_alert:
-        labels:
-          severity: critical
-      ticket_alert:
-        labels:
-          disable: true
+        severity: critical
+    ticket_alert:
+      labels:
+        severity: warning
+
+- name: "requests-latency"
+  objective: 99
+  sli:
+```
+
+```
+events:
+```
+
+```
+error_query: |
+      (
+        sum(rate(apiserver_request_duration_seconds_count{verb!="WATCH"}[{{.window}}]))
+        -
+        sum(rate(apiserver_request_duration_seconds_bucket{le="0.4",verb!="WATCH"}[{{.window}}]))
+      )
+    total_query: sum(rate(apiserver_request_duration_seconds_count{verb!="WATCH"}[{{.window}}]))
+alerting:
+  name: K8sApiserverLatencyAlert
+  labels:
+    category: "latency"
+  annotations:
+    runbook: "https://github.com/kubernetes-monitoring/kubernetes-mixin/tree/master/runbook.md#alert-name-kubeapilatencyhigh"
+  page_alert:
+    labels:
+      severity: critical
+  ticket_alert:
+    labels:
+      disable: true
 ```
 
 ## Index
@@ -65,6 +79,8 @@ slos:
 - [type Alert](<#type-alert>)
 - [type Alerting](<#type-alerting>)
 - [type SLI](<#type-sli>)
+- [type SLIEvents](<#type-slievents>)
+- [type SLIRaw](<#type-sliraw>)
 - [type SLO](<#type-slo>)
 - [type Spec](<#type-spec>)
 
@@ -116,8 +132,23 @@ type Alerting struct {
 
 SLI will tell what is good or bad for the SLO\. All SLIs will be get based on time windows\, that's why Sloth needs the queries to use \`\{\{\.window\}\}\` template variable\.
 
+Only one of the SLI types can be used\.
+
 ```go
 type SLI struct {
+    // SLIRaw is the raw SLI type.
+    Raw *SLIRaw `yaml:"raw,omitempty"`
+    // SLIEvents is the events SLI type.
+    Events *SLIEvents `yaml:"events,omitempty"`
+}
+```
+
+## type SLIEvents
+
+SLIEvents is an SLI that is calculated as the division of bad events and total events\, giving a ratio SLI\. Normally this is the most common ratio type\.
+
+```go
+type SLIEvents struct {
     // ErrorQuery is a Prometheus query that will get the number/count of events
     // that we consider that are bad for the SLO (e.g "http 5xx", "latency > 250ms"...).
     // Requires the usage of `{{.window}}` template variable.
@@ -126,6 +157,17 @@ type SLI struct {
     // for the SLO (e.g "all http requests"...).
     // Requires the usage of `{{.window}}` template variable.
     TotalQuery string `yaml:"total_query"`
+}
+```
+
+## type SLIRaw
+
+SLIRaw is a error ratio SLI already calculated\. Normally this will be used when the SLI is already calculated by other recording rule\, system\.\.\.
+
+```go
+type SLIRaw struct {
+    // ErrorRatioQuery is a Prometheus query that will get the raw error ratio (0-1) for the SLO.
+    ErrorRatioQuery string `yaml:"error_ratio_query"`
 }
 ```
 

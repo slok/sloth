@@ -14,6 +14,8 @@
 - Improve 30d SLI error recording rule.
 - Disable recording rules generation using flags.
 - Disable alert rules generation using flags.
+- Support events based SLI.
+- Support raw query based SLI.
 
 [unreleased]: https://github.com/slok/sloth/compare/v0.1.0...HEAD
 [v0.1.0]: https://github.com/slok/sloth/releases/tag/v0.1.0

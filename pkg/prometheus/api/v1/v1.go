@@ -11,8 +11,9 @@
 //      - name: "requests-availability"
 //        objective: 99.9
 //        sli:
-//          error_query: sum(rate(apiserver_request_total{code=~"5..", code="429"}[{{.window}}]))
-//          total_query: sum(rate(apiserver_request_total[{{.window}}]))
+//			events:
+//            error_query: sum(rate(apiserver_request_total{code=~"5..", code="429"}[{{.window}}]))
+//            total_query: sum(rate(apiserver_request_total[{{.window}}]))
 //        alerting:
 //          name: K8sApiserverAvailabilityAlert
 //          labels:
@@ -29,13 +30,14 @@
 //      - name: "requests-latency"
 //        objective: 99
 //        sli:
-//          error_query: |
-//            (
-//              sum(rate(apiserver_request_duration_seconds_count{verb!="WATCH"}[{{.window}}]))
-//              -
-//              sum(rate(apiserver_request_duration_seconds_bucket{le="0.4",verb!="WATCH"}[{{.window}}]))
-//            )
-//          total_query: sum(rate(apiserver_request_duration_seconds_count{verb!="WATCH"}[{{.window}}]))
+//			events:
+//            error_query: |
+//              (
+//                sum(rate(apiserver_request_duration_seconds_count{verb!="WATCH"}[{{.window}}]))
+//                -
+//                sum(rate(apiserver_request_duration_seconds_bucket{le="0.4",verb!="WATCH"}[{{.window}}]))
+//              )
+//            total_query: sum(rate(apiserver_request_duration_seconds_count{verb!="WATCH"}[{{.window}}]))
 //        alerting:
 //          name: K8sApiserverLatencyAlert
 //          labels:
@@ -88,7 +90,25 @@ type SLO struct {
 // SLI will tell what is good or bad for the SLO.
 // All SLIs will be get based on time windows, that's why Sloth needs the queries to
 // use `{{.window}}` template variable.
+//
+// Only one of the SLI types can be used.
 type SLI struct {
+	// SLIRaw is the raw SLI type.
+	Raw *SLIRaw `yaml:"raw,omitempty"`
+	// SLIEvents is the events SLI type.
+	Events *SLIEvents `yaml:"events,omitempty"`
+}
+
+// SLIRaw is a error ratio SLI already calculated. Normally this will be used when the SLI
+// is already calculated by other recording rule, system...
+type SLIRaw struct {
+	// ErrorRatioQuery is a Prometheus query that will get the raw error ratio (0-1) for the SLO.
+	ErrorRatioQuery string `yaml:"error_ratio_query"`
+}
+
+// SLIEvents is an SLI that is calculated as the division of bad events and total events, giving
+// a ratio SLI. Normally this is the most common ratio type.
+type SLIEvents struct {
 	// ErrorQuery is a Prometheus query that will get the number/count of events
 	// that we consider that are bad for the SLO (e.g "http 5xx", "latency > 250ms"...).
 	// Requires the usage of `{{.window}}` template variable.

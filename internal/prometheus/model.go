@@ -3,6 +3,7 @@ package prometheus
 import (
 	"bytes"
 	"fmt"
+	"reflect"
 	"regexp"
 	"text/template"
 	"time"
@@ -13,8 +14,17 @@ import (
 	promqlparser "github.com/prometheus/prometheus/promql/parser"
 )
 
-// CustomSLI reprensents an SLI with custom error and total expressions.
-type CustomSLI struct {
+// SLI reprensents an SLI with custom error and total expressions.
+type SLI struct {
+	Raw    *SLIRaw
+	Events *SLIEvents
+}
+
+type SLIRaw struct {
+	ErrorRatioQuery string `validate:"required,prom_expr,template_vars"`
+}
+
+type SLIEvents struct {
 	ErrorQuery string `validate:"required,prom_expr,template_vars"`
 	TotalQuery string `validate:"required,prom_expr,template_vars"`
 }
@@ -29,10 +39,10 @@ type AlertMeta struct {
 
 // SLO represents a service level objective configuration.
 type SLO struct {
-	ID               string    `validate:"required"`
-	Name             string    `validate:"required"`
-	Service          string    `validate:"required"`
-	SLI              CustomSLI `validate:"required"`
+	ID               string `validate:"required"`
+	Name             string `validate:"required"`
+	Service          string `validate:"required"`
+	SLI              SLI    `validate:"required"`
 	TimeWindow       time.Duration
 	Objective        float64           `validate:"gt=0,lte=100"`
 	Labels           map[string]string `validate:"dive,keys,prom_label_key,endkeys,required,prom_label_value"`
@@ -70,6 +80,7 @@ var modelSpecValidate = func() *validator.Validate {
 	mustRegisterValidation(v, "prom_annot_key", validatePromAnnotKey)
 	mustRegisterValidation(v, "required_if_enabled", validateRequiredEnabledAlertName)
 	mustRegisterValidation(v, "template_vars", validateTemplateVars)
+	v.RegisterStructValidation(validateOneSLI, SLI{})
 
 	return v
 }()
@@ -169,6 +180,37 @@ func validateTemplateVars(fl validator.FieldLevel) bool {
 	}
 
 	return tplWindowRegex.MatchString(v)
+}
+
+// validateOneSLIType implements validator.CustomTypeFunc by validating
+// only one SLI type is set and configured.
+func validateOneSLI(sl validator.StructLevel) {
+	sli, ok := sl.Current().Interface().(SLI)
+	if !ok {
+		sl.ReportError(sli, "", "SLI", "not_sli", "")
+		return
+	}
+
+	// Check only one SLI type is set.
+	sliSet := false
+	sliType := reflect.ValueOf(sli)
+	strNumFields := sliType.NumField()
+	for i := 0; i < strNumFields; i++ {
+		f := sliType.Field(i)
+		if f.IsNil() {
+			continue
+		}
+		// We already have one SLI type set.
+		if sliSet {
+			sl.ReportError(sli, "", "", "one_sli_type", "")
+		}
+		sliSet = true
+	}
+
+	// No SLI types set.
+	if !sliSet {
+		sl.ReportError(sli, "", "", "sli_type_required", "")
+	}
 }
 
 // SLORules are the prometheus rules required by an SLO.

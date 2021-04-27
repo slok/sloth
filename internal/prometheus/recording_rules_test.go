@@ -46,9 +46,11 @@ func TestGenerateSLIRecordingRules(t *testing.T) {
 				Name:       "test-name",
 				Service:    "test-svc",
 				TimeWindow: 30 * 24 * time.Hour,
-				SLI: prometheus.CustomSLI{
-					ErrorQuery: `rate(my_metric[{{}.window}}]{error="true"})`,
-					TotalQuery: `rate(my_metric[{{.window}}])`,
+				SLI: prometheus.SLI{
+					Events: &prometheus.SLIEvents{
+						ErrorQuery: `rate(my_metric[{{}.window}}]{error="true"})`,
+						TotalQuery: `rate(my_metric[{{.window}}])`,
+					},
 				},
 				Labels: map[string]string{
 					"kind": "test",
@@ -58,15 +60,17 @@ func TestGenerateSLIRecordingRules(t *testing.T) {
 			expErr:     true,
 		},
 
-		"Having and wrong variablein the expression should fail.": {
+		"Having and wrong variable in the expression should fail.": {
 			slo: prometheus.SLO{
 				ID:         "test",
 				Name:       "test-name",
 				Service:    "test-svc",
 				TimeWindow: 30 * 24 * time.Hour,
-				SLI: prometheus.CustomSLI{
-					ErrorQuery: `rate(my_metric[{{.Window}}]{error="true"})`,
-					TotalQuery: `rate(my_metric[{{.window}}])`,
+				SLI: prometheus.SLI{
+					Events: &prometheus.SLIEvents{
+						ErrorQuery: `rate(my_metric[{{.Window}}]{error="true"})`,
+						TotalQuery: `rate(my_metric[{{.window}}])`,
+					},
 				},
 				Labels: map[string]string{
 					"kind": "test",
@@ -76,15 +80,17 @@ func TestGenerateSLIRecordingRules(t *testing.T) {
 			expErr:     true,
 		},
 
-		"Having and SLO an its mwmb alerts should create the recording rules.": {
+		"Having an SLO with SLI(events)  and its mwmb alerts should create the recording rules.": {
 			slo: prometheus.SLO{
 				ID:         "test",
 				Name:       "test-name",
 				Service:    "test-svc",
 				TimeWindow: 30 * 24 * time.Hour,
-				SLI: prometheus.CustomSLI{
-					ErrorQuery: `rate(my_metric[{{.window}}]{error="true"})`,
-					TotalQuery: `rate(my_metric[{{.window}}])`,
+				SLI: prometheus.SLI{
+					Events: &prometheus.SLIEvents{
+						ErrorQuery: `rate(my_metric[{{.window}}]{error="true"})`,
+						TotalQuery: `rate(my_metric[{{.window}}])`,
+					},
 				},
 				Labels: map[string]string{
 					"kind": "test",
@@ -179,15 +185,121 @@ func TestGenerateSLIRecordingRules(t *testing.T) {
 			},
 		},
 
+		"Having an SLO with SLI(raw)  and its mwmb alerts should create the recording rules.": {
+			slo: prometheus.SLO{
+				ID:         "test",
+				Name:       "test-name",
+				Service:    "test-svc",
+				TimeWindow: 30 * 24 * time.Hour,
+				SLI: prometheus.SLI{
+					Raw: &prometheus.SLIRaw{
+						ErrorRatioQuery: `rate(my_metric[{{.window}}])`,
+					},
+				},
+				Labels: map[string]string{
+					"kind": "test",
+				},
+			},
+			alertGroup: getAlertGroup(),
+			expRules: []rulefmt.Rule{
+				{
+					Record: "slo:sli_error:ratio_rate5m",
+					Expr:   "(rate(my_metric[5m]))",
+					Labels: map[string]string{
+						"kind":          "test",
+						"sloth_service": "test-svc",
+						"sloth_slo":     "test-name",
+						"sloth_id":      "test",
+						"sloth_window":  "5m",
+					},
+				},
+				{
+					Record: "slo:sli_error:ratio_rate30m",
+					Expr:   "(rate(my_metric[30m]))",
+					Labels: map[string]string{
+						"kind":          "test",
+						"sloth_service": "test-svc",
+						"sloth_slo":     "test-name",
+						"sloth_id":      "test",
+						"sloth_window":  "30m",
+					},
+				},
+				{
+					Record: "slo:sli_error:ratio_rate1h",
+					Expr:   "(rate(my_metric[1h]))",
+					Labels: map[string]string{
+						"kind":          "test",
+						"sloth_service": "test-svc",
+						"sloth_slo":     "test-name",
+						"sloth_id":      "test",
+						"sloth_window":  "1h",
+					},
+				},
+				{
+					Record: "slo:sli_error:ratio_rate2h",
+					Expr:   "(rate(my_metric[2h]))",
+					Labels: map[string]string{
+						"kind":          "test",
+						"sloth_service": "test-svc",
+						"sloth_slo":     "test-name",
+						"sloth_id":      "test",
+						"sloth_window":  "2h",
+					},
+				},
+				{
+					Record: "slo:sli_error:ratio_rate6h",
+					Expr:   "(rate(my_metric[6h]))",
+					Labels: map[string]string{
+						"kind":          "test",
+						"sloth_service": "test-svc",
+						"sloth_slo":     "test-name",
+						"sloth_id":      "test",
+						"sloth_window":  "6h",
+					},
+				},
+				{
+					Record: "slo:sli_error:ratio_rate1d",
+					Expr:   "(rate(my_metric[1d]))",
+					Labels: map[string]string{
+						"kind":          "test",
+						"sloth_service": "test-svc",
+						"sloth_slo":     "test-name",
+						"sloth_id":      "test",
+						"sloth_window":  "1d",
+					},
+				},
+				{
+					Record: "slo:sli_error:ratio_rate3d",
+					Expr:   "(rate(my_metric[3d]))",
+					Labels: map[string]string{
+						"kind":          "test",
+						"sloth_service": "test-svc",
+						"sloth_slo":     "test-name",
+						"sloth_id":      "test",
+						"sloth_window":  "3d",
+					},
+				},
+				{
+					Record: "slo:sli_error:ratio_rate30d",
+					Expr:   "max(avg_over_time(slo:sli_error:ratio_rate5m{sloth_id=\"test\", sloth_service=\"test-svc\", sloth_slo=\"test-name\"}[30d])) without(sloth_window)",
+					Labels: map[string]string{
+						"sloth_window": "30d",
+					},
+				},
+			},
+		},
+
 		"An SLO alert with duplicated time windows should appear once and sorted.": {
 			slo: prometheus.SLO{
 				ID:         "test",
 				Name:       "test-name",
 				Service:    "test-svc",
 				TimeWindow: 30 * 24 * time.Hour,
-				SLI: prometheus.CustomSLI{
-					ErrorQuery: `rate(my_metric[{{.window}}]{error="true"})`,
-					TotalQuery: `rate(my_metric[{{.window}}])`,
+				SLI: prometheus.SLI{
+					Events: &prometheus.SLIEvents{
+						ErrorQuery: `rate(my_metric[{{.window}}]{error="true"})`,
+						TotalQuery: `rate(my_metric[{{.window}}])`,
+					},
 				},
 				Labels: map[string]string{
 					"kind": "test",

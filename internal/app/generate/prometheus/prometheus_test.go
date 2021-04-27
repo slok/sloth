@@ -32,9 +32,11 @@ func TestIntegrationAppServiceGenerate(t *testing.T) {
 						ID:      "test-id",
 						Name:    "test-name",
 						Service: "test-svc",
-						SLI: prometheus.CustomSLI{
-							ErrorQuery: `rate(my_metric{error="true"}[{{.window}}])`,
-							TotalQuery: `rate(my_metric[{{.window}}])`,
+						SLI: prometheus.SLI{
+							Events: &prometheus.SLIEvents{
+								ErrorQuery: `rate(my_metric{error="true"}[{{.window}}])`,
+								TotalQuery: `rate(my_metric[{{.window}}])`,
+							},
 						},
 						TimeWindow: 30 * 24 * time.Hour,
 						Objective:  99.9,
@@ -59,9 +61,11 @@ func TestIntegrationAppServiceGenerate(t *testing.T) {
 							ID:      "test-id",
 							Name:    "test-name",
 							Service: "test-svc",
-							SLI: prometheus.CustomSLI{
-								ErrorQuery: `rate(my_metric{error="true"}[{{.window}}])`,
-								TotalQuery: `rate(my_metric[{{.window}}])`,
+							SLI: prometheus.SLI{
+								Events: &prometheus.SLIEvents{
+									ErrorQuery: `rate(my_metric{error="true"}[{{.window}}])`,
+									TotalQuery: `rate(my_metric[{{.window}}])`,
+								},
 							},
 							TimeWindow: 30 * 24 * time.Hour,
 							Objective:  99.9,

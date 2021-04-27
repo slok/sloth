@@ -48,20 +48,31 @@ func (yamlSpecLoader) mapSpecToModel(spec prometheusv1.Spec) ([]SLO, error) {
 	models := make([]SLO, 0, len(spec.SLOs))
 	for _, specSLO := range spec.SLOs {
 		slo := SLO{
-			ID:         fmt.Sprintf("%s-%s", spec.Service, specSLO.Name),
-			Name:       specSLO.Name,
-			Service:    spec.Service,
-			TimeWindow: 30 * 24 * time.Hour, // Default and for now the only one supported.
-			SLI: CustomSLI{
-				ErrorQuery: specSLO.SLI.ErrorQuery,
-				TotalQuery: specSLO.SLI.TotalQuery,
-			},
+			ID:               fmt.Sprintf("%s-%s", spec.Service, specSLO.Name),
+			Name:             specSLO.Name,
+			Service:          spec.Service,
+			TimeWindow:       30 * 24 * time.Hour, // Default and for now the only one supported.,
 			Objective:        specSLO.Objective,
 			Labels:           mergeLabels(spec.Labels, specSLO.Labels),
 			PageAlertMeta:    AlertMeta{Disable: true},
 			WarningAlertMeta: AlertMeta{Disable: true},
 		}
 
+		// Set SLIs.
+		if specSLO.SLI.Events != nil {
+			slo.SLI.Events = &SLIEvents{
+				ErrorQuery: specSLO.SLI.Events.ErrorQuery,
+				TotalQuery: specSLO.SLI.Events.TotalQuery,
+			}
+		}
+
+		if specSLO.SLI.Raw != nil {
+			slo.SLI.Raw = &SLIRaw{
+				ErrorRatioQuery: specSLO.SLI.Raw.ErrorRatioQuery,
+			}
+		}
+
+		// Set alerts.
 		if !specSLO.Alerting.PageAlert.Disable {
 			slo.PageAlertMeta = AlertMeta{
 				Name:        specSLO.Alerting.Name,

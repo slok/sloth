@@ -13,9 +13,11 @@ func getGoodSLO() prometheus.SLO {
 		ID:      "slo1-id",
 		Name:    "slo1",
 		Service: "test-svc",
-		SLI: prometheus.CustomSLI{
-			ErrorQuery: `sum(rate(grpc_server_handled_requests_count{job="myapp",code=~"Internal|Unavailable"}[{{ .window }}]))`,
-			TotalQuery: `sum(rate(grpc_server_handled_requests_count{job="myapp"}[{{ .window }}]))`,
+		SLI: prometheus.SLI{
+			Events: &prometheus.SLIEvents{
+				ErrorQuery: `sum(rate(grpc_server_handled_requests_count{job="myapp",code=~"Internal|Unavailable"}[{{ .window }}]))`,
+				TotalQuery: `sum(rate(grpc_server_handled_requests_count{job="myapp"}[{{ .window }}]))`,
+			},
 		},
 		Objective: 99.99,
 		Labels: map[string]string{
@@ -89,40 +91,60 @@ func TestModelValidationSpec(t *testing.T) {
 			expErrMessage: "Key: 'SLO.Service' Error:Field validation for 'Service' failed on the 'required' tag",
 		},
 
+		"SLO without SLI type should fail.": {
+			slo: func() prometheus.SLO {
+				s := getGoodSLO()
+				s.SLI = prometheus.SLI{}
+				return s
+			},
+			expErrMessage: "Key: 'SLO.SLI.' Error:Field validation for '' failed on the 'sli_type_required' tag",
+		},
+
+		"SLO with more than one SLI type should fail.": {
+			slo: func() prometheus.SLO {
+				s := getGoodSLO()
+				s.SLI.Raw = &prometheus.SLIRaw{
+					ErrorRatioQuery: `sum(rate(grpc_server_handled_requests_count{job="myapp",code=~"Internal|Unavailable"}[{{ .window }}]))`,
+				}
+				return s
+			},
+			expErrMessage: "Key: 'SLO.SLI.' Error:Field validation for '' failed on the 'one_sli_type' tag",
+		},
+
 		"SLO SLI error query should be valid Prometheus expr.": {
 			slo: func() prometheus.SLO {
 				s := getGoodSLO()
-				s.SLI.ErrorQuery = "sum(rate(grpc_server_handled_requests_count{[1m]))"
+				s.SLI.Events.ErrorQuery = "sum(rate(grpc_server_handled_requests_count{[1m]))"
 				return s
 			},
-			expErrMessage: "Key: 'SLO.SLI.ErrorQuery' Error:Field validation for 'ErrorQuery' failed on the 'prom_expr' tag",
+			expErrMessage: "Key: 'SLO.SLI.Events.ErrorQuery' Error:Field validation for 'ErrorQuery' failed on the 'prom_expr' tag",
 		},
 
 		"SLO SLI error query should have required template vars.": {
 			slo: func() prometheus.SLO {
 				s := getGoodSLO()
-				s.SLI.ErrorQuery = "sum(rate(grpc_server_handled_requests_count[1m]))"
+				s.SLI.Events.ErrorQuery = "sum(rate(grpc_server_handled_requests_count[1m]))"
 				return s
 			},
-			expErrMessage: "Key: 'SLO.SLI.ErrorQuery' Error:Field validation for 'ErrorQuery' failed on the 'template_vars' tag",
+			expErrMessage: "Key: 'SLO.SLI.Events.ErrorQuery' Error:Field validation for 'ErrorQuery' failed on the 'template_vars' tag",
 		},
 
 		"SLO SLI total query should be valid Prometheus expr.": {
 			slo: func() prometheus.SLO {
 				s := getGoodSLO()
-				s.SLI.TotalQuery = "sum(rate(grpc_server_handled_requests_count{[1m]))"
+				s.SLI.Events.TotalQuery = "sum(rate(grpc_server_handled_requests_count{[1m]))"
 				return s
 			},
-			expErrMessage: "Key: 'SLO.SLI.TotalQuery' Error:Field validation for 'TotalQuery' failed on the 'prom_expr' tag",
+			expErrMessage: "Key: 'SLO.SLI.Events.TotalQuery' Error:Field validation for 'TotalQuery' failed on the 'prom_expr' tag",
 		},
 
 		"SLO SLI total query should have required template vars.": {
 			slo: func() prometheus.SLO {
 				s := getGoodSLO()
-				s.SLI.TotalQuery = "sum(rate(grpc_server_handled_requests_count[1m]))"
+				s.SLI.Events.TotalQuery = "sum(rate(grpc_server_handled_requests_count[1m]))"
 				return s
 			},
-			expErrMessage: "Key: 'SLO.SLI.TotalQuery' Error:Field validation for 'TotalQuery' failed on the 'template_vars' tag",
+			expErrMessage: "Key: 'SLO.SLI.Events.TotalQuery' Error:Field validation for 'TotalQuery' failed on the 'template_vars' tag",
 		},
 
 		"SLO Objective shouldn't be less than 0.": {

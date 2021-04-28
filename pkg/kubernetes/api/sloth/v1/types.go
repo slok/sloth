@@ -6,7 +6,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-//go:generate gomarkdoc -o ./README.md .
+//go:generate gomarkdoc -o ./README.md ./
 
 // +genclient
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
@@ -26,7 +26,7 @@ type PrometheusServiceLevel struct {
 	Spec PrometheusServiceLevelSpec `json:"spec,omitempty"`
 }
 
-// ServiceLevelSpec is the spec for a PrometheusServiceLevel
+// ServiceLevelSpec is the spec for a PrometheusServiceLevel.
 type PrometheusServiceLevelSpec struct {
 	// Service is the application of the SLOs.
 	Service string `json:"service"`

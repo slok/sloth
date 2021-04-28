@@ -54,7 +54,7 @@ package v1
 
 const Version = "prometheus/v1"
 
-//go:generate gomarkdoc -o ./README.md .
+//go:generate gomarkdoc -o ./README.md ./
 
 // Spec represents the root type of the SLOs declaration specification.
 type Spec struct {

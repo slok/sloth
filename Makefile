@@ -62,8 +62,12 @@ integration: build-dev-image ## Runs integration test.
 go-gen: build-dev-image  ## Generates go based code.
 	@$(DOCKER_RUN_CMD) /bin/sh -c './scripts/gogen.sh'
 
+.PHONY: kube-gen
+kube-gen: build-dev-image  ## Generates go based code.
+	/bin/sh -c './scripts/kubegen.sh'
+
 .PHONY: gen
-gen: go-gen ## Generates all.
+gen: go-gen kube-gen  ## Generates all.
 
 .PHONY: deps
 deps:  ## Fixes the dependencies

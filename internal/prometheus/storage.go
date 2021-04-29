@@ -41,15 +41,7 @@ type StorageSLO struct {
 // split and store as 2 different groups the alerts and the recordings, if true
 // it will be save as a single group.
 func (i IOWriterGroupedRulesYAMLRepo) StoreSLOs(ctx context.Context, slos []StorageSLO) error {
-	err := i.storeGrouped(ctx, slos)
-	if err != nil {
-		return err
-	}
 
-	return nil
-}
-
-func (i IOWriterGroupedRulesYAMLRepo) storeGrouped(ctx context.Context, slos []StorageSLO) error {
 	if len(slos) == 0 {
 		return fmt.Errorf("slo rules required")
 	}

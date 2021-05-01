@@ -1,0 +1,28 @@
+# This example shows a simple service level by implementing a single SLO without alerts.
+# It disables page (critical) and ticket (warning) alerts.
+# The SLO SLI measures the event errors as the http request respones with the code >=500 and 429.
+#
+# `sloth prometheus generate -i ./examples/no-alerts.yml`
+#
+version: "prometheus/v1"
+service: "myapp"
+labels:
+  owner: "myteam"
+slos:
+  - name: "http-availability"
+    objective: 99.99
+    sli:
+      events:
+        error_query: |
+          sum(
+            rate(http_request_duration_seconds_count{job="myapp", code=~"(5..|429)"}[{{.window}}])
+          )
+        total_query: |
+          sum(
+            rate(http_request_duration_seconds_count{job="myapp"}[{{.window}}])
+          )
+    alerting:
+      page_alert:
+        disable: true
+      ticket_alert:
+        disable: true

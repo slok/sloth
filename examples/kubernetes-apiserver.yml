@@ -1,0 +1,67 @@
+# This example shows a real service level used for Kubernetes Apiserver.
+#
+# The service level has 2 SLOs based on Apiserver requests/responses.
+#
+# We consider an SLI event the the requests made to the server, lets review the SLOs
+#
+# - `requests-availability`
+#   - This SLO warn us that we are returning correctly the requests to the clients (kubectl users, controllers...).
+#   - SLI error: We consider a bad request (event) a request with the codes >=500 or 429
+#   - SLO objective (99.9%): We are restrictive with this because we only allow failing a request every 1000.
+#
+# - `requests-latency`
+#   - This SLO warn us that we apiserver responses are being slow and this will affect the clients  (kubectl users, controllers...).
+#   - SLI error: We consider a bad request (event) when the response latency is <400ms.
+#   - SLO objective(99%): We have a relaxed objective because Kubernetes has a lot of async and eventual consistency flows. We could
+#                         create in a future another SLO that is less restrictive and use the latency of the realtime requests (e.g: kubectl).
+#
+# `sloth prometheus generate -i ./examples/kubernetes-apiserver.yml`
+#
+version: "prometheus/v1"
+service: "k8s-apiserver"
+labels:
+  cluster: "valhalla"
+  component: "kubernetes"
+slos:
+  - name: "requests-availability"
+    objective: 99.9
+    sli:
+      events:
+        error_query: sum(rate(apiserver_request_total{code=~"(5..|429)"}[{{.window}}]))
+        total_query: sum(rate(apiserver_request_total[{{.window}}]))
+    alerting:
+      name: K8sApiserverAvailabilityAlert
+      labels:
+        category: "availability"
+      annotations:
+        runbook: "https://github.com/kubernetes-monitoring/kubernetes-mixin/tree/master/runbook.md#alert-name-kubeapierrorshigh"
+      page_alert:
+        labels:
+          severity: critical
+      ticket_alert:
+        labels:
+          severity: warning
+
+  - name: "requests-latency"
+    objective: 99
+    sli:
+      events:
+        error_query: |
+          (
+            sum(rate(apiserver_request_duration_seconds_count{verb!="WATCH"}[{{.window}}]))
+            -
+            sum(rate(apiserver_request_duration_seconds_bucket{le="0.4",verb!="WATCH"}[{{.window}}]))
+          )
+        total_query: sum(rate(apiserver_request_duration_seconds_count{verb!="WATCH"}[{{.window}}]))
+    alerting:
+      name: K8sApiserverLatencyAlert
+      labels:
+        category: "latency"
+      annotations:
+        runbook: "https://github.com/kubernetes-monitoring/kubernetes-mixin/tree/master/runbook.md#alert-name-kubeapilatencyhigh"
+      page_alert:
+        labels:
+          severity: critical
+      ticket_alert:
+        labels:
+          severity: warning

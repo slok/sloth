@@ -1,0 +1,40 @@
+# This example shows another less accurate or simpler way of creating the home wifi SLO.
+#
+# The metrics already give us a metric in ratio for each wifi connection satisfaction, instead of getting
+# good and bad events as connection with a minimum satisfaction ratio, we will calculate the averate of all
+# ratio satisfaction connections over the time window.
+# So we can't use the `events` SLI because we are not going to divide bad and total events.
+#
+# - `wifi-client-satisfaction`
+#   - This SLO warn us that we have an average wifi connection satisfaction.
+#   - SLI error: Calculated internally by ubiquitis metrics, we use directly the ratio.
+#   - SLO objective (95%): We allow the average wifi connection satisfaction is >=95%
+#
+# `sloth prometheus generate -i ./examples/raw-home-wifi.yml`
+#
+version: "prometheus/v1"
+service: "home-wifi"
+labels:
+  cluster: "valhalla"
+  component: "ubiquiti"
+  context: "home"
+slos:
+  - name: "wifi-client-satisfaction"
+    objective: 95
+    sli:
+      raw:
+        # Get the averate satisfaction ratio and rest 1 (max good) to get the error ratio.
+        error_ratio_query: |
+          1 - (
+            sum(sum_over_time(unifipoller_client_satisfaction_ratio[{{.window}}]))
+            /
+            sum(count_over_time(unifipoller_client_satisfaction_ratio[{{.window}}]))
+          )
+    alerting:
+      name: WifiClientSatisfaction
+      page_alert:
+        labels:
+          severity: home
+      ticket_alert:
+        labels:
+          severity: warning

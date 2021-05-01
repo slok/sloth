@@ -1,0 +1,57 @@
+# This example shows a real service level used in my home to have SLOs on my wifi signal.
+# The metrics are extracted using unifi-poller (https://github.com/unifi-poller/unifi-poller)
+# that gets the information from an Ubiquiti Wifi installation.
+# https://community.ui.com/questions/satisfaction-percentage-in-client-properties-overview/8c940637-63d0-41de-a67b-8166cdd0ed32
+#
+# The service level has 2 SLOs based on `client_satisfaction_ratio`, this is a ratio calculated
+# by ubiquiti that is based on wifi drop packages, wifi signal...
+# We conside an SLI event the client satisfactions that currently exist, lets review the SLOs
+#
+# - `good-wifi-client-satisfaction`
+#   - This SLO warn us that we don't have a good wifi at home.
+#   - SLI error: We consider a bad client satisfaction (event) below 75% (0.75)
+#   - SLO objective (95%): We are not so restrictive and we allow that that 5 of every 100 clients be below 75%
+#
+# - `risk-wifi-client-satisfaction`
+#   - This SLO warn us that we something very bad is happenning with our home wifi.
+#   - SLI error: We consider a bad client satisfaction (event) below 50% (0.5)
+#   - SLO objective(99.9%): We are very restrictive and we allow that that 1 of every 1000 clients be below 50%
+#
+# `sloth prometheus generate -i ./examples/home-wifi.yml`
+#
+version: "prometheus/v1"
+service: "home-wifi"
+labels:
+  cluster: "valhalla"
+  component: "ubiquiti"
+  context: "home"
+slos:
+  - name: "good-wifi-client-satisfaction"
+    objective: 95
+    sli:
+      events:
+        error_query: sum_over_time((count(unifipoller_client_satisfaction_ratio < 0.75))[{{.window}}:]) OR on() vector(0)
+        total_query: sum_over_time((count(unifipoller_client_satisfaction_ratio))[{{.window}}:])
+    alerting:
+      name: GoodWifiClientSatisfaction
+      page_alert:
+        labels:
+          severity: home
+      ticket_alert:
+        labels:
+          severity: warning
+
+  - name: "risk-wifi-client-satisfaction"
+    objective: 99.9
+    sli:
+      events:
+        error_query: sum_over_time((count(unifipoller_client_satisfaction_ratio < 0.5))[{{.window}}:]) OR on() vector(0)
+        total_query: sum_over_time((count(unifipoller_client_satisfaction_ratio))[{{.window}}:])
+    alerting:
+      name: RiskWifiClientSatisfaction
+      page_alert:
+        labels:
+          severity: home
+      ticket_alert:
+        labels:
+          severity: warning

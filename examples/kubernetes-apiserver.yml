@@ -15,7 +15,7 @@
 #   - SLO objective(99%): We have a relaxed objective because Kubernetes has a lot of async and eventual consistency flows. We could
 #                         create in a future another SLO that is less restrictive and use the latency of the realtime requests (e.g: kubectl).
 #
-# `sloth prometheus generate -i ./examples/kubernetes-apiserver.yml`
+# `sloth generate -i ./examples/kubernetes-apiserver.yml`
 #
 version: "prometheus/v1"
 service: "k8s-apiserver"

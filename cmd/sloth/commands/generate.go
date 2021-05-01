@@ -25,8 +25,7 @@ type generateCommand struct {
 // NewGenerateCommand returns the generate command.
 func NewGenerateCommand(app *kingpin.Application) Command {
 	c := &generateCommand{}
-	promCmd := app.Command("prometheus", "Prometheus backend related actions")
-	cmd := promCmd.Command("generate", "Generates SLOs.")
+	cmd := app.Command("generate", "Generates Prometheus SLOs.")
 	cmd.Flag("input", "SLO spec input file path.").Short('i').Required().StringVar(&c.slosInput)
 	cmd.Flag("out", "Generated rules output file path. If `-` it will use stdout.").Short('o').Default("-").StringVar(&c.slosOut)
 	cmd.Flag("disable-recordings", "Disables recording rules generation.").BoolVar(&c.disableRecordings)
@@ -35,7 +34,7 @@ func NewGenerateCommand(app *kingpin.Application) Command {
 	return c
 }
 
-func (g generateCommand) Name() string { return "prometheus generate" }
+func (g generateCommand) Name() string { return "generate" }
 func (g generateCommand) Run(ctx context.Context, config RootConfig) error {
 	// Get SLO spec data.
 	// TODO(slok): stdin.

@@ -10,7 +10,7 @@
 #   - SLI error: Calculated internally by ubiquitis metrics, we use directly the ratio.
 #   - SLO objective (95%): We allow the average wifi connection satisfaction is >=95%
 #
-# `sloth prometheus generate -i ./examples/raw-home-wifi.yml`
+# `sloth generate -i ./examples/raw-home-wifi.yml`
 #
 version: "prometheus/v1"
 service: "home-wifi"

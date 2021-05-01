@@ -2,7 +2,7 @@
 # It disables page (critical) and ticket (warning) alerts.
 # The SLO SLI measures the event errors as the http request respones with the code >=500 and 429.
 #
-# `sloth prometheus generate -i ./examples/no-alerts.yml`
+# `sloth generate -i ./examples/no-alerts.yml`
 #
 version: "prometheus/v1"
 service: "myapp"

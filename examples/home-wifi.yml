@@ -17,7 +17,7 @@
 #   - SLI error: We consider a bad client satisfaction (event) below 50% (0.5)
 #   - SLO objective(99.9%): We are very restrictive and we allow that that 1 of every 1000 clients be below 50%
 #
-# `sloth prometheus generate -i ./examples/home-wifi.yml`
+# `sloth generate -i ./examples/home-wifi.yml`
 #
 version: "prometheus/v1"
 service: "home-wifi"

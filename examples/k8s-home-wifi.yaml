@@ -1,7 +1,7 @@
 # This example shows the same example as home-wifi.yml but using Sloth Kubernetes CRD.
 # It will generate the Prometheus rules in a Kubernetes prometheus-operator PrometheusRules CRD.
 #
-# `sloth prometheus generate -i ./examples/k8s-home-wifi.yml`
+# `sloth generate -i ./examples/k8s-home-wifi.yml`
 #
 apiVersion: sloth.slok.dev/v1
 kind: PrometheusServiceLevel

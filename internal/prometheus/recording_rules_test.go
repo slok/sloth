@@ -177,7 +177,7 @@ func TestGenerateSLIRecordingRules(t *testing.T) {
 				},
 				{
 					Record: "slo:sli_error:ratio_rate30d",
-					Expr:   "max(avg_over_time(slo:sli_error:ratio_rate5m{sloth_id=\"test\", sloth_service=\"test-svc\", sloth_slo=\"test-name\"}[30d])) without(sloth_window)",
+					Expr:   "sum_over_time(slo:sli_error:ratio_rate5m{sloth_id=\"test\", sloth_service=\"test-svc\", sloth_slo=\"test-name\"}[30d])\n/ ignoring (sloth_window)\ncount_over_time(slo:sli_error:ratio_rate5m{sloth_id=\"test\", sloth_service=\"test-svc\", sloth_slo=\"test-name\"}[30d])\n",
 					Labels: map[string]string{
 						"sloth_window": "30d",
 					},
@@ -281,7 +281,7 @@ func TestGenerateSLIRecordingRules(t *testing.T) {
 				},
 				{
 					Record: "slo:sli_error:ratio_rate30d",
-					Expr:   "max(avg_over_time(slo:sli_error:ratio_rate5m{sloth_id=\"test\", sloth_service=\"test-svc\", sloth_slo=\"test-name\"}[30d])) without(sloth_window)",
+					Expr:   "sum_over_time(slo:sli_error:ratio_rate5m{sloth_id=\"test\", sloth_service=\"test-svc\", sloth_slo=\"test-name\"}[30d])\n/ ignoring (sloth_window)\ncount_over_time(slo:sli_error:ratio_rate5m{sloth_id=\"test\", sloth_service=\"test-svc\", sloth_slo=\"test-name\"}[30d])\n",
 					Labels: map[string]string{
 						"sloth_window": "30d",
 					},
@@ -347,7 +347,7 @@ func TestGenerateSLIRecordingRules(t *testing.T) {
 				},
 				{
 					Record: "slo:sli_error:ratio_rate30d",
-					Expr:   "max(avg_over_time(slo:sli_error:ratio_rate3h{sloth_id=\"test\", sloth_service=\"test-svc\", sloth_slo=\"test-name\"}[30d])) without(sloth_window)",
+					Expr:   "sum_over_time(slo:sli_error:ratio_rate3h{sloth_id=\"test\", sloth_service=\"test-svc\", sloth_slo=\"test-name\"}[30d])\n/ ignoring (sloth_window)\ncount_over_time(slo:sli_error:ratio_rate3h{sloth_id=\"test\", sloth_service=\"test-svc\", sloth_slo=\"test-name\"}[30d])\n",
 					Labels: map[string]string{
 						"sloth_window": "30d",
 					},

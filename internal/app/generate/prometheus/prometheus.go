@@ -7,6 +7,7 @@ import (
 	"github.com/prometheus/prometheus/pkg/rulefmt"
 
 	"github.com/slok/sloth/internal/alert"
+	"github.com/slok/sloth/internal/info"
 	"github.com/slok/sloth/internal/log"
 	"github.com/slok/sloth/internal/prometheus"
 )
@@ -57,7 +58,7 @@ type SLIRecordingRulesGenerator interface {
 
 // MetadataRecordingRulesGenerator knows how to generate metadata recording rules.
 type MetadataRecordingRulesGenerator interface {
-	GenerateMetadataRecordingRules(ctx context.Context, slo prometheus.SLO, alerts alert.MWMBAlertGroup) ([]rulefmt.Rule, error)
+	GenerateMetadataRecordingRules(ctx context.Context, info info.Info, slo prometheus.SLO, alerts alert.MWMBAlertGroup) ([]rulefmt.Rule, error)
 }
 
 // SLOAlertRulesGenerator knows hot to generate SLO alert rules.
@@ -91,6 +92,7 @@ func NewService(config ServiceConfig) (*Service, error) {
 }
 
 type GenerateRequest struct {
+	Info info.Info
 	SLOs []prometheus.SLO
 }
 
@@ -112,7 +114,7 @@ func (s Service) Generate(ctx context.Context, r GenerateRequest) (*GenerateResp
 	// Alert generation.
 	results := make([]SLOResult, 0, len(r.SLOs))
 	for _, slo := range r.SLOs {
-		result, err := s.generateSLO(ctx, slo)
+		result, err := s.generateSLO(ctx, r.Info, slo)
 		if err != nil {
 			return nil, fmt.Errorf("could not generate %q slo: %w", slo.ID, err)
 		}
@@ -125,7 +127,7 @@ func (s Service) Generate(ctx context.Context, r GenerateRequest) (*GenerateResp
 	}, nil
 }
 
-func (s Service) generateSLO(ctx context.Context, slo prometheus.SLO) (*SLOResult, error) {
+func (s Service) generateSLO(ctx context.Context, info info.Info, slo prometheus.SLO) (*SLOResult, error) {
 	// Validate before using the SLO.
 	err := slo.Validate()
 	if err != nil {
@@ -154,7 +156,7 @@ func (s Service) generateSLO(ctx context.Context, slo prometheus.SLO) (*SLOResul
 	logger.WithValues(log.Kv{"rules": len(sliRecordingRules)}).Infof("SLI recording rules generated")
 
 	// Generate Metadata recording rules.
-	metaRecordingRules, err := s.metaRecordRuleGen.GenerateMetadataRecordingRules(ctx, slo, *as)
+	metaRecordingRules, err := s.metaRecordRuleGen.GenerateMetadataRecordingRules(ctx, info, slo, *as)
 	if err != nil {
 		return nil, fmt.Errorf("could not generate Prometheus metadata recording rules: %w", err)
 	}

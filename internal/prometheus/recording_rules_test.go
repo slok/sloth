@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/slok/sloth/internal/alert"
+	"github.com/slok/sloth/internal/info"
 	"github.com/slok/sloth/internal/prometheus"
 )
 
@@ -373,12 +374,18 @@ func TestGenerateSLIRecordingRules(t *testing.T) {
 
 func TestGenerateMetaRecordingRules(t *testing.T) {
 	tests := map[string]struct {
+		info       info.Info
 		slo        prometheus.SLO
 		alertGroup alert.MWMBAlertGroup
 		expRules   []rulefmt.Rule
 		expErr     bool
 	}{
 		"Having and SLO an its mwmb alerts should create the metadata recording rules.": {
+			info: info.Info{
+				Version: "test-ver",
+				Mode:    info.ModeTest,
+				Spec:    "test/v1",
+			},
 			slo: prometheus.SLO{
 				ID:         "test",
 				Name:       "test-name",
@@ -457,6 +464,19 @@ slo:error_budget:ratio{sloth_id="test", sloth_service="test-svc", sloth_slo="tes
 						"sloth_id":      "test",
 					},
 				},
+				{
+					Record: "sloth_slo_info",
+					Expr:   `vector(1)`,
+					Labels: map[string]string{
+						"kind":          "test",
+						"sloth_service": "test-svc",
+						"sloth_slo":     "test-name",
+						"sloth_id":      "test",
+						"sloth_version": "test-ver",
+						"sloth_mode":    "test",
+						"sloth_spec":    "test/v1",
+					},
+				},
 			},
 		},
 	}
@@ -465,7 +485,7 @@ slo:error_budget:ratio{sloth_id="test", sloth_service="test-svc", sloth_slo="tes
 		t.Run(name, func(t *testing.T) {
 			assert := assert.New(t)
 
-			gotRules, err := prometheus.MetadataRecordingRulesGenerator.GenerateMetadataRecordingRules(context.TODO(), test.slo, test.alertGroup)
+			gotRules, err := prometheus.MetadataRecordingRulesGenerator.GenerateMetadataRecordingRules(context.TODO(), test.info, test.slo, test.alertGroup)
 
 			if test.expErr {
 				assert.Error(err)

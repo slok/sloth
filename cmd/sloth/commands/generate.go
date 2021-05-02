@@ -10,9 +10,12 @@ import (
 
 	"github.com/slok/sloth/internal/alert"
 	generateprometheus "github.com/slok/sloth/internal/app/generate/prometheus"
+	"github.com/slok/sloth/internal/info"
 	"github.com/slok/sloth/internal/k8sprometheus"
 	"github.com/slok/sloth/internal/log"
 	"github.com/slok/sloth/internal/prometheus"
+	kubernetesv1 "github.com/slok/sloth/pkg/kubernetes/api/sloth/v1"
+	prometheusv1 "github.com/slok/sloth/pkg/prometheus/api/v1"
 )
 
 type generateCommand struct {
@@ -73,8 +76,13 @@ func (g generateCommand) Run(ctx context.Context, config RootConfig) error {
 // outs a Prometheus raw yaml.
 func (g generateCommand) runPrometheus(ctx context.Context, config RootConfig, slos []prometheus.SLO) error {
 	config.Logger.Infof("Generating from Prometheus spec")
+	info := info.Info{
+		Version: info.Version,
+		Mode:    info.ModeCLIGenPrometheus,
+		Spec:    prometheusv1.Version,
+	}
 
-	result, err := g.generate(ctx, config, slos)
+	result, err := g.generate(ctx, config, info, slos)
 	if err != nil {
 		return err
 	}
@@ -113,7 +121,12 @@ func (g generateCommand) runPrometheus(ctx context.Context, config RootConfig, s
 func (g generateCommand) runKubernetes(ctx context.Context, config RootConfig, sloGroup *k8sprometheus.SLOGroup) error {
 	config.Logger.Infof("Generating from Kubernetes Prometheus spec")
 
-	result, err := g.generate(ctx, config, sloGroup.SLOs)
+	info := info.Info{
+		Version: info.Version,
+		Mode:    info.ModeCLIGenKubernetes,
+		Spec:    fmt.Sprintf("%s/%s", kubernetesv1.SchemeGroupVersion.Group, kubernetesv1.SchemeGroupVersion.Version),
+	}
+	result, err := g.generate(ctx, config, info, sloGroup.SLOs)
 	if err != nil {
 		return err
 	}
@@ -149,7 +162,7 @@ func (g generateCommand) runKubernetes(ctx context.Context, config RootConfig, s
 
 // generate is the main generator logic that all the spec types and storers share. Mainly
 // has the logic of the generate controller.
-func (g generateCommand) generate(ctx context.Context, config RootConfig, slos []prometheus.SLO) (*generateprometheus.GenerateResponse, error) {
+func (g generateCommand) generate(ctx context.Context, config RootConfig, info info.Info, slos []prometheus.SLO) (*generateprometheus.GenerateResponse, error) {
 	// Disable recording rules if required.
 	var sliRuleGen generateprometheus.SLIRecordingRulesGenerator = generateprometheus.NoopSLIRecordingRulesGenerator
 	var metaRuleGen generateprometheus.MetadataRecordingRulesGenerator = generateprometheus.NoopMetadataRecordingRulesGenerator
@@ -177,6 +190,7 @@ func (g generateCommand) generate(ctx context.Context, config RootConfig, slos [
 	}
 
 	result, err := controller.Generate(ctx, generateprometheus.GenerateRequest{
+		Info: info,
 		SLOs: slos,
 	})
 	if err != nil {

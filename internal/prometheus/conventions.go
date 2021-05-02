@@ -7,4 +7,7 @@ const (
 	sloServiceLabelName  = "sloth_service"
 	sloWindowLabelName   = "sloth_window"
 	sloSeverityLabelName = "sloth_severity"
+	sloVersionLabelName  = "sloth_version"
+	sloModeLabelName     = "sloth_mode"
+	sloSpecLabelName     = "sloth_spec"
 )

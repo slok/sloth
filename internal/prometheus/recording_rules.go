@@ -10,6 +10,7 @@ import (
 	"github.com/prometheus/prometheus/pkg/rulefmt"
 
 	"github.com/slok/sloth/internal/alert"
+	"github.com/slok/sloth/internal/info"
 )
 
 // sliRulesgenFunc knows how to generate an SLI recording rule for a specific time window.
@@ -186,7 +187,7 @@ type metadataRecordingRulesGenerator bool
 // from an SLO.
 const MetadataRecordingRulesGenerator = metadataRecordingRulesGenerator(false)
 
-func (m metadataRecordingRulesGenerator) GenerateMetadataRecordingRules(ctx context.Context, slo SLO, alerts alert.MWMBAlertGroup) ([]rulefmt.Rule, error) {
+func (m metadataRecordingRulesGenerator) GenerateMetadataRecordingRules(ctx context.Context, info info.Info, slo SLO, alerts alert.MWMBAlertGroup) ([]rulefmt.Rule, error) {
 	labels := mergeLabels(slo.GetSLOIDPromLabels(), slo.Labels)
 
 	// Metatada Recordings.
@@ -197,6 +198,7 @@ func (m metadataRecordingRulesGenerator) GenerateMetadataRecordingRules(ctx cont
 		metricSLOCurrentBurnRateRatio            = "slo:current_burn_rate:ratio"
 		metricSLOPeriodBurnRateRatio             = "slo:period_burn_rate:ratio"
 		metricSLOPeriodErrorBudgetRemainingRatio = "slo:period_error_budget_remaining:ratio"
+		metricSLOInfo                            = "sloth_slo_info"
 	)
 
 	sloObjectiveRatio := slo.Objective / 100
@@ -270,6 +272,17 @@ func (m metadataRecordingRulesGenerator) GenerateMetadataRecordingRules(ctx cont
 			Record: metricSLOPeriodErrorBudgetRemainingRatio,
 			Expr:   fmt.Sprintf(`1 - %s%s`, metricSLOPeriodBurnRateRatio, sloFilter),
 			Labels: labels,
+		},
+
+		// Info.
+		{
+			Record: metricSLOInfo,
+			Expr:   `vector(1)`,
+			Labels: mergeLabels(labels, map[string]string{
+				sloVersionLabelName: info.Version,
+				sloModeLabelName:    string(info.Mode),
+				sloSpecLabelName:    info.Spec,
+			}),
 		},
 	}
 

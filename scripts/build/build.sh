@@ -3,7 +3,7 @@
 set -o errexit
 set -o nounset
 
-version_path="github.com/slok/sloth/internal/version.Version"
+version_path="github.com/slok/sloth/internal/info.Version"
 src=./cmd/sloth
 out=./bin/sloth
 

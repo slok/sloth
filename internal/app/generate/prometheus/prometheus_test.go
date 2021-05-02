@@ -11,6 +11,7 @@ import (
 
 	"github.com/slok/sloth/internal/alert"
 	appprometheus "github.com/slok/sloth/internal/app/generate/prometheus"
+	"github.com/slok/sloth/internal/info"
 	"github.com/slok/sloth/internal/prometheus"
 )
 
@@ -27,6 +28,11 @@ func TestIntegrationAppServiceGenerate(t *testing.T) {
 
 		"Having SLOs it should generate Prometheus recording and alert rules.": {
 			req: appprometheus.GenerateRequest{
+				Info: info.Info{
+					Version: "test-ver",
+					Mode:    info.ModeTest,
+					Spec:    "test-spec",
+				},
 				SLOs: []prometheus.SLO{
 					{
 						ID:      "test-id",
@@ -269,6 +275,19 @@ slo:error_budget:ratio{sloth_id="test-id", sloth_service="test-svc", sloth_slo="
 										"sloth_service": "test-svc",
 										"sloth_slo":     "test-name",
 										"sloth_id":      "test-id",
+									},
+								},
+								{
+									Record: "sloth_slo_info",
+									Expr:   `vector(1)`,
+									Labels: map[string]string{
+										"test_label":    "label_1",
+										"sloth_service": "test-svc",
+										"sloth_slo":     "test-name",
+										"sloth_id":      "test-id",
+										"sloth_mode":    "test",
+										"sloth_version": "test-ver",
+										"sloth_spec":    "test-spec",
 									},
 								},
 							},

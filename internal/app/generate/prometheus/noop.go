@@ -5,6 +5,7 @@ import (
 
 	"github.com/prometheus/prometheus/pkg/rulefmt"
 	"github.com/slok/sloth/internal/alert"
+	"github.com/slok/sloth/internal/info"
 	"github.com/slok/sloth/internal/prometheus"
 )
 
@@ -20,7 +21,7 @@ type noopMetadataRecordingRulesGenerator bool
 
 const NoopMetadataRecordingRulesGenerator = noopMetadataRecordingRulesGenerator(false)
 
-func (noopMetadataRecordingRulesGenerator) GenerateMetadataRecordingRules(ctx context.Context, slo prometheus.SLO, alerts alert.MWMBAlertGroup) ([]rulefmt.Rule, error) {
+func (noopMetadataRecordingRulesGenerator) GenerateMetadataRecordingRules(ctx context.Context, info info.Info, slo prometheus.SLO, alerts alert.MWMBAlertGroup) ([]rulefmt.Rule, error) {
 	return nil, nil
 }
 

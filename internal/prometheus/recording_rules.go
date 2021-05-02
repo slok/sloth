@@ -92,11 +92,12 @@ func rawSLIRecordGenerator(slo SLO, window time.Duration, alerts alert.MWMBAlert
 }
 
 func eventsSLIRecordGenerator(slo SLO, window time.Duration, alerts alert.MWMBAlertGroup) (*rulefmt.Rule, error) {
-	// Generate our first level of template by assembling the error and total expressions.
-	sliExprTpl := fmt.Sprintf(`(%s)
+	const sliExprTplFmt = `(%s)
 /
 (%s)
-`, slo.SLI.Events.ErrorQuery, slo.SLI.Events.TotalQuery)
+`
+	// Generate our first level of template by assembling the error and total expressions.
+	sliExprTpl := fmt.Sprintf(sliExprTplFmt, slo.SLI.Events.ErrorQuery, slo.SLI.Events.TotalQuery)
 
 	// Render with our templated data.
 	tpl, err := template.New("sliExpr").Option("missingkey=error").Parse(sliExprTpl)
@@ -133,17 +134,25 @@ func eventsSLIRecordGenerator(slo SLO, window time.Duration, alerts alert.MWMBAl
 // The way this optimization is made is using one SLI recording rule (the one with the shortest window to
 // reduce the downsampling, e.g 5m) and make an average over time on that rule for the window time range.
 func optimizedSLIRecordGenerator(slo SLO, window, shortWindow time.Duration) (*rulefmt.Rule, error) {
+	// Averages over ratios (average over average) is statistically incorrect, so we do
+	// aggregate all ratios on the time window and then divide with the aggregation of all the full ratios
+	// that is 1 (thats why we can use `count`), giving use a correct ratio of ratios:
+	// - https://prometheus.io/docs/practices/rules/
+	// - https://math.stackexchange.com/questions/95909/why-is-an-average-of-an-average-usually-incorrect
+	const sliExprTplFmt = `sum_over_time({{.metric}}{{.filter}}[{{.window}}])
+/ ignoring ({{.windowKey}})
+count_over_time({{.metric}}{{.filter}}[{{.window}}])
+`
+
 	if window == shortWindow {
 		return nil, fmt.Errorf("can't optimize using the same shortwindow as the window to optimize")
 	}
 
 	shortWindowSLIRec := slo.GetSLIErrorMetric(shortWindow)
 	filter := labelsToPromFilter(slo.GetSLOIDPromLabels())
-	// Use `max() without` to remove the window label and don't lose the rest (we are setting window in our rule).
-	sliExprTpl := fmt.Sprintf("max(avg_over_time(%s%s[{{.%s}}])) without(%s)", shortWindowSLIRec, filter, tplKeyWindow, sloWindowLabelName)
 
 	// Render with our templated data.
-	tpl, err := template.New("sliExpr").Option("missingkey=error").Parse(sliExprTpl)
+	tpl, err := template.New("sliExpr").Option("missingkey=error").Parse(sliExprTplFmt)
 	if err != nil {
 		return nil, fmt.Errorf("could not create SLI expression template data: %w", err)
 	}
@@ -151,7 +160,10 @@ func optimizedSLIRecordGenerator(slo SLO, window, shortWindow time.Duration) (*r
 	strWindow := timeDurationToPromStr(window)
 	var b bytes.Buffer
 	err = tpl.Execute(&b, map[string]string{
-		tplKeyWindow: strWindow,
+		"metric":    shortWindowSLIRec,
+		"filter":    filter,
+		"window":    strWindow,
+		"windowKey": sloWindowLabelName,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("could not render SLI expression template: %w", err)

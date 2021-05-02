@@ -12,15 +12,13 @@ import (
 	"github.com/slok/sloth/cmd/sloth/commands"
 	"github.com/slok/sloth/internal/log"
 	loglogrus "github.com/slok/sloth/internal/log/logrus"
+	"github.com/slok/sloth/internal/version"
 )
-
-// Version is the application version.
-var Version = "dev"
 
 // Run runs the main application.
 func Run(ctx context.Context, args []string, stdin io.Reader, stdout, stderr io.Writer) error {
 	app := kingpin.New("sloth", "Easy SLO generator.")
-	app.Version(Version)
+	app.Version(version.Version)
 	app.DefaultEnvars()
 	config := commands.NewRootConfig(app)
 
@@ -79,7 +77,7 @@ func getLogger(config commands.RootConfig) log.Logger {
 	}
 
 	logger := loglogrus.NewLogrus(logrusLogEntry).WithValues(log.Kv{
-		"version": Version,
+		"version": version.Version,
 	})
 
 	logger.Debugf("Debug level is enabled") // Will log only when debug enabled.

@@ -3,6 +3,7 @@
 set -o errexit
 set -o nounset
 
+version_path="github.com/slok/sloth/internal/version.Version"
 src=./cmd/sloth
 out=./bin/sloth
 
@@ -20,7 +21,7 @@ function build() {
 
     final_out=${out}${ext}
     ldf_cmp="-s -w -extldflags '-static'"
-    f_ver="-X main.Version=${VERSION:-dev}"
+    f_ver="-X ${version_path}=${VERSION:-dev}"
 
     echo "Building binary at ${final_out} (GOOS=${GOOS:-}, GOARCH=${GOARCH:-}, GOARM=${GOARM:-}, VERSION=${VERSION:-})"
     CGO_ENABLED=0 go build -o ${final_out} --ldflags "${ldf_cmp} ${f_ver}"  ${src}

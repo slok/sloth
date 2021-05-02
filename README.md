@@ -24,9 +24,11 @@ _At this moment Sloth is focused on Prometheus, however depending on the demand 
 - SLO spec validation.
 - Customization of labels, disabling different type of alerts...
 - A single way (uniform) of creating SLOs across different services and teams.
-- Automatic Grafana dashboard to see all your SLOs state.
+- Automatic [Grafana dashboard][grafana-dashboard] to see all your SLOs state.
 - Single binary and easy to use CLI.
 - Kubernetes ([Prometheus-operator]) support.
+
+![Small Sloth SLO dahsboard](docs/img/sloth_small_dashboard.png)
 
 ## Get Sloth
 
@@ -219,7 +221,7 @@ Yes, use `disable: true` on `page` and `ticket`.
 
 ### <a name="faq-grafana-dashboards"></a>Grafana dashboard?
 
-TODO
+Check [grafana-dashboard], this dashboard will load the SLOs automatically.
 
 [google-slo]: https://landing.google.com/sre/workbook/chapters/alerting-on-slos/
 [mwmb]: https://landing.google.com/sre/workbook/chapters/alerting-on-slos/#6-multiwindow-multi-burn-rate-alerts
@@ -229,3 +231,4 @@ TODO
 [prom-alerts]: https://prometheus.io/docs/prometheus/latest/configuration/alerting_rules/
 [prometheus-operator]: https://github.com/prometheus-operator
 [prom-op-rules]: https://github.com/prometheus-operator/prometheus-operator/blob/master/Documentation/api.md#prometheusrule
+[grafana-dashboard]: https://grafana.com/grafana/dashboards/14348

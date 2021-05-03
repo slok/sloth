@@ -4,6 +4,7 @@
 
 ### Added
 
+- Extra labels on all prometheus rules at generation cmd execution.
 - Specs as an importable API library under `pkg`.
 - Prometheus SLO spec.
 - Cli for Prometheus generation.

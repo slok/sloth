@@ -28,6 +28,10 @@ func TestIntegrationAppServiceGenerate(t *testing.T) {
 
 		"Having SLOs it should generate Prometheus recording and alert rules.": {
 			req: appprometheus.GenerateRequest{
+				ExtraLabels: map[string]string{
+					"extra_k1": "extra_v1",
+					"extra_k2": "extra_v2",
+				},
 				Info: info.Info{
 					Version: "test-ver",
 					Mode:    info.ModeTest,
@@ -75,7 +79,11 @@ func TestIntegrationAppServiceGenerate(t *testing.T) {
 							},
 							TimeWindow: 30 * 24 * time.Hour,
 							Objective:  99.9,
-							Labels:     map[string]string{"test_label": "label_1"},
+							Labels: map[string]string{
+								"test_label": "label_1",
+								"extra_k1":   "extra_v1",
+								"extra_k2":   "extra_v2",
+							},
 							PageAlertMeta: prometheus.AlertMeta{
 								Name:        "p_alert_test_name",
 								Labels:      map[string]string{"p_alert_label": "p_label_al_1"},
@@ -129,6 +137,8 @@ func TestIntegrationAppServiceGenerate(t *testing.T) {
 									Expr:   "(rate(my_metric{error=\"true\"}[5m]))\n/\n(rate(my_metric[5m]))\n",
 									Labels: map[string]string{
 										"test_label":    "label_1",
+										"extra_k1":      "extra_v1",
+										"extra_k2":      "extra_v2",
 										"sloth_service": "test-svc",
 										"sloth_slo":     "test-name",
 										"sloth_id":      "test-id",
@@ -140,6 +150,8 @@ func TestIntegrationAppServiceGenerate(t *testing.T) {
 									Expr:   "(rate(my_metric{error=\"true\"}[30m]))\n/\n(rate(my_metric[30m]))\n",
 									Labels: map[string]string{
 										"test_label":    "label_1",
+										"extra_k1":      "extra_v1",
+										"extra_k2":      "extra_v2",
 										"sloth_service": "test-svc",
 										"sloth_slo":     "test-name",
 										"sloth_id":      "test-id",
@@ -151,6 +163,8 @@ func TestIntegrationAppServiceGenerate(t *testing.T) {
 									Expr:   "(rate(my_metric{error=\"true\"}[1h]))\n/\n(rate(my_metric[1h]))\n",
 									Labels: map[string]string{
 										"test_label":    "label_1",
+										"extra_k1":      "extra_v1",
+										"extra_k2":      "extra_v2",
 										"sloth_service": "test-svc",
 										"sloth_slo":     "test-name",
 										"sloth_id":      "test-id",
@@ -162,6 +176,8 @@ func TestIntegrationAppServiceGenerate(t *testing.T) {
 									Expr:   "(rate(my_metric{error=\"true\"}[2h]))\n/\n(rate(my_metric[2h]))\n",
 									Labels: map[string]string{
 										"test_label":    "label_1",
+										"extra_k1":      "extra_v1",
+										"extra_k2":      "extra_v2",
 										"sloth_service": "test-svc",
 										"sloth_slo":     "test-name",
 										"sloth_id":      "test-id",
@@ -173,6 +189,8 @@ func TestIntegrationAppServiceGenerate(t *testing.T) {
 									Expr:   "(rate(my_metric{error=\"true\"}[6h]))\n/\n(rate(my_metric[6h]))\n",
 									Labels: map[string]string{
 										"test_label":    "label_1",
+										"extra_k1":      "extra_v1",
+										"extra_k2":      "extra_v2",
 										"sloth_service": "test-svc",
 										"sloth_slo":     "test-name",
 										"sloth_id":      "test-id",
@@ -184,6 +202,8 @@ func TestIntegrationAppServiceGenerate(t *testing.T) {
 									Expr:   "(rate(my_metric{error=\"true\"}[1d]))\n/\n(rate(my_metric[1d]))\n",
 									Labels: map[string]string{
 										"test_label":    "label_1",
+										"extra_k1":      "extra_v1",
+										"extra_k2":      "extra_v2",
 										"sloth_service": "test-svc",
 										"sloth_slo":     "test-name",
 										"sloth_id":      "test-id",
@@ -195,6 +215,8 @@ func TestIntegrationAppServiceGenerate(t *testing.T) {
 									Expr:   "(rate(my_metric{error=\"true\"}[3d]))\n/\n(rate(my_metric[3d]))\n",
 									Labels: map[string]string{
 										"test_label":    "label_1",
+										"extra_k1":      "extra_v1",
+										"extra_k2":      "extra_v2",
 										"sloth_service": "test-svc",
 										"sloth_slo":     "test-name",
 										"sloth_id":      "test-id",
@@ -216,6 +238,8 @@ func TestIntegrationAppServiceGenerate(t *testing.T) {
 									Expr:   "vector(0.9990000000000001)",
 									Labels: map[string]string{
 										"test_label":    "label_1",
+										"extra_k1":      "extra_v1",
+										"extra_k2":      "extra_v2",
 										"sloth_service": "test-svc",
 										"sloth_slo":     "test-name",
 										"sloth_id":      "test-id",
@@ -226,6 +250,8 @@ func TestIntegrationAppServiceGenerate(t *testing.T) {
 									Expr:   "vector(1-0.9990000000000001)",
 									Labels: map[string]string{
 										"test_label":    "label_1",
+										"extra_k1":      "extra_v1",
+										"extra_k2":      "extra_v2",
 										"sloth_service": "test-svc",
 										"sloth_slo":     "test-name",
 										"sloth_id":      "test-id",
@@ -236,6 +262,8 @@ func TestIntegrationAppServiceGenerate(t *testing.T) {
 									Expr:   "vector(30)",
 									Labels: map[string]string{
 										"test_label":    "label_1",
+										"extra_k1":      "extra_v1",
+										"extra_k2":      "extra_v2",
 										"sloth_service": "test-svc",
 										"sloth_slo":     "test-name",
 										"sloth_id":      "test-id",
@@ -249,6 +277,8 @@ slo:error_budget:ratio{sloth_id="test-id", sloth_service="test-svc", sloth_slo="
 `,
 									Labels: map[string]string{
 										"test_label":    "label_1",
+										"extra_k1":      "extra_v1",
+										"extra_k2":      "extra_v2",
 										"sloth_service": "test-svc",
 										"sloth_slo":     "test-name",
 										"sloth_id":      "test-id",
@@ -262,6 +292,8 @@ slo:error_budget:ratio{sloth_id="test-id", sloth_service="test-svc", sloth_slo="
 `,
 									Labels: map[string]string{
 										"test_label":    "label_1",
+										"extra_k1":      "extra_v1",
+										"extra_k2":      "extra_v2",
 										"sloth_service": "test-svc",
 										"sloth_slo":     "test-name",
 										"sloth_id":      "test-id",
@@ -272,6 +304,8 @@ slo:error_budget:ratio{sloth_id="test-id", sloth_service="test-svc", sloth_slo="
 									Expr:   `1 - slo:period_burn_rate:ratio{sloth_id="test-id", sloth_service="test-svc", sloth_slo="test-name"}`,
 									Labels: map[string]string{
 										"test_label":    "label_1",
+										"extra_k1":      "extra_v1",
+										"extra_k2":      "extra_v2",
 										"sloth_service": "test-svc",
 										"sloth_slo":     "test-name",
 										"sloth_id":      "test-id",
@@ -282,6 +316,8 @@ slo:error_budget:ratio{sloth_id="test-id", sloth_service="test-svc", sloth_slo="
 									Expr:   `vector(1)`,
 									Labels: map[string]string{
 										"test_label":    "label_1",
+										"extra_k1":      "extra_v1",
+										"extra_k2":      "extra_v2",
 										"sloth_service": "test-svc",
 										"sloth_slo":     "test-name",
 										"sloth_id":      "test-id",

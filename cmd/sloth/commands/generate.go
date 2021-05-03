@@ -23,14 +23,16 @@ type generateCommand struct {
 	slosOut           string
 	disableRecordings bool
 	disableAlerts     bool
+	extraLabels       map[string]string
 }
 
 // NewGenerateCommand returns the generate command.
 func NewGenerateCommand(app *kingpin.Application) Command {
-	c := &generateCommand{}
+	c := &generateCommand{extraLabels: map[string]string{}}
 	cmd := app.Command("generate", "Generates Prometheus SLOs.")
 	cmd.Flag("input", "SLO spec input file path.").Short('i').Required().StringVar(&c.slosInput)
 	cmd.Flag("out", "Generated rules output file path. If `-` it will use stdout.").Short('o').Default("-").StringVar(&c.slosOut)
+	cmd.Flag("extra-labels", "Extra labels that will be added to all the generated Prometheus rules ('key=value' form, can be repeated).").Short('l').StringMapVar(&c.extraLabels)
 	cmd.Flag("disable-recordings", "Disables recording rules generation.").BoolVar(&c.disableRecordings)
 	cmd.Flag("disable-alerts", "Disables alert rules generation.").BoolVar(&c.disableAlerts)
 

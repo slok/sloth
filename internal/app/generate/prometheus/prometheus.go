@@ -92,7 +92,11 @@ func NewService(config ServiceConfig) (*Service, error) {
 }
 
 type GenerateRequest struct {
+	// Info about the application and execution, normally used as metadata.
 	Info info.Info
+	// ExtraLabels are the extra labels added to the SLOs on execution time.
+	ExtraLabels map[string]string
+	// SLOs are the SLOs that will be used to generate the SLO results and Prom rules.
 	SLOs []prometheus.SLO
 }
 
@@ -111,9 +115,13 @@ func (s Service) Generate(ctx context.Context, r GenerateRequest) (*GenerateResp
 		return nil, fmt.Errorf("slos are required")
 	}
 
-	// Alert generation.
+	// Generate Prom rules.
 	results := make([]SLOResult, 0, len(r.SLOs))
 	for _, slo := range r.SLOs {
+		// Add extra labels.
+		slo.Labels = mergeLabels(slo.Labels, r.ExtraLabels)
+
+		// Generate SLO result.
 		result, err := s.generateSLO(ctx, r.Info, slo)
 		if err != nil {
 			return nil, fmt.Errorf("could not generate %q slo: %w", slo.ID, err)
@@ -178,4 +186,15 @@ func (s Service) generateSLO(ctx context.Context, info info.Info, slo prometheus
 			AlertRules:       alertRules,
 		},
 	}, nil
+}
+
+func mergeLabels(ms ...map[string]string) map[string]string {
+	res := map[string]string{}
+	for _, m := range ms {
+		for k, v := range m {
+			res[k] = v
+		}
+	}
+
+	return res
 }

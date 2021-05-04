@@ -9,7 +9,7 @@
 
 Tired of creating complex [SLOs][google-slo] by yourself? Let the hard and boring part to Sloth...
 
-Sloth generates uniform and reliable SLOs for Prometheus in a very easy way. It Uses a simple and simplified SLO spec that results in multiple metrics and [multi window multi burn][mwmb] alerts.
+Generate easily uniform and reliable SLOs for Prometheus. Using a simple and simplified SLO spec that results in multiple metrics and [multi window multi burn][mwmb] alerts.
 
 _At this moment Sloth is focused on Prometheus, however depending on the demand and complexity we may support more backeds._
 
@@ -84,15 +84,19 @@ At this moment Sloth uses Prometheus rules to generate SLOs. Based on the genera
 
 The Prometheus rules that Sloth generates can be explained in 3 categories:
 
-- **SLIs**: These rules are the base, they use the queries provided by the user to get a value used to show what is the error service level or availability. It creates multiple rules for different time windows, these different results in the multiple time windows will be used for the alerts.
-- **Metadata**: These are used as informative metrics, like the error budget remaining, the SLO objective percent... These are very handy for SLO visualization, e.g Grafana dashboard.
+- **SLIs**: These rules are the base, they use the queries provided by the user to get a value used to show what is the error service level (availability). It creates multiple rules for different time windows, these different results will be used for the alerts.
+- **Metadata**: These are used as informative metrics, like the remaining error budget, the SLO objective percent... These are very handy for SLO visualization, e.g Grafana dashboard.
 - **Alerts**: These are the [multiwindow-multiburn][mwmb] alerts that are based on the SLI rules.
 
-So, knowing these, Sloth will take the service level spec and for each SLO in the spec will create 3 rule groups as the output.
+Sloth will take the service level spec and for each SLO in the spec will create 3 rule groups with the above categories.
 
-The generated rules share the same metric name, and with the labels, we identify the service, slo... With this we obtain a uniform way of describing all the SLOs across different teams and services.
+The generated rules share the same metric name across SLOs, however the labels are the key to identify the different services, SLO... This is how we obtain a uniform way of describing all the SLOs across different teams and services.
 
-To get available metric names created by Sloth, use this query: `count({sloth_id!=""}) by (__name__)`
+To get all the available metric names created by Sloth, use this query:
+
+```text
+count({sloth_id!=""}) by (__name__)
+```
 
 ## Modes
 
@@ -112,7 +116,7 @@ Will generate the prometheus [recording][prom-recordings] and [alerting][prom-al
 
 Check CRD here: [v1](pkg/kubernetes/api/sloth/v1)
 
-Transforms a [Sloth CRD](<(pkg/kubernetes/api/sloth/v1)>) spec into [Prometheus-operator] [CRD rules][prom-op-rules]. This generates the prometheus operator CRDs based on the Sloth CRD template (kind of a translator).
+Will generate from a [Sloth CRD](pkg/kubernetes/api/sloth/v1) spec into [Prometheus-operator] [CRD rules][prom-op-rules]. This generates the prometheus operator CRDs based on the Sloth CRD template.
 
 **The CRD doesn't need to be registered in any K8s cluster because it happens as a CLI (offline). A Kubernetes controller that makes this translation automatically inside the Kubernetes cluster is in the TODO list**
 

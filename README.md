@@ -1,4 +1,8 @@
-# Sloth 🦥
+<p align="center">
+    <img src="docs/img/logo.png" width="15%" align="center" alt="sloth">
+</p>
+
+# Sloth
 
 [![CI](https://github.com/slok/sloth/actions/workflows/ci.yaml/badge.svg?branch=main)](https://github.com/slok/sloth/actions/workflows/ci.yaml)
 [![Go Report Card](https://goreportcard.com/badge/github.com/slok/sloth)](https://goreportcard.com/report/github.com/slok/sloth)

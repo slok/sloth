@@ -59,13 +59,13 @@ func (g generateCommand) Run(ctx context.Context, config RootConfig) error {
 	// Raw Prometheus generator.
 	slos, promErr := prometheus.YAMLSpecLoader.LoadSpec(ctx, slxData)
 	if promErr == nil {
-		return g.runPrometheus(ctx, config, slos)
+		return g.runPrometheus(ctx, config, *slos)
 	}
 
 	// Kubernetes Prometheus operator generator.
 	sloGroup, k8sErr := k8sprometheus.YAMLSpecLoader.LoadSpec(ctx, slxData)
 	if k8sErr == nil {
-		return g.runKubernetes(ctx, config, sloGroup)
+		return g.runKubernetes(ctx, config, *sloGroup)
 	}
 
 	// If we reached here means that we could not use any of the available spec types.
@@ -76,7 +76,7 @@ func (g generateCommand) Run(ctx context.Context, config RootConfig) error {
 
 // runPrometheus generates the SLOs based on a raw regular Prometheus spec format input and
 // outs a Prometheus raw yaml.
-func (g generateCommand) runPrometheus(ctx context.Context, config RootConfig, slos []prometheus.SLO) error {
+func (g generateCommand) runPrometheus(ctx context.Context, config RootConfig, slos prometheus.SLOGroup) error {
 	config.Logger.Infof("Generating from Prometheus spec")
 	info := info.Info{
 		Version: info.Version,
@@ -120,7 +120,7 @@ func (g generateCommand) runPrometheus(ctx context.Context, config RootConfig, s
 
 // runKubernetes generates the SLOs based on a Kuberentes spec format input and
 // outs a Kubernetes prometheus operator CRD yaml.
-func (g generateCommand) runKubernetes(ctx context.Context, config RootConfig, sloGroup *k8sprometheus.SLOGroup) error {
+func (g generateCommand) runKubernetes(ctx context.Context, config RootConfig, sloGroup k8sprometheus.SLOGroup) error {
 	config.Logger.Infof("Generating from Kubernetes Prometheus spec")
 
 	info := info.Info{
@@ -128,7 +128,7 @@ func (g generateCommand) runKubernetes(ctx context.Context, config RootConfig, s
 		Mode:    info.ModeCLIGenKubernetes,
 		Spec:    fmt.Sprintf("%s/%s", kubernetesv1.SchemeGroupVersion.Group, kubernetesv1.SchemeGroupVersion.Version),
 	}
-	result, err := g.generate(ctx, config, info, sloGroup.SLOs)
+	result, err := g.generate(ctx, config, info, sloGroup.SLOGroup)
 	if err != nil {
 		return err
 	}
@@ -164,7 +164,7 @@ func (g generateCommand) runKubernetes(ctx context.Context, config RootConfig, s
 
 // generate is the main generator logic that all the spec types and storers share. Mainly
 // has the logic of the generate controller.
-func (g generateCommand) generate(ctx context.Context, config RootConfig, info info.Info, slos []prometheus.SLO) (*generateprometheus.GenerateResponse, error) {
+func (g generateCommand) generate(ctx context.Context, config RootConfig, info info.Info, slos prometheus.SLOGroup) (*generateprometheus.GenerateResponse, error) {
 	// Disable recording rules if required.
 	var sliRuleGen generateprometheus.SLIRecordingRulesGenerator = generateprometheus.NoopSLIRecordingRulesGenerator
 	var metaRuleGen generateprometheus.MetadataRecordingRulesGenerator = generateprometheus.NoopMetadataRecordingRulesGenerator
@@ -192,8 +192,8 @@ func (g generateCommand) generate(ctx context.Context, config RootConfig, info i
 	}
 
 	result, err := controller.Generate(ctx, generateprometheus.GenerateRequest{
-		Info: info,
-		SLOs: slos,
+		Info:     info,
+		SLOGroup: slos,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("could not generate prometheus rules: %w", err)

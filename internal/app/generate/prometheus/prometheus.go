@@ -96,8 +96,8 @@ type GenerateRequest struct {
 	Info info.Info
 	// ExtraLabels are the extra labels added to the SLOs on execution time.
 	ExtraLabels map[string]string
-	// SLOs are the SLOs that will be used to generate the SLO results and Prom rules.
-	SLOs []prometheus.SLO
+	// SLOGroup are the SLOs group that will be used to generate the SLO results and Prom rules.
+	SLOGroup prometheus.SLOGroup
 }
 
 type SLOResult struct {
@@ -111,13 +111,14 @@ type GenerateResponse struct {
 }
 
 func (s Service) Generate(ctx context.Context, r GenerateRequest) (*GenerateResponse, error) {
-	if len(r.SLOs) == 0 {
-		return nil, fmt.Errorf("slos are required")
+	err := r.SLOGroup.Validate()
+	if err != nil {
+		return nil, fmt.Errorf("invalid SLO group: %w", err)
 	}
 
 	// Generate Prom rules.
-	results := make([]SLOResult, 0, len(r.SLOs))
-	for _, slo := range r.SLOs {
+	results := make([]SLOResult, 0, len(r.SLOGroup.SLOs))
+	for _, slo := range r.SLOGroup.SLOs {
 		// Add extra labels.
 		slo.Labels = mergeLabels(slo.Labels, r.ExtraLabels)
 
@@ -136,12 +137,6 @@ func (s Service) Generate(ctx context.Context, r GenerateRequest) (*GenerateResp
 }
 
 func (s Service) generateSLO(ctx context.Context, info info.Info, slo prometheus.SLO) (*SLOResult, error) {
-	// Validate before using the SLO.
-	err := slo.Validate()
-	if err != nil {
-		return nil, fmt.Errorf("slo is invalid: %w", err)
-	}
-
 	logger := s.logger.WithValues(log.Kv{"slo": slo.ID})
 
 	// Generate the MWMB alerts.

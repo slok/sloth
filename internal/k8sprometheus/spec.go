@@ -110,7 +110,7 @@ func (yamlSpecLoader) mapSpecToModel(kspec *k8sprometheusv1.PrometheusServiceLev
 			Labels:      kspec.Labels,
 			Annotations: kspec.Annotations,
 		},
-		SLOs: slos,
+		SLOGroup: prometheus.SLOGroup{SLOs: slos},
 	}
 
 	return res, nil

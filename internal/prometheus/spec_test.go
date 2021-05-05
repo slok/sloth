@@ -13,7 +13,7 @@ import (
 func TestYAMLoadSpec(t *testing.T) {
 	tests := map[string]struct {
 		specYaml string
-		expModel []prometheus.SLO
+		expModel *prometheus.SLOGroup
 		expErr   bool
 	}{
 		"Empty spec should fail.": {
@@ -98,7 +98,7 @@ slos:
       ticket_alert:
         disable: true
 `,
-			expModel: []prometheus.SLO{
+			expModel: &prometheus.SLOGroup{SLOs: []prometheus.SLO{
 				{
 					ID:         "test-svc-slo1",
 					Name:       "slo1",
@@ -160,6 +160,7 @@ slos:
 					PageAlertMeta:    prometheus.AlertMeta{Disable: true},
 					WarningAlertMeta: prometheus.AlertMeta{Disable: true},
 				},
+			},
 			},
 		},
 	}

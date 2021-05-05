@@ -16,9 +16,10 @@ func getGoodSLOGroup() k8sprometheus.SLOGroup {
 			Name:      "test",
 			Namespace: "test-ns",
 		},
-		SLOs: []prometheus.SLO{
+		SLOGroup: prometheus.SLOGroup{SLOs: []prometheus.SLO{
 			getGoodSLO("slo1"),
 			getGoodSLO("slo2"),
+		},
 		},
 	}
 }
@@ -83,7 +84,7 @@ func TestModelValidationSpec(t *testing.T) {
 				sg.K8sMeta.Name = ""
 				return sg
 			},
-			expErrMessage: "Key: 'SLOGroup.K8sMeta.Name' Error:Field validation for 'Name' failed on the 'required' tag",
+			expErrMessage: "Key: 'K8sMeta.Name' Error:Field validation for 'Name' failed on the 'required' tag",
 		},
 
 		"SLO validation is execute correctly and fails if SLOs fail.": {
@@ -92,7 +93,7 @@ func TestModelValidationSpec(t *testing.T) {
 				sg.SLOs[0].ID = ""
 				return sg
 			},
-			expErrMessage: "Key: 'SLO.ID' Error:Field validation for 'ID' failed on the 'required' tag",
+			expErrMessage: "Key: 'SLOGroup.SLOs[0].ID' Error:Field validation for 'ID' failed on the 'required' tag",
 		},
 	}
 

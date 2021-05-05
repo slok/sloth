@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [v0.1.0] - 2021-05-05
+
 ### Added
 
 - Extra labels on all prometheus rules at generation cmd execution.

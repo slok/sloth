@@ -141,7 +141,7 @@ spec:
 					Labels:      map[string]string{"lk1": "lv1", "lk2": "lv2"},
 					Annotations: map[string]string{"ak1": "av1", "ak2": "av2"},
 				},
-				SLOs: []prometheus.SLO{
+				SLOGroup: prometheus.SLOGroup{SLOs: []prometheus.SLO{
 					{
 						ID:         "test-svc-slo1",
 						Name:       "slo1",
@@ -203,6 +203,7 @@ spec:
 						PageAlertMeta:    prometheus.AlertMeta{Disable: true},
 						WarningAlertMeta: prometheus.AlertMeta{Disable: true},
 					},
+				},
 				},
 			},
 		},

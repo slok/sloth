@@ -18,21 +18,19 @@ type K8sMeta struct {
 // SLO model and Kubernetes data.
 type SLOGroup struct {
 	K8sMeta K8sMeta
-	SLOs    []prometheus.SLO
+	prometheus.SLOGroup
 }
 
 // Validate validates the SLO.
 func (s SLOGroup) Validate() error {
-	err := modelSpecValidate.Struct(s)
+	err := modelSpecValidate.Struct(s.K8sMeta)
 	if err != nil {
 		return err
 	}
 
-	for _, slo := range s.SLOs {
-		err := slo.Validate()
-		if err != nil {
-			return err
-		}
+	err = s.SLOGroup.Validate()
+	if err != nil {
+		return err
 	}
 
 	return nil

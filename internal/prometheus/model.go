@@ -50,8 +50,12 @@ type SLO struct {
 	WarningAlertMeta AlertMeta
 }
 
+type SLOGroup struct {
+	SLOs []SLO `validate:"required,dive"`
+}
+
 // Validate validates the SLO.
-func (s SLO) Validate() error {
+func (s SLOGroup) Validate() error {
 	return modelSpecValidate.Struct(s)
 }
 
@@ -81,7 +85,7 @@ var modelSpecValidate = func() *validator.Validate {
 	mustRegisterValidation(v, "required_if_enabled", validateRequiredEnabledAlertName)
 	mustRegisterValidation(v, "template_vars", validateTemplateVars)
 	v.RegisterStructValidation(validateOneSLI, SLI{})
-
+	v.RegisterStructValidation(validateSLOGroup, SLOGroup{})
 	return v
 }()
 
@@ -210,6 +214,30 @@ func validateOneSLI(sl validator.StructLevel) {
 	// No SLI types set.
 	if !sliSet {
 		sl.ReportError(sli, "", "", "sli_type_required", "")
+	}
+}
+
+// validateSLOGroup implements validator.CustomTypeFunc by validating
+// SLO IDs are not repeated.
+func validateSLOGroup(sl validator.StructLevel) {
+	sloGroup, ok := sl.Current().Interface().(SLOGroup)
+	if !ok {
+		sl.ReportError(sloGroup, "", "SLOGroup", "not_slo_group", "")
+		return
+	}
+
+	if len(sloGroup.SLOs) == 0 {
+		sl.ReportError(sloGroup, "", "", "slos_required", "")
+	}
+
+	// Check SLO IDs not repeated.
+	sloIDs := map[string]struct{}{}
+	for _, slo := range sloGroup.SLOs {
+		_, ok := sloIDs[slo.ID]
+		if ok {
+			sl.ReportError(slo.ID, slo.ID, "", "slo_repeated", "")
+		}
+		sloIDs[slo.ID] = struct{}{}
 	}
 }
 

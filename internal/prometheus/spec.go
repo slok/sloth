@@ -15,7 +15,7 @@ type yamlSpecLoader bool
 // YAMLSpecLoader knows how to load YAML specs and converts them to a model.
 const YAMLSpecLoader = yamlSpecLoader(false)
 
-func (y yamlSpecLoader) LoadSpec(ctx context.Context, data []byte) ([]SLO, error) {
+func (y yamlSpecLoader) LoadSpec(ctx context.Context, data []byte) (*SLOGroup, error) {
 	if len(data) == 0 {
 		return nil, fmt.Errorf("spec is required")
 	}
@@ -44,7 +44,7 @@ func (y yamlSpecLoader) LoadSpec(ctx context.Context, data []byte) ([]SLO, error
 	return m, nil
 }
 
-func (yamlSpecLoader) mapSpecToModel(spec prometheusv1.Spec) ([]SLO, error) {
+func (yamlSpecLoader) mapSpecToModel(spec prometheusv1.Spec) (*SLOGroup, error) {
 	models := make([]SLO, 0, len(spec.SLOs))
 	for _, specSLO := range spec.SLOs {
 		slo := SLO{
@@ -92,5 +92,5 @@ func (yamlSpecLoader) mapSpecToModel(spec prometheusv1.Spec) ([]SLO, error) {
 		models = append(models, slo)
 	}
 
-	return models, nil
+	return &SLOGroup{SLOs: models}, nil
 }

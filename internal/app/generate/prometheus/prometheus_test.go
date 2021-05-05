@@ -37,7 +37,7 @@ func TestIntegrationAppServiceGenerate(t *testing.T) {
 					Mode:    info.ModeTest,
 					Spec:    "test-spec",
 				},
-				SLOs: []prometheus.SLO{
+				SLOGroup: prometheus.SLOGroup{SLOs: []prometheus.SLO{
 					{
 						ID:      "test-id",
 						Name:    "test-name",
@@ -62,6 +62,7 @@ func TestIntegrationAppServiceGenerate(t *testing.T) {
 							Annotations: map[string]string{"t_alert_annot": "t_label_an_1"},
 						},
 					},
+				},
 				},
 			},
 			expResp: appprometheus.GenerateResponse{

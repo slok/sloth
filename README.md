@@ -11,15 +11,15 @@
 
 ## Introduction
 
-Tired of creating complex [SLOs][google-slo] by yourself? Let the hard and boring part to Sloth...
+Use the easiest way to generate [SLOs][google-slo] for Prometheus.
 
-Generate easily uniform and reliable SLOs for Prometheus. Using a simple and simplified SLO spec that results in multiple metrics and [multi window multi burn][mwmb] alerts.
+Sloth generates understandable, uniform and reliable Prometheus SLOs for any kind of service. Using a simple and simplified SLO spec that results in multiple metrics and [multi window multi burn][mwmb] alerts.
 
 _At this moment Sloth is focused on Prometheus, however depending on the demand and complexity we may support more backeds._
 
 ## Features
 
-- Simple, maintainable and easy SLO spec.
+- Simple, maintainable and understandable SLO spec.
 - Reliable SLO metrics and alerts.
 - Based on [Google SLO][google-slo] implementation and [multi window multi burn][mwmb] alerts framework.
 - Autogenerates Prometheus SLI recording rules in different time windows.
@@ -27,7 +27,7 @@ _At this moment Sloth is focused on Prometheus, however depending on the demand 
 - Autogenerates Prometheus SLO [multi window multi burn][mwmb] alert rules (Page and warning).
 - SLO spec validation.
 - Customization of labels, disabling different type of alerts...
-- A single way (uniform) of creating SLOs across different services and teams.
+- A single way (uniform) of creating SLOs across all different services and teams.
 - Automatic [Grafana dashboard][grafana-dashboard] to see all your SLOs state.
 - Single binary and easy to use CLI.
 - Kubernetes ([Prometheus-operator]) support.
@@ -80,6 +80,8 @@ slos:
           slack_channel: "#alerts-myteam"
 ```
 
+[This](examples/_gen/getting-started.yml) would be the result you would obtain from the above [spec example](examples/getting-started.yml).
+
 ## How does it work
 
 At this moment Sloth uses Prometheus rules to generate SLOs. Based on the generated [recording][prom-recordings] and [alert][prom-alerts] rules it creates a reliable and uniform SLO implementation:
@@ -131,6 +133,8 @@ Will generate from a [Sloth CRD](pkg/kubernetes/api/sloth/v1) spec into [Prometh
 - [Home wifi](examples/home-wifi.yml): My home Ubiquti Wifi SLOs.
 - [K8s Home wifi](examples/k8s-home-wifi.yml): Same as home-wifi but shows how to generate Prometheus-operator CRD from a Sloth CRD.
 - [Raw Home wifi](examples/raw-home-wifi.yml): Example showing how to use `raw` SLIs instead of the common `events` using the home-wifi example.
+
+The resulting generated SLOs are in [examples/\_gen](examples/_gen).
 
 ## F.A.Q
 

@@ -11,7 +11,7 @@
 //      - name: "requests-availability"
 //        objective: 99.9
 //        sli:
-//			events:
+//          events:
 //            error_query: sum(rate(apiserver_request_total{code=~"5..", code="429"}[{{.window}}]))
 //            total_query: sum(rate(apiserver_request_total[{{.window}}]))
 //        alerting:
@@ -30,7 +30,7 @@
 //      - name: "requests-latency"
 //        objective: 99
 //        sli:
-//			events:
+//          events:
 //            error_query: |
 //              (
 //                sum(rate(apiserver_request_duration_seconds_count{verb!="WATCH"}[{{.window}}]))

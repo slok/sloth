@@ -20,57 +20,45 @@ slos:
   - name: "requests-availability"
     objective: 99.9
     sli:
-```
-
-```
-events:
-```
-
-```
-error_query: sum(rate(apiserver_request_total{code=~"5..", code="429"}[{{.window}}]))
-      total_query: sum(rate(apiserver_request_total[{{.window}}]))
-  alerting:
-    name: K8sApiserverAvailabilityAlert
-    labels:
-      category: "availability"
-    annotations:
-      runbook: "https://github.com/kubernetes-monitoring/kubernetes-mixin/tree/master/runbook.md#alert-name-kubeapierrorshigh"
-    page_alert:
+      events:
+        error_query: sum(rate(apiserver_request_total{code=~"5..", code="429"}[{{.window}}]))
+        total_query: sum(rate(apiserver_request_total[{{.window}}]))
+    alerting:
+      name: K8sApiserverAvailabilityAlert
       labels:
-        severity: critical
-    ticket_alert:
+        category: "availability"
+      annotations:
+        runbook: "https://github.com/kubernetes-monitoring/kubernetes-mixin/tree/master/runbook.md#alert-name-kubeapierrorshigh"
+      page_alert:
+        labels:
+          severity: critical
+      ticket_alert:
+        labels:
+          severity: warning
+
+  - name: "requests-latency"
+    objective: 99
+    sli:
+      events:
+        error_query: |
+          (
+            sum(rate(apiserver_request_duration_seconds_count{verb!="WATCH"}[{{.window}}]))
+            -
+            sum(rate(apiserver_request_duration_seconds_bucket{le="0.4",verb!="WATCH"}[{{.window}}]))
+          )
+        total_query: sum(rate(apiserver_request_duration_seconds_count{verb!="WATCH"}[{{.window}}]))
+    alerting:
+      name: K8sApiserverLatencyAlert
       labels:
-        severity: warning
-
-- name: "requests-latency"
-  objective: 99
-  sli:
-```
-
-```
-events:
-```
-
-```
-error_query: |
-      (
-        sum(rate(apiserver_request_duration_seconds_count{verb!="WATCH"}[{{.window}}]))
-        -
-        sum(rate(apiserver_request_duration_seconds_bucket{le="0.4",verb!="WATCH"}[{{.window}}]))
-      )
-    total_query: sum(rate(apiserver_request_duration_seconds_count{verb!="WATCH"}[{{.window}}]))
-alerting:
-  name: K8sApiserverLatencyAlert
-  labels:
-    category: "latency"
-  annotations:
-    runbook: "https://github.com/kubernetes-monitoring/kubernetes-mixin/tree/master/runbook.md#alert-name-kubeapilatencyhigh"
-  page_alert:
-    labels:
-      severity: critical
-  ticket_alert:
-    labels:
-      disable: true
+        category: "latency"
+      annotations:
+        runbook: "https://github.com/kubernetes-monitoring/kubernetes-mixin/tree/master/runbook.md#alert-name-kubeapilatencyhigh"
+      page_alert:
+        labels:
+          severity: critical
+      ticket_alert:
+        labels:
+          disable: true
 ```
 
 ## Index

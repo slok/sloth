@@ -9,7 +9,7 @@ import (
 	"gopkg.in/alecthomas/kingpin.v2"
 
 	"github.com/slok/sloth/internal/alert"
-	generateprometheus "github.com/slok/sloth/internal/app/generate/prometheus"
+	"github.com/slok/sloth/internal/app/generate"
 	"github.com/slok/sloth/internal/info"
 	"github.com/slok/sloth/internal/k8sprometheus"
 	"github.com/slok/sloth/internal/log"
@@ -164,23 +164,23 @@ func (g generateCommand) runKubernetes(ctx context.Context, config RootConfig, s
 
 // generate is the main generator logic that all the spec types and storers share. Mainly
 // has the logic of the generate controller.
-func (g generateCommand) generate(ctx context.Context, config RootConfig, info info.Info, slos prometheus.SLOGroup) (*generateprometheus.GenerateResponse, error) {
+func (g generateCommand) generate(ctx context.Context, config RootConfig, info info.Info, slos prometheus.SLOGroup) (*generate.Response, error) {
 	// Disable recording rules if required.
-	var sliRuleGen generateprometheus.SLIRecordingRulesGenerator = generateprometheus.NoopSLIRecordingRulesGenerator
-	var metaRuleGen generateprometheus.MetadataRecordingRulesGenerator = generateprometheus.NoopMetadataRecordingRulesGenerator
+	var sliRuleGen generate.SLIRecordingRulesGenerator = generate.NoopSLIRecordingRulesGenerator
+	var metaRuleGen generate.MetadataRecordingRulesGenerator = generate.NoopMetadataRecordingRulesGenerator
 	if !g.disableRecordings {
 		sliRuleGen = prometheus.SLIRecordingRulesGenerator
 		metaRuleGen = prometheus.MetadataRecordingRulesGenerator
 	}
 
 	// Disable alert rules if required.
-	var alertRuleGen generateprometheus.SLOAlertRulesGenerator = generateprometheus.NoopSLOAlertRulesGenerator
+	var alertRuleGen generate.SLOAlertRulesGenerator = generate.NoopSLOAlertRulesGenerator
 	if !g.disableAlerts {
 		alertRuleGen = prometheus.SLOAlertRulesGenerator
 	}
 
 	// Generate.
-	controller, err := generateprometheus.NewService(generateprometheus.ServiceConfig{
+	controller, err := generate.NewService(generate.ServiceConfig{
 		AlertGenerator:              alert.AlertGenerator,
 		SLIRecordingRulesGenerator:  sliRuleGen,
 		MetaRecordingRulesGenerator: metaRuleGen,
@@ -191,7 +191,7 @@ func (g generateCommand) generate(ctx context.Context, config RootConfig, info i
 		return nil, fmt.Errorf("could not create application service: %w", err)
 	}
 
-	result, err := controller.Generate(ctx, generateprometheus.GenerateRequest{
+	result, err := controller.Generate(ctx, generate.Request{
 		Info:     info,
 		SLOGroup: slos,
 	})

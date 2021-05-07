@@ -1,4 +1,4 @@
-package prometheus_test
+package generate_test
 
 import (
 	"context"
@@ -10,24 +10,24 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/slok/sloth/internal/alert"
-	appprometheus "github.com/slok/sloth/internal/app/generate/prometheus"
+	"github.com/slok/sloth/internal/app/generate"
 	"github.com/slok/sloth/internal/info"
 	"github.com/slok/sloth/internal/prometheus"
 )
 
 func TestIntegrationAppServiceGenerate(t *testing.T) {
 	tests := map[string]struct {
-		req     appprometheus.GenerateRequest
-		expResp appprometheus.GenerateResponse
+		req     generate.Request
+		expResp generate.Response
 		expErr  bool
 	}{
 		"If no SLOs are requested it should error.": {
-			req:    appprometheus.GenerateRequest{},
+			req:    generate.Request{},
 			expErr: true,
 		},
 
 		"Having SLOs it should generate Prometheus recording and alert rules.": {
-			req: appprometheus.GenerateRequest{
+			req: generate.Request{
 				ExtraLabels: map[string]string{
 					"extra_k1": "extra_v1",
 					"extra_k2": "extra_v2",
@@ -65,8 +65,8 @@ func TestIntegrationAppServiceGenerate(t *testing.T) {
 				},
 				},
 			},
-			expResp: appprometheus.GenerateResponse{
-				PrometheusSLOs: []appprometheus.SLOResult{
+			expResp: generate.Response{
+				PrometheusSLOs: []generate.SLOResult{
 					{
 						SLO: prometheus.SLO{
 							ID:      "test-id",
@@ -391,7 +391,7 @@ or ignoring (sloth_window)
 			assert := assert.New(t)
 			require := require.New(t)
 
-			svc, err := appprometheus.NewService(appprometheus.ServiceConfig{})
+			svc, err := generate.NewService(generate.ServiceConfig{})
 			require.NoError(err)
 
 			gotResp, err := svc.Generate(context.TODO(), test.req)

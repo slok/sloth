@@ -13,7 +13,7 @@
 
 Use the easiest way to generate [SLOs][google-slo] for Prometheus.
 
-Sloth generates understandable, uniform and reliable Prometheus SLOs for any kind of service. Using a simple and simplified SLO spec that results in multiple metrics and [multi window multi burn][mwmb] alerts.
+Sloth generates understandable, uniform and reliable Prometheus SLOs for any kind of service. Using a simple SLO spec that results in multiple metrics and [multi window multi burn][mwmb] alerts.
 
 _At this moment Sloth is focused on Prometheus, however depending on the demand and complexity we may support more backeds._
 

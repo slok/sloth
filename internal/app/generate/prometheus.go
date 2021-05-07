@@ -1,4 +1,4 @@
-package prometheus
+package generate
 
 import (
 	"context"
@@ -91,7 +91,7 @@ func NewService(config ServiceConfig) (*Service, error) {
 	}, nil
 }
 
-type GenerateRequest struct {
+type Request struct {
 	// Info about the application and execution, normally used as metadata.
 	Info info.Info
 	// ExtraLabels are the extra labels added to the SLOs on execution time.
@@ -106,11 +106,11 @@ type SLOResult struct {
 	SLORules prometheus.SLORules
 }
 
-type GenerateResponse struct {
+type Response struct {
 	PrometheusSLOs []SLOResult
 }
 
-func (s Service) Generate(ctx context.Context, r GenerateRequest) (*GenerateResponse, error) {
+func (s Service) Generate(ctx context.Context, r Request) (*Response, error) {
 	err := r.SLOGroup.Validate()
 	if err != nil {
 		return nil, fmt.Errorf("invalid SLO group: %w", err)
@@ -131,7 +131,7 @@ func (s Service) Generate(ctx context.Context, r GenerateRequest) (*GenerateResp
 		results = append(results, *result)
 	}
 
-	return &GenerateResponse{
+	return &Response{
 		PrometheusSLOs: results,
 	}, nil
 }

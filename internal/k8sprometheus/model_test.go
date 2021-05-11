@@ -13,8 +13,10 @@ import (
 func getGoodSLOGroup() k8sprometheus.SLOGroup {
 	return k8sprometheus.SLOGroup{
 		K8sMeta: k8sprometheus.K8sMeta{
-			Name:      "test",
-			Namespace: "test-ns",
+			Kind:       "PrometheusServiceLevel",
+			APIVersion: "sloth.slok.dev/v1",
+			Name:       "test",
+			Namespace:  "test-ns",
 		},
 		SLOGroup: prometheus.SLOGroup{SLOs: []prometheus.SLO{
 			getGoodSLO("slo1"),
@@ -76,6 +78,24 @@ func TestModelValidationSpec(t *testing.T) {
 	}{
 		"Correct SLOs should not fail.": {
 			slos: getGoodSLOGroup,
+		},
+
+		"Kind is required.": {
+			slos: func() k8sprometheus.SLOGroup {
+				sg := getGoodSLOGroup()
+				sg.K8sMeta.Kind = ""
+				return sg
+			},
+			expErrMessage: "Key: 'K8sMeta.Kind' Error:Field validation for 'Kind' failed on the 'required' tag",
+		},
+
+		"APIVersion is required.": {
+			slos: func() k8sprometheus.SLOGroup {
+				sg := getGoodSLOGroup()
+				sg.K8sMeta.APIVersion = ""
+				return sg
+			},
+			expErrMessage: "Key: 'K8sMeta.APIVersion' Error:Field validation for 'APIVersion' failed on the 'required' tag",
 		},
 
 		"Name is required.": {

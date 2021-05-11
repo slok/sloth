@@ -41,7 +41,7 @@ func (y yamlSpecLoader) LoadSpec(ctx context.Context, data []byte) (*SLOGroup, e
 		return nil, fmt.Errorf("at least one SLO is required")
 	}
 
-	m, err := y.mapSpecToModel(kslo)
+	m, err := mapSpecToModel(kslo)
 	if err != nil {
 		return nil, fmt.Errorf("could not map to model: %w", err)
 	}
@@ -49,7 +49,16 @@ func (y yamlSpecLoader) LoadSpec(ctx context.Context, data []byte) (*SLOGroup, e
 	return m, nil
 }
 
-func (yamlSpecLoader) mapSpecToModel(kspec *k8sprometheusv1.PrometheusServiceLevel) (*SLOGroup, error) {
+type crSpecLoader bool
+
+// CRSpecLoader knows how to load Kubernetes CRD specs and converts them to a model.
+const CRSpecLoader = crSpecLoader(false)
+
+func (c crSpecLoader) LoadSpec(ctx context.Context, spec *k8sprometheusv1.PrometheusServiceLevel) (*SLOGroup, error) {
+	return mapSpecToModel(spec)
+}
+
+func mapSpecToModel(kspec *k8sprometheusv1.PrometheusServiceLevel) (*SLOGroup, error) {
 	slos := make([]prometheus.SLO, 0, len(kspec.Spec.SLOs))
 	spec := kspec.Spec
 	for _, specSLO := range kspec.Spec.SLOs {
@@ -62,7 +71,7 @@ func (yamlSpecLoader) mapSpecToModel(kspec *k8sprometheusv1.PrometheusServiceLev
 			ID:               fmt.Sprintf("%s-%s", spec.Service, specSLO.Name),
 			Name:             specSLO.Name,
 			Service:          spec.Service,
-			TimeWindow:       30 * 24 * time.Hour, // Default and for now the only one supported.,
+			TimeWindow:       30 * 24 * time.Hour, // Default and for now the only one supported.
 			Objective:        objective,
 			Labels:           mergeLabels(spec.Labels, specSLO.Labels),
 			PageAlertMeta:    prometheus.AlertMeta{Disable: true},
@@ -105,6 +114,9 @@ func (yamlSpecLoader) mapSpecToModel(kspec *k8sprometheusv1.PrometheusServiceLev
 
 	res := &SLOGroup{
 		K8sMeta: K8sMeta{
+			Kind:        "PrometheusServiceLevel",
+			APIVersion:  "sloth.slok.dev/v1",
+			UID:         string(kspec.UID),
 			Name:        kspec.Name,
 			Namespace:   kspec.Namespace,
 			Labels:      kspec.Labels,

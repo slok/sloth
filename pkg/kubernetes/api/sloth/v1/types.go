@@ -14,15 +14,9 @@ import (
 // PrometheusServiceLevel is the expected service quality level using Prometheus
 // as the backend used by Sloth.
 type PrometheusServiceLevel struct {
-	metav1.TypeMeta `json:",inline"`
-	// Standard object's metadata.
-	// More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#metadata
-	// +optional
+	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	// Specification of the ddesired behaviour of the pod terminator.
-	// More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#spec-and-status
-	// +optional
 	Spec PrometheusServiceLevelSpec `json:"spec,omitempty"`
 }
 

@@ -136,6 +136,9 @@ spec:
 `,
 			expModel: &k8sprometheus.SLOGroup{
 				K8sMeta: k8sprometheus.K8sMeta{
+					Kind:        "PrometheusServiceLevel",
+					APIVersion:  "sloth.slok.dev/v1",
+					UID:         "",
 					Name:        "k8s-test-svc",
 					Namespace:   "test-ns",
 					Labels:      map[string]string{"lk1": "lv1", "lk2": "lv2"},

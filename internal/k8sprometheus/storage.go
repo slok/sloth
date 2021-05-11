@@ -11,6 +11,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/serializer/json"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/intstr"
 
 	"github.com/slok/sloth/internal/info"
@@ -46,6 +47,27 @@ type StorageSLO struct {
 }
 
 func (i IOWriterPrometheusOperatorYAMLRepo) StoreSLOs(ctx context.Context, kmeta K8sMeta, slos []StorageSLO) error {
+	rule, err := mapModelToPrometheusOperator(ctx, kmeta, slos)
+	if err != nil {
+		return fmt.Errorf("could not map model to Prometheus operator CR: %w", err)
+	}
+
+	var b bytes.Buffer
+	err = i.encoder.Encode(rule, &b)
+	if err != nil {
+		return fmt.Errorf("could encode prometheus operator object: %w", err)
+	}
+
+	rulesYaml := writeTopDisclaimer(b.Bytes())
+	_, err = i.writer.Write(rulesYaml)
+	if err != nil {
+		return fmt.Errorf("could not write top disclaimer: %w", err)
+	}
+
+	return nil
+}
+
+func mapModelToPrometheusOperator(ctx context.Context, kmeta K8sMeta, slos []StorageSLO) (*monitoringv1.PrometheusRule, error) {
 	rule := &monitoringv1.PrometheusRule{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "monitoring.coreos.com/v1",
@@ -60,7 +82,7 @@ func (i IOWriterPrometheusOperatorYAMLRepo) StoreSLOs(ctx context.Context, kmeta
 	}
 
 	if len(slos) == 0 {
-		return fmt.Errorf("slo rules required")
+		return nil, fmt.Errorf("slo rules required")
 	}
 
 	for _, slo := range slos {
@@ -89,22 +111,10 @@ func (i IOWriterPrometheusOperatorYAMLRepo) StoreSLOs(ctx context.Context, kmeta
 	// If we don't have anything to store, error so we can increase the reliability
 	// because maybe this was due to an unintended error (typos, misconfig, too many disable...).
 	if len(rule.Spec.Groups) == 0 {
-		return ErrNoSLORules
+		return nil, ErrNoSLORules
 	}
 
-	var b bytes.Buffer
-	err := i.encoder.Encode(rule, &b)
-	if err != nil {
-		return fmt.Errorf("could encode prometheus operator object: %w", err)
-	}
-
-	rulesYaml := writeTopDisclaimer(b.Bytes())
-	_, err = i.writer.Write(rulesYaml)
-	if err != nil {
-		return fmt.Errorf("could not write top disclaimer: %w", err)
-	}
-
-	return nil
+	return rule, nil
 }
 
 func promRulesToKubeRules(rules []rulefmt.Rule) []monitoringv1.Rule {
@@ -137,3 +147,47 @@ var disclaimer = fmt.Sprintf(`
 # DO NOT EDIT.
 
 `, info.Version)
+
+func NewPrometheusOperatorCRDRepo(ensurer PrometheusRulesEnsurer, logger log.Logger) PrometheusOperatorCRDRepo {
+	return PrometheusOperatorCRDRepo{
+		ensurer: ensurer,
+		logger:  logger.WithValues(log.Kv{"svc": "storage.PrometheusOperatorCRDAPIServer", "format": "k8s-prometheus-operator"}),
+	}
+}
+
+// PrometheusOperatorCRDRepo knows to store all the SLO rules (recordings and alerts)
+// grouped as a Kubernetes prometheus operator CR using Kubernetes API server.
+type PrometheusOperatorCRDRepo struct {
+	logger  log.Logger
+	ensurer PrometheusRulesEnsurer
+}
+
+type PrometheusRulesEnsurer interface {
+	EnsurePrometheusRule(ctx context.Context, pr *monitoringv1.PrometheusRule) error
+}
+
+//go:generate mockery --case underscore --output k8sprometheusmock --outpkg k8sprometheusmock --name PrometheusRulesEnsurer
+
+func (p PrometheusOperatorCRDRepo) StoreSLOs(ctx context.Context, kmeta K8sMeta, slos []StorageSLO) error {
+	// Map to the Prometheus operator CRD.
+	rule, err := mapModelToPrometheusOperator(ctx, kmeta, slos)
+	if err != nil {
+		return fmt.Errorf("could not map model to Prometheus operator CR: %w", err)
+	}
+
+	// Add object reference.
+	rule.ObjectMeta.OwnerReferences = append(rule.ObjectMeta.OwnerReferences, metav1.OwnerReference{
+		Kind:       kmeta.Kind,
+		APIVersion: kmeta.APIVersion,
+		Name:       kmeta.Name,
+		UID:        types.UID(kmeta.UID),
+	})
+
+	// Create on API server.
+	err = p.ensurer.EnsurePrometheusRule(ctx, rule)
+	if err != nil {
+		return fmt.Errorf("could not ensure Prometheus operator rule CR: %w", err)
+	}
+
+	return nil
+}

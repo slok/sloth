@@ -153,7 +153,7 @@ type Alert struct {
 }
 
 type PrometheusServiceLevelStatus struct {
-	// PromOpRulesGeneratedSLOs tells how many SLOs have been processed and generated for Prometheus operator successfuly.
+	// PromOpRulesGeneratedSLOs tells how many SLOs have been processed and generated for Prometheus operator successfully.
 	PromOpRulesGeneratedSLOs int `json:"promOpRulesGeneratedSLOs"`
 	// ProcessedSLOs tells how many SLOs haven been processed for Prometheus operator.
 	ProcessedSLOs int `json:"processedSLOs"`

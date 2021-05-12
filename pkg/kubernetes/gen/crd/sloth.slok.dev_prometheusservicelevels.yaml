@@ -192,7 +192,7 @@ spec:
                 description: PromOpRulesGenerated tells if the rules for prometheus operator CRD have been generated.
                 type: boolean
               promOpRulesGeneratedSLOs:
-                description: PromOpRulesGeneratedSLOs tells how many SLOs have been processed and generated for Prometheus operator successfuly.
+                description: PromOpRulesGeneratedSLOs tells how many SLOs have been processed and generated for Prometheus operator successfully.
                 type: integer
             required:
             - lastPromOpRulesGeneration

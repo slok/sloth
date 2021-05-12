@@ -102,6 +102,18 @@ func (c *FakePrometheusServiceLevels) Update(ctx context.Context, prometheusServ
 	return obj.(*slothv1.PrometheusServiceLevel), err
 }
 
+// UpdateStatus was generated because the type contains a Status member.
+// Add a +genclient:noStatus comment above the type to avoid generating UpdateStatus().
+func (c *FakePrometheusServiceLevels) UpdateStatus(ctx context.Context, prometheusServiceLevel *slothv1.PrometheusServiceLevel, opts v1.UpdateOptions) (*slothv1.PrometheusServiceLevel, error) {
+	obj, err := c.Fake.
+		Invokes(testing.NewUpdateSubresourceAction(prometheusservicelevelsResource, "status", c.ns, prometheusServiceLevel), &slothv1.PrometheusServiceLevel{})
+
+	if obj == nil {
+		return nil, err
+	}
+	return obj.(*slothv1.PrometheusServiceLevel), err
+}
+
 // Delete takes name of the prometheusServiceLevel and deletes it. Returns an error if one occurs.
 func (c *FakePrometheusServiceLevels) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
 	_, err := c.Fake.

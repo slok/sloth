@@ -40,6 +40,7 @@ type PrometheusServiceLevelsGetter interface {
 type PrometheusServiceLevelInterface interface {
 	Create(ctx context.Context, prometheusServiceLevel *v1.PrometheusServiceLevel, opts metav1.CreateOptions) (*v1.PrometheusServiceLevel, error)
 	Update(ctx context.Context, prometheusServiceLevel *v1.PrometheusServiceLevel, opts metav1.UpdateOptions) (*v1.PrometheusServiceLevel, error)
+	UpdateStatus(ctx context.Context, prometheusServiceLevel *v1.PrometheusServiceLevel, opts metav1.UpdateOptions) (*v1.PrometheusServiceLevel, error)
 	Delete(ctx context.Context, name string, opts metav1.DeleteOptions) error
 	DeleteCollection(ctx context.Context, opts metav1.DeleteOptions, listOpts metav1.ListOptions) error
 	Get(ctx context.Context, name string, opts metav1.GetOptions) (*v1.PrometheusServiceLevel, error)
@@ -128,6 +129,22 @@ func (c *prometheusServiceLevels) Update(ctx context.Context, prometheusServiceL
 		Namespace(c.ns).
 		Resource("prometheusservicelevels").
 		Name(prometheusServiceLevel.Name).
+		VersionedParams(&opts, scheme.ParameterCodec).
+		Body(prometheusServiceLevel).
+		Do(ctx).
+		Into(result)
+	return
+}
+
+// UpdateStatus was generated because the type contains a Status member.
+// Add a +genclient:noStatus comment above the type to avoid generating UpdateStatus().
+func (c *prometheusServiceLevels) UpdateStatus(ctx context.Context, prometheusServiceLevel *v1.PrometheusServiceLevel, opts metav1.UpdateOptions) (result *v1.PrometheusServiceLevel, err error) {
+	result = &v1.PrometheusServiceLevel{}
+	err = c.client.Put().
+		Namespace(c.ns).
+		Resource("prometheusservicelevels").
+		Name(prometheusServiceLevel.Name).
+		SubResource("status").
 		VersionedParams(&opts, scheme.ParameterCodec).
 		Body(prometheusServiceLevel).
 		Do(ctx).

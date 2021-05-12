@@ -51,7 +51,7 @@ func (yamlSpecLoader) mapSpecToModel(spec prometheusv1.Spec) (*SLOGroup, error) 
 			ID:               fmt.Sprintf("%s-%s", spec.Service, specSLO.Name),
 			Name:             specSLO.Name,
 			Service:          spec.Service,
-			TimeWindow:       30 * 24 * time.Hour, // Default and for now the only one supported.,
+			TimeWindow:       30 * 24 * time.Hour, // Default and for now the only one supported.
 			Objective:        specSLO.Objective,
 			Labels:           mergeLabels(spec.Labels, specSLO.Labels),
 			PageAlertMeta:    AlertMeta{Disable: true},

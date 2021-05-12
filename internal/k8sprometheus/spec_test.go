@@ -101,21 +101,21 @@ spec:
       objective: 99.99
       sli:
         events:
-          error_query: test_expr_error_1
-          total_query: test_expr_total_1
+          errorQuery: test_expr_error_1
+          totalQuery: test_expr_total_1
       alerting:
         name: testAlert
         labels:
           tier: "1"
         annotations:
           runbook: http://whatever.com
-        page_alert:
+        pageAlert:
           labels:
             severity: slack
             channel: "#a-myteam"
           annotations:
             message: "This is very important."
-        ticket_alert:
+        ticketAlert:
           labels:
             severity: slack
             channel: "#a-not-so-important"
@@ -127,11 +127,11 @@ spec:
       objective: 99.9
       sli:
         raw:
-          error_ratio_query: test_expr_ratio_2
+          errorRatioQuery: test_expr_ratio_2
       alerting:
-        page_alert:
+        pageAlert:
           disable: true
-        ticket_alert:
+        ticketAlert:
           disable: true
 `,
 			expModel: &k8sprometheus.SLOGroup{

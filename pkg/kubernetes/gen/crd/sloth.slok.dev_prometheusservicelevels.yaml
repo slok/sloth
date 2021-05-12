@@ -10,13 +10,41 @@ metadata:
 spec:
   group: sloth.slok.dev
   names:
+    categories:
+    - slo
+    - sli
     kind: PrometheusServiceLevel
     listKind: PrometheusServiceLevelList
     plural: prometheusservicelevels
+    shortNames:
+    - psl
+    - pslo
     singular: prometheusservicelevel
   scope: Namespaced
   versions:
-  - name: v1
+  - additionalPrinterColumns:
+    - jsonPath: .spec.service
+      name: SERVICE
+      type: string
+    - jsonPath: .status.processedSLOs
+      name: DESIRED SLOs
+      type: integer
+    - jsonPath: .status.promOpRulesGeneratedSLOs
+      name: READY SLOs
+      type: integer
+    - jsonPath: .status.promOpRulesGenerated
+      name: GEN OK
+      type: boolean
+    - jsonPath: .status.lastPromOpRulesGeneration
+      name: LAST GEN
+      type: date
+    - jsonPath: .status.lastPromOpRulesSuccessfulGeneration
+      name: LAST OK GEN
+      type: date
+    - jsonPath: .metadata.creationTimestamp
+      name: AGE
+      type: date
+    name: v1
     schema:
       openAPIV3Schema:
         description: PrometheusServiceLevel is the expected service quality level using Prometheus as the backend used by Sloth.
@@ -61,7 +89,7 @@ spec:
                         name:
                           description: Name is the name used by the alerts generated for this SLO.
                           type: string
-                        page_alert:
+                        pageAlert:
                           description: Page alert refers to the critical alert (check multiwindow-multiburn alerts).
                           properties:
                             annotations:
@@ -78,7 +106,7 @@ spec:
                               description: Labels are the Prometheus labels for the specific alert. For example can be useful to route the Page alert to specific Slack channel.
                               type: object
                           type: object
-                        ticket_alert:
+                        ticketAlert:
                           description: TicketAlert alert refers to the warning alert (check multiwindow-multiburn alerts).
                           properties:
                             annotations:
@@ -105,6 +133,7 @@ spec:
                       type: object
                     name:
                       description: Name is the name of the SLO.
+                      maxLength: 128
                       type: string
                     objective:
                       description: Objective is target of the SLO the percentage (0, 100] (e.g 99.9).
@@ -115,24 +144,24 @@ spec:
                         events:
                           description: SLIEvents is the events SLI type.
                           properties:
-                            error_query:
+                            errorQuery:
                               description: ErrorQuery is a Prometheus query that will get the number/count of events that we consider that are bad for the SLO (e.g "http 5xx", "latency > 250ms"...). Requires the usage of `{{.window}}` template variable.
                               type: string
-                            total_query:
+                            totalQuery:
                               description: TotalQuery is a Prometheus query that will get the total number/count of events for the SLO (e.g "all http requests"...). Requires the usage of `{{.window}}` template variable.
                               type: string
                           required:
-                          - error_query
-                          - total_query
+                          - errorQuery
+                          - totalQuery
                           type: object
                         raw:
                           description: SLIRaw is the raw SLI type.
                           properties:
-                            error_ratio_query:
+                            errorRatioQuery:
                               description: ErrorRatioQuery is a Prometheus query that will get the raw error ratio (0-1) for the SLO.
                               type: string
                           required:
-                          - error_ratio_query
+                          - errorRatioQuery
                           type: object
                       type: object
                   required:
@@ -141,13 +170,41 @@ spec:
                   - objective
                   - sli
                   type: object
+                minItems: 1
                 type: array
             required:
             - service
             type: object
+          status:
+            properties:
+              lastPromOpRulesGeneration:
+                description: LastPromOpRulesGeneration tells the last atemp made for SLO rules generate.
+                format: date-time
+                type: string
+              lastPromOpRulesSuccessfulGeneration:
+                description: LastPromOpRulesGeneration tells the last atemp made for a successful SLO rules generate.
+                format: date-time
+                type: string
+              processedSLOs:
+                description: ProcessedSLOs tells how many SLOs haven been processed for Prometheus operator.
+                type: integer
+              promOpRulesGenerated:
+                description: PromOpRulesGenerated tells if the rules for prometheus operator CRD have been generated.
+                type: boolean
+              promOpRulesGeneratedSLOs:
+                description: PromOpRulesGeneratedSLOs tells how many SLOs have been processed and generated for Prometheus operator successfully.
+                type: integer
+            required:
+            - lastPromOpRulesGeneration
+            - processedSLOs
+            - promOpRulesGenerated
+            - promOpRulesGeneratedSLOs
+            type: object
         type: object
     served: true
     storage: true
+    subresources:
+      status: {}
 status:
   acceptedNames:
     kind: ""

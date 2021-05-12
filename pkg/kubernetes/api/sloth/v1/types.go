@@ -18,7 +18,7 @@ import (
 // +kubebuilder:printcolumn:name="LAST GEN",type="date",JSONPath=".status.lastPromOpRulesGeneration"
 // +kubebuilder:printcolumn:name="LAST OK GEN",type="date",JSONPath=".status.lastPromOpRulesSuccessfulGeneration"
 // +kubebuilder:printcolumn:name="AGE",type="date",JSONPath=".metadata.creationTimestamp"
-// +kubebuilder:resource:singular=prometheusservicelevel,path=prometheusservicelevels,shortName=psl;pslo,scope=Namespaced,categories=slo;sli
+// +kubebuilder:resource:singular=prometheusservicelevel,path=prometheusservicelevels,shortName=psl;pslo,scope=Namespaced,categories=slo;slos;sli;slis
 //
 // PrometheusServiceLevel is the expected service quality level using Prometheus
 // as the backend used by Sloth.

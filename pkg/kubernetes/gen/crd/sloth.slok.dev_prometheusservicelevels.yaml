@@ -12,7 +12,9 @@ spec:
   names:
     categories:
     - slo
+    - slos
     - sli
+    - slis
     kind: PrometheusServiceLevel
     listKind: PrometheusServiceLevelList
     plural: prometheusservicelevels

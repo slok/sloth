@@ -2,6 +2,7 @@ package k8sprometheus
 
 import (
 	"context"
+	"time"
 
 	monitoringv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
 	monitoringclientset "github.com/prometheus-operator/prometheus-operator/pkg/client/versioned"
@@ -68,4 +69,21 @@ func (k KubernetesService) EnsurePrometheusRule(ctx context.Context, pr *monitor
 	logger.Debugf("monitoringv1.PrometheusRule has been overwritten")
 
 	return nil
+}
+
+func (k KubernetesService) EnsurePrometheusServiceLevelStatus(ctx context.Context, slo *slothv1.PrometheusServiceLevel, err error) error {
+	slo = slo.DeepCopy()
+
+	slo.Status.PromOpRulesGenerated = false
+	slo.Status.PromOpRulesGeneratedSLOs = 0
+	slo.Status.ProcessedSLOs = len(slo.Spec.SLOs)
+	slo.Status.LastPromOpRulesGeneration = &metav1.Time{Time: time.Now().UTC()}
+	if err == nil {
+		slo.Status.PromOpRulesGenerated = true
+		slo.Status.PromOpRulesGeneratedSLOs = len(slo.Spec.SLOs)
+		slo.Status.LastPromOpRulesSuccessfulGeneration = slo.Status.LastPromOpRulesGeneration
+	}
+
+	_, err = k.slothCli.SlothV1().PrometheusServiceLevels(slo.Namespace).UpdateStatus(ctx, slo, metav1.UpdateOptions{})
+	return err
 }

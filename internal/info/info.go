@@ -8,9 +8,10 @@ var (
 type Mode string
 
 const (
-	ModeTest             = "test"
-	ModeCLIGenPrometheus = "cli-gen-prom"
-	ModeCLIGenKubernetes = "cli-gen-k8s"
+	ModeTest                    = "test"
+	ModeCLIGenPrometheus        = "cli-gen-prom"
+	ModeCLIGenKubernetes        = "cli-gen-k8s"
+	ModeControllerGenKubernetes = "ctrl-gen-k8s"
 )
 
 // Info is the information of the app and request based for SLO generators.

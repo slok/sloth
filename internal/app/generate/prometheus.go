@@ -137,7 +137,7 @@ func (s Service) Generate(ctx context.Context, r Request) (*Response, error) {
 }
 
 func (s Service) generateSLO(ctx context.Context, info info.Info, slo prometheus.SLO) (*SLOResult, error) {
-	logger := s.logger.WithValues(log.Kv{"slo": slo.ID})
+	logger := s.logger.WithCtxValues(ctx).WithValues(log.Kv{"slo": slo.ID})
 
 	// Generate the MWMB alerts.
 	alertSLO := alert.SLO{

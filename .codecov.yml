@@ -4,5 +4,5 @@ coverage:
     patch: false
     project:
       default:
-        # Allow going dows 1% before being a failure.
+        # Allow going down 1% before being a failure.
         threshold: 1%

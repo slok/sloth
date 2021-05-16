@@ -136,7 +136,7 @@ spec:
                       type: string
                     objective:
                       description: Objective is target of the SLO the percentage (0, 100] (e.g 99.9).
-                      type: string
+                      type: number
                     sli:
                       description: SLI is the indicator (service level indicator) for this specific SLO.
                       properties:

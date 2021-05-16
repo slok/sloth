@@ -429,7 +429,7 @@ type SLO struct {
     // +kubebuilder:validation:Required
     //
     // Objective is target of the SLO the percentage (0, 100] (e.g 99.9).
-    Objective json.Number `json:"objective"`
+    Objective float64 `json:"objective"`
 
     // Labels are the Prometheus labels that will have all the recording and
     // alerting rules for this specific SLO. These labels are merged with the

@@ -42,7 +42,7 @@ type HandlerConfig struct {
 	Repository       Repository
 	KubeStatusStorer KubeStatusStorer
 	ExtraLabels      map[string]string
-	// IgnoreHandleAfter makes the handles of objects with a success state and no spec change,
+	// IgnoreHandleBefore makes the handles of objects with a success state and no spec change,
 	// be ignored if the last success is less than this setting.
 	// Be aware that this setting should be less than the controller resync interval.
 	IgnoreHandleBefore time.Duration

@@ -36,6 +36,7 @@ type kubeControllerCommand struct {
 	extraLabels       map[string]string
 	workers           int
 	kubeConfig        string
+	kubeContext       string
 	resyncInterval    time.Duration
 	namespace         string
 	development       bool
@@ -50,14 +51,15 @@ func NewKubeControllerCommand(app *kingpin.Application) Command {
 	cmd.Alias("controller")
 	cmd.Alias("k8s-controller")
 
-	app.Flag("development", "Enable development mode.").BoolVar(&c.development)
+	cmd.Flag("development", "Enable development mode.").BoolVar(&c.development)
 	kubeHome := filepath.Join(homedir.HomeDir(), ".kube", "config")
-	app.Flag("kube-config", "kubernetes configuration path, only used when development mode enabled.").Default(kubeHome).Short('c').StringVar(&c.kubeConfig)
-	app.Flag("workers", "Concurrent processing workers for each kubernetes controller.").Default("5").Short('w').IntVar(&c.workers)
-	app.Flag("resync-interval", "The duration between all resources resync.").Default("15m").DurationVar(&c.resyncInterval)
-	app.Flag("namespace", "Run the controller targeting specific namespace, by default all.").StringVar(&c.namespace)
-	app.Flag("metrics-path", "The path for Prometheus metrics.").Default("/metrics").StringVar(&c.metricsPath)
-	app.Flag("metrics-listen-addr", "The listen address for Prometheus metrics and pprof.").Default(":8081").StringVar(&c.metricsListenAddr)
+	cmd.Flag("kube-config", "kubernetes configuration path, only used when development mode enabled.").Default(kubeHome).StringVar(&c.kubeConfig)
+	cmd.Flag("kube-context", "kubernetes context, only used when development mode enabled.").StringVar(&c.kubeContext)
+	cmd.Flag("workers", "Concurrent processing workers for each kubernetes controller.").Default("5").IntVar(&c.workers)
+	cmd.Flag("resync-interval", "The duration between all resources resync.").Default("15m").DurationVar(&c.resyncInterval)
+	cmd.Flag("namespace", "Run the controller targeting specific namespace, by default all.").StringVar(&c.namespace)
+	cmd.Flag("metrics-path", "The path for Prometheus metrics.").Default("/metrics").StringVar(&c.metricsPath)
+	cmd.Flag("metrics-listen-addr", "The listen address for Prometheus metrics and pprof.").Default(":8081").StringVar(&c.metricsListenAddr)
 	cmd.Flag("extra-labels", "Extra labels that will be added to all the generated Prometheus rules ('key=value' form, can be repeated).").Short('l').StringMapVar(&c.extraLabels)
 
 	return c
@@ -210,7 +212,14 @@ func (k kubeControllerCommand) loadKubernetesConfig() (*rest.Config, error) {
 
 	// If devel mode then use configuration flag path.
 	if k.development {
-		config, err := clientcmd.BuildConfigFromFlags("", k.kubeConfig)
+		config, err := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(
+			&clientcmd.ClientConfigLoadingRules{
+				ExplicitPath: k.kubeConfig,
+			},
+			&clientcmd.ConfigOverrides{
+				CurrentContext: k.kubeContext,
+			}).ClientConfig()
+
 		if err != nil {
 			return nil, fmt.Errorf("could not load configuration: %w", err)
 		}

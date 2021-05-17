@@ -32,7 +32,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        kubernetes: [1.19.7, 1.20.2]
+        kubernetes: [1.18.15, 1.19.7, 1.20.2]
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-go@v2

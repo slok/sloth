@@ -1,8 +1,6 @@
 package v1
 
 import (
-	"encoding/json"
-
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -15,8 +13,7 @@ import (
 // +kubebuilder:printcolumn:name="DESIRED SLOs",type="integer",JSONPath=".status.processedSLOs"
 // +kubebuilder:printcolumn:name="READY SLOs",type="integer",JSONPath=".status.promOpRulesGeneratedSLOs"
 // +kubebuilder:printcolumn:name="GEN OK",type="boolean",JSONPath=".status.promOpRulesGenerated"
-// +kubebuilder:printcolumn:name="LAST GEN",type="date",JSONPath=".status.lastPromOpRulesGeneration"
-// +kubebuilder:printcolumn:name="LAST OK GEN",type="date",JSONPath=".status.lastPromOpRulesSuccessfulGeneration"
+// +kubebuilder:printcolumn:name="GEN AGE",type="date",JSONPath=".status.lastPromOpRulesSuccessfulGenerated"
 // +kubebuilder:printcolumn:name="AGE",type="date",JSONPath=".metadata.creationTimestamp"
 // +kubebuilder:resource:singular=prometheusservicelevel,path=prometheusservicelevels,shortName=psl;pslo,scope=Namespaced,categories=slo;slos;sli;slis
 //
@@ -59,7 +56,7 @@ type SLO struct {
 	// +kubebuilder:validation:Required
 	//
 	// Objective is target of the SLO the percentage (0, 100] (e.g 99.9).
-	Objective json.Number `json:"objective"`
+	Objective float64 `json:"objective"`
 
 	// Labels are the Prometheus labels that will have all the recording and
 	// alerting rules for this specific SLO. These labels are merged with the
@@ -159,11 +156,13 @@ type PrometheusServiceLevelStatus struct {
 	ProcessedSLOs int `json:"processedSLOs"`
 	// PromOpRulesGenerated tells if the rules for prometheus operator CRD have been generated.
 	PromOpRulesGenerated bool `json:"promOpRulesGenerated"`
-	// LastPromOpRulesGeneration tells the last atemp made for SLO rules generate.
-	LastPromOpRulesGeneration *metav1.Time `json:"lastPromOpRulesGeneration"`
 	// LastPromOpRulesGeneration tells the last atemp made for a successful SLO rules generate.
 	// +optional
-	LastPromOpRulesSuccessfulGeneration *metav1.Time `json:"lastPromOpRulesSuccessfulGeneration"`
+	LastPromOpRulesSuccessfulGenerated *metav1.Time `json:"lastPromOpRulesSuccessfulGenerated,omitempty"`
+	// ObservedGeneration tells the generation was acted on, normally this is required to stop an
+	// infinite loop when the status is updated because it sends a watch updated event to the watchers
+	// of the K8s object.
+	ObservedGeneration int64 `json:"observedGeneration"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object

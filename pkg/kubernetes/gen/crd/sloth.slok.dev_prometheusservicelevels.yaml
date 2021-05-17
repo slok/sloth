@@ -37,11 +37,8 @@ spec:
     - jsonPath: .status.promOpRulesGenerated
       name: GEN OK
       type: boolean
-    - jsonPath: .status.lastPromOpRulesGeneration
-      name: LAST GEN
-      type: date
-    - jsonPath: .status.lastPromOpRulesSuccessfulGeneration
-      name: LAST OK GEN
+    - jsonPath: .status.lastPromOpRulesSuccessfulGenerated
+      name: GEN AGE
       type: date
     - jsonPath: .metadata.creationTimestamp
       name: AGE
@@ -139,7 +136,7 @@ spec:
                       type: string
                     objective:
                       description: Objective is target of the SLO the percentage (0, 100] (e.g 99.9).
-                      type: string
+                      type: number
                     sli:
                       description: SLI is the indicator (service level indicator) for this specific SLO.
                       properties:
@@ -179,14 +176,14 @@ spec:
             type: object
           status:
             properties:
-              lastPromOpRulesGeneration:
-                description: LastPromOpRulesGeneration tells the last atemp made for SLO rules generate.
-                format: date-time
-                type: string
-              lastPromOpRulesSuccessfulGeneration:
+              lastPromOpRulesSuccessfulGenerated:
                 description: LastPromOpRulesGeneration tells the last atemp made for a successful SLO rules generate.
                 format: date-time
                 type: string
+              observedGeneration:
+                description: ObservedGeneration tells the generation was acted on, normally this is required to stop an infinite loop when the status is updated because it sends a watch updated event to the watchers of the K8s object.
+                format: int64
+                type: integer
               processedSLOs:
                 description: ProcessedSLOs tells how many SLOs haven been processed for Prometheus operator.
                 type: integer
@@ -197,7 +194,7 @@ spec:
                 description: PromOpRulesGeneratedSLOs tells how many SLOs have been processed and generated for Prometheus operator successfully.
                 type: integer
             required:
-            - lastPromOpRulesGeneration
+            - observedGeneration
             - processedSLOs
             - promOpRulesGenerated
             - promOpRulesGeneratedSLOs

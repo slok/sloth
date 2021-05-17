@@ -62,17 +62,12 @@ func mapSpecToModel(kspec *k8sprometheusv1.PrometheusServiceLevel) (*SLOGroup, e
 	slos := make([]prometheus.SLO, 0, len(kspec.Spec.SLOs))
 	spec := kspec.Spec
 	for _, specSLO := range kspec.Spec.SLOs {
-		objective, err := specSLO.Objective.Float64()
-		if err != nil {
-			return nil, fmt.Errorf("could not get float64 from SLO objective k8s string: %w", err)
-		}
-
 		slo := prometheus.SLO{
 			ID:               fmt.Sprintf("%s-%s", spec.Service, specSLO.Name),
 			Name:             specSLO.Name,
 			Service:          spec.Service,
 			TimeWindow:       30 * 24 * time.Hour, // Default and for now the only one supported.
-			Objective:        objective,
+			Objective:        specSLO.Objective,
 			Labels:           mergeLabels(spec.Labels, specSLO.Labels),
 			PageAlertMeta:    prometheus.AlertMeta{Disable: true},
 			WarningAlertMeta: prometheus.AlertMeta{Disable: true},

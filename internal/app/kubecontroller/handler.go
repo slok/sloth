@@ -3,6 +3,7 @@ package kubecontroller
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/spotahome/kooper/v2/controller"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -41,7 +42,11 @@ type HandlerConfig struct {
 	Repository       Repository
 	KubeStatusStorer KubeStatusStorer
 	ExtraLabels      map[string]string
-	Logger           log.Logger
+	// IgnoreHandleBefore makes the handles of objects with a success state and no spec change,
+	// be ignored if the last success is less than this setting.
+	// Be aware that this setting should be less than the controller resync interval.
+	IgnoreHandleBefore time.Duration
+	Logger             log.Logger
 }
 
 func (c *HandlerConfig) defaults() error {
@@ -65,6 +70,10 @@ func (c *HandlerConfig) defaults() error {
 		return fmt.Errorf("repository is required")
 	}
 
+	if c.IgnoreHandleBefore == 0 {
+		c.IgnoreHandleBefore = 3 * time.Minute
+	}
+
 	if c.Logger == nil {
 		c.Logger = log.Noop
 	}
@@ -74,12 +83,13 @@ func (c *HandlerConfig) defaults() error {
 }
 
 type handler struct {
-	specLoader       SpecLoader
-	generator        Generator
-	repository       Repository
-	kubeStatusStorer KubeStatusStorer
-	extraLabels      map[string]string
-	logger           log.Logger
+	specLoader         SpecLoader
+	generator          Generator
+	repository         Repository
+	kubeStatusStorer   KubeStatusStorer
+	extraLabels        map[string]string
+	ignoreHandleBefore time.Duration
+	logger             log.Logger
 }
 
 func NewHandler(config HandlerConfig) (controller.Handler, error) {
@@ -88,12 +98,13 @@ func NewHandler(config HandlerConfig) (controller.Handler, error) {
 		return nil, fmt.Errorf("invalid configuration: %w", err)
 	}
 	return &handler{
-		specLoader:       config.SpecLoader,
-		generator:        config.Generator,
-		repository:       config.Repository,
-		kubeStatusStorer: config.KubeStatusStorer,
-		extraLabels:      config.ExtraLabels,
-		logger:           config.Logger,
+		specLoader:         config.SpecLoader,
+		generator:          config.Generator,
+		repository:         config.Repository,
+		kubeStatusStorer:   config.KubeStatusStorer,
+		extraLabels:        config.ExtraLabels,
+		ignoreHandleBefore: config.IgnoreHandleBefore,
+		logger:             config.Logger,
 	}, nil
 }
 
@@ -112,10 +123,9 @@ func (h handler) handlePrometheusServiceLevelV1(ctx context.Context, psl *slothv
 	ctx = h.logger.SetValuesOnCtx(ctx, log.Kv{"ns": psl.Namespace, "name": psl.Name})
 	logger := h.logger.WithCtxValues(ctx)
 
-	// If the received object is being deleted, ignore.
-	deleteInProgress := !psl.DeletionTimestamp.IsZero()
-	if deleteInProgress {
-		logger.Debugf("Received object is in deletion process, ignoring")
+	ignoreReason, ignore := h.ignoreHandlePrometheusServiceLevelV1(ctx, psl)
+	if ignore {
+		logger.Debugf("Ignoring object due to %q", ignoreReason)
 		return nil
 	}
 
@@ -163,4 +173,29 @@ func (h handler) handlePrometheusServiceLevelV1(ctx context.Context, psl *slothv
 	}
 
 	return nil
+}
+
+func (h handler) ignoreHandlePrometheusServiceLevelV1(ctx context.Context, psl *slothv1.PrometheusServiceLevel) (reason string, ignore bool) {
+	// If the received object is being deleted, ignore.
+	deleteInProgress := !psl.DeletionTimestamp.IsZero()
+	if deleteInProgress {
+		return "deletion in progress", true
+	}
+
+	// If we received an update event not because of an spec change but because of an status change
+	// we need to break the loop because if we continue with the handling most likely that will update
+	// the status (and we will end here again on the next controller event).
+	// We know that in case of error we are not changing the status if we were already in an error state
+	// however if we are in a success state we have a changing field (a timestamp), so to break these loops
+	// we will check some conditions so we can ignore it:
+	// - The generation of the status is the same as the one in the metadata: Means the spec didn't change.
+	// - The status is ok: Means is not a retry because of an error.
+	// - The status success TS is less than a duration: Means that if we just updated the success state we break the inmediate loop.
+	if psl.Generation == psl.Status.ObservedGeneration &&
+		psl.Status.PromOpRulesGenerated &&
+		time.Since(psl.Status.LastPromOpRulesSuccessfulGenerated.Time) < h.ignoreHandleBefore {
+		return "no spec change in correct state object", true
+	}
+
+	return "", false
 }

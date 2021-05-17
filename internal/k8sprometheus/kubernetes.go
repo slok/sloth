@@ -71,17 +71,22 @@ func (k KubernetesService) EnsurePrometheusRule(ctx context.Context, pr *monitor
 	return nil
 }
 
+// EnsurePrometheusServiceLevelStatus updates the status of a PrometheusServiceLeve, be aware that updating
+// an status will trigger a watch update event on a controller.
+// In case of no error we will update "last correct Prometheus operation rules generated" TS so we can be in
+// a infinite loop of handling, the handler should break this loop somehow (e.g: if ok and last generated < 5m, ignore).
 func (k KubernetesService) EnsurePrometheusServiceLevelStatus(ctx context.Context, slo *slothv1.PrometheusServiceLevel, err error) error {
 	slo = slo.DeepCopy()
 
 	slo.Status.PromOpRulesGenerated = false
 	slo.Status.PromOpRulesGeneratedSLOs = 0
 	slo.Status.ProcessedSLOs = len(slo.Spec.SLOs)
-	slo.Status.LastPromOpRulesGeneration = &metav1.Time{Time: time.Now().UTC()}
+	slo.Status.ObservedGeneration = slo.Generation
+
 	if err == nil {
 		slo.Status.PromOpRulesGenerated = true
 		slo.Status.PromOpRulesGeneratedSLOs = len(slo.Spec.SLOs)
-		slo.Status.LastPromOpRulesSuccessfulGeneration = slo.Status.LastPromOpRulesGeneration
+		slo.Status.LastPromOpRulesSuccessfulGenerated = &metav1.Time{Time: time.Now().UTC()}
 	}
 
 	_, err = k.slothCli.SlothV1().PrometheusServiceLevels(slo.Namespace).UpdateStatus(ctx, slo, metav1.UpdateOptions{})

@@ -18,15 +18,18 @@ import (
 // Run runs the main application.
 func Run(ctx context.Context, args []string, stdin io.Reader, stdout, stderr io.Writer) error {
 	app := kingpin.New("sloth", "Easy SLO generator.")
-	app.Version(info.Version)
 	app.DefaultEnvars()
 	config := commands.NewRootConfig(app)
 
 	// Setup commands (registers flags).
 	generateCmd := commands.NewGenerateCommand(app)
+	kubeCtrlCmd := commands.NewKubeControllerCommand(app)
+	versionCmd := commands.NewVersionCommand(app)
 
 	cmds := map[string]commands.Command{
 		generateCmd.Name(): generateCmd,
+		kubeCtrlCmd.Name(): kubeCtrlCmd,
+		versionCmd.Name():  versionCmd,
 	}
 
 	// Parse commandline.

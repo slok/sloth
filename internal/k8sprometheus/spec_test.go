@@ -98,7 +98,7 @@ spec:
     - name: "slo1"
       labels:
         category: test
-      objective: 99.99
+      objective: 99.99999
       sli:
         events:
           errorQuery: test_expr_error_1
@@ -156,7 +156,7 @@ spec:
 								TotalQuery: "test_expr_total_1",
 							},
 						},
-						Objective: 99.99,
+						Objective: 99.99999,
 						Labels: map[string]string{
 							"owner":    "myteam",
 							"category": "test",

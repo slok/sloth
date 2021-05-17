@@ -20,7 +20,7 @@ spec:
     context: "home"
   slos:
     - name: "good-wifi-client-satisfaction"
-      objective: "95"
+      objective: 95
       sli:
         events:
           errorQuery: sum_over_time((count(unifipoller_client_satisfaction_ratio < 0.75))[{{.window}}:]) OR on() vector(0)
@@ -35,7 +35,7 @@ spec:
             severity: warning
 
     - name: "risk-wifi-client-satisfaction"
-      objective: "99.9"
+      objective: 99.9
       sli:
         events:
           errorQuery: sum_over_time((count(unifipoller_client_satisfaction_ratio < 0.5))[{{.window}}:]) OR on() vector(0)

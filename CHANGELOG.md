@@ -2,6 +2,22 @@
 
 ## [Unreleased]
 
+### Added
+
+- Kubernetes Prometheus CRD status.
+- Kubernetes Prometheus CRD status data print for Kubectl.
+- Kubernetes controller mode to generate Prometheus-operator CRs from Sloth CRs.
+- `controller` command to start Kubernetes controller.
+- `version` command to return the app version to stdout.
+
+### Changed
+
+- Kubernetes Prometheus CRD manifests uses camelcase.
+
+### Deleted
+
+- `--version` flag.
+
 ## [v0.1.0] - 2021-05-05
 
 ### Added

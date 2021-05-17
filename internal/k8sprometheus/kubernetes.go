@@ -82,6 +82,7 @@ func (k KubernetesService) EnsurePrometheusServiceLevelStatus(ctx context.Contex
 	slo.Status.PromOpRulesGeneratedSLOs = 0
 	slo.Status.ProcessedSLOs = len(slo.Spec.SLOs)
 	slo.Status.ObservedGeneration = slo.Generation
+
 	if err == nil {
 		slo.Status.PromOpRulesGenerated = true
 		slo.Status.PromOpRulesGeneratedSLOs = len(slo.Spec.SLOs)

@@ -85,6 +85,14 @@ func (k kubeControllerCommand) Run(ctx context.Context, config RootConfig) error
 	}
 	ksvc := k8sprometheus.NewKubernetesService(kSlothcli, kmonitoringCli, config.Logger)
 
+	// Check we can get Sloth CRs without problem before starting everything. This is a hard
+	// dependency, if we can't then fail.
+	_, err = ksvc.ListPrometheusServiceLevels(ctx, k.namespace, map[string]string{})
+	if err != nil {
+		return fmt.Errorf("check for PrometheusServiceLevel CRD failed: could not list: %w", err)
+	}
+	config.Logger.Debugf("PrometheusServiceLevel CRD ready")
+
 	// Prepare our run entrypoints.
 	var g run.Group
 

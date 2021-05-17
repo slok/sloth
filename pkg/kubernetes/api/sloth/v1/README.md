@@ -295,7 +295,7 @@ type PrometheusServiceLevelStatus struct {
     PromOpRulesGenerated bool `json:"promOpRulesGenerated"`
     // LastPromOpRulesGeneration tells the last atemp made for a successful SLO rules generate.
     // +optional
-    LastPromOpRulesSuccessfulGenerated *metav1.Time `json:"lastPromOpRulesSuccessfulGenerated"`
+    LastPromOpRulesSuccessfulGenerated *metav1.Time `json:"lastPromOpRulesSuccessfulGenerated,omitempty"`
     // ObservedGeneration tells the generation was acted on, normally this is required to stop an
     // infinite loop when the status is updated because it sends a watch updated event to the watchers
     // of the K8s object.

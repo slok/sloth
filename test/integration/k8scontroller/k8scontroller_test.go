@@ -25,6 +25,7 @@ func sanitizePrometheusRule(pr *monitoringv1.PrometheusRule) *monitoringv1.Prome
 	pr.ResourceVersion = ""
 	pr.Generation = 0
 	pr.CreationTimestamp = metav1.Time{}
+	pr.SelfLink = ""
 
 	for i := range pr.OwnerReferences {
 		pr.OwnerReferences[i].UID = ""
@@ -73,7 +74,7 @@ func TestKubernetesControllerPromOperatorGenerate(t *testing.T) {
 			exec: func(ctx context.Context, t *testing.T, ns string, kClis *k8scontroller.KubeClients) {
 				// Prepare our SLO on Kubernetes.
 				SLOs := getBasePrometheusServiceLevel()
-				newSLOS, err := kClis.Sloth.SlothV1().PrometheusServiceLevels(ns).Create(ctx, SLOs, metav1.CreateOptions{})
+				newSLOs, err := kClis.Sloth.SlothV1().PrometheusServiceLevels(ns).Create(ctx, SLOs, metav1.CreateOptions{})
 				require.NoError(t, err)
 
 				// Wait to be sure the controller had time for handling.
@@ -87,7 +88,7 @@ func TestKubernetesControllerPromOperatorGenerate(t *testing.T) {
 					ProcessedSLOs:            2,
 					PromOpRulesGeneratedSLOs: 2,
 					PromOpRulesGenerated:     true,
-					ObservedGeneration:       newSLOS.Generation,
+					ObservedGeneration:       newSLOs.Generation,
 				}
 				gotSLOs.Status.LastPromOpRulesSuccessfulGenerated = nil // Remove variations.
 
@@ -100,7 +101,7 @@ func TestKubernetesControllerPromOperatorGenerate(t *testing.T) {
 				// Prepare our wrong SLO on Kubernetes.
 				SLOs := getBasePrometheusServiceLevel()
 				SLOs.Spec.SLOs[0].Objective = 101 // Make the SLO invalid.
-				newSLOS, err := kClis.Sloth.SlothV1().PrometheusServiceLevels(ns).Create(ctx, SLOs, metav1.CreateOptions{})
+				newSLOs, err := kClis.Sloth.SlothV1().PrometheusServiceLevels(ns).Create(ctx, SLOs, metav1.CreateOptions{})
 				require.NoError(t, err)
 
 				// Wait to be sure the controller had time for handling.
@@ -114,7 +115,7 @@ func TestKubernetesControllerPromOperatorGenerate(t *testing.T) {
 					ProcessedSLOs:            2,
 					PromOpRulesGeneratedSLOs: 0,
 					PromOpRulesGenerated:     false,
-					ObservedGeneration:       newSLOS.Generation,
+					ObservedGeneration:       newSLOs.Generation,
 				}
 				gotSLOs.Status.LastPromOpRulesSuccessfulGenerated = nil // Remove variations.
 

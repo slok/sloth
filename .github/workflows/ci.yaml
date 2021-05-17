@@ -52,12 +52,16 @@ jobs:
           kind create cluster --image kindest/node:v${{ matrix.kubernetes }}
           kind get kubeconfig > /tmp/test.kubeconfig
 
-          # Build binary
+          # Register CRDs.
+          kubectl apply -f ./pkg/kubernetes/gen/crd/
+          kubectl apply -f ./test/integration/crd
+
+          # Build binary.
           echo "Building binary..."
           make ci-build
           sudo mv ./bin/sloth /usr/local/bin/
 
-          # Execute integration tests
+          # Execute integration tests.
           echo "Executing integration tests..."
           export SLOTH_INTEGRATION_KUBE_CONFIG=/tmp/test.kubeconfig
           make ci-integration

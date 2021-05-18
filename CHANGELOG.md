@@ -9,6 +9,7 @@
 - Kubernetes controller mode to generate Prometheus-operator CRs from Sloth CRs.
 - `controller` command to start Kubernetes controller.
 - `version` command to return the app version to stdout.
+- `service` and SLO `name` validation.
 
 ### Changed
 

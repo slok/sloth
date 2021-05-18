@@ -39,9 +39,9 @@ type AlertMeta struct {
 
 // SLO represents a service level objective configuration.
 type SLO struct {
-	ID               string `validate:"required"`
-	Name             string `validate:"required"`
-	Service          string `validate:"required"`
+	ID               string `validate:"required,name"`
+	Name             string `validate:"required,name"`
+	Service          string `validate:"required,name"`
 	SLI              SLI    `validate:"required"`
 	TimeWindow       time.Duration
 	Objective        float64           `validate:"gt=0,lte=100"`
@@ -82,6 +82,7 @@ var modelSpecValidate = func() *validator.Validate {
 	mustRegisterValidation(v, "prom_label_key", validatePromLabelKey)
 	mustRegisterValidation(v, "prom_label_value", validatePromLabelValue)
 	mustRegisterValidation(v, "prom_annot_key", validatePromAnnotKey)
+	mustRegisterValidation(v, "name", validateName)
 	mustRegisterValidation(v, "required_if_enabled", validateRequiredEnabledAlertName)
 	mustRegisterValidation(v, "template_vars", validateTemplateVars)
 	v.RegisterStructValidation(validateOneSLI, SLI{})
@@ -158,6 +159,24 @@ func validatePromExpression(fl validator.FieldLevel) bool {
 
 	_, err = promqlparser.ParseExpr(tplB.String())
 	return err == nil
+}
+
+// Names must:
+// - Start and end with an alphanumeric.
+// - Contain alphanumeric, `.`, '_', and '-'.
+var (
+	nameRegexp = regexp.MustCompile("^[A-Za-z0-9][-A-Za-z0-9_.]*[A-Za-z0-9]$")
+)
+
+// validateName implements validator.CustomTypeFunc by validating
+// a regular name.
+func validateName(fl validator.FieldLevel) bool {
+	s, ok := fl.Field().Interface().(string)
+	if !ok {
+		return false
+	}
+
+	return nameRegexp.MatchString(s)
 }
 
 func validateRequiredEnabledAlertName(fl validator.FieldLevel) bool {

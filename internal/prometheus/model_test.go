@@ -13,7 +13,7 @@ func getGoodSLOGroup() prometheus.SLOGroup {
 		SLOs: []prometheus.SLO{
 			{
 				ID:      "slo1-id",
-				Name:    "slo1",
+				Name:    "test.slo-0_1",
 				Service: "test-svc",
 				SLI: prometheus.SLI{
 					Events: &prometheus.SLIEvents{
@@ -95,6 +95,33 @@ func TestModelValidationSpec(t *testing.T) {
 			expErrMessage: "Key: 'SLOGroup.SLOs[0].ID' Error:Field validation for 'ID' failed on the 'required' tag",
 		},
 
+		"SLO ID must be alphanumeric, `.`, '_', and '-'.": {
+			slo: func() prometheus.SLOGroup {
+				s := getGoodSLOGroup()
+				s.SLOs[0].ID = "this-is-{a-test"
+				return s
+			},
+			expErrMessage: "Key: 'SLOGroup.SLOs[0].ID' Error:Field validation for 'ID' failed on the 'name' tag",
+		},
+
+		"SLO ID must start with aphanumeric.": {
+			slo: func() prometheus.SLOGroup {
+				s := getGoodSLOGroup()
+				s.SLOs[0].ID = "_" + s.SLOs[0].ID
+				return s
+			},
+			expErrMessage: "Key: 'SLOGroup.SLOs[0].ID' Error:Field validation for 'ID' failed on the 'name' tag",
+		},
+
+		"SLO ID must end with aphanumeric.": {
+			slo: func() prometheus.SLOGroup {
+				s := getGoodSLOGroup()
+				s.SLOs[0].ID = s.SLOs[0].ID + "_"
+				return s
+			},
+			expErrMessage: "Key: 'SLOGroup.SLOs[0].ID' Error:Field validation for 'ID' failed on the 'name' tag",
+		},
+
 		"SLO Name is required.": {
 			slo: func() prometheus.SLOGroup {
 				s := getGoodSLOGroup()
@@ -104,6 +131,33 @@ func TestModelValidationSpec(t *testing.T) {
 			expErrMessage: "Key: 'SLOGroup.SLOs[0].Name' Error:Field validation for 'Name' failed on the 'required' tag",
 		},
 
+		"SLO Name must be alphanumeric, `.`, '_', and '-'.": {
+			slo: func() prometheus.SLOGroup {
+				s := getGoodSLOGroup()
+				s.SLOs[0].Name = "this-is-{a-test"
+				return s
+			},
+			expErrMessage: "Key: 'SLOGroup.SLOs[0].Name' Error:Field validation for 'Name' failed on the 'name' tag",
+		},
+
+		"SLO Name must start with aphanumeric.": {
+			slo: func() prometheus.SLOGroup {
+				s := getGoodSLOGroup()
+				s.SLOs[0].Name = "_" + s.SLOs[0].Name
+				return s
+			},
+			expErrMessage: "Key: 'SLOGroup.SLOs[0].Name' Error:Field validation for 'Name' failed on the 'name' tag",
+		},
+
+		"SLO Name must end with aphanumeric.": {
+			slo: func() prometheus.SLOGroup {
+				s := getGoodSLOGroup()
+				s.SLOs[0].Name = s.SLOs[0].Name + "_"
+				return s
+			},
+			expErrMessage: "Key: 'SLOGroup.SLOs[0].Name' Error:Field validation for 'Name' failed on the 'name' tag",
+		},
+
 		"SLO Service is required.": {
 			slo: func() prometheus.SLOGroup {
 				s := getGoodSLOGroup()
@@ -111,6 +165,33 @@ func TestModelValidationSpec(t *testing.T) {
 				return s
 			},
 			expErrMessage: "Key: 'SLOGroup.SLOs[0].Service' Error:Field validation for 'Service' failed on the 'required' tag",
+		},
+
+		"SLO Service must be alphanumeric, `.`, '_', and '-'.": {
+			slo: func() prometheus.SLOGroup {
+				s := getGoodSLOGroup()
+				s.SLOs[0].Service = "this-is-{a-test"
+				return s
+			},
+			expErrMessage: "Key: 'SLOGroup.SLOs[0].Service' Error:Field validation for 'Service' failed on the 'name' tag",
+		},
+
+		"SLO Service must start with aphanumeric.": {
+			slo: func() prometheus.SLOGroup {
+				s := getGoodSLOGroup()
+				s.SLOs[0].Service = "_" + s.SLOs[0].Service
+				return s
+			},
+			expErrMessage: "Key: 'SLOGroup.SLOs[0].Service' Error:Field validation for 'Service' failed on the 'name' tag",
+		},
+
+		"SLO Service must end with aphanumeric.": {
+			slo: func() prometheus.SLOGroup {
+				s := getGoodSLOGroup()
+				s.SLOs[0].Service = s.SLOs[0].Service + "_"
+				return s
+			},
+			expErrMessage: "Key: 'SLOGroup.SLOs[0].Service' Error:Field validation for 'Service' failed on the 'name' tag",
 		},
 
 		"SLO without SLI type should fail.": {

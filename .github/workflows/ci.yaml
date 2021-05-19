@@ -32,7 +32,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        kubernetes: [1.18.15, 1.19.7, 1.20.2]
+        kubernetes: [1.18.19, 1.19.11, 1.20.7, 1.21.1]
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-go@v2
@@ -40,7 +40,7 @@ jobs:
           go-version: 1.16
       - name: Execute tests
         env:
-          KIND_VERSION: v0.10.0
+          KIND_VERSION: v0.11.0
         run: |
           # Get dependencies.
           echo "Getting dependencies..."

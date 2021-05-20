@@ -10,6 +10,7 @@
 - `controller` command to start Kubernetes controller.
 - `version` command to return the app version to stdout.
 - `service` and SLO `name` validation.
+- Kubernetes controller mode documentation.
 
 ### Changed
 

@@ -21,6 +21,7 @@ labels:
 slos:
   - name: "wifi-client-satisfaction"
     objective: 95
+    description: "Warn us that we have an average wifi connection satisfaction."
     sli:
       raw:
         # Get the averate satisfaction ratio and rest 1 (max good) to get the error ratio.

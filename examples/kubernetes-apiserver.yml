@@ -25,6 +25,7 @@ labels:
 slos:
   - name: "requests-availability"
     objective: 99.9
+    description: "Warn that we are returning correctly the requests to the clients (kubectl users, controllers...)."
     sli:
       events:
         error_query: sum(rate(apiserver_request_total{code=~"(5..|429)"}[{{.window}}]))
@@ -44,6 +45,7 @@ slos:
 
   - name: "requests-latency"
     objective: 99
+    description: "Warn that we apiserver responses are being slow and this will affect the clients  (kubectl users, controllers...)."
     sli:
       events:
         error_query: |

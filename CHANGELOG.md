@@ -11,6 +11,8 @@
 - `version` command to return the app version to stdout.
 - `service` and SLO `name` validation.
 - Kubernetes controller mode documentation.
+- Description field on Prometheus Kubernetes and regular SLO specs.
+- Prometheus metrics for Kubernetes controller mode.
 
 ### Changed
 

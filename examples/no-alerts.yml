@@ -11,6 +11,7 @@ labels:
 slos:
   - name: "http-availability"
     objective: 99.99
+    description: "Common SLO based on availability for HTTP request responses."
     sli:
       events:
         error_query: |

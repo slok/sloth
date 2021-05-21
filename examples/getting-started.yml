@@ -8,6 +8,7 @@ slos:
   # We allow failing (5xx and 429) 1 request every 1000 requests (99.9%).
   - name: "requests-availability"
     objective: 99.9
+    description: "Common SLO based on availability for HTTP request responses."
     sli:
       events:
         error_query: sum(rate(http_request_duration_seconds_count{job="myservice",code=~"(5..|429)"}[{{.window}}]))

@@ -53,6 +53,10 @@ type SLO struct {
 	// Name is the name of the SLO.
 	Name string `json:"name"`
 
+	// Description is the description of the SLO.
+	// +optional
+	Description string `json:"description,omitempty"`
+
 	// +kubebuilder:validation:Required
 	//
 	// Objective is target of the SLO the percentage (0, 100] (e.g 99.9).

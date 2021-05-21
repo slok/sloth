@@ -10,9 +10,10 @@
 //    slos:
 //      - name: "requests-availability"
 //        objective: 99.9
+//        description: "Common SLO based on availability for Kubernetes apiserver HTTP request responses."
 //        sli:
 //          events:
-//            error_query: sum(rate(apiserver_request_total{code=~"5..", code="429"}[{{.window}}]))
+//            error_query: sum(rate(apiserver_request_total{code=~"(5..|429)"}[{{.window}}]))
 //            total_query: sum(rate(apiserver_request_total[{{.window}}]))
 //        alerting:
 //          name: K8sApiserverAvailabilityAlert
@@ -29,6 +30,7 @@
 //
 //      - name: "requests-latency"
 //        objective: 99
+//        description: "Common SLO based on latency for Kubernetes apiserver HTTP request responses."
 //        sli:
 //          events:
 //            error_query: |
@@ -74,6 +76,8 @@ type Spec struct {
 type SLO struct {
 	// Name is the name of the SLO.
 	Name string `yaml:"name"`
+	// Description is the description of the SLO.
+	Description string `yaml:"description,omitempty"`
 	// Objective is target of the SLO the percentage (0, 100] (e.g 99.9).
 	Objective float64 `yaml:"objective"`
 	// Labels are the Prometheus labels that will have all the recording and

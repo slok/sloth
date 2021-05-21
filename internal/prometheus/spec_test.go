@@ -63,6 +63,7 @@ slos:
     labels:
       category: test
     objective: 99.99
+    description: "This is a test."
     sli:
       events:
         error_query: test_expr_error_1
@@ -100,10 +101,11 @@ slos:
 `,
 			expModel: &prometheus.SLOGroup{SLOs: []prometheus.SLO{
 				{
-					ID:         "test-svc-slo1",
-					Name:       "slo1",
-					Service:    "test-svc",
-					TimeWindow: 30 * 24 * time.Hour,
+					ID:          "test-svc-slo1",
+					Name:        "slo1",
+					Service:     "test-svc",
+					Description: "This is a test.",
+					TimeWindow:  30 * 24 * time.Hour,
 					SLI: prometheus.SLI{
 						Events: &prometheus.SLIEvents{
 							ErrorQuery: "test_expr_error_1",

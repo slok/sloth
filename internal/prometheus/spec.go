@@ -50,6 +50,7 @@ func (yamlSpecLoader) mapSpecToModel(spec prometheusv1.Spec) (*SLOGroup, error) 
 		slo := SLO{
 			ID:               fmt.Sprintf("%s-%s", spec.Service, specSLO.Name),
 			Name:             specSLO.Name,
+			Description:      specSLO.Description,
 			Service:          spec.Service,
 			TimeWindow:       30 * 24 * time.Hour, // Default and for now the only one supported.
 			Objective:        specSLO.Objective,

@@ -65,7 +65,7 @@ slos:
         error_query: sum(rate(http_request_duration_seconds_count{job="myservice",code=~"(5..|429)"}[{{.window}}]))
         total_query: sum(rate(http_request_duration_seconds_count{job="myservice"}[{{.window}}]))
     alerting:
-      name: MyServiceAvailabilitySLO
+      name: MyServiceHighErrorRate
       labels:
         category: "availability"
       annotations:
@@ -189,12 +189,12 @@ $ kubectl create ns monitoring
 $ kubectl apply -f ./deploy/kubernetes/sloth.yaml
 
 # Deploy some SLOs.
-$ kubectl apply -f ./examples/k8s-home-wifi.yml
+$ kubectl apply -f ./examples/k8s-getting-started.yml
 
 # Get CRs.
 $ kubectl -n monitoring get slos
-NAME                  SERVICE     DESIRED SLOS   READY SLOS   GEN OK   GEN AGE   AGE
-sloth-slo-home-wifi   home-wifi   2              2            true     29s       2m50s
+NAME                   SERVICE           DESIRED SLOS   READY SLOS   GEN OK   GEN AGE   AGE
+sloth-slo-my-service   myservice         1              1            true     27s       27s
 
 $ kubectl -n monitoring get prometheusrules
 NAME                  AGE
@@ -203,6 +203,8 @@ sloth-slo-home-wifi   38s
 
 ## Examples
 
+- [Getting started](examples/getting-started.yml): Getting started example.
+- [K8s Getting started](examples/k8s-getting-started.yml): Getting started example as a Kubernetes CRD.
 - [Alerts disabled](examples/no-alerts.yml): Simple example that shows how to disable alerts.
 - [K8s apiserver](examples/kubernetes-apiserver.yml): Real example of SLOs for a Kubernetes Apiserver.
 - [Home wifi](examples/home-wifi.yml): My home Ubiquti Wifi SLOs.

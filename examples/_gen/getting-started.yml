@@ -181,7 +181,7 @@ groups:
       tier: "2"
 - name: sloth-slo-alerts-myservice-requests-availability
   rules:
-  - alert: MyServiceAvailabilitySLO
+  - alert: MyServiceHighErrorRate
     expr: |
       (
           (slo:sli_error:ratio_rate5m{sloth_id="myservice-requests-availability", sloth_service="myservice", sloth_slo="requests-availability"} > (14.4 * 0.0009999999999999432))
@@ -203,7 +203,7 @@ groups:
       summary: High error rate on 'myservice' requests responses
       title: (page) {{$labels.sloth_service}} {{$labels.sloth_slo}} SLO error budget
         burn rate is too fast.
-  - alert: MyServiceAvailabilitySLO
+  - alert: MyServiceHighErrorRate
     expr: |
       (
           (slo:sli_error:ratio_rate2h{sloth_id="myservice-requests-availability", sloth_service="myservice", sloth_slo="requests-availability"} > (3 * 0.0009999999999999432))

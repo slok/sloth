@@ -9,6 +9,8 @@ metadata:
   creationTimestamp: null
   labels:
     app: sloth
+    app.kubernetes.io/component: SLO
+    app.kubernetes.io/managed-by: sloth
     prometheus: prometheus
     role: alert-rules
   name: sloth-slo-home-wifi

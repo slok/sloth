@@ -156,9 +156,7 @@ func getBasePrometheusServiceLevel() *slothv1.PrometheusServiceLevel {
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "test01",
 			Labels: map[string]string{
-				"prometheus":                   "default",
-				"app.kubernetes.io/component":  "SLO",
-				"app.kubernetes.io/managed-by": "sloth",
+				"prometheus": "default",
 			},
 		},
 		Spec: slothv1.PrometheusServiceLevelSpec{
@@ -213,7 +211,9 @@ func getBasePromOpPrometheusRule(slothVersion string) *monitoringv1.PrometheusRu
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "test01",
 			Labels: map[string]string{
-				"prometheus": "default",
+				"prometheus":                   "default",
+				"app.kubernetes.io/component":  "SLO",
+				"app.kubernetes.io/managed-by": "sloth",
 			},
 			OwnerReferences: []metav1.OwnerReference{
 				{

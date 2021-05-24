@@ -14,7 +14,7 @@ slos:
         error_query: sum(rate(http_request_duration_seconds_count{job="myservice",code=~"(5..|429)"}[{{.window}}]))
         total_query: sum(rate(http_request_duration_seconds_count{job="myservice"}[{{.window}}]))
     alerting:
-      name: MyServiceAvailabilitySLO
+      name: MyServiceHighErrorRate
       labels:
         category: "availability"
       annotations:

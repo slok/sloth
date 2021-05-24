@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [v0.2.0] - 2021-05-24
+
 ### Added
 
 - SLO spec `description` field.
@@ -42,5 +44,6 @@
 - Support raw query based SLI.
 - Kubernetes (prometheus-operator) CRD generation support.
 
-[unreleased]: https://github.com/slok/sloth/compare/v0.1.0...HEAD
+[unreleased]: https://github.com/slok/sloth/compare/v0.2.0...HEAD
+[v0.2.0]: https://github.com/slok/sloth/compare/v0.1.0...v0.2.0
 [v0.1.0]: https://github.com/slok/sloth/releases/tag/v0.1.0

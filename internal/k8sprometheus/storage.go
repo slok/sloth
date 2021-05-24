@@ -68,6 +68,15 @@ func (i IOWriterPrometheusOperatorYAMLRepo) StoreSLOs(ctx context.Context, kmeta
 }
 
 func mapModelToPrometheusOperator(ctx context.Context, kmeta K8sMeta, slos []StorageSLO) (*monitoringv1.PrometheusRule, error) {
+	// Add extra labels.
+	labels := map[string]string{
+		"app.kubernetes.io/component":  "SLO",
+		"app.kubernetes.io/managed-by": "sloth",
+	}
+	for k, v := range kmeta.Labels {
+		labels[k] = v
+	}
+
 	rule := &monitoringv1.PrometheusRule{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "monitoring.coreos.com/v1",
@@ -76,7 +85,7 @@ func mapModelToPrometheusOperator(ctx context.Context, kmeta K8sMeta, slos []Sto
 		ObjectMeta: metav1.ObjectMeta{
 			Name:        kmeta.Name,
 			Namespace:   kmeta.Namespace,
-			Labels:      kmeta.Labels,
+			Labels:      labels,
 			Annotations: kmeta.Annotations,
 		},
 	}

@@ -4,6 +4,7 @@
 
 ### Added
 
+- SLO spec `description` field.
 - Kubernetes Prometheus CRD status.
 - Kubernetes Prometheus CRD status data print for Kubectl.
 - Kubernetes controller mode to generate Prometheus-operator CRs from Sloth CRs.
@@ -16,7 +17,7 @@
 
 ### Changed
 
-- Kubernetes Prometheus CRD manifests uses camelcase.
+- (BREAKING) Kubernetes Prometheus CRD manifests uses camelcase instead of snakecase.
 
 ### Deleted
 

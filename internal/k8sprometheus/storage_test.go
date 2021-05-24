@@ -74,6 +74,8 @@ metadata:
     ak1: av1
   creationTimestamp: null
   labels:
+    app.kubernetes.io/component: SLO
+    app.kubernetes.io/managed-by: sloth
     lk1: lv1
   name: test-name
   namespace: test-ns
@@ -121,6 +123,8 @@ metadata:
     ak1: av1
   creationTimestamp: null
   labels:
+    app.kubernetes.io/component: SLO
+    app.kubernetes.io/managed-by: sloth
     lk1: lv1
   name: test-name
   namespace: test-ns
@@ -169,6 +173,8 @@ metadata:
     ak1: av1
   creationTimestamp: null
   labels:
+    app.kubernetes.io/component: SLO
+    app.kubernetes.io/managed-by: sloth
     lk1: lv1
   name: test-name
   namespace: test-ns
@@ -277,6 +283,8 @@ metadata:
     ak1: av1
   creationTimestamp: null
   labels:
+    app.kubernetes.io/component: SLO
+    app.kubernetes.io/managed-by: sloth
     lk1: lv1
   name: test-name
   namespace: test-ns
@@ -487,9 +495,13 @@ func TestPrometheusOperatorCRDRepo(t *testing.T) {
 						Kind:       "PrometheusRule",
 					},
 					ObjectMeta: metav1.ObjectMeta{
-						Name:        "test-name",
-						Namespace:   "test-ns",
-						Labels:      map[string]string{"lk1": "lv1"},
+						Name:      "test-name",
+						Namespace: "test-ns",
+						Labels: map[string]string{
+							"lk1":                          "lv1",
+							"app.kubernetes.io/component":  "SLO",
+							"app.kubernetes.io/managed-by": "sloth",
+						},
 						Annotations: map[string]string{"ak1": "av1"},
 						OwnerReferences: []metav1.OwnerReference{
 							{

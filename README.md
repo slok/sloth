@@ -31,6 +31,7 @@ _At this moment Sloth is focused on Prometheus, however depending on the demand 
 - Automatic [Grafana dashboard][grafana-dashboard] to see all your SLOs state.
 - Single binary and easy to use CLI.
 - Kubernetes ([Prometheus-operator]) support.
+- Kubernetes Controller/operator mode with CRDs.
 
 ![Small Sloth SLO dahsboard](docs/img/sloth_small_dashboard.png)
 
@@ -328,7 +329,7 @@ Both have pros and cons:
 - Having the SLO as CRs in K8s, improves the discovery as you can always do `kubectl get slos --all-namespaces`.
 - The CLI doesn't require an app running, Sloth CRDs registered... the SLO generation process is simpler, so you have less PoFs.
 
-In a few words, theres no right or wring answer, pick your own flavour based on your use case: teams size, engineers in the company or development flow...
+In a few words, theres no right or wrong answer, pick your own flavour based on your use case: teams size, engineers in the company or development flow...
 
 [google-slo]: https://landing.google.com/sre/workbook/chapters/alerting-on-slos/
 [mwmb]: https://landing.google.com/sre/workbook/chapters/alerting-on-slos/#6-multiwindow-multi-burn-rate-alerts

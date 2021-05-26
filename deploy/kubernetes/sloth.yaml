@@ -67,25 +67,8 @@ spec:
               protocol: TCP
 
 ---
-kind: Service
-apiVersion: v1
-metadata:
-  name: sloth
-  namespace: monitoring
-  labels:
-    app: sloth
-spec:
-  selector:
-    app: sloth
-  type: ClusterIP
-  ports:
-    - name: metrics
-      port: 8081
-      protocol: TCP
-
----
 apiVersion: monitoring.coreos.com/v1
-kind: ServiceMonitor
+kind: PodMonitor
 metadata:
   name: sloth
   namespace: monitoring
@@ -96,5 +79,5 @@ spec:
   selector:
     matchLabels:
       app: sloth
-  endpoints:
+  podMetricsEndpoints:
     - port: metrics

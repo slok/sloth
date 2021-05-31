@@ -177,7 +177,7 @@ func (s sliPluginLoader) LoadRawSLIPlugin(ctx context.Context, src string) (*SLI
 	yaegiInterp := s.newYaeginInterpreter()
 	_, err := yaegiInterp.EvalWithContext(ctx, src)
 	if err != nil {
-		return nil, fmt.Errorf("could not evauluta plugin source code: %w", err)
+		return nil, fmt.Errorf("could not evaluate plugin source code: %w", err)
 	}
 
 	// Discover package name.
@@ -190,7 +190,7 @@ func (s sliPluginLoader) LoadRawSLIPlugin(ctx context.Context, src string) (*SLI
 	// Get plugin ID.
 	pluginIDTmp, err := yaegiInterp.EvalWithContext(ctx, fmt.Sprintf("%s.SLIPluginID", packageName))
 	if err != nil {
-		return nil, fmt.Errorf("could get plugin ID: %w", err)
+		return nil, fmt.Errorf("could not get plugin ID: %w", err)
 	}
 
 	pluginID, ok := pluginIDTmp.Interface().(pluginv1.SLIPluginID)
@@ -201,7 +201,7 @@ func (s sliPluginLoader) LoadRawSLIPlugin(ctx context.Context, src string) (*SLI
 	// Get plugin logic.
 	pluginFuncTmp, err := yaegiInterp.EvalWithContext(ctx, fmt.Sprintf("%s.SLIPlugin", packageName))
 	if err != nil {
-		return nil, fmt.Errorf("could get plugin: %w", err)
+		return nil, fmt.Errorf("could not get plugin: %w", err)
 	}
 
 	pluginFunc, ok := pluginFuncTmp.Interface().(pluginv1.SLIPlugin)

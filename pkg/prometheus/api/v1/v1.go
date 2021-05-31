@@ -97,10 +97,12 @@ type SLO struct {
 //
 // Only one of the SLI types can be used.
 type SLI struct {
-	// SLIRaw is the raw SLI type.
+	// Raw is the raw SLI type.
 	Raw *SLIRaw `yaml:"raw,omitempty"`
-	// SLIEvents is the events SLI type.
+	// Events is the events SLI type.
 	Events *SLIEvents `yaml:"events,omitempty"`
+	// Plugin is the pluggable SLI type.
+	Plugin *SLIPlugin `yaml:"plugin,omitempty"`
 }
 
 // SLIRaw is a error ratio SLI already calculated. Normally this will be used when the SLI
@@ -121,6 +123,14 @@ type SLIEvents struct {
 	// for the SLO (e.g "all http requests"...).
 	// Requires the usage of `{{.window}}` template variable.
 	TotalQuery string `yaml:"total_query"`
+}
+
+// SLIPlugin will use the SLI returned by the SLI plugin selected along with the options.
+type SLIPlugin struct {
+	// Name is the name of the plugin that needs to load.
+	ID string `yaml:"id"`
+	// Options are the options used for the plugin.
+	Options map[string]interface{} `yaml:"options"`
 }
 
 // Alerting wraps all the configuration required by the SLO alerts.

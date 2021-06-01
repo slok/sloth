@@ -10,18 +10,24 @@ import (
 	"github.com/slok/sloth/internal/prometheus"
 	k8sprometheusv1 "github.com/slok/sloth/pkg/kubernetes/api/sloth/v1"
 	"github.com/slok/sloth/pkg/kubernetes/gen/clientset/versioned/scheme"
+	prometheuspluginv1 "github.com/slok/sloth/pkg/prometheus/plugin/v1"
 )
 
-type yamlSpecLoader struct {
+// YAMLSpecLoader knows how to load Kubernetes ServiceLevel YAML specs and converts them to a model.
+type YAMLSpecLoader struct {
+	plugins map[string]prometheus.SLIPlugin
 	decoder runtime.Decoder
 }
 
-// YAMLSpecLoader knows how to load Kubernetes ServiceLevel YAML specs and converts them to a model.
-var YAMLSpecLoader = yamlSpecLoader{
-	decoder: scheme.Codecs.UniversalDeserializer(),
+// NewYAMLSpecLoader returns a YAML spec loader.
+func NewYAMLSpecLoader(plugins map[string]prometheus.SLIPlugin) YAMLSpecLoader {
+	return YAMLSpecLoader{
+		plugins: plugins,
+		decoder: scheme.Codecs.UniversalDeserializer(),
+	}
 }
 
-func (y yamlSpecLoader) LoadSpec(ctx context.Context, data []byte) (*SLOGroup, error) {
+func (y YAMLSpecLoader) LoadSpec(ctx context.Context, data []byte) (*SLOGroup, error) {
 	if len(data) == 0 {
 		return nil, fmt.Errorf("spec is required")
 	}
@@ -41,7 +47,7 @@ func (y yamlSpecLoader) LoadSpec(ctx context.Context, data []byte) (*SLOGroup, e
 		return nil, fmt.Errorf("at least one SLO is required")
 	}
 
-	m, err := mapSpecToModel(kslo)
+	m, err := mapSpecToModel(y.plugins, kslo)
 	if err != nil {
 		return nil, fmt.Errorf("could not map to model: %w", err)
 	}
@@ -49,16 +55,23 @@ func (y yamlSpecLoader) LoadSpec(ctx context.Context, data []byte) (*SLOGroup, e
 	return m, nil
 }
 
-type crSpecLoader bool
-
-// CRSpecLoader knows how to load Kubernetes CRD specs and converts them to a model.
-const CRSpecLoader = crSpecLoader(false)
-
-func (c crSpecLoader) LoadSpec(ctx context.Context, spec *k8sprometheusv1.PrometheusServiceLevel) (*SLOGroup, error) {
-	return mapSpecToModel(spec)
+type CRSpecLoader struct {
+	plugins map[string]prometheus.SLIPlugin
 }
 
-func mapSpecToModel(kspec *k8sprometheusv1.PrometheusServiceLevel) (*SLOGroup, error) {
+// CRSpecLoader knows how to load Kubernetes CRD specs and converts them to a model.
+
+func NewCRSpecLoader(plugins map[string]prometheus.SLIPlugin) CRSpecLoader {
+	return CRSpecLoader{
+		plugins: plugins,
+	}
+}
+
+func (c CRSpecLoader) LoadSpec(ctx context.Context, spec *k8sprometheusv1.PrometheusServiceLevel) (*SLOGroup, error) {
+	return mapSpecToModel(c.plugins, spec)
+}
+
+func mapSpecToModel(plugins map[string]prometheus.SLIPlugin, kspec *k8sprometheusv1.PrometheusServiceLevel) (*SLOGroup, error) {
 	slos := make([]prometheus.SLO, 0, len(kspec.Spec.SLOs))
 	spec := kspec.Spec
 	for _, specSLO := range kspec.Spec.SLOs {
@@ -85,6 +98,32 @@ func mapSpecToModel(kspec *k8sprometheusv1.PrometheusServiceLevel) (*SLOGroup, e
 		if specSLO.SLI.Raw != nil {
 			slo.SLI.Raw = &prometheus.SLIRaw{
 				ErrorRatioQuery: specSLO.SLI.Raw.ErrorRatioQuery,
+			}
+		}
+
+		if specSLO.SLI.Plugin != nil {
+			plugin, ok := plugins[specSLO.SLI.Plugin.ID]
+			if !ok {
+				return nil, fmt.Errorf("unknown plugin: %q", specSLO.SLI.Plugin.ID)
+			}
+			opts := specSLO.SLI.Plugin.Options
+			if opts == nil {
+				opts = map[string]interface{}{}
+			}
+
+			meta := map[string]interface{}{
+				prometheuspluginv1.SLIPluginMetaService: spec.Service,
+				prometheuspluginv1.SLIPluginMetaSLO:     specSLO.Name,
+				prometheuspluginv1.SLIPluginMetaLabels:  spec.Labels,
+			}
+
+			rawQuery, err := plugin.Func(meta, opts)
+			if err != nil {
+				return nil, fmt.Errorf("plugin %q execution error: %w", specSLO.SLI.Plugin.ID, err)
+			}
+
+			slo.SLI.Raw = &prometheus.SLIRaw{
+				ErrorRatioQuery: rawQuery,
 			}
 		}
 

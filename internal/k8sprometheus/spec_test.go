@@ -2,6 +2,7 @@ package k8sprometheus_test
 
 import (
 	"context"
+	"fmt"
 	"testing"
 	"time"
 
@@ -14,6 +15,7 @@ import (
 func TestYAMLoadSpec(t *testing.T) {
 	tests := map[string]struct {
 		specYaml string
+		plugins  map[string]prometheus.SLIPlugin
 		expModel *k8sprometheus.SLOGroup
 		expErr   bool
 	}{
@@ -73,6 +75,130 @@ metadata:
     app: sloth
 spec:
   service: "home-wifi"
+`,
+			expErr: true,
+		},
+
+		"An spec without unknown SLI plugin should fail.": {
+			specYaml: `
+apiVersion: sloth.slok.dev/v1
+kind: PrometheusServiceLevel
+metadata:
+  name: k8s-test-svc
+  namespace: test-ns
+spec:
+  service: test-svc
+  slos:
+    - name: "slo"
+      objective: 99
+      sli:
+        plugin:
+          id: unknown_plugin
+      alerting:
+        page_alert:
+          disable: true
+        ticket_alert:
+          disable: true
+`,
+			expErr: true,
+		},
+
+		"Spec with SLI plugin should use the plugin correctly.": {
+			plugins: map[string]prometheus.SLIPlugin{
+				"test_plugin": {
+					ID: "test_plugin",
+					Func: func(meta map[string]interface{}, options map[string]interface{}) (string, error) {
+						labels := meta["sloth_labels"].(map[string]string)
+						return fmt.Sprintf(`plugin_raw_expr{service="%s",slo="%s",gk1="%s",k1="%s",k2="%t"}`,
+							meta["sloth_service"],
+							meta["sloth_slo"],
+							labels["gk1"],
+							options["k1"],
+							options["k2"]), nil
+					},
+				},
+			},
+			specYaml: `
+apiVersion: sloth.slok.dev/v1
+kind: PrometheusServiceLevel
+metadata:
+  name: k8s-test-svc
+  namespace: test-ns
+spec:
+  service: test-svc
+  labels:
+    gk1: gv1
+  slos:
+    - name: "slo-test"
+      objective: 99
+      sli:
+        plugin:
+          id: test_plugin
+          options:
+            k1: v1
+            k2: true
+      alerting:
+        pageAlert:
+          disable: true
+        ticketAlert:
+          disable: true
+`,
+			expModel: &k8sprometheus.SLOGroup{
+				K8sMeta: k8sprometheus.K8sMeta{
+					Kind:       "PrometheusServiceLevel",
+					APIVersion: "sloth.slok.dev/v1",
+					UID:        "",
+					Name:       "k8s-test-svc",
+					Namespace:  "test-ns",
+				},
+				SLOGroup: prometheus.SLOGroup{SLOs: []prometheus.SLO{
+					{
+						ID:         "test-svc-slo-test",
+						Name:       "slo-test",
+						Service:    "test-svc",
+						TimeWindow: 30 * 24 * time.Hour,
+						Labels:     map[string]string{"gk1": "gv1"},
+						SLI: prometheus.SLI{
+							Raw: &prometheus.SLIRaw{
+								ErrorRatioQuery: `plugin_raw_expr{service="test-svc",slo="slo-test",gk1="gv1",k1="v1",k2="true"}`,
+							},
+						},
+						Objective:        99,
+						PageAlertMeta:    prometheus.AlertMeta{Disable: true},
+						WarningAlertMeta: prometheus.AlertMeta{Disable: true},
+					},
+				}},
+			},
+		},
+
+		"An spec with SLI plugin that returns an error should use the plugin correctly and fail.": {
+			plugins: map[string]prometheus.SLIPlugin{
+				"test_plugin": {
+					ID: "test_plugin",
+					Func: func(meta map[string]interface{}, options map[string]interface{}) (string, error) {
+						return "", fmt.Errorf("something")
+					},
+				},
+			},
+			specYaml: `
+apiVersion: sloth.slok.dev/v1
+kind: PrometheusServiceLevel
+metadata:
+  name: k8s-test-svc
+  namespace: test-ns
+spec:
+  service: test-svc
+  slos:
+    - name: "slo"
+      objective: 99
+      sli:
+        plugin:
+          id: test_plugin
+      alerting:
+        page_alert:
+          disable: true
+        ticket_alert:
+          disable: true
 `,
 			expErr: true,
 		},
@@ -218,7 +344,8 @@ spec:
 		t.Run(name, func(t *testing.T) {
 			assert := assert.New(t)
 
-			gotModel, err := k8sprometheus.YAMLSpecLoader.LoadSpec(context.TODO(), []byte(test.specYaml))
+			loader := k8sprometheus.NewYAMLSpecLoader(test.plugins)
+			gotModel, err := loader.LoadSpec(context.TODO(), []byte(test.specYaml))
 
 			if test.expErr {
 				assert.Error(err)

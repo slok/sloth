@@ -8,14 +8,22 @@ import (
 	"gopkg.in/yaml.v2"
 
 	prometheusv1 "github.com/slok/sloth/pkg/prometheus/api/v1"
+	prometheuspluginv1 "github.com/slok/sloth/pkg/prometheus/plugin/v1"
 )
 
-type yamlSpecLoader bool
-
 // YAMLSpecLoader knows how to load YAML specs and converts them to a model.
-const YAMLSpecLoader = yamlSpecLoader(false)
+type YAMLSpecLoader struct {
+	plugins map[string]SLIPlugin
+}
 
-func (y yamlSpecLoader) LoadSpec(ctx context.Context, data []byte) (*SLOGroup, error) {
+// NewYAMLSpecLoader returns a YAML spec loader.
+func NewYAMLSpecLoader(plugins map[string]SLIPlugin) YAMLSpecLoader {
+	return YAMLSpecLoader{
+		plugins: plugins,
+	}
+}
+
+func (y YAMLSpecLoader) LoadSpec(ctx context.Context, data []byte) (*SLOGroup, error) {
 	if len(data) == 0 {
 		return nil, fmt.Errorf("spec is required")
 	}
@@ -44,7 +52,7 @@ func (y yamlSpecLoader) LoadSpec(ctx context.Context, data []byte) (*SLOGroup, e
 	return m, nil
 }
 
-func (yamlSpecLoader) mapSpecToModel(spec prometheusv1.Spec) (*SLOGroup, error) {
+func (y YAMLSpecLoader) mapSpecToModel(spec prometheusv1.Spec) (*SLOGroup, error) {
 	models := make([]SLO, 0, len(spec.SLOs))
 	for _, specSLO := range spec.SLOs {
 		slo := SLO{
@@ -70,6 +78,32 @@ func (yamlSpecLoader) mapSpecToModel(spec prometheusv1.Spec) (*SLOGroup, error) 
 		if specSLO.SLI.Raw != nil {
 			slo.SLI.Raw = &SLIRaw{
 				ErrorRatioQuery: specSLO.SLI.Raw.ErrorRatioQuery,
+			}
+		}
+
+		if specSLO.SLI.Plugin != nil {
+			plugin, ok := y.plugins[specSLO.SLI.Plugin.ID]
+			if !ok {
+				return nil, fmt.Errorf("unknown plugin: %q", specSLO.SLI.Plugin.ID)
+			}
+			opts := specSLO.SLI.Plugin.Options
+			if opts == nil {
+				opts = map[string]interface{}{}
+			}
+
+			meta := map[string]interface{}{
+				prometheuspluginv1.SLIPluginMetaService: spec.Service,
+				prometheuspluginv1.SLIPluginMetaSLO:     specSLO.Name,
+				prometheuspluginv1.SLIPluginMetaLabels:  spec.Labels,
+			}
+
+			rawQuery, err := plugin.Func(meta, opts)
+			if err != nil {
+				return nil, fmt.Errorf("plugin %q execution error: %w", specSLO.SLI.Plugin.ID, err)
+			}
+
+			slo.SLI.Raw = &SLIRaw{
+				ErrorRatioQuery: rawQuery,
 			}
 		}
 

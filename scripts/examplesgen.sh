@@ -20,7 +20,7 @@ set +f # Allow asterisk expansion.
 # the current development version.
 for file in ${SLOS_PATH}/*.yml; do
     fname=$(basename "$file")
-    go run ./cmd/sloth/ generate -i "${file}" -o "${GEN_PATH}/${fname}"
+    go run ./cmd/sloth/ generate -i "${file}" -o "${GEN_PATH}/${fname}" -p "${SLOS_PATH}"
 done
 
 set -f

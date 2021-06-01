@@ -24,6 +24,7 @@ type generateCommand struct {
 	disableRecordings bool
 	disableAlerts     bool
 	extraLabels       map[string]string
+	sliPluginsPaths   []string
 }
 
 // NewGenerateCommand returns the generate command.
@@ -35,6 +36,7 @@ func NewGenerateCommand(app *kingpin.Application) Command {
 	cmd.Flag("extra-labels", "Extra labels that will be added to all the generated Prometheus rules ('key=value' form, can be repeated).").Short('l').StringMapVar(&c.extraLabels)
 	cmd.Flag("disable-recordings", "Disables recording rules generation.").BoolVar(&c.disableRecordings)
 	cmd.Flag("disable-alerts", "Disables alert rules generation.").BoolVar(&c.disableAlerts)
+	cmd.Flag("sli-plugins-path", "The path to SLI plugins (can be repeated), if not set it disable plugins support.").Short('p').StringsVar(&c.sliPluginsPaths)
 
 	return c
 }
@@ -55,15 +57,35 @@ func (g generateCommand) Run(ctx context.Context, config RootConfig) error {
 	}
 
 	// Try loading spec with all the generators possible.
+	plugins := map[string]prometheus.SLIPlugin{}
+	if len(g.sliPluginsPaths) > 0 {
+		config := prometheus.FileSLIPluginRepoConfig{
+			Paths:  g.sliPluginsPaths,
+			Logger: config.Logger,
+		}
+		sliPluginRepo, err := prometheus.NewFileSLIPluginRepo(config)
+		if err != nil {
+			return fmt.Errorf("could not create file SLI plugin repository: %w", err)
+		}
+
+		ps, err := sliPluginRepo.ListSLIPlugins(ctx)
+		if err != nil {
+			return fmt.Errorf("could not load plugins: %w", err)
+		}
+		plugins = ps
+		config.Logger.WithValues(log.Kv{"plugins": len(plugins)}).Infof("SLI plugins loaded")
+	}
 
 	// Raw Prometheus generator.
-	slos, promErr := prometheus.YAMLSpecLoader.LoadSpec(ctx, slxData)
+	promYAMLLoader := prometheus.NewYAMLSpecLoader(plugins)
+	slos, promErr := promYAMLLoader.LoadSpec(ctx, slxData)
 	if promErr == nil {
 		return g.runPrometheus(ctx, config, *slos)
 	}
 
 	// Kubernetes Prometheus operator generator.
-	sloGroup, k8sErr := k8sprometheus.YAMLSpecLoader.LoadSpec(ctx, slxData)
+	kubeYAMLLoader := k8sprometheus.NewYAMLSpecLoader(plugins)
+	sloGroup, k8sErr := kubeYAMLLoader.LoadSpec(ctx, slxData)
 	if k8sErr == nil {
 		return g.runKubernetes(ctx, config, *sloGroup)
 	}

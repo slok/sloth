@@ -42,6 +42,7 @@ type kubeControllerCommand struct {
 	development       bool
 	metricsPath       string
 	metricsListenAddr string
+	sliPluginsPaths   []string
 }
 
 // NewKubeControllerCommand returns the Kubernetes controller command.
@@ -61,12 +62,33 @@ func NewKubeControllerCommand(app *kingpin.Application) Command {
 	cmd.Flag("metrics-path", "The path for Prometheus metrics.").Default("/metrics").StringVar(&c.metricsPath)
 	cmd.Flag("metrics-listen-addr", "The listen address for Prometheus metrics and pprof.").Default(":8081").StringVar(&c.metricsListenAddr)
 	cmd.Flag("extra-labels", "Extra labels that will be added to all the generated Prometheus rules ('key=value' form, can be repeated).").Short('l').StringMapVar(&c.extraLabels)
+	cmd.Flag("sli-plugins-path", "The path to SLI plugins (can be repeated), if not set it disable plugins support.").Short('p').StringsVar(&c.sliPluginsPaths)
 
 	return c
 }
 
 func (k kubeControllerCommand) Name() string { return "kubernetes-controller" }
 func (k kubeControllerCommand) Run(ctx context.Context, config RootConfig) error {
+	// Try loading spec with all the generators possible.
+	plugins := map[string]prometheus.SLIPlugin{}
+	if len(k.sliPluginsPaths) > 0 {
+		config := prometheus.FileSLIPluginRepoConfig{
+			Paths:  k.sliPluginsPaths,
+			Logger: config.Logger,
+		}
+		sliPluginRepo, err := prometheus.NewFileSLIPluginRepo(config)
+		if err != nil {
+			return fmt.Errorf("could not create file SLI plugin repository: %w", err)
+		}
+
+		ps, err := sliPluginRepo.ListSLIPlugins(ctx)
+		if err != nil {
+			return fmt.Errorf("could not load plugins: %w", err)
+		}
+		plugins = ps
+		config.Logger.WithValues(log.Kv{"plugins": len(plugins)}).Infof("SLI plugins loaded")
+	}
+
 	// Load Kubernetes clients.
 	config.Logger.Infof("Loading Kubernetes configuration...")
 	kcfg, err := k.loadKubernetesConfig()
@@ -173,7 +195,7 @@ func (k kubeControllerCommand) Run(ctx context.Context, config RootConfig) error
 		// Create handler.
 		config := kubecontroller.HandlerConfig{
 			Generator:        generator,
-			SpecLoader:       k8sprometheus.CRSpecLoader,
+			SpecLoader:       k8sprometheus.NewCRSpecLoader(plugins),
 			Repository:       k8sprometheus.NewPrometheusOperatorCRDRepo(ksvc, config.Logger),
 			KubeStatusStorer: ksvc,
 			ExtraLabels:      k.extraLabels,

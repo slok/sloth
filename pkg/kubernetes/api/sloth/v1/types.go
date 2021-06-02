@@ -127,7 +127,7 @@ type SLIPlugin struct {
 
 	// Options are the options used for the plugin.
 	// +optional
-	Options map[string]interface{} `json:"options,omitempty"`
+	Options map[string]string `json:"options,omitempty"`
 }
 
 // Alerting wraps all the configuration required by the SLO alerts.

@@ -13,7 +13,8 @@ slos:
       plugin:
         id: "getting_started_availability"
         options:
-          job: myservice
+          job: "myservice"
+          filter: 'f1="v1",f2="v2"'
     alerting:
       name: MyServiceHighErrorRate
       labels:

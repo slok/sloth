@@ -70,6 +70,7 @@ slos:
 - [type Alerting](<#type-alerting>)
 - [type SLI](<#type-sli>)
 - [type SLIEvents](<#type-slievents>)
+- [type SLIPlugin](<#type-sliplugin>)
 - [type SLIRaw](<#type-sliraw>)
 - [type SLO](<#type-slo>)
 - [type Spec](<#type-spec>)
@@ -126,10 +127,12 @@ Only one of the SLI types can be used\.
 
 ```go
 type SLI struct {
-    // SLIRaw is the raw SLI type.
+    // Raw is the raw SLI type.
     Raw *SLIRaw `yaml:"raw,omitempty"`
-    // SLIEvents is the events SLI type.
+    // Events is the events SLI type.
     Events *SLIEvents `yaml:"events,omitempty"`
+    // Plugin is the pluggable SLI type.
+    Plugin *SLIPlugin `yaml:"plugin,omitempty"`
 }
 ```
 
@@ -147,6 +150,19 @@ type SLIEvents struct {
     // for the SLO (e.g "all http requests"...).
     // Requires the usage of `{{.window}}` template variable.
     TotalQuery string `yaml:"total_query"`
+}
+```
+
+## type SLIPlugin
+
+SLIPlugin will use the SLI returned by the SLI plugin selected along with the options\.
+
+```go
+type SLIPlugin struct {
+    // Name is the name of the plugin that needs to load.
+    ID  string `yaml:"id"`
+    // Options are the options used for the plugin.
+    Options map[string]string `yaml:"options"`
 }
 ```
 

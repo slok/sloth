@@ -1,0 +1,46 @@
+# This example shows the same example as home-wifi.yml but using Sloth Kubernetes CRD.
+# It will generate the Prometheus rules in a Kubernetes prometheus-operator PrometheusRules CRD.
+#
+# `sloth generate -i ./examples/plugin-k8s-home-wifi.yml` -p ./examples
+#
+apiVersion: sloth.slok.dev/v1
+kind: PrometheusServiceLevel
+metadata:
+  name: sloth-slo-home-wifi
+  namespace: monitoring
+  labels:
+    prometheus: prometheus
+    role: alert-rules
+    app: sloth
+spec:
+  service: "myservice"
+  labels:
+    owner: "myteam"
+    repo: "myorg/myservice"
+    tier: "2"
+  slos:
+    # We allow failing (5xx and 429) 1 request every 1000 requests (99.9%).
+    - name: "requests-availability"
+      objective: 99.9
+      description: "Common SLO based on availability for HTTP request responses."
+      sli:
+        plugin:
+          id: "getting_started_availability"
+          options:
+            job: "myservice"
+            filter: 'f1="v1",f2="v2"'
+      alerting:
+        name: MyServiceHighErrorRate
+        labels:
+          category: "availability"
+        annotations:
+          # Overwrite default Sloth SLO alert summmary on ticket and page alerts.
+          summary: "High error rate on 'myservice' requests responses"
+        page_alert:
+          labels:
+            severity: pageteam
+            routing_key: myteam
+        ticket_alert:
+          labels:
+            severity: "slack"
+            slack_channel: "#alerts-myteam"

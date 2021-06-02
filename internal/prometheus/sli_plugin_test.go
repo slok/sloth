@@ -16,8 +16,9 @@ func TestSLIPluginLoader(t *testing.T) {
 	tests := map[string]struct {
 		pluginSrc   string
 		pluginID    string
-		meta        map[string]interface{}
-		options     map[string]interface{}
+		meta        map[string]string
+		labels      map[string]string
+		options     map[string]string
 		expPluginID string
 		expSLIQuery string
 		expErr      bool
@@ -28,7 +29,7 @@ package testplugin
 
 const SLIPluginID = "test_plugin"
 
-func SLIPlugin(meta map[string]interface{}, options map[string]interface{}) (string, error) {
+func SLIPlugin(meta map[string]string, labels map[string]string, options map[string]string) (string, error) {
 	return "test_query{}", nil
 }
 `,
@@ -44,13 +45,14 @@ import "fmt"
 
 const SLIPluginID = "test_plugin"
 
-func SLIPlugin(meta map[string]interface{}, options map[string]interface{}) (string, error) {
-	return fmt.Sprintf("test_query{mk1=\"%s\",k1=\"%s\",k2=\"%s\"}", meta["mk1"], options["k1"], options["k2"]), nil
+func SLIPlugin(meta map[string]string, labels map[string]string, options map[string]string) (string, error) {
+	return fmt.Sprintf("test_query{mk1=\"%s\",lk1=\"%s\",k1=\"%s\",k2=\"%s\"}", meta["mk1"], labels["lk1"], options["k1"], options["k2"]), nil
 }
 		`,
-			meta:        map[string]interface{}{"mk1": "mv1"},
-			options:     map[string]interface{}{"k1": "v1", "k2": "v2"},
-			expSLIQuery: `test_query{mk1="mv1",k1="v1",k2="v2"}`,
+			meta:        map[string]string{"mk1": "mv1"},
+			labels:      map[string]string{"lk1": "lv1"},
+			options:     map[string]string{"k1": "v1", "k2": "v2"},
+			expSLIQuery: `test_query{mk1="mv1",lk1="lv1",k1="v1",k2="v2"}`,
 			expPluginID: "test_plugin",
 		},
 
@@ -62,12 +64,13 @@ import "fmt"
 
 const SLIPluginID = "test_plugin"
 
-func SLIPlugin(meta map[string]interface{}, options map[string]interface{}) (string, error) {
+func SLIPlugin(meta map[string]string, labels map[string]string, options map[string]string) (string, error) {
 	return "", fmt.Errorf("something")
 }
 		`,
-			meta:        map[string]interface{}{"mk1": "mv1"},
-			options:     map[string]interface{}{"k1": "v1", "k2": "v2"},
+			meta:        map[string]string{"mk1": "mv1"},
+			labels:      map[string]string{"lk1": "lv1"},
+			options:     map[string]string{"k1": "v1", "k2": "v2"},
 			expPluginID: "test_plugin",
 			expErr:      true,
 		},
@@ -100,7 +103,7 @@ func SLIPlugin(meta map[string]interface{}, options map[string]interface{}) (str
 			assert.True(ok)
 			assert.Equal(test.expPluginID, plugin.ID)
 
-			gotSLIQuery, err := plugin.Func(test.meta, test.options)
+			gotSLIQuery, err := plugin.Func(test.meta, test.labels, test.options)
 			if test.expErr {
 				assert.Error(err)
 			} else if assert.NoError(err) {

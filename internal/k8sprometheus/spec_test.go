@@ -107,11 +107,11 @@ spec:
 			plugins: map[string]prometheus.SLIPlugin{
 				"test_plugin": {
 					ID: "test_plugin",
-					Func: func(meta map[string]interface{}, options map[string]interface{}) (string, error) {
-						labels := meta["sloth_labels"].(map[string]string)
-						return fmt.Sprintf(`plugin_raw_expr{service="%s",slo="%s",gk1="%s",k1="%s",k2="%t"}`,
-							meta["sloth_service"],
-							meta["sloth_slo"],
+					Func: func(meta map[string]string, labels map[string]string, options map[string]string) (string, error) {
+						return fmt.Sprintf(`plugin_raw_expr{service="%s",slo="%s",objective="%s",gk1="%s",k1="%s",k2="%s"}`,
+							meta["service"],
+							meta["slo"],
+							meta["objective"],
 							labels["gk1"],
 							options["k1"],
 							options["k2"]), nil
@@ -136,7 +136,7 @@ spec:
           id: test_plugin
           options:
             k1: v1
-            k2: true
+            k2: "true"
       alerting:
         pageAlert:
           disable: true
@@ -160,7 +160,7 @@ spec:
 						Labels:     map[string]string{"gk1": "gv1"},
 						SLI: prometheus.SLI{
 							Raw: &prometheus.SLIRaw{
-								ErrorRatioQuery: `plugin_raw_expr{service="test-svc",slo="slo-test",gk1="gv1",k1="v1",k2="true"}`,
+								ErrorRatioQuery: `plugin_raw_expr{service="test-svc",slo="slo-test",objective="99.000000",gk1="gv1",k1="v1",k2="true"}`,
 							},
 						},
 						Objective:        99,
@@ -175,7 +175,7 @@ spec:
 			plugins: map[string]prometheus.SLIPlugin{
 				"test_plugin": {
 					ID: "test_plugin",
-					Func: func(meta map[string]interface{}, options map[string]interface{}) (string, error) {
+					Func: func(meta map[string]string, labels map[string]string, options map[string]string) (string, error) {
 						return "", fmt.Errorf("something")
 					},
 				},

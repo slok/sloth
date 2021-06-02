@@ -86,18 +86,14 @@ func (y YAMLSpecLoader) mapSpecToModel(spec prometheusv1.Spec) (*SLOGroup, error
 			if !ok {
 				return nil, fmt.Errorf("unknown plugin: %q", specSLO.SLI.Plugin.ID)
 			}
-			opts := specSLO.SLI.Plugin.Options
-			if opts == nil {
-				opts = map[string]interface{}{}
+
+			meta := map[string]string{
+				prometheuspluginv1.SLIPluginMetaService:   spec.Service,
+				prometheuspluginv1.SLIPluginMetaSLO:       specSLO.Name,
+				prometheuspluginv1.SLIPluginMetaObjective: fmt.Sprintf("%f", specSLO.Objective),
 			}
 
-			meta := map[string]interface{}{
-				prometheuspluginv1.SLIPluginMetaService: spec.Service,
-				prometheuspluginv1.SLIPluginMetaSLO:     specSLO.Name,
-				prometheuspluginv1.SLIPluginMetaLabels:  spec.Labels,
-			}
-
-			rawQuery, err := plugin.Func(meta, opts)
+			rawQuery, err := plugin.Func(meta, spec.Labels, specSLO.SLI.Plugin.Options)
 			if err != nil {
 				return nil, fmt.Errorf("plugin %q execution error: %w", specSLO.SLI.Plugin.ID, err)
 			}

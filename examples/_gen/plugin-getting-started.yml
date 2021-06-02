@@ -9,10 +9,9 @@ groups:
   - record: slo:sli_error:ratio_rate5m
     expr: |-
       (
-      sum(rate(http_request_duration_seconds_count{from_plugin="true",job="myservice",code=~"(5..|429)"}[5m]))
+      sum(rate(http_request_duration_seconds_count{ f1="v1",f2="v2",job="myservice",code=~"(5..|429)" }[5m]))
       /
-      sum(rate(http_request_duration_seconds_count{from_plugin="true",job="myservice"}[5m]))
-      )
+      sum(rate(http_request_duration_seconds_count{ f1="v1",f2="v2",job="myservice" }[5m])))
     labels:
       owner: myteam
       repo: myorg/myservice
@@ -24,10 +23,9 @@ groups:
   - record: slo:sli_error:ratio_rate30m
     expr: |-
       (
-      sum(rate(http_request_duration_seconds_count{from_plugin="true",job="myservice",code=~"(5..|429)"}[30m]))
+      sum(rate(http_request_duration_seconds_count{ f1="v1",f2="v2",job="myservice",code=~"(5..|429)" }[30m]))
       /
-      sum(rate(http_request_duration_seconds_count{from_plugin="true",job="myservice"}[30m]))
-      )
+      sum(rate(http_request_duration_seconds_count{ f1="v1",f2="v2",job="myservice" }[30m])))
     labels:
       owner: myteam
       repo: myorg/myservice
@@ -39,10 +37,9 @@ groups:
   - record: slo:sli_error:ratio_rate1h
     expr: |-
       (
-      sum(rate(http_request_duration_seconds_count{from_plugin="true",job="myservice",code=~"(5..|429)"}[1h]))
+      sum(rate(http_request_duration_seconds_count{ f1="v1",f2="v2",job="myservice",code=~"(5..|429)" }[1h]))
       /
-      sum(rate(http_request_duration_seconds_count{from_plugin="true",job="myservice"}[1h]))
-      )
+      sum(rate(http_request_duration_seconds_count{ f1="v1",f2="v2",job="myservice" }[1h])))
     labels:
       owner: myteam
       repo: myorg/myservice
@@ -54,10 +51,9 @@ groups:
   - record: slo:sli_error:ratio_rate2h
     expr: |-
       (
-      sum(rate(http_request_duration_seconds_count{from_plugin="true",job="myservice",code=~"(5..|429)"}[2h]))
+      sum(rate(http_request_duration_seconds_count{ f1="v1",f2="v2",job="myservice",code=~"(5..|429)" }[2h]))
       /
-      sum(rate(http_request_duration_seconds_count{from_plugin="true",job="myservice"}[2h]))
-      )
+      sum(rate(http_request_duration_seconds_count{ f1="v1",f2="v2",job="myservice" }[2h])))
     labels:
       owner: myteam
       repo: myorg/myservice
@@ -69,10 +65,9 @@ groups:
   - record: slo:sli_error:ratio_rate6h
     expr: |-
       (
-      sum(rate(http_request_duration_seconds_count{from_plugin="true",job="myservice",code=~"(5..|429)"}[6h]))
+      sum(rate(http_request_duration_seconds_count{ f1="v1",f2="v2",job="myservice",code=~"(5..|429)" }[6h]))
       /
-      sum(rate(http_request_duration_seconds_count{from_plugin="true",job="myservice"}[6h]))
-      )
+      sum(rate(http_request_duration_seconds_count{ f1="v1",f2="v2",job="myservice" }[6h])))
     labels:
       owner: myteam
       repo: myorg/myservice
@@ -84,10 +79,9 @@ groups:
   - record: slo:sli_error:ratio_rate1d
     expr: |-
       (
-      sum(rate(http_request_duration_seconds_count{from_plugin="true",job="myservice",code=~"(5..|429)"}[1d]))
+      sum(rate(http_request_duration_seconds_count{ f1="v1",f2="v2",job="myservice",code=~"(5..|429)" }[1d]))
       /
-      sum(rate(http_request_duration_seconds_count{from_plugin="true",job="myservice"}[1d]))
-      )
+      sum(rate(http_request_duration_seconds_count{ f1="v1",f2="v2",job="myservice" }[1d])))
     labels:
       owner: myteam
       repo: myorg/myservice
@@ -99,10 +93,9 @@ groups:
   - record: slo:sli_error:ratio_rate3d
     expr: |-
       (
-      sum(rate(http_request_duration_seconds_count{from_plugin="true",job="myservice",code=~"(5..|429)"}[3d]))
+      sum(rate(http_request_duration_seconds_count{ f1="v1",f2="v2",job="myservice",code=~"(5..|429)" }[3d]))
       /
-      sum(rate(http_request_duration_seconds_count{from_plugin="true",job="myservice"}[3d]))
-      )
+      sum(rate(http_request_duration_seconds_count{ f1="v1",f2="v2",job="myservice" }[3d])))
     labels:
       owner: myteam
       repo: myorg/myservice

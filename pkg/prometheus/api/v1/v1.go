@@ -130,7 +130,7 @@ type SLIPlugin struct {
 	// Name is the name of the plugin that needs to load.
 	ID string `yaml:"id"`
 	// Options are the options used for the plugin.
-	Options map[string]interface{} `yaml:"options"`
+	Options map[string]string `yaml:"options"`
 }
 
 // Alerting wraps all the configuration required by the SLO alerts.

@@ -144,7 +144,7 @@ spec:
                       description: SLI is the indicator (service level indicator) for this specific SLO.
                       properties:
                         events:
-                          description: SLIEvents is the events SLI type.
+                          description: Events is the events SLI type.
                           properties:
                             errorQuery:
                               description: ErrorQuery is a Prometheus query that will get the number/count of events that we consider that are bad for the SLO (e.g "http 5xx", "latency > 250ms"...). Requires the usage of `{{.window}}` template variable.
@@ -156,8 +156,22 @@ spec:
                           - errorQuery
                           - totalQuery
                           type: object
+                        plugin:
+                          description: Plugin is the pluggable SLI type.
+                          properties:
+                            id:
+                              description: Name is the name of the plugin that needs to load.
+                              type: string
+                            options:
+                              additionalProperties:
+                                type: string
+                              description: Options are the options used for the plugin.
+                              type: object
+                          required:
+                          - id
+                          type: object
                         raw:
-                          description: SLIRaw is the raw SLI type.
+                          description: Raw is the raw SLI type.
                           properties:
                             errorRatioQuery:
                               description: ErrorRatioQuery is a Prometheus query that will get the raw error ratio (0-1) for the SLO.

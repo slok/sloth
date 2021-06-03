@@ -55,7 +55,7 @@ func (c *HandlerConfig) defaults() error {
 	}
 
 	if c.SpecLoader == nil {
-		c.SpecLoader = k8sprometheus.CRSpecLoader
+		return fmt.Errorf("kubernetes cr spec loader is required")
 	}
 
 	if c.KubeStatusStorer == nil {

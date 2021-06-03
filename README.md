@@ -32,6 +32,8 @@ _At this moment Sloth is focused on Prometheus, however depending on the demand 
 - Single binary and easy to use CLI.
 - Kubernetes ([Prometheus-operator]) support.
 - Kubernetes Controller/operator mode with CRDs.
+- Support different [SLI types](#sli-types-manifests).
+- Support for [SLI plugins](#sli-plugins).
 
 ![Small Sloth SLO dahsboard](docs/img/sloth_small_dashboard.png)
 
@@ -211,8 +213,82 @@ sloth-slo-home-wifi   38s
 - [Home wifi](examples/home-wifi.yml): My home Ubiquti Wifi SLOs.
 - [K8s Home wifi](examples/k8s-home-wifi.yml): Same as home-wifi but shows how to generate Prometheus-operator CRD from a Sloth CRD.
 - [Raw Home wifi](examples/raw-home-wifi.yml): Example showing how to use `raw` SLIs instead of the common `events` using the home-wifi example.
+- SLI Plugins: Example showing how to use SLI plugins.
+  - [Regular manifest](examples/plugin-getting-started.yml)
+  - [K8s manifest](examples/plugin-k8s-getting-started.yml)
+  - [Plugin src](examples/plugins/getting-started/availability/plugin.go)
 
 The resulting generated SLOs are in [examples/\_gen](examples/_gen).
+
+## SLI plugins
+
+SLI plugins are small Go plugins (using [Yaegi]) that can be loaded on Sloth start.
+
+These plugins can be refenreced as an SLI on the SLO specs and will return a raw SLI type.
+
+### [`prometheus/v1`](pkg/prometheus/plugin/v1)
+
+Developing an [`prometheus/v1`](pkg/prometheus/plugin/v1) SLI plugin is very easy, however you need to meet some requirements:
+
+- The plugin version used as a global called `SLIPluginVersion`.
+- A plugin ID global called `SLIPluginID`.
+- A Plugin logic function called `SLIPlugin`.
+- The plugin must be in a single file named `plugin.go`.
+- Plugins only can use the Go standard library (`reflect` and `unsafe` packages can't b used).
+- Plugin received options are a `map[string]string` to avoid `interface{}` problems on dynamic execution code, the conversion to specific types are responsibility of the plugin.
+- Plugins don't depend on go modules, GOPATH or similar (thanks to the previous requirements).
+
+Sloth knows how to autodiscover plugins giving a path (`--sli-plugins-path`), and will load all the discovered ones.
+
+A very simple example:
+
+from `plugins/x/y/plugin.go`
+
+```go
+package testplugin
+
+import "context"
+
+const (
+  SLIPluginVersion = "prometheus/v1"
+  SLIPluginID = "test_plugin"
+)
+func SLIPlugin(ctx context.Context, meta map[string]string, labels map[string]string, options map[string]string) (string, error) {
+  return "rate(my_raw_error_ratio_query{}[{{.window}}])", nil
+}
+```
+
+Used in SLO spec:
+
+```yaml
+version: "prometheus/v1"
+service: "myservice"
+slos:
+  - name: "some-slo"
+    objective: 99.9
+    sli:
+      plugin:
+        id: "test_plugin"
+        options:
+          opt1: "something"
+          opt2: "something"
+    alerting:
+#...
+```
+
+On spec load, Sloth will execute the referenced plugins with the options and use the result as a Raw SLI type, the one that returns the error ratio query.
+
+**Why should I use plugins?**
+
+By default you shouldn't unless you have scenarios where they can simplify, add security or improve the SLO adoption on the team/company. Some examples:
+
+- SLI custom validation (parameters, queries...).
+- Company wide precreated SLIs for common used libraries.
+- Complex Prometheus query SLIs.
+- Precreated SLIs for the team or company that normally everyones uses on the SLOs.
+- OSS SLI plugins that come with the apps, frameworks or libraries (e.g Kubernetes apiserver, http framework X...).
+- The company or the team could have a repository with all the shared plugins and everyone could use them and contribute with new ones.
+- Automation power when templates are not enough.
 
 ## F.A.Q
 
@@ -226,6 +302,7 @@ The resulting generated SLOs are in [examples/\_gen](examples/_gen).
 - [Can I disable alerts?](#faq-disable-alerts)
 - [Grafana dashboard?](#faq-grafana-dashboards)
 - [CLI VS K8s controller?](#cli-vs-controller)
+- [SLI types on manifests](#sli-types-manifests)
 
 ### <a name="faq-why-sloth"></a>Why Sloth
 
@@ -331,6 +408,14 @@ Both have pros and cons:
 
 In a few words, theres no right or wrong answer, pick your own flavour based on your use case: teams size, engineers in the company or development flow...
 
+### <a name="sli-types-manifests"></a>SLI types on manifests
+
+`prometheus/v1` (regular) and `sloth.slok.dev/v1/PrometheusServiceLevel` (Kubernetes CRD), support 3 ways of setting SLIs:
+
+- Events: This are based on 2 queries, the one that returns the total/valid number of events and the one that returns the bad events. Sloht will make a query dividing them to get the final error ratio (0-1).
+- Raw: This is a single raw prometheus query that when executed will return the error ratio (0-1).
+- Plugins: Check [plugins section](#sli-plugins) for more information. It reference plugins that will be preloaded and already developed. Sloth will execute them on generation and it will return a raw query. This is the best way to abstract queries from users or having SLOs at scale.
+
 [google-slo]: https://landing.google.com/sre/workbook/chapters/alerting-on-slos/
 [mwmb]: https://landing.google.com/sre/workbook/chapters/alerting-on-slos/#6-multiwindow-multi-burn-rate-alerts
 [sli]: https://landing.google.com/sre/sre-book/chapters/service-level-objectives/#indicators-o8seIAcZ
@@ -342,3 +427,4 @@ In a few words, theres no right or wrong answer, pick your own flavour based on 
 [grafana-dashboard]: https://grafana.com/grafana/dashboards/14348
 [prom-op-rules-crd]: https://github.com/prometheus-operator/kube-prometheus/blob/main/manifests/setup/prometheus-operator-0prometheusruleCustomResourceDefinition.yaml
 [sloth-crd]: pkg/kubernetes/gen/crd/sloth.slok.dev_prometheusservicelevels.yaml
+[yaegi]: https://github.com/traefik/yaegi

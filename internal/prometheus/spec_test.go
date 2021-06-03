@@ -2,6 +2,7 @@ package prometheus_test
 
 import (
 	"context"
+	"fmt"
 	"testing"
 	"time"
 
@@ -13,6 +14,7 @@ import (
 func TestYAMLoadSpec(t *testing.T) {
 	tests := map[string]struct {
 		specYaml string
+		plugins  map[string]prometheus.SLIPlugin
 		expModel *prometheus.SLOGroup
 		expErr   bool
 	}{
@@ -44,6 +46,7 @@ slos:
 `,
 			expErr: true,
 		},
+
 		"Spec without SLOs should fail.": {
 			specYaml: `
 service: test-svc
@@ -52,7 +55,109 @@ slos: []
 `,
 			expErr: true,
 		},
+
+		"Spec without unknown SLI plugin should fail.": {
+			specYaml: `
+service: test-svc
+version: "prometheus/v1"
+slos:
+  - name: "slo"
+    objective: 99
+    sli:
+      plugin:
+        id: unknown_plugin
+    alerting:
+      page_alert:
+        disable: true
+      ticket_alert:
+        disable: true
+`,
+			expErr: true,
+		},
+
+		"Spec with SLI plugin that returns an error should use the plugin correctly and fail.": {
+			plugins: map[string]prometheus.SLIPlugin{
+				"test_plugin": {
+					ID: "test_plugin",
+					Func: func(ctx context.Context, meta map[string]string, labels map[string]string, options map[string]string) (string, error) {
+						return "", fmt.Errorf("something")
+					},
+				},
+			},
+			specYaml: `
+service: test-svc
+version: "prometheus/v1"
+slos:
+  - name: "slo"
+    objective: 99
+    sli:
+      plugin:
+        id: test_plugin
+    alerting:
+      page_alert:
+        disable: true
+      ticket_alert:
+        disable: true
+`,
+			expErr: true,
+		},
+
+		"Spec with SLI plugin should use the plugin correctly.": {
+			plugins: map[string]prometheus.SLIPlugin{
+				"test_plugin": {
+					ID: "test_plugin",
+					Func: func(ctx context.Context, meta map[string]string, labels map[string]string, options map[string]string) (string, error) {
+						return fmt.Sprintf(`plugin_raw_expr{service="%s",slo="%s",objective="%s",gk1="%s",k1="%s",k2="%s"}`,
+							meta["service"],
+							meta["slo"],
+							meta["objective"],
+							labels["gk1"],
+							options["k1"],
+							options["k2"]), nil
+					},
+				},
+			},
+			specYaml: `
+service: test-svc
+version: "prometheus/v1"
+labels:
+  gk1: gv1
+slos:
+  - name: "slo-test"
+    objective: 99
+    sli:
+      plugin:
+        id: test_plugin
+        options:
+          k1: v1
+          k2: true
+    alerting:
+      page_alert:
+        disable: true
+      ticket_alert:
+        disable: true
+`,
+			expModel: &prometheus.SLOGroup{SLOs: []prometheus.SLO{
+				{
+					ID:         "test-svc-slo-test",
+					Name:       "slo-test",
+					Service:    "test-svc",
+					TimeWindow: 30 * 24 * time.Hour,
+					Labels:     map[string]string{"gk1": "gv1"},
+					SLI: prometheus.SLI{
+						Raw: &prometheus.SLIRaw{
+							ErrorRatioQuery: `plugin_raw_expr{service="test-svc",slo="slo-test",objective="99.000000",gk1="gv1",k1="v1",k2="true"}`,
+						},
+					},
+					Objective:        99,
+					PageAlertMeta:    prometheus.AlertMeta{Disable: true},
+					WarningAlertMeta: prometheus.AlertMeta{Disable: true},
+				},
+			}},
+		},
+
 		"Correct spec should return the models correctly.": {
+
 			specYaml: `
 version: "prometheus/v1"
 service: "test-svc"
@@ -162,8 +267,7 @@ slos:
 					PageAlertMeta:    prometheus.AlertMeta{Disable: true},
 					WarningAlertMeta: prometheus.AlertMeta{Disable: true},
 				},
-			},
-			},
+			}},
 		},
 	}
 
@@ -171,7 +275,8 @@ slos:
 		t.Run(name, func(t *testing.T) {
 			assert := assert.New(t)
 
-			gotModel, err := prometheus.YAMLSpecLoader.LoadSpec(context.TODO(), []byte(test.specYaml))
+			loader := prometheus.NewYAMLSpecLoader(test.plugins)
+			gotModel, err := loader.LoadSpec(context.TODO(), []byte(test.specYaml))
 
 			if test.expErr {
 				assert.Error(err)

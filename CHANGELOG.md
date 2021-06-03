@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+### Added
+
+- SLI plugins support.
+- SLI `prometheus/v1` plugins.
+
 ## [v0.2.0] - 2021-05-24
 
 ### Added

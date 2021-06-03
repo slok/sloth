@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Added
+
+- SLI pluggins support.
+
 ## [v0.2.0] - 2021-05-24
 
 ### Added

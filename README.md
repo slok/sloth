@@ -32,6 +32,7 @@ _At this moment Sloth is focused on Prometheus, however depending on the demand 
 - Single binary and easy to use CLI.
 - Kubernetes ([Prometheus-operator]) support.
 - Kubernetes Controller/operator mode with CRDs.
+- Support for SLI plugins.
 
 ![Small Sloth SLO dahsboard](docs/img/sloth_small_dashboard.png)
 
@@ -211,8 +212,68 @@ sloth-slo-home-wifi   38s
 - [Home wifi](examples/home-wifi.yml): My home Ubiquti Wifi SLOs.
 - [K8s Home wifi](examples/k8s-home-wifi.yml): Same as home-wifi but shows how to generate Prometheus-operator CRD from a Sloth CRD.
 - [Raw Home wifi](examples/raw-home-wifi.yml): Example showing how to use `raw` SLIs instead of the common `events` using the home-wifi example.
+- SLI Plugins: Example showing how to use SLI plugins.
+  - [Spec](examples/plugin-getting-started.yml)
+  - [Plugin](examples/plugins/getting-started/availability/plugin.go)
 
 The resulting generated SLOs are in [examples/\_gen](examples/_gen).
+
+## SLI plugins
+
+SLI plugins are simple Go based plugins that can be loaded on Sloth start.
+
+These plugins can be refenreced as an SLI on the SLO specs and will return a raw SLI type.
+
+Developing an SLI plugin is very easy, however you need to meet some requirements:
+
+- A plugin ID global that is called `SLIPluginID`.
+- A Plugin logic function that is called `SLIPlugin`.
+- The plugin must be in a single file named `plugin.go`.
+- Plugins only can use the Go standard library (`reflect` and `unsafe` packages can't b used).
+- Plugin received options are a `map[string]string` to avoid `interface{}` problems on dynamic execution code, the conversion to specific types are responsibility of the plugin.
+- Plugins don't depend on go modules, GOPATH or similar (thanks to the previous requirements).
+
+Sloth knows how to autodiscover plugins giving a path (`--sli-plugins-path`), and will load all the discovered ones.
+
+A very simple example:
+
+from `plugins/x/y/plugin.go`
+
+```go
+package testplugin
+
+const SLIPluginID = "test_plugin"
+func SLIPlugin(meta map[string]string, labels map[string]string, options map[string]string) (string, error) {
+  return "rate(my_raw_error_ratio_query{}[{{.window}}])", nil
+}
+```
+
+Used in SLO spec:
+
+```yaml
+version: "prometheus/v1"
+service: "myservice"
+slos:
+  - name: "some-slo"
+    objective: 99.9
+    sli:
+      plugin:
+        id: "test_plugin"
+    alerting:
+#...
+```
+
+**Why should I use plugins?**
+
+By default you shouldn't unless you have scenarios where they can simplify, add security or improve the SLO adoption on the team/company. Some examples:
+
+- SLI custom validation (parameters, queries...).
+- Company wide precreated SLIs for common used libraries.
+- Complex Prometheus query SLIs.
+- Precreated SLIs for the team or company that normally everyones uses on the SLOs.
+- OSS SLI plugins that come with the apps, frameworks or libraries (e.g Kubernetes apiserver, http framework X...).
+- The company or the team could have a repository with all the shared plugins and everyone could use them and contribute with new ones.
+- Automation power when templates are not enough.
 
 ## F.A.Q
 

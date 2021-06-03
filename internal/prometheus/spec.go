@@ -44,7 +44,7 @@ func (y YAMLSpecLoader) LoadSpec(ctx context.Context, data []byte) (*SLOGroup, e
 		return nil, fmt.Errorf("at least one SLO is required")
 	}
 
-	m, err := y.mapSpecToModel(s)
+	m, err := y.mapSpecToModel(ctx, s)
 	if err != nil {
 		return nil, fmt.Errorf("could not map to model: %w", err)
 	}
@@ -52,7 +52,7 @@ func (y YAMLSpecLoader) LoadSpec(ctx context.Context, data []byte) (*SLOGroup, e
 	return m, nil
 }
 
-func (y YAMLSpecLoader) mapSpecToModel(spec prometheusv1.Spec) (*SLOGroup, error) {
+func (y YAMLSpecLoader) mapSpecToModel(ctx context.Context, spec prometheusv1.Spec) (*SLOGroup, error) {
 	models := make([]SLO, 0, len(spec.SLOs))
 	for _, specSLO := range spec.SLOs {
 		slo := SLO{
@@ -93,7 +93,7 @@ func (y YAMLSpecLoader) mapSpecToModel(spec prometheusv1.Spec) (*SLOGroup, error
 				prometheuspluginv1.SLIPluginMetaObjective: fmt.Sprintf("%f", specSLO.Objective),
 			}
 
-			rawQuery, err := plugin.Func(meta, spec.Labels, specSLO.SLI.Plugin.Options)
+			rawQuery, err := plugin.Func(ctx, meta, spec.Labels, specSLO.SLI.Plugin.Options)
 			if err != nil {
 				return nil, fmt.Errorf("plugin %q execution error: %w", specSLO.SLI.Plugin.ID, err)
 			}

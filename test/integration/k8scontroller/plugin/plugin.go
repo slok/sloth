@@ -2,6 +2,7 @@ package availability
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"regexp"
 	"strings"
@@ -20,7 +21,7 @@ sum(rate(integration_test{ {{.filter}}job="{{.job}}" }[{{"{{.window}}"}}]))`))
 
 var filterRegex = regexp.MustCompile(`([^=]+="[^=,"]+",)+`)
 
-func SLIPlugin(meta map[string]string, labels map[string]string, options map[string]string) (string, error) {
+func SLIPlugin(ctx context.Context, meta map[string]string, labels map[string]string, options map[string]string) (string, error) {
 	// Get job.
 	job, ok := options["job"]
 	if !ok {

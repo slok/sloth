@@ -107,7 +107,7 @@ spec:
 			plugins: map[string]prometheus.SLIPlugin{
 				"test_plugin": {
 					ID: "test_plugin",
-					Func: func(meta map[string]string, labels map[string]string, options map[string]string) (string, error) {
+					Func: func(ctx context.Context, meta map[string]string, labels map[string]string, options map[string]string) (string, error) {
 						return fmt.Sprintf(`plugin_raw_expr{service="%s",slo="%s",objective="%s",gk1="%s",k1="%s",k2="%s"}`,
 							meta["service"],
 							meta["slo"],
@@ -175,7 +175,7 @@ spec:
 			plugins: map[string]prometheus.SLIPlugin{
 				"test_plugin": {
 					ID: "test_plugin",
-					Func: func(meta map[string]string, labels map[string]string, options map[string]string) (string, error) {
+					Func: func(ctx context.Context, meta map[string]string, labels map[string]string, options map[string]string) (string, error) {
 						return "", fmt.Errorf("something")
 					},
 				},

@@ -2,6 +2,7 @@ package availability
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"regexp"
 	"strings"
@@ -24,7 +25,7 @@ var filterRegex = regexp.MustCompile(`([^=]+="[^=,"]+",)+`)
 //
 // It will return an Sloth error ratio raw query that returns the error ratio of HTTP requests based
 // on the HTTP response status code, taking 5xx and 429 as error events.
-func SLIPlugin(meta map[string]string, labels map[string]string, options map[string]string) (string, error) {
+func SLIPlugin(ctx context.Context, meta map[string]string, labels map[string]string, options map[string]string) (string, error) {
 	// Get job.
 	job, ok := options["job"]
 	if !ok {

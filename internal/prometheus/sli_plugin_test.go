@@ -28,9 +28,11 @@ func TestSLIPluginLoader(t *testing.T) {
 			pluginSrc: `
 package testplugin
 
+import "context"
+
 const SLIPluginVersion = "prometheus/v1"
 
-func SLIPlugin(meta map[string]string, labels map[string]string, options map[string]string) (string, error) {
+func SLIPlugin(ctx context.Context, meta map[string]string, labels map[string]string, options map[string]string) (string, error) {
 	return "test_query{}", nil
 }
 `,
@@ -41,13 +43,15 @@ func SLIPlugin(meta map[string]string, labels map[string]string, options map[str
 			pluginSrc: `
 package testplugin
 
+import "context"
+
 const (
 	SLIPluginID      = "test_plugin"
 	SLIPluginVersion = "prometheus/v1"
 )
 
 
-func SLIPlugin(meta map[string]string, labels map[string]string, options map[string]string) (string, error) {
+func SLIPlugin(ctx context.Context, meta map[string]string, labels map[string]string, options map[string]string) (string, error) {
 	return "test_query{}", nil
 }
 `,
@@ -59,6 +63,8 @@ func SLIPlugin(meta map[string]string, labels map[string]string, options map[str
 			pluginSrc: `
 package testplugin
 
+import "context"
+
 import "fmt"
 
 const (
@@ -66,7 +72,7 @@ const (
 	SLIPluginVersion = "prometheus/v1"
 )
 
-func SLIPlugin(meta map[string]string, labels map[string]string, options map[string]string) (string, error) {
+func SLIPlugin(ctx context.Context, meta map[string]string, labels map[string]string, options map[string]string) (string, error) {
 	return fmt.Sprintf("test_query{mk1=\"%s\",lk1=\"%s\",k1=\"%s\",k2=\"%s\"}", meta["mk1"], labels["lk1"], options["k1"], options["k2"]), nil
 }
 		`,
@@ -81,6 +87,8 @@ func SLIPlugin(meta map[string]string, labels map[string]string, options map[str
 			pluginSrc: `
 package testplugin
 
+import "context"
+
 import "fmt"
 
 const (
@@ -88,7 +96,7 @@ const (
 	SLIPluginVersion = "prometheus/v1"
 )
 
-func SLIPlugin(meta map[string]string, labels map[string]string, options map[string]string) (string, error) {
+func SLIPlugin(ctx context.Context, meta map[string]string, labels map[string]string, options map[string]string) (string, error) {
 	return "", fmt.Errorf("something")
 }
 		`,
@@ -131,7 +139,7 @@ func SLIPlugin(meta map[string]string, labels map[string]string, options map[str
 			assert.True(ok)
 			assert.Equal(test.expPluginID, plugin.ID)
 
-			gotSLIQuery, err := plugin.Func(test.meta, test.labels, test.options)
+			gotSLIQuery, err := plugin.Func(context.TODO(), test.meta, test.labels, test.options)
 			if test.expErr {
 				assert.Error(err)
 			} else if assert.NoError(err) {

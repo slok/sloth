@@ -247,11 +247,13 @@ from `plugins/x/y/plugin.go`
 ```go
 package testplugin
 
+import "context"
+
 const (
   SLIPluginVersion = "prometheus/v1"
   SLIPluginID = "test_plugin"
 )
-func SLIPlugin(meta map[string]string, labels map[string]string, options map[string]string) (string, error) {
+func SLIPlugin(ctx context.Context, meta map[string]string, labels map[string]string, options map[string]string) (string, error) {
   return "rate(my_raw_error_ratio_query{}[{{.window}}])", nil
 }
 ```

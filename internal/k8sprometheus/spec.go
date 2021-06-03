@@ -47,7 +47,7 @@ func (y YAMLSpecLoader) LoadSpec(ctx context.Context, data []byte) (*SLOGroup, e
 		return nil, fmt.Errorf("at least one SLO is required")
 	}
 
-	m, err := mapSpecToModel(y.plugins, kslo)
+	m, err := mapSpecToModel(ctx, y.plugins, kslo)
 	if err != nil {
 		return nil, fmt.Errorf("could not map to model: %w", err)
 	}
@@ -68,10 +68,10 @@ func NewCRSpecLoader(plugins map[string]prometheus.SLIPlugin) CRSpecLoader {
 }
 
 func (c CRSpecLoader) LoadSpec(ctx context.Context, spec *k8sprometheusv1.PrometheusServiceLevel) (*SLOGroup, error) {
-	return mapSpecToModel(c.plugins, spec)
+	return mapSpecToModel(ctx, c.plugins, spec)
 }
 
-func mapSpecToModel(plugins map[string]prometheus.SLIPlugin, kspec *k8sprometheusv1.PrometheusServiceLevel) (*SLOGroup, error) {
+func mapSpecToModel(ctx context.Context, plugins map[string]prometheus.SLIPlugin, kspec *k8sprometheusv1.PrometheusServiceLevel) (*SLOGroup, error) {
 	slos := make([]prometheus.SLO, 0, len(kspec.Spec.SLOs))
 	spec := kspec.Spec
 	for _, specSLO := range kspec.Spec.SLOs {
@@ -113,7 +113,7 @@ func mapSpecToModel(plugins map[string]prometheus.SLIPlugin, kspec *k8sprometheu
 				prometheuspluginv1.SLIPluginMetaObjective: fmt.Sprintf("%f", specSLO.Objective),
 			}
 
-			rawQuery, err := plugin.Func(meta, spec.Labels, specSLO.SLI.Plugin.Options)
+			rawQuery, err := plugin.Func(ctx, meta, spec.Labels, specSLO.SLI.Plugin.Options)
 			if err != nil {
 				return nil, fmt.Errorf("plugin %q execution error: %w", specSLO.SLI.Plugin.ID, err)
 			}

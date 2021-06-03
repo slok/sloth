@@ -8,7 +8,10 @@ import (
 	"text/template"
 )
 
-const SLIPluginID = "integration_test"
+const (
+	SLIPluginVersion = "prometheus/v1"
+	SLIPluginID      = "integration_test"
+)
 
 var tpl = template.Must(template.New("").Parse(`
 sum(rate(integration_test{ {{.filter}}job="{{.job}}",code=~"(5..|429)" }[{{"{{.window}}"}}]))

@@ -7,6 +7,12 @@
 // play it safe.
 package plugin
 
+// Version is this plugin type version.
+const Version = "prometheus/v1"
+
+// SLIPluginVersion is the version of the plugin (e.g: `prometheus/v1`).
+type SLIPluginVersion = string
+
 // SLIPluginID is the ID of the plugin.
 type SLIPluginID = string
 

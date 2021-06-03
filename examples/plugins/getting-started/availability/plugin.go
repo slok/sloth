@@ -8,7 +8,10 @@ import (
 	"text/template"
 )
 
-const SLIPluginID = "getting_started_availability"
+const (
+	SLIPluginVersion = "prometheus/v1"
+	SLIPluginID      = "getting_started_availability"
+)
 
 var queryTpl = template.Must(template.New("").Parse(`
 sum(rate(http_request_duration_seconds_count{ {{.filter}}job="{{.job}}",code=~"(5..|429)" }[{{"{{.window}}"}}]))

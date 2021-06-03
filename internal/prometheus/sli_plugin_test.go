@@ -21,13 +21,31 @@ func TestSLIPluginLoader(t *testing.T) {
 		options     map[string]string
 		expPluginID string
 		expSLIQuery string
+		expErrLoad  bool
 		expErr      bool
 	}{
+		"Plugin without version should fail on load.": {
+			pluginSrc: `
+package testplugin
+
+const SLIPluginVersion = "prometheus/v1"
+
+func SLIPlugin(meta map[string]string, labels map[string]string, options map[string]string) (string, error) {
+	return "test_query{}", nil
+}
+`,
+			expErrLoad: true,
+		},
+
 		"Basic plugin should load and return a correct SLI.": {
 			pluginSrc: `
 package testplugin
 
-const SLIPluginID = "test_plugin"
+const (
+	SLIPluginID      = "test_plugin"
+	SLIPluginVersion = "prometheus/v1"
+)
+
 
 func SLIPlugin(meta map[string]string, labels map[string]string, options map[string]string) (string, error) {
 	return "test_query{}", nil
@@ -43,7 +61,10 @@ package testplugin
 
 import "fmt"
 
-const SLIPluginID = "test_plugin"
+const (
+	SLIPluginID      = "test_plugin"
+	SLIPluginVersion = "prometheus/v1"
+)
 
 func SLIPlugin(meta map[string]string, labels map[string]string, options map[string]string) (string, error) {
 	return fmt.Sprintf("test_query{mk1=\"%s\",lk1=\"%s\",k1=\"%s\",k2=\"%s\"}", meta["mk1"], labels["lk1"], options["k1"], options["k2"]), nil
@@ -62,7 +83,10 @@ package testplugin
 
 import "fmt"
 
-const SLIPluginID = "test_plugin"
+const (
+	SLIPluginID      = "test_plugin"
+	SLIPluginVersion = "prometheus/v1"
+)
 
 func SLIPlugin(meta map[string]string, labels map[string]string, options map[string]string) (string, error) {
 	return "", fmt.Errorf("something")
@@ -95,7 +119,11 @@ func SLIPlugin(meta map[string]string, labels map[string]string, options map[str
 			require.NoError(err)
 
 			plugins, err := repo.ListSLIPlugins(context.TODO())
-			require.NoError(err)
+			if test.expErrLoad {
+				assert.Error(err)
+				return
+			}
+			assert.NoError(err)
 
 			// Execute pluginand check.
 			assert.Len(plugins, 1)

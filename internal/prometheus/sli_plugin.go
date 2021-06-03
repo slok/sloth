@@ -171,6 +171,7 @@ var packageRegexp = regexp.MustCompile(`(?m)^package +([^\s]+) *$`)
 // The load process will search for:
 // - A function called `SLIPlugin` to obtain the plugin func.
 // - A constant called `SLIPluginID` to obtain the plugin ID.
+// - A constant called `SLIPluginVersion` to obtain the plugin version.
 func (s sliPluginLoader) LoadRawSLIPlugin(ctx context.Context, src string) (*SLIPlugin, error) {
 	// Load the plugin in a new interpreter.
 	// For each plugin we need to use an independent interpreter to avoid name collisions.
@@ -186,6 +187,17 @@ func (s sliPluginLoader) LoadRawSLIPlugin(ctx context.Context, src string) (*SLI
 		return nil, fmt.Errorf("invalid plugin source code, could not get package name")
 	}
 	packageName := packageMatch[1]
+
+	// Get plugin version and check if is a known one.
+	pluginVerTmp, err := yaegiInterp.EvalWithContext(ctx, fmt.Sprintf("%s.SLIPluginVersion", packageName))
+	if err != nil {
+		return nil, fmt.Errorf("could not get plugin version: %w", err)
+	}
+
+	pluginVer, ok := pluginVerTmp.Interface().(pluginv1.SLIPluginVersion)
+	if !ok || (pluginVer != pluginv1.Version) {
+		return nil, fmt.Errorf("unsuported plugin version: %s", pluginVer)
+	}
 
 	// Get plugin ID.
 	pluginIDTmp, err := yaegiInterp.EvalWithContext(ctx, fmt.Sprintf("%s.SLIPluginID", packageName))

@@ -226,12 +226,13 @@ SLI plugins are small Go plugins (using [Yaegi]) that can be loaded on Sloth sta
 
 These plugins can be refenreced as an SLI on the SLO specs and will return a raw SLI type.
 
-### [`v1`](pkg/prometheus/plugin/v1)
+### [`prometheus/v1`](pkg/prometheus/plugin/v1)
 
-Developing an [`v1`](pkg/prometheus/plugin/v1) SLI plugin is very easy, however you need to meet some requirements:
+Developing an [`prometheus/v1`](pkg/prometheus/plugin/v1) SLI plugin is very easy, however you need to meet some requirements:
 
-- A plugin ID global that is called `SLIPluginID`.
-- A Plugin logic function that is called `SLIPlugin`.
+- The plugin version used as a global called `SLIPluginVersion`.
+- A plugin ID global called `SLIPluginID`.
+- A Plugin logic function called `SLIPlugin`.
 - The plugin must be in a single file named `plugin.go`.
 - Plugins only can use the Go standard library (`reflect` and `unsafe` packages can't b used).
 - Plugin received options are a `map[string]string` to avoid `interface{}` problems on dynamic execution code, the conversion to specific types are responsibility of the plugin.
@@ -246,7 +247,10 @@ from `plugins/x/y/plugin.go`
 ```go
 package testplugin
 
-const SLIPluginID = "test_plugin"
+const (
+  SLIPluginVersion = "prometheus/v1"
+  SLIPluginID = "test_plugin"
+)
 func SLIPlugin(meta map[string]string, labels map[string]string, options map[string]string) (string, error) {
   return "rate(my_raw_error_ratio_query{}[{{.window}}])", nil
 }
@@ -408,7 +412,7 @@ In a few words, theres no right or wrong answer, pick your own flavour based on 
 
 - Events: This are based on 2 queries, the one that returns the total/valid number of events and the one that returns the bad events. Sloht will make a query dividing them to get the final error ratio (0-1).
 - Raw: This is a single raw prometheus query that when executed will return the error ratio (0-1).
-- Plugins: Check [plugins section](<(#sli-plugins)>) for more information. It reference plugins that will be preloaded and already developed. Sloth will execute them on generation and it will return a raw query. This is the best way to abstract queries from users or having SLOs at scale.
+- Plugins: Check [plugins section](#sli-plugins) for more information. It reference plugins that will be preloaded and already developed. Sloth will execute them on generation and it will return a raw query. This is the best way to abstract queries from users or having SLOs at scale.
 
 [google-slo]: https://landing.google.com/sre/workbook/chapters/alerting-on-slos/
 [mwmb]: https://landing.google.com/sre/workbook/chapters/alerting-on-slos/#6-multiwindow-multi-burn-rate-alerts

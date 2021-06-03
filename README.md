@@ -32,7 +32,8 @@ _At this moment Sloth is focused on Prometheus, however depending on the demand 
 - Single binary and easy to use CLI.
 - Kubernetes ([Prometheus-operator]) support.
 - Kubernetes Controller/operator mode with CRDs.
-- Support for SLI plugins.
+- Support different [SLI types](#sli-types-manifests).
+- Support for [SLI plugins](#sli-plugins).
 
 ![Small Sloth SLO dahsboard](docs/img/sloth_small_dashboard.png)
 
@@ -220,7 +221,7 @@ The resulting generated SLOs are in [examples/\_gen](examples/_gen).
 
 ## SLI plugins
 
-SLI plugins are simple Go based plugins that can be loaded on Sloth start.
+SLI plugins are small Go plugins (using [Yaegi]) that can be loaded on Sloth start.
 
 These plugins can be refenreced as an SLI on the SLO specs and will return a raw SLI type.
 
@@ -259,9 +260,14 @@ slos:
     sli:
       plugin:
         id: "test_plugin"
+        options:
+          opt1: "something"
+          opt2: "something"
     alerting:
 #...
 ```
+
+On spec load, Sloth will execute the referenced plugins with the options and use the result as a Raw SLI type, the one that returns the error ratio query.
 
 **Why should I use plugins?**
 
@@ -287,6 +293,7 @@ By default you shouldn't unless you have scenarios where they can simplify, add 
 - [Can I disable alerts?](#faq-disable-alerts)
 - [Grafana dashboard?](#faq-grafana-dashboards)
 - [CLI VS K8s controller?](#cli-vs-controller)
+- [SLI types on manifests](#sli-types-manifests)
 
 ### <a name="faq-why-sloth"></a>Why Sloth
 
@@ -392,6 +399,14 @@ Both have pros and cons:
 
 In a few words, theres no right or wrong answer, pick your own flavour based on your use case: teams size, engineers in the company or development flow...
 
+### <a name="sli-types-manifests"></a>SLI types on manifests
+
+`prometheus/v1` (regular) and `sloth.slok.dev/v1/PrometheusServiceLevel` (Kubernetes CRD), support 3 ways of setting SLIs:
+
+- Events: This are based on 2 queries, the one that returns the total/valid number of events and the one that returns the bad events. Sloht will make a query dividing them to get the final error ratio (0-1).
+- Raw: This is a single raw prometheus query that when executed will return the error ratio (0-1).
+- Plugins: Check [plugins section](<(#sli-plugins)>) for more information. It reference plugins that will be preloaded and already developed. Sloth will execute them on generation and it will return a raw query. This is the best way to abstract queries from users or having SLOs at scale.
+
 [google-slo]: https://landing.google.com/sre/workbook/chapters/alerting-on-slos/
 [mwmb]: https://landing.google.com/sre/workbook/chapters/alerting-on-slos/#6-multiwindow-multi-burn-rate-alerts
 [sli]: https://landing.google.com/sre/sre-book/chapters/service-level-objectives/#indicators-o8seIAcZ
@@ -403,3 +418,4 @@ In a few words, theres no right or wrong answer, pick your own flavour based on 
 [grafana-dashboard]: https://grafana.com/grafana/dashboards/14348
 [prom-op-rules-crd]: https://github.com/prometheus-operator/kube-prometheus/blob/main/manifests/setup/prometheus-operator-0prometheusruleCustomResourceDefinition.yaml
 [sloth-crd]: pkg/kubernetes/gen/crd/sloth.slok.dev_prometheusservicelevels.yaml
+[yaegi]: https://github.com/traefik/yaegi

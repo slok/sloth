@@ -56,7 +56,7 @@ func (g generateCommand) Run(ctx context.Context, config RootConfig) error {
 		return fmt.Errorf("could not read SLOs spec file data: %w", err)
 	}
 
-	// Try loading spec with all the generators possible.
+	// Load SLI plugins.
 	plugins := map[string]prometheus.SLIPlugin{}
 	if len(g.sliPluginsPaths) > 0 {
 		config := prometheus.FileSLIPluginRepoConfig{
@@ -75,6 +75,8 @@ func (g generateCommand) Run(ctx context.Context, config RootConfig) error {
 		plugins = ps
 		config.Logger.WithValues(log.Kv{"plugins": len(plugins)}).Infof("SLI plugins loaded")
 	}
+
+	// Try loading spec with all the generators possible.
 
 	// Raw Prometheus generator.
 	promYAMLLoader := prometheus.NewYAMLSpecLoader(plugins)

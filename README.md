@@ -214,8 +214,9 @@ sloth-slo-home-wifi   38s
 - [K8s Home wifi](examples/k8s-home-wifi.yml): Same as home-wifi but shows how to generate Prometheus-operator CRD from a Sloth CRD.
 - [Raw Home wifi](examples/raw-home-wifi.yml): Example showing how to use `raw` SLIs instead of the common `events` using the home-wifi example.
 - SLI Plugins: Example showing how to use SLI plugins.
-  - [Spec](examples/plugin-getting-started.yml)
-  - [Plugin](examples/plugins/getting-started/availability/plugin.go)
+  - [Regular manifest](examples/plugin-getting-started.yml)
+  - [K8s manifest](examples/plugin-k8s-getting-started.yml)
+  - [Plugin src](examples/plugins/getting-started/availability/plugin.go)
 
 The resulting generated SLOs are in [examples/\_gen](examples/_gen).
 
@@ -225,7 +226,9 @@ SLI plugins are small Go plugins (using [Yaegi]) that can be loaded on Sloth sta
 
 These plugins can be refenreced as an SLI on the SLO specs and will return a raw SLI type.
 
-Developing an SLI plugin is very easy, however you need to meet some requirements:
+### [`v1`](pkg/prometheus/plugin/v1)
+
+Developing an [`v1`](pkg/prometheus/plugin/v1) SLI plugin is very easy, however you need to meet some requirements:
 
 - A plugin ID global that is called `SLIPluginID`.
 - A Plugin logic function that is called `SLIPlugin`.

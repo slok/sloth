@@ -69,7 +69,7 @@ func NewKubeControllerCommand(app *kingpin.Application) Command {
 
 func (k kubeControllerCommand) Name() string { return "kubernetes-controller" }
 func (k kubeControllerCommand) Run(ctx context.Context, config RootConfig) error {
-	// Try loading spec with all the generators possible.
+	// Load SLI plugins.
 	plugins := map[string]prometheus.SLIPlugin{}
 	if len(k.sliPluginsPaths) > 0 {
 		config := prometheus.FileSLIPluginRepoConfig{

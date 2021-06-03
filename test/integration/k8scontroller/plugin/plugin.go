@@ -44,7 +44,7 @@ func SLIPlugin(meta map[string]string, labels map[string]string, options map[str
 
 	// Create query.
 	var b bytes.Buffer
-	data := map[string]interface{}{
+	data := map[string]string{
 		"job":    job,
 		"filter": filter,
 	}
@@ -57,10 +57,9 @@ func SLIPlugin(meta map[string]string, labels map[string]string, options map[str
 }
 
 func validateLabels(labels map[string]string, requiredKeys ...string) error {
-	// Validate that the labels have an owner.
 	for _, k := range requiredKeys {
 		v, ok := labels[k]
-		if !ok || ok && v == "" {
+		if !ok || (ok && v == "") {
 			return fmt.Errorf("%q label is required", k)
 		}
 	}

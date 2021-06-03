@@ -10,13 +10,17 @@ import (
 
 const SLIPluginID = "getting_started_availability"
 
-var tpl = template.Must(template.New("").Parse(`
+var queryTpl = template.Must(template.New("").Parse(`
 sum(rate(http_request_duration_seconds_count{ {{.filter}}job="{{.job}}",code=~"(5..|429)" }[{{"{{.window}}"}}]))
 /
 sum(rate(http_request_duration_seconds_count{ {{.filter}}job="{{.job}}" }[{{"{{.window}}"}}]))`))
 
 var filterRegex = regexp.MustCompile(`([^=]+="[^=,"]+",)+`)
 
+// SLIPlugin is the getting started plugin example.
+//
+// It will return an Sloth error ratio raw query that returns the error ratio of HTTP requests based
+// on the HTTP response status code, taking 5xx and 429 as error events.
 func SLIPlugin(meta map[string]string, labels map[string]string, options map[string]string) (string, error) {
 	// Get job.
 	job, ok := options["job"]
@@ -44,11 +48,11 @@ func SLIPlugin(meta map[string]string, labels map[string]string, options map[str
 
 	// Create query.
 	var b bytes.Buffer
-	data := map[string]interface{}{
+	data := map[string]string{
 		"job":    job,
 		"filter": filter,
 	}
-	err = tpl.Execute(&b, data)
+	err = queryTpl.Execute(&b, data)
 	if err != nil {
 		return "", fmt.Errorf("could not execute template: %w", err)
 	}
@@ -56,16 +60,14 @@ func SLIPlugin(meta map[string]string, labels map[string]string, options map[str
 	return b.String(), nil
 }
 
+// validateLabels will check the labels exist.
 func validateLabels(labels map[string]string, requiredKeys ...string) error {
-	// Validate that the labels have an owner.
 	for _, k := range requiredKeys {
-		_, ok := labels[k]
-		if !ok {
+		v, ok := labels[k]
+		if !ok || (ok && v == "") {
 			return fmt.Errorf("%q label is required", k)
 		}
 	}
 
 	return nil
 }
-
-type sliPlugin = func(meta map[string]string, labels map[string]string, options map[string]string) (string, error)

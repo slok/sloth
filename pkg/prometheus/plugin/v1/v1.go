@@ -28,4 +28,4 @@ const (
 // SLIPlugin knows how to generate SLIs based on data options.
 //
 // This is the type the SLI plugins need to implement.
-type SLIPlugin = func(ctx context.Context, meta map[string]string, labels map[string]string, options map[string]string) (query string, err error)
+type SLIPlugin = func(ctx context.Context, meta, labels, options map[string]string) (query string, err error)

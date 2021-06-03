@@ -32,7 +32,7 @@ import "context"
 
 const SLIPluginVersion = "prometheus/v1"
 
-func SLIPlugin(ctx context.Context, meta map[string]string, labels map[string]string, options map[string]string) (string, error) {
+func SLIPlugin(ctx context.Context, meta, labels, options map[string]string) (string, error) {
 	return "test_query{}", nil
 }
 `,
@@ -51,7 +51,7 @@ const (
 )
 
 
-func SLIPlugin(ctx context.Context, meta map[string]string, labels map[string]string, options map[string]string) (string, error) {
+func SLIPlugin(ctx context.Context, meta, labels, options map[string]string) (string, error) {
 	return "test_query{}", nil
 }
 `,
@@ -72,7 +72,7 @@ const (
 	SLIPluginVersion = "prometheus/v1"
 )
 
-func SLIPlugin(ctx context.Context, meta map[string]string, labels map[string]string, options map[string]string) (string, error) {
+func SLIPlugin(ctx context.Context, meta, labels, options map[string]string) (string, error) {
 	return fmt.Sprintf("test_query{mk1=\"%s\",lk1=\"%s\",k1=\"%s\",k2=\"%s\"}", meta["mk1"], labels["lk1"], options["k1"], options["k2"]), nil
 }
 		`,
@@ -96,7 +96,7 @@ const (
 	SLIPluginVersion = "prometheus/v1"
 )
 
-func SLIPlugin(ctx context.Context, meta map[string]string, labels map[string]string, options map[string]string) (string, error) {
+func SLIPlugin(ctx context.Context, meta, labels, options map[string]string) (string, error) {
 	return "", fmt.Errorf("something")
 }
 		`,

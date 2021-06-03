@@ -21,11 +21,14 @@ sum(rate(http_request_duration_seconds_count{ {{.filter}}job="{{.job}}" }[{{"{{.
 
 var filterRegex = regexp.MustCompile(`([^=]+="[^=,"]+",)+`)
 
+// Alias helper used to simplify SLIPlugin func signature.
+type sMap = map[string]string
+
 // SLIPlugin is the getting started plugin example.
 //
 // It will return an Sloth error ratio raw query that returns the error ratio of HTTP requests based
 // on the HTTP response status code, taking 5xx and 429 as error events.
-func SLIPlugin(ctx context.Context, meta map[string]string, labels map[string]string, options map[string]string) (string, error) {
+func SLIPlugin(ctx context.Context, meta sMap, labels sMap, options sMap) (string, error) {
 	// Get job.
 	job, ok := options["job"]
 	if !ok {

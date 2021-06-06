@@ -6,7 +6,7 @@ require (
 	github.com/go-playground/validator/v10 v10.6.1
 	github.com/oklog/run v1.1.0
 	github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring v0.48.1
-	github.com/prometheus-operator/prometheus-operator/pkg/client v0.48.0
+	github.com/prometheus-operator/prometheus-operator/pkg/client v0.48.1
 	github.com/prometheus/client_golang v1.10.0
 	github.com/prometheus/common v0.25.0
 	github.com/prometheus/prometheus v1.8.2-0.20210512173212-24c9b61221f7 // v2.27.0 (Avoid semver incompatibilies with commit).

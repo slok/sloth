@@ -6,6 +6,9 @@
 
 - SLI plugins support.
 - SLI `prometheus/v1` plugins.
+- Add SLI plugin settings to `prometheus/v1` spec.
+- Add SLI plugin settings to `PrometheusServiceLevel` CRD.
+- Make optional alerting `name` field on `PrometheusServiceLevel` CRD.
 
 ## [v0.2.0] - 2021-05-24
 

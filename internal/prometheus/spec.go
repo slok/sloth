@@ -56,15 +56,15 @@ func (y YAMLSpecLoader) mapSpecToModel(ctx context.Context, spec prometheusv1.Sp
 	models := make([]SLO, 0, len(spec.SLOs))
 	for _, specSLO := range spec.SLOs {
 		slo := SLO{
-			ID:               fmt.Sprintf("%s-%s", spec.Service, specSLO.Name),
-			Name:             specSLO.Name,
-			Description:      specSLO.Description,
-			Service:          spec.Service,
-			TimeWindow:       30 * 24 * time.Hour, // Default and for now the only one supported.
-			Objective:        specSLO.Objective,
-			Labels:           mergeLabels(spec.Labels, specSLO.Labels),
-			PageAlertMeta:    AlertMeta{Disable: true},
-			WarningAlertMeta: AlertMeta{Disable: true},
+			ID:              fmt.Sprintf("%s-%s", spec.Service, specSLO.Name),
+			Name:            specSLO.Name,
+			Description:     specSLO.Description,
+			Service:         spec.Service,
+			TimeWindow:      30 * 24 * time.Hour, // Default and for now the only one supported.
+			Objective:       specSLO.Objective,
+			Labels:          mergeLabels(spec.Labels, specSLO.Labels),
+			PageAlertMeta:   AlertMeta{Disable: true},
+			TicketAlertMeta: AlertMeta{Disable: true},
 		}
 
 		// Set SLIs.
@@ -113,7 +113,7 @@ func (y YAMLSpecLoader) mapSpecToModel(ctx context.Context, spec prometheusv1.Sp
 		}
 
 		if !specSLO.Alerting.TicketAlert.Disable {
-			slo.WarningAlertMeta = AlertMeta{
+			slo.TicketAlertMeta = AlertMeta{
 				Name:        specSLO.Alerting.Name,
 				Labels:      mergeLabels(specSLO.Alerting.Labels, specSLO.Alerting.TicketAlert.Labels),
 				Annotations: mergeLabels(specSLO.Alerting.Annotations, specSLO.Alerting.TicketAlert.Annotations),

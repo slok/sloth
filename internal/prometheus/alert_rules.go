@@ -36,8 +36,8 @@ func (s sloAlertRulesGenerator) GenerateSLOAlertRules(ctx context.Context, slo S
 	}
 
 	// Generate Ticket alerts.
-	if !slo.WarningAlertMeta.Disable {
-		rule, err := s.alertGenFunc(slo, slo.WarningAlertMeta, alerts.TicketQuick, alerts.TicketSlow)
+	if !slo.TicketAlertMeta.Disable {
+		rule, err := s.alertGenFunc(slo, slo.TicketAlertMeta, alerts.TicketQuick, alerts.TicketSlow)
 		if err != nil {
 			return nil, fmt.Errorf("could not create ticket alert: %w", err)
 		}

@@ -149,9 +149,9 @@ slos:
 							ErrorRatioQuery: `plugin_raw_expr{service="test-svc",slo="slo-test",objective="99.000000",gk1="gv1",k1="v1",k2="true"}`,
 						},
 					},
-					Objective:        99,
-					PageAlertMeta:    prometheus.AlertMeta{Disable: true},
-					WarningAlertMeta: prometheus.AlertMeta{Disable: true},
+					Objective:       99,
+					PageAlertMeta:   prometheus.AlertMeta{Disable: true},
+					TicketAlertMeta: prometheus.AlertMeta{Disable: true},
 				},
 			}},
 		},
@@ -235,7 +235,7 @@ slos:
 							"runbook": "http://whatever.com",
 						},
 					},
-					WarningAlertMeta: prometheus.AlertMeta{
+					TicketAlertMeta: prometheus.AlertMeta{
 						Disable: false,
 						Name:    "testAlert",
 						Labels: map[string]string{
@@ -264,8 +264,8 @@ slos:
 						"owner":    "myteam",
 						"category": "test2",
 					},
-					PageAlertMeta:    prometheus.AlertMeta{Disable: true},
-					WarningAlertMeta: prometheus.AlertMeta{Disable: true},
+					PageAlertMeta:   prometheus.AlertMeta{Disable: true},
+					TicketAlertMeta: prometheus.AlertMeta{Disable: true},
 				},
 			}},
 		},

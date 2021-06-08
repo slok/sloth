@@ -55,7 +55,7 @@ func getGoodSLO(name string) prometheus.SLO {
 				"runbook": "http://whatever.com",
 			},
 		},
-		WarningAlertMeta: prometheus.AlertMeta{
+		TicketAlertMeta: prometheus.AlertMeta{
 			Disable: false,
 			Name:    "testAlert",
 			Labels: map[string]string{

@@ -76,15 +76,15 @@ func mapSpecToModel(ctx context.Context, plugins map[string]prometheus.SLIPlugin
 	spec := kspec.Spec
 	for _, specSLO := range kspec.Spec.SLOs {
 		slo := prometheus.SLO{
-			ID:               fmt.Sprintf("%s-%s", spec.Service, specSLO.Name),
-			Name:             specSLO.Name,
-			Description:      specSLO.Description,
-			Service:          spec.Service,
-			TimeWindow:       30 * 24 * time.Hour, // Default and for now the only one supported.
-			Objective:        specSLO.Objective,
-			Labels:           mergeLabels(spec.Labels, specSLO.Labels),
-			PageAlertMeta:    prometheus.AlertMeta{Disable: true},
-			WarningAlertMeta: prometheus.AlertMeta{Disable: true},
+			ID:              fmt.Sprintf("%s-%s", spec.Service, specSLO.Name),
+			Name:            specSLO.Name,
+			Description:     specSLO.Description,
+			Service:         spec.Service,
+			TimeWindow:      30 * 24 * time.Hour, // Default and for now the only one supported.
+			Objective:       specSLO.Objective,
+			Labels:          mergeLabels(spec.Labels, specSLO.Labels),
+			PageAlertMeta:   prometheus.AlertMeta{Disable: true},
+			TicketAlertMeta: prometheus.AlertMeta{Disable: true},
 		}
 
 		// Set SLIs.
@@ -133,7 +133,7 @@ func mapSpecToModel(ctx context.Context, plugins map[string]prometheus.SLIPlugin
 		}
 
 		if !specSLO.Alerting.TicketAlert.Disable {
-			slo.WarningAlertMeta = prometheus.AlertMeta{
+			slo.TicketAlertMeta = prometheus.AlertMeta{
 				Name:        specSLO.Alerting.Name,
 				Labels:      mergeLabels(specSLO.Alerting.Labels, specSLO.Alerting.TicketAlert.Labels),
 				Annotations: mergeLabels(specSLO.Alerting.Annotations, specSLO.Alerting.TicketAlert.Annotations),

@@ -56,7 +56,7 @@ func TestIntegrationAppServiceGenerate(t *testing.T) {
 							Labels:      map[string]string{"p_alert_label": "p_label_al_1"},
 							Annotations: map[string]string{"p_alert_annot": "p_label_an_1"},
 						},
-						WarningAlertMeta: prometheus.AlertMeta{
+						TicketAlertMeta: prometheus.AlertMeta{
 							Name:        "t_alert_test_name",
 							Labels:      map[string]string{"t_alert_label": "t_label_al_1"},
 							Annotations: map[string]string{"t_alert_annot": "t_label_an_1"},
@@ -90,7 +90,7 @@ func TestIntegrationAppServiceGenerate(t *testing.T) {
 								Labels:      map[string]string{"p_alert_label": "p_label_al_1"},
 								Annotations: map[string]string{"p_alert_annot": "p_label_an_1"},
 							},
-							WarningAlertMeta: prometheus.AlertMeta{
+							TicketAlertMeta: prometheus.AlertMeta{
 								Name:        "t_alert_test_name",
 								Labels:      map[string]string{"t_alert_label": "t_label_al_1"},
 								Annotations: map[string]string{"t_alert_annot": "t_label_an_1"},

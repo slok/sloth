@@ -66,7 +66,7 @@ func TestGenerateSLOAlertRules(t *testing.T) {
 					Labels:      map[string]string{"custom-label": "test1"},
 					Annotations: map[string]string{"custom-annot": "test1"},
 				},
-				WarningAlertMeta: prometheus.AlertMeta{
+				TicketAlertMeta: prometheus.AlertMeta{
 					Name:        "something2",
 					Labels:      map[string]string{"custom-label": "test2"},
 					Annotations: map[string]string{"custom-annot": "test2"},
@@ -135,7 +135,7 @@ or ignoring (sloth_window)
 					Labels:      map[string]string{"custom-label": "test1"},
 					Annotations: map[string]string{"custom-annot": "test1"},
 				},
-				WarningAlertMeta: prometheus.AlertMeta{
+				TicketAlertMeta: prometheus.AlertMeta{
 					Disable: true,
 				},
 			},
@@ -175,7 +175,7 @@ or ignoring (sloth_window)
 				PageAlertMeta: prometheus.AlertMeta{
 					Disable: true,
 				},
-				WarningAlertMeta: prometheus.AlertMeta{
+				TicketAlertMeta: prometheus.AlertMeta{
 					Name:        "something2",
 					Labels:      map[string]string{"custom-label": "test2"},
 					Annotations: map[string]string{"custom-annot": "test2"},

@@ -122,8 +122,6 @@ spec:
                               description: Labels are the Prometheus labels for the specific alert. For example can be useful to route the Page alert to specific Slack channel.
                               type: object
                           type: object
-                      required:
-                      - name
                       type: object
                     description:
                       description: Description is the description of the SLO.

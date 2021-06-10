@@ -33,7 +33,8 @@ _At this moment Sloth is focused on Prometheus, however depending on the demand 
 - Kubernetes ([Prometheus-operator]) support.
 - Kubernetes Controller/operator mode with CRDs.
 - Support different [SLI types](#sli-types-manifests).
-- Support for [SLI plugins](#sli-plugins).
+- Support for [SLI plugins](#sli-plugins)
+- A library with [common SLI plugins][common-sli-plugins].
 
 ![Small Sloth SLO dahsboard](docs/img/sloth_small_dashboard.png)
 
@@ -225,6 +226,8 @@ The resulting generated SLOs are in [examples/\_gen](examples/_gen).
 SLI plugins are small Go plugins (using [Yaegi]) that can be loaded on Sloth start.
 
 These plugins can be refenreced as an SLI on the SLO specs and will return a raw SLI type.
+
+Sloth will maintain a library with [common SLI plugins][common-sli-plugins] that can be used on your SLOs or used as examples to develop your own ones.
 
 ### [`prometheus/v1`](pkg/prometheus/plugin/v1)
 
@@ -429,3 +432,4 @@ In a few words, theres no right or wrong answer, pick your own flavour based on 
 [prom-op-rules-crd]: https://github.com/prometheus-operator/kube-prometheus/blob/main/manifests/setup/prometheus-operator-0prometheusruleCustomResourceDefinition.yaml
 [sloth-crd]: pkg/kubernetes/gen/crd/sloth.slok.dev_prometheusservicelevels.yaml
 [yaegi]: https://github.com/traefik/yaegi
+[common-sli-plugins]: https://github.com/slok/sloth-common-sli-plugins

@@ -216,8 +216,9 @@ func (g generateCommand) generate(ctx context.Context, config RootConfig, info i
 	}
 
 	result, err := controller.Generate(ctx, generate.Request{
-		Info:     info,
-		SLOGroup: slos,
+		ExtraLabels: g.extraLabels,
+		Info:        info,
+		SLOGroup:    slos,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("could not generate prometheus rules: %w", err)

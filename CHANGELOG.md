@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Changed
+
+- Fix CLI `--extra-labels` not being used.
+
 ## [v0.3.0] - 2021-06-10
 
 ### Added

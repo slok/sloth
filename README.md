@@ -11,11 +11,11 @@
 
 ## Introduction
 
-Use the easiest way to generate [SLOs][google-slo] for Prometheus.
+Meet the easiest way to generate [SLOs][google-slo] for Prometheus.
 
 Sloth generates understandable, uniform and reliable Prometheus SLOs for any kind of service. Using a simple SLO spec that results in multiple metrics and [multi window multi burn][mwmb] alerts.
 
-_At this moment Sloth is focused on Prometheus, however depending on the demand and complexity we may support more backeds._
+_At this moment Sloth is focused on Prometheus, however depending on the demand and complexity we may support other backends._
 
 ## Features
 
@@ -36,7 +36,7 @@ _At this moment Sloth is focused on Prometheus, however depending on the demand 
 - Support for [SLI plugins](#sli-plugins)
 - A library with [common SLI plugins][common-sli-plugins].
 
-![Small Sloth SLO dahsboard](docs/img/sloth_small_dashboard.png)
+![Small Sloth SLO dashboard](docs/img/sloth_small_dashboard.png)
 
 ## Get Sloth
 
@@ -101,7 +101,7 @@ The Prometheus rules that Sloth generates can be explained in 3 categories:
 
 Sloth will take the service level spec and for each SLO in the spec will create 3 rule groups with the above categories.
 
-The generated rules share the same metric name across SLOs, however the labels are the key to identify the different services, SLO... This is how we obtain a uniform way of describing all the SLOs across different teams and services.
+These rules will share the same metric name across SLOs. However the labels are the key to identify the different services, SLO... This is how we obtain a uniform way of describing all the SLOs across different teams and services.
 
 To get all the available metric names created by Sloth, use this query:
 
@@ -118,7 +118,7 @@ At this moment Sloth can work in two different modes:
 
 ### CLI
 
-`generate` will generate Prometheus rules in different formats based on the specs. This mode only needs the CLI so its very useful on Gitops, CI, scripts or as a CLI on yout toolbox.
+`generate` will generate Prometheus rules in different formats based on the specs. This mode only needs the CLI so its very useful for GitOps, CI, scripts or as a CLI on your toolbox.
 
 Currently there are two types of specs supported for `generate` command. Sloth will detect the input spec type and generate the output type accordingly:
 
@@ -149,7 +149,7 @@ INFO[0000] Prometheus rules written                      format=yaml groups=6 ou
 
 Check CRD here: [v1](pkg/kubernetes/api/sloth/v1)
 
-Will generate from a [Sloth CRD](pkg/kubernetes/api/sloth/v1) spec into [Prometheus-operator] [CRD rules][prom-op-rules]. This generates the prometheus operator CRDs based on the Sloth CRD template.
+Will generate from a [Sloth CRD](pkg/kubernetes/api/sloth/v1) spec into [Prometheus-operator][CRD rules][prom-op-rules]. This generates the prometheus operator CRDs based on the Sloth CRD template.
 
 - **Sloth CRD is NOT required in the cluster because it happens offline as a CLI. For controller/operator K8s flow, check next section**
 - **Prometheus operator Rule CRD is required in the cluster for the Sloth generated rules: [Manifest][prom-op-rules-crd]**
@@ -172,7 +172,7 @@ INFO[0000] SLO alert rules generated                     rules=2 slo=home-wifi-r
 
 ### Kubernetes Controller ([Prometheus-operator])
 
-`kubernetes-controller` command runs Sloth as a controller/operator that will react on [`sloth.slok.dev/v1/PrometheusServiceLevel`](pkg/kubernetes/api/sloth/v1) CRD. The controller will create the required [Prometheus-operator] [CRD rules][prom-op-rules].
+`kubernetes-controller` command runs Sloth as a controller/operator that will react on [`sloth.slok.dev/v1/PrometheusServiceLevel`](pkg/kubernetes/api/sloth/v1) CRD. The controller will create the required [Prometheus-operator][CRD rules][prom-op-rules].
 
 In the end the controller mode makes the same work as the CLI however integrates better with a native Kubernetes flow.
 
@@ -231,13 +231,13 @@ Sloth will maintain a library with [common SLI plugins][common-sli-plugins] that
 
 ### [`prometheus/v1`](pkg/prometheus/plugin/v1)
 
-Developing an [`prometheus/v1`](pkg/prometheus/plugin/v1) SLI plugin is very easy, however you need to meet some requirements:
+Developing a [`prometheus/v1`](pkg/prometheus/plugin/v1) SLI plugin is very easy, however you need to meet some requirements:
 
 - The plugin version used as a global called `SLIPluginVersion`.
 - A plugin ID global called `SLIPluginID`.
 - A Plugin logic function called `SLIPlugin`.
 - The plugin must be in a single file named `plugin.go`.
-- Plugins only can use the Go standard library (`reflect` and `unsafe` packages can't b used).
+- Plugins only can use the Go standard library (`reflect` and `unsafe` packages can't be used).
 - Plugin received options are a `map[string]string` to avoid `interface{}` problems on dynamic execution code, the conversion to specific types are responsibility of the plugin.
 - Plugins don't depend on go modules, GOPATH or similar (thanks to the previous requirements).
 

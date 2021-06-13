@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Added
+
+- Support multi-arch docker images.
+
 ### Changed
 
 - Fix CLI `--extra-labels` not being used.

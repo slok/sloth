@@ -41,7 +41,7 @@ _At this moment Sloth is focused on Prometheus, however depending on the demand 
 ## Get Sloth
 
 - [Releases](https://github.com/slok/sloth/releases)
-- [Docker images](https://hub.docker.com/r/slok/sloth)
+- [Multi-arch Docker images](https://hub.docker.com/r/slok/sloth)
 - `git clone git@github.com:slok/sloth.git && cd ./sloth && make build && ls -la ./bin`
 
 ## Getting started
@@ -149,7 +149,7 @@ INFO[0000] Prometheus rules written                      format=yaml groups=6 ou
 
 Check CRD here: [v1](pkg/kubernetes/api/sloth/v1)
 
-Will generate from a [Sloth CRD](pkg/kubernetes/api/sloth/v1) spec into [Prometheus-operator][CRD rules][prom-op-rules]. This generates the prometheus operator CRDs based on the Sloth CRD template.
+Will generate from a [Sloth CRD](pkg/kubernetes/api/sloth/v1) spec into [Prometheus-operator] [CRD rules][prom-op-rules]. This generates the prometheus operator CRDs based on the Sloth CRD template.
 
 - **Sloth CRD is NOT required in the cluster because it happens offline as a CLI. For controller/operator K8s flow, check next section**
 - **Prometheus operator Rule CRD is required in the cluster for the Sloth generated rules: [Manifest][prom-op-rules-crd]**
@@ -172,7 +172,7 @@ INFO[0000] SLO alert rules generated                     rules=2 slo=home-wifi-r
 
 ### Kubernetes Controller ([Prometheus-operator])
 
-`kubernetes-controller` command runs Sloth as a controller/operator that will react on [`sloth.slok.dev/v1/PrometheusServiceLevel`](pkg/kubernetes/api/sloth/v1) CRD. The controller will create the required [Prometheus-operator][CRD rules][prom-op-rules].
+`kubernetes-controller` command runs Sloth as a controller/operator that will react on [`sloth.slok.dev/v1/PrometheusServiceLevel`](pkg/kubernetes/api/sloth/v1) CRD. The controller will create the required [Prometheus-operator] [crd rules][prom-op-rules].
 
 In the end the controller mode makes the same work as the CLI however integrates better with a native Kubernetes flow.
 

@@ -74,7 +74,7 @@ jobs:
       PROD_IMAGE_NAME: ${GITHUB_REPOSITORY}
       VERSION: ${GITHUB_SHA}
     needs: [check, unit-test, integration-test]
-    name: Release image
+    name: Release images
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -93,7 +93,7 @@ jobs:
     env:
       PROD_IMAGE_NAME: ${GITHUB_REPOSITORY}
     needs: [check, unit-test, integration-test]
-    name: Tagged release image
+    name: Tagged release images
     runs-on: ubuntu-latest
     steps:
       - run: echo "VERSION=${GITHUB_REF#refs/*/}" >> ${GITHUB_ENV} # Sets VERSION env var.

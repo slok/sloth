@@ -7,7 +7,7 @@ set -o nounset
 ostypes=("Linux" "Darwin" "Windows" "ARM")
 for ostype in "${ostypes[@]}"
 do
-	ostype="${ostype}" ./scripts/build/build.sh
+	ostype="${ostype}" ./scripts/build/bin/build.sh
 done
 
 # Create checksums.

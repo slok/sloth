@@ -18,4 +18,4 @@ vendor/
 .test_coverage.txt
 
 # Binaries
-bin/
+/bin

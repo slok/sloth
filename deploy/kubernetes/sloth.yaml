@@ -58,7 +58,7 @@ spec:
       serviceAccountName: sloth
       containers:
         - name: sloth
-          image: slok/sloth:v0.3.0
+          image: slok/sloth:v0.3.1
           args:
             - kubernetes-controller
           ports:

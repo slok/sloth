@@ -18,6 +18,7 @@ groups:
       )
       )
     labels:
+      cmd: examplesgen.sh
       owner: myteam
       sloth_id: myapp-http-availability
       sloth_service: myapp
@@ -35,6 +36,7 @@ groups:
       )
       )
     labels:
+      cmd: examplesgen.sh
       owner: myteam
       sloth_id: myapp-http-availability
       sloth_service: myapp
@@ -52,6 +54,7 @@ groups:
       )
       )
     labels:
+      cmd: examplesgen.sh
       owner: myteam
       sloth_id: myapp-http-availability
       sloth_service: myapp
@@ -69,6 +72,7 @@ groups:
       )
       )
     labels:
+      cmd: examplesgen.sh
       owner: myteam
       sloth_id: myapp-http-availability
       sloth_service: myapp
@@ -86,6 +90,7 @@ groups:
       )
       )
     labels:
+      cmd: examplesgen.sh
       owner: myteam
       sloth_id: myapp-http-availability
       sloth_service: myapp
@@ -103,6 +108,7 @@ groups:
       )
       )
     labels:
+      cmd: examplesgen.sh
       owner: myteam
       sloth_id: myapp-http-availability
       sloth_service: myapp
@@ -120,6 +126,7 @@ groups:
       )
       )
     labels:
+      cmd: examplesgen.sh
       owner: myteam
       sloth_id: myapp-http-availability
       sloth_service: myapp
@@ -137,6 +144,7 @@ groups:
   - record: slo:objective:ratio
     expr: vector(0.9998999999999999)
     labels:
+      cmd: examplesgen.sh
       owner: myteam
       sloth_id: myapp-http-availability
       sloth_service: myapp
@@ -144,6 +152,7 @@ groups:
   - record: slo:error_budget:ratio
     expr: vector(1-0.9998999999999999)
     labels:
+      cmd: examplesgen.sh
       owner: myteam
       sloth_id: myapp-http-availability
       sloth_service: myapp
@@ -151,6 +160,7 @@ groups:
   - record: slo:time_period:days
     expr: vector(30)
     labels:
+      cmd: examplesgen.sh
       owner: myteam
       sloth_id: myapp-http-availability
       sloth_service: myapp
@@ -161,6 +171,7 @@ groups:
       / on(sloth_id, sloth_slo, sloth_service) group_left
       slo:error_budget:ratio{sloth_id="myapp-http-availability", sloth_service="myapp", sloth_slo="http-availability"}
     labels:
+      cmd: examplesgen.sh
       owner: myteam
       sloth_id: myapp-http-availability
       sloth_service: myapp
@@ -171,6 +182,7 @@ groups:
       / on(sloth_id, sloth_slo, sloth_service) group_left
       slo:error_budget:ratio{sloth_id="myapp-http-availability", sloth_service="myapp", sloth_slo="http-availability"}
     labels:
+      cmd: examplesgen.sh
       owner: myteam
       sloth_id: myapp-http-availability
       sloth_service: myapp
@@ -179,6 +191,7 @@ groups:
     expr: 1 - slo:period_burn_rate:ratio{sloth_id="myapp-http-availability", sloth_service="myapp",
       sloth_slo="http-availability"}
     labels:
+      cmd: examplesgen.sh
       owner: myteam
       sloth_id: myapp-http-availability
       sloth_service: myapp
@@ -186,6 +199,7 @@ groups:
   - record: sloth_slo_info
     expr: vector(1)
     labels:
+      cmd: examplesgen.sh
       owner: myteam
       sloth_id: myapp-http-availability
       sloth_mode: cli-gen-prom

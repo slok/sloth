@@ -25,6 +25,7 @@ spec:
         /
         sum(rate(http_request_duration_seconds_count{ f1="v1",f2="v2",job="myservice" }[5m])))
       labels:
+        cmd: examplesgen.sh
         owner: myteam
         repo: myorg/myservice
         sloth_id: myservice-requests-availability
@@ -39,6 +40,7 @@ spec:
         /
         sum(rate(http_request_duration_seconds_count{ f1="v1",f2="v2",job="myservice" }[30m])))
       labels:
+        cmd: examplesgen.sh
         owner: myteam
         repo: myorg/myservice
         sloth_id: myservice-requests-availability
@@ -53,6 +55,7 @@ spec:
         /
         sum(rate(http_request_duration_seconds_count{ f1="v1",f2="v2",job="myservice" }[1h])))
       labels:
+        cmd: examplesgen.sh
         owner: myteam
         repo: myorg/myservice
         sloth_id: myservice-requests-availability
@@ -67,6 +70,7 @@ spec:
         /
         sum(rate(http_request_duration_seconds_count{ f1="v1",f2="v2",job="myservice" }[2h])))
       labels:
+        cmd: examplesgen.sh
         owner: myteam
         repo: myorg/myservice
         sloth_id: myservice-requests-availability
@@ -81,6 +85,7 @@ spec:
         /
         sum(rate(http_request_duration_seconds_count{ f1="v1",f2="v2",job="myservice" }[6h])))
       labels:
+        cmd: examplesgen.sh
         owner: myteam
         repo: myorg/myservice
         sloth_id: myservice-requests-availability
@@ -95,6 +100,7 @@ spec:
         /
         sum(rate(http_request_duration_seconds_count{ f1="v1",f2="v2",job="myservice" }[1d])))
       labels:
+        cmd: examplesgen.sh
         owner: myteam
         repo: myorg/myservice
         sloth_id: myservice-requests-availability
@@ -109,6 +115,7 @@ spec:
         /
         sum(rate(http_request_duration_seconds_count{ f1="v1",f2="v2",job="myservice" }[3d])))
       labels:
+        cmd: examplesgen.sh
         owner: myteam
         repo: myorg/myservice
         sloth_id: myservice-requests-availability
@@ -128,6 +135,7 @@ spec:
     rules:
     - expr: vector(0.9990000000000001)
       labels:
+        cmd: examplesgen.sh
         owner: myteam
         repo: myorg/myservice
         sloth_id: myservice-requests-availability
@@ -137,6 +145,7 @@ spec:
       record: slo:objective:ratio
     - expr: vector(1-0.9990000000000001)
       labels:
+        cmd: examplesgen.sh
         owner: myteam
         repo: myorg/myservice
         sloth_id: myservice-requests-availability
@@ -146,6 +155,7 @@ spec:
       record: slo:error_budget:ratio
     - expr: vector(30)
       labels:
+        cmd: examplesgen.sh
         owner: myteam
         repo: myorg/myservice
         sloth_id: myservice-requests-availability
@@ -158,6 +168,7 @@ spec:
         / on(sloth_id, sloth_slo, sloth_service) group_left
         slo:error_budget:ratio{sloth_id="myservice-requests-availability", sloth_service="myservice", sloth_slo="requests-availability"}
       labels:
+        cmd: examplesgen.sh
         owner: myteam
         repo: myorg/myservice
         sloth_id: myservice-requests-availability
@@ -170,6 +181,7 @@ spec:
         / on(sloth_id, sloth_slo, sloth_service) group_left
         slo:error_budget:ratio{sloth_id="myservice-requests-availability", sloth_service="myservice", sloth_slo="requests-availability"}
       labels:
+        cmd: examplesgen.sh
         owner: myteam
         repo: myorg/myservice
         sloth_id: myservice-requests-availability
@@ -180,6 +192,7 @@ spec:
     - expr: 1 - slo:period_burn_rate:ratio{sloth_id="myservice-requests-availability",
         sloth_service="myservice", sloth_slo="requests-availability"}
       labels:
+        cmd: examplesgen.sh
         owner: myteam
         repo: myorg/myservice
         sloth_id: myservice-requests-availability
@@ -189,6 +202,7 @@ spec:
       record: slo:period_error_budget_remaining:ratio
     - expr: vector(1)
       labels:
+        cmd: examplesgen.sh
         owner: myteam
         repo: myorg/myservice
         sloth_id: myservice-requests-availability

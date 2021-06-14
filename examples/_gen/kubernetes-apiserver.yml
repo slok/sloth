@@ -13,6 +13,7 @@ groups:
       (sum(rate(apiserver_request_total[5m])))
     labels:
       cluster: valhalla
+      cmd: examplesgen.sh
       component: kubernetes
       sloth_id: k8s-apiserver-requests-availability
       sloth_service: k8s-apiserver
@@ -25,6 +26,7 @@ groups:
       (sum(rate(apiserver_request_total[30m])))
     labels:
       cluster: valhalla
+      cmd: examplesgen.sh
       component: kubernetes
       sloth_id: k8s-apiserver-requests-availability
       sloth_service: k8s-apiserver
@@ -37,6 +39,7 @@ groups:
       (sum(rate(apiserver_request_total[1h])))
     labels:
       cluster: valhalla
+      cmd: examplesgen.sh
       component: kubernetes
       sloth_id: k8s-apiserver-requests-availability
       sloth_service: k8s-apiserver
@@ -49,6 +52,7 @@ groups:
       (sum(rate(apiserver_request_total[2h])))
     labels:
       cluster: valhalla
+      cmd: examplesgen.sh
       component: kubernetes
       sloth_id: k8s-apiserver-requests-availability
       sloth_service: k8s-apiserver
@@ -61,6 +65,7 @@ groups:
       (sum(rate(apiserver_request_total[6h])))
     labels:
       cluster: valhalla
+      cmd: examplesgen.sh
       component: kubernetes
       sloth_id: k8s-apiserver-requests-availability
       sloth_service: k8s-apiserver
@@ -73,6 +78,7 @@ groups:
       (sum(rate(apiserver_request_total[1d])))
     labels:
       cluster: valhalla
+      cmd: examplesgen.sh
       component: kubernetes
       sloth_id: k8s-apiserver-requests-availability
       sloth_service: k8s-apiserver
@@ -85,6 +91,7 @@ groups:
       (sum(rate(apiserver_request_total[3d])))
     labels:
       cluster: valhalla
+      cmd: examplesgen.sh
       component: kubernetes
       sloth_id: k8s-apiserver-requests-availability
       sloth_service: k8s-apiserver
@@ -103,6 +110,7 @@ groups:
     expr: vector(0.9990000000000001)
     labels:
       cluster: valhalla
+      cmd: examplesgen.sh
       component: kubernetes
       sloth_id: k8s-apiserver-requests-availability
       sloth_service: k8s-apiserver
@@ -111,6 +119,7 @@ groups:
     expr: vector(1-0.9990000000000001)
     labels:
       cluster: valhalla
+      cmd: examplesgen.sh
       component: kubernetes
       sloth_id: k8s-apiserver-requests-availability
       sloth_service: k8s-apiserver
@@ -119,6 +128,7 @@ groups:
     expr: vector(30)
     labels:
       cluster: valhalla
+      cmd: examplesgen.sh
       component: kubernetes
       sloth_id: k8s-apiserver-requests-availability
       sloth_service: k8s-apiserver
@@ -130,6 +140,7 @@ groups:
       slo:error_budget:ratio{sloth_id="k8s-apiserver-requests-availability", sloth_service="k8s-apiserver", sloth_slo="requests-availability"}
     labels:
       cluster: valhalla
+      cmd: examplesgen.sh
       component: kubernetes
       sloth_id: k8s-apiserver-requests-availability
       sloth_service: k8s-apiserver
@@ -141,6 +152,7 @@ groups:
       slo:error_budget:ratio{sloth_id="k8s-apiserver-requests-availability", sloth_service="k8s-apiserver", sloth_slo="requests-availability"}
     labels:
       cluster: valhalla
+      cmd: examplesgen.sh
       component: kubernetes
       sloth_id: k8s-apiserver-requests-availability
       sloth_service: k8s-apiserver
@@ -150,6 +162,7 @@ groups:
       sloth_service="k8s-apiserver", sloth_slo="requests-availability"}
     labels:
       cluster: valhalla
+      cmd: examplesgen.sh
       component: kubernetes
       sloth_id: k8s-apiserver-requests-availability
       sloth_service: k8s-apiserver
@@ -158,6 +171,7 @@ groups:
     expr: vector(1)
     labels:
       cluster: valhalla
+      cmd: examplesgen.sh
       component: kubernetes
       sloth_id: k8s-apiserver-requests-availability
       sloth_mode: cli-gen-prom
@@ -227,6 +241,7 @@ groups:
       (sum(rate(apiserver_request_duration_seconds_count{verb!="WATCH"}[5m])))
     labels:
       cluster: valhalla
+      cmd: examplesgen.sh
       component: kubernetes
       sloth_id: k8s-apiserver-requests-latency
       sloth_service: k8s-apiserver
@@ -244,6 +259,7 @@ groups:
       (sum(rate(apiserver_request_duration_seconds_count{verb!="WATCH"}[30m])))
     labels:
       cluster: valhalla
+      cmd: examplesgen.sh
       component: kubernetes
       sloth_id: k8s-apiserver-requests-latency
       sloth_service: k8s-apiserver
@@ -261,6 +277,7 @@ groups:
       (sum(rate(apiserver_request_duration_seconds_count{verb!="WATCH"}[1h])))
     labels:
       cluster: valhalla
+      cmd: examplesgen.sh
       component: kubernetes
       sloth_id: k8s-apiserver-requests-latency
       sloth_service: k8s-apiserver
@@ -278,6 +295,7 @@ groups:
       (sum(rate(apiserver_request_duration_seconds_count{verb!="WATCH"}[2h])))
     labels:
       cluster: valhalla
+      cmd: examplesgen.sh
       component: kubernetes
       sloth_id: k8s-apiserver-requests-latency
       sloth_service: k8s-apiserver
@@ -295,6 +313,7 @@ groups:
       (sum(rate(apiserver_request_duration_seconds_count{verb!="WATCH"}[6h])))
     labels:
       cluster: valhalla
+      cmd: examplesgen.sh
       component: kubernetes
       sloth_id: k8s-apiserver-requests-latency
       sloth_service: k8s-apiserver
@@ -312,6 +331,7 @@ groups:
       (sum(rate(apiserver_request_duration_seconds_count{verb!="WATCH"}[1d])))
     labels:
       cluster: valhalla
+      cmd: examplesgen.sh
       component: kubernetes
       sloth_id: k8s-apiserver-requests-latency
       sloth_service: k8s-apiserver
@@ -329,6 +349,7 @@ groups:
       (sum(rate(apiserver_request_duration_seconds_count{verb!="WATCH"}[3d])))
     labels:
       cluster: valhalla
+      cmd: examplesgen.sh
       component: kubernetes
       sloth_id: k8s-apiserver-requests-latency
       sloth_service: k8s-apiserver
@@ -347,6 +368,7 @@ groups:
     expr: vector(0.99)
     labels:
       cluster: valhalla
+      cmd: examplesgen.sh
       component: kubernetes
       sloth_id: k8s-apiserver-requests-latency
       sloth_service: k8s-apiserver
@@ -355,6 +377,7 @@ groups:
     expr: vector(1-0.99)
     labels:
       cluster: valhalla
+      cmd: examplesgen.sh
       component: kubernetes
       sloth_id: k8s-apiserver-requests-latency
       sloth_service: k8s-apiserver
@@ -363,6 +386,7 @@ groups:
     expr: vector(30)
     labels:
       cluster: valhalla
+      cmd: examplesgen.sh
       component: kubernetes
       sloth_id: k8s-apiserver-requests-latency
       sloth_service: k8s-apiserver
@@ -374,6 +398,7 @@ groups:
       slo:error_budget:ratio{sloth_id="k8s-apiserver-requests-latency", sloth_service="k8s-apiserver", sloth_slo="requests-latency"}
     labels:
       cluster: valhalla
+      cmd: examplesgen.sh
       component: kubernetes
       sloth_id: k8s-apiserver-requests-latency
       sloth_service: k8s-apiserver
@@ -385,6 +410,7 @@ groups:
       slo:error_budget:ratio{sloth_id="k8s-apiserver-requests-latency", sloth_service="k8s-apiserver", sloth_slo="requests-latency"}
     labels:
       cluster: valhalla
+      cmd: examplesgen.sh
       component: kubernetes
       sloth_id: k8s-apiserver-requests-latency
       sloth_service: k8s-apiserver
@@ -394,6 +420,7 @@ groups:
       sloth_service="k8s-apiserver", sloth_slo="requests-latency"}
     labels:
       cluster: valhalla
+      cmd: examplesgen.sh
       component: kubernetes
       sloth_id: k8s-apiserver-requests-latency
       sloth_service: k8s-apiserver
@@ -402,6 +429,7 @@ groups:
     expr: vector(1)
     labels:
       cluster: valhalla
+      cmd: examplesgen.sh
       component: kubernetes
       sloth_id: k8s-apiserver-requests-latency
       sloth_mode: cli-gen-prom

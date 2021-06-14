@@ -13,6 +13,7 @@ groups:
       (sum_over_time((count(unifipoller_client_satisfaction_ratio))[5m:]))
     labels:
       cluster: valhalla
+      cmd: examplesgen.sh
       component: ubiquiti
       context: home
       sloth_id: home-wifi-good-wifi-client-satisfaction
@@ -26,6 +27,7 @@ groups:
       (sum_over_time((count(unifipoller_client_satisfaction_ratio))[30m:]))
     labels:
       cluster: valhalla
+      cmd: examplesgen.sh
       component: ubiquiti
       context: home
       sloth_id: home-wifi-good-wifi-client-satisfaction
@@ -39,6 +41,7 @@ groups:
       (sum_over_time((count(unifipoller_client_satisfaction_ratio))[1h:]))
     labels:
       cluster: valhalla
+      cmd: examplesgen.sh
       component: ubiquiti
       context: home
       sloth_id: home-wifi-good-wifi-client-satisfaction
@@ -52,6 +55,7 @@ groups:
       (sum_over_time((count(unifipoller_client_satisfaction_ratio))[2h:]))
     labels:
       cluster: valhalla
+      cmd: examplesgen.sh
       component: ubiquiti
       context: home
       sloth_id: home-wifi-good-wifi-client-satisfaction
@@ -65,6 +69,7 @@ groups:
       (sum_over_time((count(unifipoller_client_satisfaction_ratio))[6h:]))
     labels:
       cluster: valhalla
+      cmd: examplesgen.sh
       component: ubiquiti
       context: home
       sloth_id: home-wifi-good-wifi-client-satisfaction
@@ -78,6 +83,7 @@ groups:
       (sum_over_time((count(unifipoller_client_satisfaction_ratio))[1d:]))
     labels:
       cluster: valhalla
+      cmd: examplesgen.sh
       component: ubiquiti
       context: home
       sloth_id: home-wifi-good-wifi-client-satisfaction
@@ -91,6 +97,7 @@ groups:
       (sum_over_time((count(unifipoller_client_satisfaction_ratio))[3d:]))
     labels:
       cluster: valhalla
+      cmd: examplesgen.sh
       component: ubiquiti
       context: home
       sloth_id: home-wifi-good-wifi-client-satisfaction
@@ -110,6 +117,7 @@ groups:
     expr: vector(0.95)
     labels:
       cluster: valhalla
+      cmd: examplesgen.sh
       component: ubiquiti
       context: home
       sloth_id: home-wifi-good-wifi-client-satisfaction
@@ -119,6 +127,7 @@ groups:
     expr: vector(1-0.95)
     labels:
       cluster: valhalla
+      cmd: examplesgen.sh
       component: ubiquiti
       context: home
       sloth_id: home-wifi-good-wifi-client-satisfaction
@@ -128,6 +137,7 @@ groups:
     expr: vector(30)
     labels:
       cluster: valhalla
+      cmd: examplesgen.sh
       component: ubiquiti
       context: home
       sloth_id: home-wifi-good-wifi-client-satisfaction
@@ -140,6 +150,7 @@ groups:
       slo:error_budget:ratio{sloth_id="home-wifi-good-wifi-client-satisfaction", sloth_service="home-wifi", sloth_slo="good-wifi-client-satisfaction"}
     labels:
       cluster: valhalla
+      cmd: examplesgen.sh
       component: ubiquiti
       context: home
       sloth_id: home-wifi-good-wifi-client-satisfaction
@@ -152,6 +163,7 @@ groups:
       slo:error_budget:ratio{sloth_id="home-wifi-good-wifi-client-satisfaction", sloth_service="home-wifi", sloth_slo="good-wifi-client-satisfaction"}
     labels:
       cluster: valhalla
+      cmd: examplesgen.sh
       component: ubiquiti
       context: home
       sloth_id: home-wifi-good-wifi-client-satisfaction
@@ -162,6 +174,7 @@ groups:
       sloth_service="home-wifi", sloth_slo="good-wifi-client-satisfaction"}
     labels:
       cluster: valhalla
+      cmd: examplesgen.sh
       component: ubiquiti
       context: home
       sloth_id: home-wifi-good-wifi-client-satisfaction
@@ -171,6 +184,7 @@ groups:
     expr: vector(1)
     labels:
       cluster: valhalla
+      cmd: examplesgen.sh
       component: ubiquiti
       context: home
       sloth_id: home-wifi-good-wifi-client-satisfaction
@@ -232,6 +246,7 @@ groups:
       (sum_over_time((count(unifipoller_client_satisfaction_ratio))[5m:]))
     labels:
       cluster: valhalla
+      cmd: examplesgen.sh
       component: ubiquiti
       context: home
       sloth_id: home-wifi-risk-wifi-client-satisfaction
@@ -245,6 +260,7 @@ groups:
       (sum_over_time((count(unifipoller_client_satisfaction_ratio))[30m:]))
     labels:
       cluster: valhalla
+      cmd: examplesgen.sh
       component: ubiquiti
       context: home
       sloth_id: home-wifi-risk-wifi-client-satisfaction
@@ -258,6 +274,7 @@ groups:
       (sum_over_time((count(unifipoller_client_satisfaction_ratio))[1h:]))
     labels:
       cluster: valhalla
+      cmd: examplesgen.sh
       component: ubiquiti
       context: home
       sloth_id: home-wifi-risk-wifi-client-satisfaction
@@ -271,6 +288,7 @@ groups:
       (sum_over_time((count(unifipoller_client_satisfaction_ratio))[2h:]))
     labels:
       cluster: valhalla
+      cmd: examplesgen.sh
       component: ubiquiti
       context: home
       sloth_id: home-wifi-risk-wifi-client-satisfaction
@@ -284,6 +302,7 @@ groups:
       (sum_over_time((count(unifipoller_client_satisfaction_ratio))[6h:]))
     labels:
       cluster: valhalla
+      cmd: examplesgen.sh
       component: ubiquiti
       context: home
       sloth_id: home-wifi-risk-wifi-client-satisfaction
@@ -297,6 +316,7 @@ groups:
       (sum_over_time((count(unifipoller_client_satisfaction_ratio))[1d:]))
     labels:
       cluster: valhalla
+      cmd: examplesgen.sh
       component: ubiquiti
       context: home
       sloth_id: home-wifi-risk-wifi-client-satisfaction
@@ -310,6 +330,7 @@ groups:
       (sum_over_time((count(unifipoller_client_satisfaction_ratio))[3d:]))
     labels:
       cluster: valhalla
+      cmd: examplesgen.sh
       component: ubiquiti
       context: home
       sloth_id: home-wifi-risk-wifi-client-satisfaction
@@ -329,6 +350,7 @@ groups:
     expr: vector(0.9990000000000001)
     labels:
       cluster: valhalla
+      cmd: examplesgen.sh
       component: ubiquiti
       context: home
       sloth_id: home-wifi-risk-wifi-client-satisfaction
@@ -338,6 +360,7 @@ groups:
     expr: vector(1-0.9990000000000001)
     labels:
       cluster: valhalla
+      cmd: examplesgen.sh
       component: ubiquiti
       context: home
       sloth_id: home-wifi-risk-wifi-client-satisfaction
@@ -347,6 +370,7 @@ groups:
     expr: vector(30)
     labels:
       cluster: valhalla
+      cmd: examplesgen.sh
       component: ubiquiti
       context: home
       sloth_id: home-wifi-risk-wifi-client-satisfaction
@@ -359,6 +383,7 @@ groups:
       slo:error_budget:ratio{sloth_id="home-wifi-risk-wifi-client-satisfaction", sloth_service="home-wifi", sloth_slo="risk-wifi-client-satisfaction"}
     labels:
       cluster: valhalla
+      cmd: examplesgen.sh
       component: ubiquiti
       context: home
       sloth_id: home-wifi-risk-wifi-client-satisfaction
@@ -371,6 +396,7 @@ groups:
       slo:error_budget:ratio{sloth_id="home-wifi-risk-wifi-client-satisfaction", sloth_service="home-wifi", sloth_slo="risk-wifi-client-satisfaction"}
     labels:
       cluster: valhalla
+      cmd: examplesgen.sh
       component: ubiquiti
       context: home
       sloth_id: home-wifi-risk-wifi-client-satisfaction
@@ -381,6 +407,7 @@ groups:
       sloth_service="home-wifi", sloth_slo="risk-wifi-client-satisfaction"}
     labels:
       cluster: valhalla
+      cmd: examplesgen.sh
       component: ubiquiti
       context: home
       sloth_id: home-wifi-risk-wifi-client-satisfaction
@@ -390,6 +417,7 @@ groups:
     expr: vector(1)
     labels:
       cluster: valhalla
+      cmd: examplesgen.sh
       component: ubiquiti
       context: home
       sloth_id: home-wifi-risk-wifi-client-satisfaction

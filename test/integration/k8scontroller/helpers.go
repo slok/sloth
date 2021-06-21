@@ -1,13 +1,10 @@
 package k8scontroller
 
 import (
-	"bytes"
 	"context"
 	"fmt"
 	"os"
 	"os/exec"
-	"regexp"
-	"strings"
 	"testing"
 	"time"
 
@@ -19,6 +16,7 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 
 	slothclientset "github.com/slok/sloth/pkg/kubernetes/gen/clientset/versioned"
+	"github.com/slok/sloth/test/integration/testutils"
 )
 
 type Config struct {
@@ -67,60 +65,16 @@ func NewConfig(t *testing.T) Config {
 	return c
 }
 
-var multiSpaceRegex = regexp.MustCompile(" +")
-
-// RunSloth executes sloth command.
-func RunSloth(ctx context.Context, env []string, cmdApp, cmdArgs string, nolog bool) (stdout, stderr []byte, err error) {
-	// Sanitize command.
-	cmdArgs = strings.TrimSpace(cmdArgs)
-	cmdArgs = multiSpaceRegex.ReplaceAllString(cmdArgs, " ")
-
-	// Split into args.
-	args := strings.Split(cmdArgs, " ")
-
-	// Create command.
-	var outData, errData bytes.Buffer
-	cmd := exec.CommandContext(ctx, cmdApp, args...)
-	cmd.Stdout = &outData
-	cmd.Stderr = &errData
-
-	// Set env.
-	newEnv := append([]string{}, env...)
-	newEnv = append(newEnv, os.Environ()...)
-	if nolog {
-		newEnv = append(newEnv,
-			"SLOTH_NO_LOG=true",
-			"SLOTH_NO_COLOR=true",
-		)
-	}
-	cmd.Env = newEnv
-
-	// Run.
-	err = cmd.Run()
-
-	return outData.Bytes(), errData.Bytes(), err
-}
-
-func SlothVersion(ctx context.Context, config Config) (string, error) {
-	stdout, stderr, err := RunSloth(ctx, []string{}, config.Binary, "version", false)
-	if err != nil {
-		return "", fmt.Errorf("could not obtain versions: %s: %w", stderr, err)
-	}
-
-	return string(stdout), nil
-}
-
 func RunSlothController(ctx context.Context, config Config, ns string, cmdArgs string) (stdout, stderr []byte, err error) {
 	env := []string{
 		fmt.Sprintf("SLOTH_KUBE_CONFIG=%s", config.KubeConfig),
 		fmt.Sprintf("SLOTH_KUBE_CONTEXT=%s", config.KubeContext),
 		fmt.Sprintf("SLOTH_KUBE_NAMESPACE=%s", ns),
 		fmt.Sprintf("SLOTH_DEVELOPMENT=%t", true),
-		fmt.Sprintf("SLOTH_DEVELOPMENT=%t", true),
 		fmt.Sprintf("SLOTH_SLI_PLUGINS_PATH=%s", "./"),
 	}
 
-	return RunSloth(ctx, env, config.Binary, fmt.Sprintf("kubernetes-controller %s", cmdArgs), true)
+	return testutils.RunSloth(ctx, env, config.Binary, fmt.Sprintf("kubernetes-controller %s", cmdArgs), true)
 }
 
 type KubeClients struct {

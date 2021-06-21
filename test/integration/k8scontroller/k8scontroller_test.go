@@ -12,6 +12,7 @@ import (
 
 	slothv1 "github.com/slok/sloth/pkg/kubernetes/api/sloth/v1"
 	"github.com/slok/sloth/test/integration/k8scontroller"
+	"github.com/slok/sloth/test/integration/testutils"
 )
 
 // sanitizePrometheusRule will remove all the dynamic fields on a monitoringv1.PrometheusRule object
@@ -36,7 +37,7 @@ func sanitizePrometheusRule(pr *monitoringv1.PrometheusRule) *monitoringv1.Prome
 func TestKubernetesControllerPromOperatorGenerate(t *testing.T) {
 	// Tests config.
 	config := k8scontroller.NewConfig(t)
-	version, err := k8scontroller.SlothVersion(context.TODO(), config)
+	version, err := testutils.SlothVersion(context.TODO(), config.Binary)
 	require.NoError(t, err)
 
 	// KubeClis.

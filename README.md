@@ -202,7 +202,7 @@ sloth-slo-my-service   myservice         1              1            true     27
 
 $ kubectl -n monitoring get prometheusrules
 NAME                  AGE
-sloth-slo-home-wifi   38s
+sloth-slo-my-service  38s
 ```
 
 ## Examples

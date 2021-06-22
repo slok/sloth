@@ -1,0 +1,20 @@
+version: "prometheus/v1"
+service: "svc01"
+labels:
+  owner: myteam
+  tier: "2"
+slos:
+  - name: "slo1"
+    objective: 99.9
+    description: "This is SLO 01."
+    sli:
+      plugin:
+        id: integration_test
+        options:
+          job: svc01
+          filter: guybrush="threepwood",melee="island"
+    alerting:
+      page_alert:
+        disable: true
+      ticket_alert:
+        disable: true

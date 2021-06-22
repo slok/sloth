@@ -8,6 +8,8 @@ VERSION ?= $(shell git describe --tags --always)
 
 UNIT_TEST_CMD := ./scripts/check/unit-test.sh
 INTEGRATION_TEST_CMD := ./scripts/check/integration-test.sh
+INTEGRATION_TEST_K8S_CMD := ./scripts/check/integration-test-k8s.sh
+INTEGRATION_TEST_CLI_CMD := ./scripts/check/integration-test-cli.sh
 CHECK_CMD := ./scripts/check/check.sh
 
 DEV_IMAGE_NAME := slok/sloth-dev
@@ -89,6 +91,14 @@ ci-test:  ## Runs unit test in CI environment (without docker).
 ci-check:  ## Runs checks in CI environment (without docker).
 	@$(CHECK_CMD)
 
-.PHONY: ci-integration-test
+.PHONY: ci-integration
 ci-integration: ## Runs integraton test in CI environment (without docker).
 	@$(INTEGRATION_TEST_CMD)
+
+.PHONY: ci-integration-cli
+ci-integration-cli: ## Runs integraton test for CLI in CI environment (without docker).
+	@$(INTEGRATION_TEST_CLI_CMD)
+
+.PHONY: ci-integration-k8s
+ci-integration-k8s: ## Runs integraton test for K8s in CI environment (without docker).
+	@$(INTEGRATION_TEST_K8S_CMD)

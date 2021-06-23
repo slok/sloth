@@ -1,4 +1,4 @@
-version: "prometheus/v1"
+version: "prometheus/v999"
 service: "svc01"
 labels:
   global01k1: global01v1

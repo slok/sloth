@@ -55,6 +55,11 @@ func TestPrometheusGenerate(t *testing.T) {
 			expOut:     expectLoader.mustLoadExp("./testdata/out-base.yaml.tpl"),
 		},
 
+		"Generate should generate the correct rules for all the SLOs (Kubernetes).": {
+			genCmdArgs: "--input ./testdata/in-base-k8s.yaml",
+			expOut:     expectLoader.mustLoadExp("./testdata/out-base-k8s.yaml.tpl"),
+		},
+
 		"Generate without alerts should generate the correct recording rules for all the SLOs.": {
 			genCmdArgs: "--input ./testdata/in-base.yaml --disable-alerts",
 			expOut:     expectLoader.mustLoadExp("./testdata/out-base-no-alerts.yaml.tpl"),
@@ -78,6 +83,16 @@ func TestPrometheusGenerate(t *testing.T) {
 		"Generate using multifile YAML in single file should generate the correct rules for all the SLOs.": {
 			genCmdArgs: "--input ./testdata/in-multifile.yaml",
 			expOut:     expectLoader.mustLoadExp("./testdata/out-multifile.yaml.tpl"),
+		},
+
+		"Generate using multifile YAML in single file should generate the correct rules for all the SLOs (Kubernetes).": {
+			genCmdArgs: "--input ./testdata/in-multifile.yaml",
+			expOut:     expectLoader.mustLoadExp("./testdata/out-multifile.yaml.tpl"),
+		},
+
+		"Generate using invalid version should fail.": {
+			genCmdArgs: "--input ./testdata/in-invalid-version.yaml",
+			expErr:     true,
 		},
 	}
 

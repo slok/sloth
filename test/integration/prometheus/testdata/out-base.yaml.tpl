@@ -182,6 +182,7 @@ groups:
       )
     labels:
       alert01k1: alert01v1
+      alert03k1: alert03v1
       sloth_severity: page
     annotations:
       alert02k1: alert02k2
@@ -204,6 +205,7 @@ groups:
       )
     labels:
       alert01k1: alert01v1
+      alert04k1: alert04v1
       sloth_severity: ticket
     annotations:
       alert02k1: alert02k2

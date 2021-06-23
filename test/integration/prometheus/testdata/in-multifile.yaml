@@ -19,10 +19,10 @@ slos:
         alert01k1: "alert01v1"
       annotations:
         alert02k1: "alert02k2"
-      pageAlert:
+      page_alert:
         labels:
           alert03k1: "alert03v1"
-      ticketAlert:
+      ticket_alert:
         labels:
           alert04k1: "alert04v1"
   - name: "slo02"
@@ -63,10 +63,10 @@ slos:
         alert01k1: "alert01v1"
       annotations:
         alert02k1: "alert02k2"
-      pageAlert:
+      page_alert:
         labels:
           alert03k1: "alert03v1"
-      ticketAlert:
+      ticket_alert:
         labels:
           alert04k1: "alert04v1"
   - name: "slo02"

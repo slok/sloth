@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Added
+
+- Support multiple services per YAML file (multfile).
+
 ## [v0.3.1] - 2021-06-14
 
 ### Added

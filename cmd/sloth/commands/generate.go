@@ -1,10 +1,13 @@
 package commands
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"io"
 	"os"
+	"regexp"
+	"strings"
 
 	"gopkg.in/alecthomas/kingpin.v2"
 
@@ -76,31 +79,56 @@ func (g generateCommand) Run(ctx context.Context, config RootConfig) error {
 		config.Logger.WithValues(log.Kv{"plugins": len(plugins)}).Infof("SLI plugins loaded")
 	}
 
-	// Try loading spec with all the generators possible.
-
-	// Raw Prometheus generator.
+	// Create Spec loaders.
 	promYAMLLoader := prometheus.NewYAMLSpecLoader(plugins)
-	slos, promErr := promYAMLLoader.LoadSpec(ctx, slxData)
-	if promErr == nil {
-		return g.runPrometheus(ctx, config, *slos)
-	}
-
-	// Kubernetes Prometheus operator generator.
 	kubeYAMLLoader := k8sprometheus.NewYAMLSpecLoader(plugins)
-	sloGroup, k8sErr := kubeYAMLLoader.LoadSpec(ctx, slxData)
-	if k8sErr == nil {
-		return g.runKubernetes(ctx, config, *sloGroup)
+
+	// Prepare store output.
+	var out io.Writer = config.Stdout
+	if g.slosOut != "-" {
+		f, err := os.Create(g.slosOut)
+		if err != nil {
+			return fmt.Errorf("could not create out file: %w", err)
+		}
+		defer f.Close()
+		out = f
 	}
 
-	// If we reached here means that we could not use any of the available spec types.
-	config.Logger.Errorf("Tried loading raw prometheus SLOs spec, it couldn't: %s", promErr)
-	config.Logger.Errorf("Tried loading Kubernetes prometheus SLOs spec, it couldn't: %s", k8sErr)
-	return fmt.Errorf("invalid spec, could not load with any of the supported spec types")
+	// Split YAMLs in case we have multiple yaml files in a single file.
+	splittedSLOsData := splitYAML(slxData)
+
+	for _, data := range splittedSLOsData {
+		// Try loading spec with all the generators possible:
+		// 1 - Raw Prometheus generator.
+		slos, promErr := promYAMLLoader.LoadSpec(ctx, []byte(data))
+		if promErr == nil {
+			err := g.runPrometheus(ctx, config, *slos, out)
+			if err == nil {
+				continue
+			}
+		}
+
+		// 2 - Kubernetes Prometheus operator generator.
+		sloGroup, k8sErr := kubeYAMLLoader.LoadSpec(ctx, []byte(data))
+		if k8sErr == nil {
+			err := g.runKubernetes(ctx, config, *sloGroup, out)
+			if err == nil {
+				continue
+			}
+		}
+
+		// If we reached here means that we could not use any of the available spec types.
+		config.Logger.Errorf("Tried loading raw prometheus SLOs spec, it couldn't: %s", promErr)
+		config.Logger.Errorf("Tried loading Kubernetes prometheus SLOs spec, it couldn't: %s", k8sErr)
+		return fmt.Errorf("invalid spec, could not load with any of the supported spec types")
+	}
+
+	return nil
 }
 
 // runPrometheus generates the SLOs based on a raw regular Prometheus spec format input and
 // outs a Prometheus raw yaml.
-func (g generateCommand) runPrometheus(ctx context.Context, config RootConfig, slos prometheus.SLOGroup) error {
+func (g generateCommand) runPrometheus(ctx context.Context, config RootConfig, slos prometheus.SLOGroup, out io.Writer) error {
 	config.Logger.Infof("Generating from Prometheus spec")
 	info := info.Info{
 		Version: info.Version,
@@ -111,17 +139,6 @@ func (g generateCommand) runPrometheus(ctx context.Context, config RootConfig, s
 	result, err := g.generate(ctx, config, info, slos)
 	if err != nil {
 		return err
-	}
-
-	// Store.
-	var out io.Writer = config.Stdout
-	if g.slosOut != "-" {
-		f, err := os.Create(g.slosOut)
-		if err != nil {
-			return fmt.Errorf("could not create out file: %w", err)
-		}
-		defer f.Close()
-		out = f
 	}
 
 	repo := prometheus.NewIOWriterGroupedRulesYAMLRepo(out, config.Logger)
@@ -144,7 +161,7 @@ func (g generateCommand) runPrometheus(ctx context.Context, config RootConfig, s
 
 // runKubernetes generates the SLOs based on a Kuberentes spec format input and
 // outs a Kubernetes prometheus operator CRD yaml.
-func (g generateCommand) runKubernetes(ctx context.Context, config RootConfig, sloGroup k8sprometheus.SLOGroup) error {
+func (g generateCommand) runKubernetes(ctx context.Context, config RootConfig, sloGroup k8sprometheus.SLOGroup, out io.Writer) error {
 	config.Logger.Infof("Generating from Kubernetes Prometheus spec")
 
 	info := info.Info{
@@ -155,17 +172,6 @@ func (g generateCommand) runKubernetes(ctx context.Context, config RootConfig, s
 	result, err := g.generate(ctx, config, info, sloGroup.SLOGroup)
 	if err != nil {
 		return err
-	}
-
-	// Store.
-	var out io.Writer = config.Stdout
-	if g.slosOut != "-" {
-		f, err := os.Create(g.slosOut)
-		if err != nil {
-			return fmt.Errorf("could not create out file: %w", err)
-		}
-		defer f.Close()
-		out = f
 	}
 
 	repo := k8sprometheus.NewIOWriterPrometheusOperatorYAMLRepo(out, config.Logger)
@@ -225,4 +231,29 @@ func (g generateCommand) generate(ctx context.Context, config RootConfig, info i
 	}
 
 	return result, nil
+}
+
+var (
+	splitMarkRe  = regexp.MustCompile("(?m)^---")
+	rmCommentsRe = regexp.MustCompile("(?m)^#.*$")
+)
+
+func splitYAML(data []byte) []string {
+	// Santize.
+	data = bytes.TrimSpace(data)
+	data = rmCommentsRe.ReplaceAll(data, []byte(""))
+
+	// Split (YAML can declare multiple files in the same file using `---`).
+	dataSplit := splitMarkRe.Split(string(data), -1)
+
+	// Remove empty splits.
+	nonEmptyData := []string{}
+	for _, d := range dataSplit {
+		d = strings.TrimSpace(d)
+		if d != "" {
+			nonEmptyData = append(nonEmptyData, d)
+		}
+	}
+
+	return nonEmptyData
 }

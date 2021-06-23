@@ -74,6 +74,11 @@ func TestPrometheusGenerate(t *testing.T) {
 			genCmdArgs: "--input ./testdata/in-plugin.yaml",
 			expOut:     expectLoader.mustLoadExp("./testdata/out-plugin.yaml.tpl"),
 		},
+
+		"Generate using multifile YAML in single file should generate the correct rules for all the SLOs.": {
+			genCmdArgs: "--input ./testdata/in-multifile.yaml",
+			expOut:     expectLoader.mustLoadExp("./testdata/out-multifile.yaml.tpl"),
+		},
 	}
 
 	for name, test := range tests {

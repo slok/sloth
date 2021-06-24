@@ -2,9 +2,11 @@
 
 ## [Unreleased]
 
+## [v0.4.0] - 2021-06-24
+
 ### Added
 
-- Support multiple services per YAML file (multfile).
+- Support multiple services per YAML file (multifile).
 - Validate cmd.
 - Validation SLO spec files autodiscovery.
 - Validation include and exclude filter regex for files.
@@ -71,7 +73,8 @@
 - Support raw query based SLI.
 - Kubernetes (prometheus-operator) CRD generation support.
 
-[unreleased]: https://github.com/slok/sloth/compare/v0.3.1...HEAD
+[unreleased]: https://github.com/slok/sloth/compare/v0.4.0...HEAD
+[v0.4.0]: https://github.com/slok/sloth/compare/v0.3.1...v0.4.0
 [v0.3.1]: https://github.com/slok/sloth/compare/v0.3.0...v0.3.1
 [v0.3.0]: https://github.com/slok/sloth/compare/v0.2.0...v0.3.0
 [v0.2.0]: https://github.com/slok/sloth/compare/v0.1.0...v0.2.0

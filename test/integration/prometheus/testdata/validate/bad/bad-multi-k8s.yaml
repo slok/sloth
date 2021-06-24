@@ -1,0 +1,97 @@
+---
+apiVersion: sloth.slok.dev/v1
+kind: PrometheusServiceLevel
+metadata:
+  name: svc
+  namespace: test-ns
+spec:
+  service: "svc01"
+  labels:
+    global01k1: global01v1
+  slos:
+    - name: "slo1"
+      objective: 99.9
+      description: "This is SLO 01."
+      labels:
+        global02k1: global02v1
+      sli:
+        events:
+          errorQuery: sum(rate(http_request_duration_seconds_count{job="myservice",code=~"(5..|429)"}[{{.window}}]))
+          totalQuery: sum(rate(http_request_duration_seconds_count{job="myservice"}[{{.window}}]))
+      alerting:
+        name: "" # BAD!
+        labels:
+          alert01k1: "alert01v1"
+        annotations:
+          alert02k1: "alert02k2"
+        pageAlert:
+          labels:
+            alert03k1: "alert03v1"
+        ticketAlert:
+          labels:
+            alert04k1: "alert04v1"
+    - name: "slo02"
+      objective: 95
+      description: "This is SLO 02."
+      labels:
+        global03k1: global03v1
+      sli:
+        raw:
+          errorRatioQuery: |
+            sum(rate(http_request_duration_seconds_count{job="myservice",code=~"(5..|429)"}[{{.window}}]))
+            /
+            sum(rate(http_request_duration_seconds_count{job="myservice"}[{{.window}}]))
+      alerting:
+        pageAlert:
+          disable: true
+        ticketAlert:
+          disable: true
+
+---
+apiVersion: sloth.slok.dev/v1
+kind: PrometheusServiceLevel
+metadata:
+  name: svc-2
+  namespace: test-ns-2
+spec:
+  service: "svc02"
+  labels:
+    global01k1: global01v1
+  slos:
+    - name: "slo1"
+      objective: 99.99
+      description: "This is SLO 01."
+      labels:
+        global02k1: global02v1
+      sli:
+        events:
+          errorQuery: sum(rate(http_request_duration_seconds_count{job="myservice",code=~"(5..|429)"}[{{.window}}]))
+          totalQuery: sum(rate(http_request_duration_seconds_count{job="myservice"}[{{.window}}]))
+      alerting:
+        name: myServiceAlert
+        labels:
+          alert01k1: "alert01v1"
+        annotations:
+          alert02k1: "alert02k2"
+        pageAlert:
+          labels:
+            alert03k1: "alert03v1"
+        ticketAlert:
+          labels:
+            alert04k1: "alert04v1"
+    - name: "slo02"
+      objective: 95
+      description: "This is SLO 02."
+      labels:
+        global03k1: global03v1
+      sli:
+        raw:
+          errorRatioQuery: |
+            sum(rate(http_request_duration_seconds_count{job="myservice",code=~"(5..|429)"}[{{.window}}]))
+            /
+            sum(rate(http_request_duration_seconds_count{job="myservice"}[{{.window}}]))
+      alerting:
+        pageAlert:
+          disable: true
+        ticketAlert:
+          disable: true

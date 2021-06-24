@@ -25,7 +25,7 @@ _At this moment Sloth is focused on Prometheus, however depending on the demand 
 - Autogenerates Prometheus SLI recording rules in different time windows.
 - Autogenerates Prometheus SLO metadata rules.
 - Autogenerates Prometheus SLO [multi window multi burn][mwmb] alert rules (Page and warning).
-- SLO spec validation.
+- SLO spec validation (including `validate` command for Gitops and CI).
 - Customization of labels, disabling different type of alerts...
 - A single way (uniform) of creating SLOs across all different services and teams.
 - Automatic [Grafana dashboard][grafana-dashboard] to see all your SLOs state.
@@ -204,6 +204,21 @@ $ kubectl -n monitoring get prometheusrules
 NAME                  AGE
 sloth-slo-my-service  38s
 ```
+
+## SLO Validation
+
+Sloth validates the spec on generation, however, on specific steps of the SLO generation process, we only want to validate a group of SLOs. For this purpose Sloth comes with a helpful command called `validate`. It will discover all the specs recursively and apply the same generation process as `generate` (including plugins, options...) but discarding the result.
+
+Example that validates all SLOs in a directory (including subdirectories) and excludes all in spec files that match `_gen` in the spec path.
+
+```bash
+$ sloth validate --input ./examples --sli-plugins-path ./examples/plugins --fs-exclude _gen
+
+INFO[0000] SLI plugins loaded                            plugins=1 version=dev
+INFO[0000] Validation succeeded                          slo-specs=13 version=dev
+```
+
+This command is very helpful on Gitops and CI pipelines to have a fast feedback loop, independently of the process you are using for generating the SLOs (Kubernetes controller or CLI).
 
 ## Examples
 

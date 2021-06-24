@@ -1,13 +1,10 @@
 package commands
 
 import (
-	"bytes"
 	"context"
 	"fmt"
 	"io"
 	"os"
-	"regexp"
-	"strings"
 
 	"gopkg.in/alecthomas/kingpin.v2"
 
@@ -46,6 +43,10 @@ func NewGenerateCommand(app *kingpin.Application) Command {
 
 func (g generateCommand) Name() string { return "generate" }
 func (g generateCommand) Run(ctx context.Context, config RootConfig) error {
+	ctx = config.Logger.SetValuesOnCtx(ctx, log.Kv{
+		"out": g.slosOut,
+	})
+
 	// Get SLO spec data.
 	// TODO(slok): stdin.
 	f, err := os.Open(g.slosInput)
@@ -59,24 +60,10 @@ func (g generateCommand) Run(ctx context.Context, config RootConfig) error {
 		return fmt.Errorf("could not read SLOs spec file data: %w", err)
 	}
 
-	// Load SLI plugins.
-	plugins := map[string]prometheus.SLIPlugin{}
-	if len(g.sliPluginsPaths) > 0 {
-		config := prometheus.FileSLIPluginRepoConfig{
-			Paths:  g.sliPluginsPaths,
-			Logger: config.Logger,
-		}
-		sliPluginRepo, err := prometheus.NewFileSLIPluginRepo(config)
-		if err != nil {
-			return fmt.Errorf("could not create file SLI plugin repository: %w", err)
-		}
-
-		ps, err := sliPluginRepo.ListSLIPlugins(ctx)
-		if err != nil {
-			return fmt.Errorf("could not load plugins: %w", err)
-		}
-		plugins = ps
-		config.Logger.WithValues(log.Kv{"plugins": len(plugins)}).Infof("SLI plugins loaded")
+	// Load plugins
+	plugins, err := loadPlugins(ctx, config.Logger, g.sliPluginsPaths)
+	if err != nil {
+		return fmt.Errorf("could not load plugins: %w", err)
 	}
 
 	// Create Spec loaders.
@@ -102,19 +89,21 @@ func (g generateCommand) Run(ctx context.Context, config RootConfig) error {
 		// 1 - Raw Prometheus generator.
 		slos, promErr := promYAMLLoader.LoadSpec(ctx, []byte(data))
 		if promErr == nil {
-			err := g.runPrometheus(ctx, config, *slos, out)
-			if err == nil {
-				continue
+			err := generatePrometheus(ctx, config.Logger, g.disableRecordings, g.disableAlerts, g.extraLabels, *slos, out)
+			if err != nil {
+				return fmt.Errorf("could not generate Prometheus format rules: %w", err)
 			}
+			continue
 		}
 
 		// 2 - Kubernetes Prometheus operator generator.
 		sloGroup, k8sErr := kubeYAMLLoader.LoadSpec(ctx, []byte(data))
 		if k8sErr == nil {
-			err := g.runKubernetes(ctx, config, *sloGroup, out)
-			if err == nil {
-				continue
+			err := generateKubernetes(ctx, config.Logger, g.disableRecordings, g.disableAlerts, g.extraLabels, *sloGroup, out)
+			if err != nil {
+				return fmt.Errorf("could not generate Kubernetes format rules: %w", err)
 			}
+			continue
 		}
 
 		// If we reached here means that we could not use any of the available spec types.
@@ -126,22 +115,22 @@ func (g generateCommand) Run(ctx context.Context, config RootConfig) error {
 	return nil
 }
 
-// runPrometheus generates the SLOs based on a raw regular Prometheus spec format input and
+// generatePrometheus generates the SLOs based on a raw regular Prometheus spec format input and
 // outs a Prometheus raw yaml.
-func (g generateCommand) runPrometheus(ctx context.Context, config RootConfig, slos prometheus.SLOGroup, out io.Writer) error {
-	config.Logger.Infof("Generating from Prometheus spec")
+func generatePrometheus(ctx context.Context, logger log.Logger, disableRecs, disableAlerts bool, extraLabels map[string]string, slos prometheus.SLOGroup, out io.Writer) error {
+	logger.Infof("Generating from Prometheus spec")
 	info := info.Info{
 		Version: info.Version,
 		Mode:    info.ModeCLIGenPrometheus,
 		Spec:    prometheusv1.Version,
 	}
 
-	result, err := g.generate(ctx, config, info, slos)
+	result, err := generateRules(ctx, logger, info, disableRecs, disableAlerts, extraLabels, slos)
 	if err != nil {
 		return err
 	}
 
-	repo := prometheus.NewIOWriterGroupedRulesYAMLRepo(out, config.Logger)
+	repo := prometheus.NewIOWriterGroupedRulesYAMLRepo(out, logger)
 	storageSLOs := make([]prometheus.StorageSLO, 0, len(result.PrometheusSLOs))
 	for _, s := range result.PrometheusSLOs {
 		storageSLOs = append(storageSLOs, prometheus.StorageSLO{
@@ -150,7 +139,6 @@ func (g generateCommand) runPrometheus(ctx context.Context, config RootConfig, s
 		})
 	}
 
-	ctx = config.Logger.SetValuesOnCtx(ctx, log.Kv{"out": g.slosOut})
 	err = repo.StoreSLOs(ctx, storageSLOs)
 	if err != nil {
 		return fmt.Errorf("could not store SLOS: %w", err)
@@ -159,22 +147,22 @@ func (g generateCommand) runPrometheus(ctx context.Context, config RootConfig, s
 	return nil
 }
 
-// runKubernetes generates the SLOs based on a Kuberentes spec format input and
+// generateKubernetes generates the SLOs based on a Kuberentes spec format input and
 // outs a Kubernetes prometheus operator CRD yaml.
-func (g generateCommand) runKubernetes(ctx context.Context, config RootConfig, sloGroup k8sprometheus.SLOGroup, out io.Writer) error {
-	config.Logger.Infof("Generating from Kubernetes Prometheus spec")
+func generateKubernetes(ctx context.Context, logger log.Logger, disableRecs, disableAlerts bool, extraLabels map[string]string, sloGroup k8sprometheus.SLOGroup, out io.Writer) error {
+	logger.Infof("Generating from Kubernetes Prometheus spec")
 
 	info := info.Info{
 		Version: info.Version,
 		Mode:    info.ModeCLIGenKubernetes,
 		Spec:    fmt.Sprintf("%s/%s", kubernetesv1.SchemeGroupVersion.Group, kubernetesv1.SchemeGroupVersion.Version),
 	}
-	result, err := g.generate(ctx, config, info, sloGroup.SLOGroup)
+	result, err := generateRules(ctx, logger, info, disableRecs, disableAlerts, extraLabels, sloGroup.SLOGroup)
 	if err != nil {
 		return err
 	}
 
-	repo := k8sprometheus.NewIOWriterPrometheusOperatorYAMLRepo(out, config.Logger)
+	repo := k8sprometheus.NewIOWriterPrometheusOperatorYAMLRepo(out, logger)
 	storageSLOs := make([]k8sprometheus.StorageSLO, 0, len(result.PrometheusSLOs))
 	for _, s := range result.PrometheusSLOs {
 		storageSLOs = append(storageSLOs, k8sprometheus.StorageSLO{
@@ -183,7 +171,6 @@ func (g generateCommand) runKubernetes(ctx context.Context, config RootConfig, s
 		})
 	}
 
-	ctx = config.Logger.SetValuesOnCtx(ctx, log.Kv{"out": g.slosOut})
 	err = repo.StoreSLOs(ctx, sloGroup.K8sMeta, storageSLOs)
 	if err != nil {
 		return fmt.Errorf("could not store SLOS: %w", err)
@@ -193,19 +180,19 @@ func (g generateCommand) runKubernetes(ctx context.Context, config RootConfig, s
 }
 
 // generate is the main generator logic that all the spec types and storers share. Mainly
-// has the logic of the generate controller.
-func (g generateCommand) generate(ctx context.Context, config RootConfig, info info.Info, slos prometheus.SLOGroup) (*generate.Response, error) {
+// has the logic of the generate app service.
+func generateRules(ctx context.Context, logger log.Logger, info info.Info, disableRecs, disableAlerts bool, extraLabels map[string]string, slos prometheus.SLOGroup) (*generate.Response, error) {
 	// Disable recording rules if required.
 	var sliRuleGen generate.SLIRecordingRulesGenerator = generate.NoopSLIRecordingRulesGenerator
 	var metaRuleGen generate.MetadataRecordingRulesGenerator = generate.NoopMetadataRecordingRulesGenerator
-	if !g.disableRecordings {
+	if !disableRecs {
 		sliRuleGen = prometheus.SLIRecordingRulesGenerator
 		metaRuleGen = prometheus.MetadataRecordingRulesGenerator
 	}
 
 	// Disable alert rules if required.
 	var alertRuleGen generate.SLOAlertRulesGenerator = generate.NoopSLOAlertRulesGenerator
-	if !g.disableAlerts {
+	if !disableAlerts {
 		alertRuleGen = prometheus.SLOAlertRulesGenerator
 	}
 
@@ -215,14 +202,14 @@ func (g generateCommand) generate(ctx context.Context, config RootConfig, info i
 		SLIRecordingRulesGenerator:  sliRuleGen,
 		MetaRecordingRulesGenerator: metaRuleGen,
 		SLOAlertRulesGenerator:      alertRuleGen,
-		Logger:                      config.Logger,
+		Logger:                      logger,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("could not create application service: %w", err)
 	}
 
 	result, err := controller.Generate(ctx, generate.Request{
-		ExtraLabels: g.extraLabels,
+		ExtraLabels: extraLabels,
 		Info:        info,
 		SLOGroup:    slos,
 	})
@@ -231,29 +218,4 @@ func (g generateCommand) generate(ctx context.Context, config RootConfig, info i
 	}
 
 	return result, nil
-}
-
-var (
-	splitMarkRe  = regexp.MustCompile("(?m)^---")
-	rmCommentsRe = regexp.MustCompile("(?m)^#.*$")
-)
-
-func splitYAML(data []byte) []string {
-	// Santize.
-	data = bytes.TrimSpace(data)
-	data = rmCommentsRe.ReplaceAll(data, []byte(""))
-
-	// Split (YAML can declare multiple files in the same file using `---`).
-	dataSplit := splitMarkRe.Split(string(data), -1)
-
-	// Remove empty splits.
-	nonEmptyData := []string{}
-	for _, d := range dataSplit {
-		d = strings.TrimSpace(d)
-		if d != "" {
-			nonEmptyData = append(nonEmptyData, d)
-		}
-	}
-
-	return nonEmptyData
 }

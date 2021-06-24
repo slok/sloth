@@ -1,0 +1,42 @@
+version: "prometheus/v1"
+service: "svc01"
+labels:
+  global01k1: global01v1
+slos:
+  - name: "slo1"
+    objective: 99.9
+    description: "This is SLO 01."
+    labels:
+      global02k1: global02v1
+    sli:
+      events:
+        error_query: sum(rate(http_request_duration_seconds_count{job="myservice",code=~"(5..|429)"}[{{.window}}]))
+        total_query: sum(rate(http_request_duration_seconds_count{job="myservice"}[{{.window}}]))
+    alerting:
+      name: myServiceAlert
+      labels:
+        alert01k1: "alert01v1"
+      annotations:
+        alert02k1: "alert02k2"
+      pageAlert:
+        labels:
+          alert03k1: "alert03v1"
+      ticketAlert:
+        labels:
+          alert04k1: "alert04v1"
+  - name: "slo02"
+    objective: 101 # BAD!
+    description: "This is SLO 02."
+    labels:
+      global03k1: global03v1
+    sli:
+      raw:
+        error_ratio_query: |
+          sum(rate(http_request_duration_seconds_count{job="myservice",code=~"(5..|429)"}[{{.window}}]))
+          /
+          sum(rate(http_request_duration_seconds_count{job="myservice"}[{{.window}}]))
+    alerting:
+      page_alert:
+        disable: true
+      ticket_alert:
+        disable: true

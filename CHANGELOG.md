@@ -5,6 +5,9 @@
 ### Added
 
 - Support multiple services per YAML file (multfile).
+- Validate cmd.
+- Validation SLO spec files autodiscovery.
+- Validation include and exclude filter regex for files.
 
 ## [v0.3.1] - 2021-06-14
 

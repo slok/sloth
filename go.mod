@@ -13,7 +13,7 @@ require (
 	github.com/sirupsen/logrus v1.8.1
 	github.com/spotahome/kooper/v2 v2.0.0-rc.2
 	github.com/stretchr/testify v1.7.0
-	github.com/traefik/yaegi v0.9.18
+	github.com/traefik/yaegi v0.9.19
 	gopkg.in/alecthomas/kingpin.v2 v2.2.6
 	gopkg.in/yaml.v2 v2.4.0
 	k8s.io/api v0.21.1

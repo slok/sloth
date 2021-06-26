@@ -175,8 +175,12 @@ var packageRegexp = regexp.MustCompile(`(?m)^package +([^\s]+) *$`)
 func (s sliPluginLoader) LoadRawSLIPlugin(ctx context.Context, src string) (*SLIPlugin, error) {
 	// Load the plugin in a new interpreter.
 	// For each plugin we need to use an independent interpreter to avoid name collisions.
-	yaegiInterp := s.newYaeginInterpreter()
-	_, err := yaegiInterp.EvalWithContext(ctx, src)
+	yaegiInterp, err := s.newYaeginInterpreter()
+	if err != nil {
+		return nil, fmt.Errorf("could not create a new Yaegi interpreter: %w", err)
+	}
+
+	_, err = yaegiInterp.EvalWithContext(ctx, src)
 	if err != nil {
 		return nil, fmt.Errorf("could not evaluate plugin source code: %w", err)
 	}
@@ -227,8 +231,12 @@ func (s sliPluginLoader) LoadRawSLIPlugin(ctx context.Context, src string) (*SLI
 	}, nil
 }
 
-func (s sliPluginLoader) newYaeginInterpreter() *interp.Interpreter {
+func (s sliPluginLoader) newYaeginInterpreter() (*interp.Interpreter, error) {
 	i := interp.New(interp.Options{})
-	i.Use(stdlib.Symbols)
-	return i
+	err := i.Use(stdlib.Symbols)
+	if err != nil {
+		return nil, fmt.Errorf("could not use stdlib symbols: %w", err)
+	}
+
+	return i, nil
 }

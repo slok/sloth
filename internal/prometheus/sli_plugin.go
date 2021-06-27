@@ -166,8 +166,9 @@ func (f *FileSLIPluginRepo) Reload(ctx context.Context) error {
 
 	// Set loaded plugins.
 	f.mu.Lock()
-	defer f.mu.Unlock()
 	f.plugins = plugins
+	f.mu.Unlock()
+
 	f.logger.WithValues(log.Kv{"plugins": len(plugins)}).Infof("SLI plugins loaded")
 
 	return nil

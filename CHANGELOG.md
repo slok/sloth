@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Changed
+
+- (Internal) SLI Plugins are retrieved from a repository service instead of getting them from a `map`.
+
 ## [v0.4.0] - 2021-06-24
 
 ### Added

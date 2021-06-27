@@ -69,24 +69,9 @@ func NewKubeControllerCommand(app *kingpin.Application) Command {
 
 func (k kubeControllerCommand) Name() string { return "kubernetes-controller" }
 func (k kubeControllerCommand) Run(ctx context.Context, config RootConfig) error {
-	// Load SLI plugins.
-	plugins := map[string]prometheus.SLIPlugin{}
-	if len(k.sliPluginsPaths) > 0 {
-		config := prometheus.FileSLIPluginRepoConfig{
-			Paths:  k.sliPluginsPaths,
-			Logger: config.Logger,
-		}
-		sliPluginRepo, err := prometheus.NewFileSLIPluginRepo(config)
-		if err != nil {
-			return fmt.Errorf("could not create file SLI plugin repository: %w", err)
-		}
-
-		ps, err := sliPluginRepo.ListSLIPlugins(ctx)
-		if err != nil {
-			return fmt.Errorf("could not load plugins: %w", err)
-		}
-		plugins = ps
-		config.Logger.WithValues(log.Kv{"plugins": len(plugins)}).Infof("SLI plugins loaded")
+	pluginRepo, err := createPluginLoader(ctx, config.Logger, k.sliPluginsPaths)
+	if err != nil {
+		return err
 	}
 
 	// Load Kubernetes clients.
@@ -195,7 +180,7 @@ func (k kubeControllerCommand) Run(ctx context.Context, config RootConfig) error
 		// Create handler.
 		config := kubecontroller.HandlerConfig{
 			Generator:        generator,
-			SpecLoader:       k8sprometheus.NewCRSpecLoader(plugins),
+			SpecLoader:       k8sprometheus.NewCRSpecLoader(pluginRepo),
 			Repository:       k8sprometheus.NewPrometheusOperatorCRDRepo(ksvc, config.Logger),
 			KubeStatusStorer: ksvc,
 			ExtraLabels:      k.extraLabels,

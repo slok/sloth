@@ -11,15 +11,19 @@ import (
 	prometheuspluginv1 "github.com/slok/sloth/pkg/prometheus/plugin/v1"
 )
 
+type SLIPluginRepo interface {
+	GetSLIPlugin(ctx context.Context, id string) (*SLIPlugin, error)
+}
+
 // YAMLSpecLoader knows how to load YAML specs and converts them to a model.
 type YAMLSpecLoader struct {
-	plugins map[string]SLIPlugin
+	pluginsRepo SLIPluginRepo
 }
 
 // NewYAMLSpecLoader returns a YAML spec loader.
-func NewYAMLSpecLoader(plugins map[string]SLIPlugin) YAMLSpecLoader {
+func NewYAMLSpecLoader(pluginsRepo SLIPluginRepo) YAMLSpecLoader {
 	return YAMLSpecLoader{
-		plugins: plugins,
+		pluginsRepo: pluginsRepo,
 	}
 }
 
@@ -82,9 +86,9 @@ func (y YAMLSpecLoader) mapSpecToModel(ctx context.Context, spec prometheusv1.Sp
 		}
 
 		if specSLO.SLI.Plugin != nil {
-			plugin, ok := y.plugins[specSLO.SLI.Plugin.ID]
-			if !ok {
-				return nil, fmt.Errorf("unknown plugin: %q", specSLO.SLI.Plugin.ID)
+			plugin, err := y.pluginsRepo.GetSLIPlugin(ctx, specSLO.SLI.Plugin.ID)
+			if err != nil {
+				return nil, fmt.Errorf("could not get plugin: %w", err)
 			}
 
 			meta := map[string]string{

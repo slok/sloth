@@ -61,14 +61,14 @@ func (g generateCommand) Run(ctx context.Context, config RootConfig) error {
 	}
 
 	// Load plugins
-	plugins, err := loadPlugins(ctx, config.Logger, g.sliPluginsPaths)
+	pluginRepo, err := createPluginLoader(ctx, config.Logger, g.sliPluginsPaths)
 	if err != nil {
-		return fmt.Errorf("could not load plugins: %w", err)
+		return err
 	}
 
 	// Create Spec loaders.
-	promYAMLLoader := prometheus.NewYAMLSpecLoader(plugins)
-	kubeYAMLLoader := k8sprometheus.NewYAMLSpecLoader(plugins)
+	promYAMLLoader := prometheus.NewYAMLSpecLoader(pluginRepo)
+	kubeYAMLLoader := k8sprometheus.NewYAMLSpecLoader(pluginRepo)
 
 	// Prepare store output.
 	var out io.Writer = config.Stdout

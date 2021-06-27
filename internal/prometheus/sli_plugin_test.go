@@ -124,19 +124,17 @@ func SLIPlugin(ctx context.Context, meta, labels, options map[string]string) (st
 				Paths:       []string{"./"},
 			}
 			repo, err := prometheus.NewFileSLIPluginRepo(config)
-			require.NoError(err)
-
-			plugins, err := repo.ListSLIPlugins(context.TODO())
 			if test.expErrLoad {
 				assert.Error(err)
 				return
 			}
 			assert.NoError(err)
 
-			// Execute pluginand check.
-			assert.Len(plugins, 1)
-			plugin, ok := plugins[test.expPluginID]
-			assert.True(ok)
+			// Get plugin.
+			plugin, err := repo.GetSLIPlugin(context.TODO(), test.expPluginID)
+			require.NoError(err)
+
+			// Check.
 			assert.Equal(test.expPluginID, plugin.ID)
 
 			gotSLIQuery, err := plugin.Func(context.TODO(), test.meta, test.labels, test.options)

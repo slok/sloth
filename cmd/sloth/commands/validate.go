@@ -63,15 +63,15 @@ func (v validateCommand) Run(ctx context.Context, config RootConfig) error {
 		return fmt.Errorf("0 slo specs have been discovered")
 	}
 
-	// Load plugins
-	plugins, err := loadPlugins(ctx, config.Logger, v.sliPluginsPaths)
+	// Load plugins.
+	pluginRepo, err := createPluginLoader(ctx, config.Logger, v.sliPluginsPaths)
 	if err != nil {
-		return fmt.Errorf("could not load plugins: %w", err)
+		return err
 	}
 
 	// Create Spec loaders.
-	promYAMLLoader := prometheus.NewYAMLSpecLoader(plugins)
-	kubeYAMLLoader := k8sprometheus.NewYAMLSpecLoader(plugins)
+	promYAMLLoader := prometheus.NewYAMLSpecLoader(pluginRepo)
+	kubeYAMLLoader := k8sprometheus.NewYAMLSpecLoader(pluginRepo)
 
 	// For every file load the data and start the validation process:
 	validations := []*fileValidation{}

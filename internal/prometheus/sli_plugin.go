@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"sync"
 
 	"github.com/traefik/yaegi/interp"
 	"github.com/traefik/yaegi/stdlib"
@@ -71,10 +72,6 @@ func (c *FileSLIPluginRepoConfig) defaults() error {
 		c.FileManager = fileManager{}
 	}
 
-	if len(c.Paths) == 0 {
-		return fmt.Errorf("at least one path is required")
-	}
-
 	if c.Logger == nil {
 		c.Logger = log.Noop
 	}
@@ -88,12 +85,20 @@ func NewFileSLIPluginRepo(config FileSLIPluginRepoConfig) (*FileSLIPluginRepo, e
 	if err != nil {
 		return nil, fmt.Errorf("invalid configuration: %w", err)
 	}
-	return &FileSLIPluginRepo{
+
+	f := &FileSLIPluginRepo{
 		fileManager:  config.FileManager,
 		pluginLoader: sliPluginLoader{},
 		paths:        config.Paths,
 		logger:       config.Logger,
-	}, nil
+	}
+
+	err = f.Reload(context.Background())
+	if err != nil {
+		return nil, fmt.Errorf("could not load plugins: %w", err)
+	}
+
+	return f, nil
 }
 
 // FileSLIPluginRepo will provide the plugins loaded from files.
@@ -114,18 +119,21 @@ type FileSLIPluginRepo struct {
 	pluginLoader sliPluginLoader
 	fileManager  FileManager
 	paths        []string
+	plugins      map[string]SLIPlugin
+	mu           sync.RWMutex
 	logger       log.Logger
 }
 
 var sliPluginNameRegex = regexp.MustCompile("plugin.go$")
 
-func (f FileSLIPluginRepo) ListSLIPlugins(ctx context.Context) (map[string]SLIPlugin, error) {
+// Reload will reload all the plugins again from the paths.
+func (f *FileSLIPluginRepo) Reload(ctx context.Context) error {
 	// Discover plugins.
 	paths := map[string]struct{}{}
 	for _, path := range f.paths {
 		discoveredPaths, err := f.fileManager.FindFiles(ctx, path, sliPluginNameRegex)
 		if err != nil {
-			return nil, fmt.Errorf("could not discover SLI plugins: %w", err)
+			return fmt.Errorf("could not discover SLI plugins: %w", err)
 		}
 		for _, dPath := range discoveredPaths {
 			paths[dPath] = struct{}{}
@@ -137,26 +145,51 @@ func (f FileSLIPluginRepo) ListSLIPlugins(ctx context.Context) (map[string]SLIPl
 	for path := range paths {
 		pluginData, err := f.fileManager.ReadFile(ctx, path)
 		if err != nil {
-			return nil, fmt.Errorf("could not read %q plugin data: %w", path, err)
+			return fmt.Errorf("could not read %q plugin data: %w", path, err)
 		}
 
 		// Create the plugin.
 		plugin, err := f.pluginLoader.LoadRawSLIPlugin(ctx, string(pluginData))
 		if err != nil {
-			return nil, fmt.Errorf("could not load %q plugin: %w", path, err)
+			return fmt.Errorf("could not load %q plugin: %w", path, err)
 		}
 
 		// Check collision.
 		_, ok := plugins[plugin.ID]
 		if ok {
-			return nil, fmt.Errorf("2 or more plugins with the same %q ID have been loaded", plugin.ID)
+			return fmt.Errorf("2 or more plugins with the same %q ID have been loaded", plugin.ID)
 		}
 
 		plugins[plugin.ID] = *plugin
 		f.logger.WithValues(log.Kv{"plugin-id": plugin.ID, "plugin-path": path}).Debugf("SLI plugin loaded")
 	}
 
-	return plugins, nil
+	// Set loaded plugins.
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	f.plugins = plugins
+	f.logger.WithValues(log.Kv{"plugins": len(plugins)}).Infof("SLI plugins loaded")
+
+	return nil
+}
+
+func (f *FileSLIPluginRepo) ListSLIPlugins(ctx context.Context) (map[string]SLIPlugin, error) {
+	f.mu.RLock()
+	defer f.mu.RUnlock()
+
+	return f.plugins, nil
+}
+
+func (f *FileSLIPluginRepo) GetSLIPlugin(ctx context.Context, id string) (*SLIPlugin, error) {
+	f.mu.RLock()
+	defer f.mu.RUnlock()
+
+	p, ok := f.plugins[id]
+	if !ok {
+		return nil, fmt.Errorf("plugin %q missing", id)
+	}
+
+	return &p, nil
 }
 
 // sliPluginLoader knows how to load Go SLI plugins using Yaegi.

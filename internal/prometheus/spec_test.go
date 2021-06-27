@@ -11,6 +11,16 @@ import (
 	"github.com/slok/sloth/internal/prometheus"
 )
 
+type testMemPluginsRepo map[string]prometheus.SLIPlugin
+
+func (t testMemPluginsRepo) GetSLIPlugin(ctx context.Context, id string) (*prometheus.SLIPlugin, error) {
+	p, ok := t[id]
+	if !ok {
+		return nil, fmt.Errorf("unknown plugin")
+	}
+	return &p, nil
+}
+
 func TestYAMLoadSpec(t *testing.T) {
 	tests := map[string]struct {
 		specYaml string
@@ -275,7 +285,7 @@ slos:
 		t.Run(name, func(t *testing.T) {
 			assert := assert.New(t)
 
-			loader := prometheus.NewYAMLSpecLoader(test.plugins)
+			loader := prometheus.NewYAMLSpecLoader(testMemPluginsRepo(test.plugins))
 			gotModel, err := loader.LoadSpec(context.TODO(), []byte(test.specYaml))
 
 			if test.expErr {

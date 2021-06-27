@@ -38,27 +38,17 @@ func splitYAML(data []byte) []string {
 	return nonEmptyData
 }
 
-func loadPlugins(ctx context.Context, logger log.Logger, paths []string) (map[string]prometheus.SLIPlugin, error) {
-	plugins := map[string]prometheus.SLIPlugin{}
-	if len(paths) > 0 {
-		config := prometheus.FileSLIPluginRepoConfig{
-			Paths:  paths,
-			Logger: logger,
-		}
-		sliPluginRepo, err := prometheus.NewFileSLIPluginRepo(config)
-		if err != nil {
-			return nil, fmt.Errorf("could not create file SLI plugin repository: %w", err)
-		}
-
-		ps, err := sliPluginRepo.ListSLIPlugins(ctx)
-		if err != nil {
-			return nil, fmt.Errorf("could not load plugins: %w", err)
-		}
-		plugins = ps
-		config.Logger.WithValues(log.Kv{"plugins": len(plugins)}).Infof("SLI plugins loaded")
+func createPluginLoader(ctx context.Context, logger log.Logger, paths []string) (*prometheus.FileSLIPluginRepo, error) {
+	config := prometheus.FileSLIPluginRepoConfig{
+		Paths:  paths,
+		Logger: logger,
+	}
+	sliPluginRepo, err := prometheus.NewFileSLIPluginRepo(config)
+	if err != nil {
+		return nil, fmt.Errorf("could not create file SLI plugin repository: %w", err)
 	}
 
-	return plugins, nil
+	return sliPluginRepo, nil
 }
 
 func discoverSLOManifests(logger log.Logger, exclude, include *regexp.Regexp, path string) ([]string, error) {

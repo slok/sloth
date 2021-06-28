@@ -65,7 +65,7 @@ func NewKubeControllerCommand(app *kingpin.Application) Command {
 	cmd.Flag("metrics-path", "The path for Prometheus metrics.").Default("/metrics").StringVar(&c.metricsPath)
 	cmd.Flag("metrics-listen-addr", "The listen address for Prometheus metrics and pprof.").Default(":8081").StringVar(&c.metricsListenAddr)
 	cmd.Flag("hot-reload-addr", "The listen address for hot-reloading components that allow it.").Default(":8082").StringVar(&c.hotReloadAddr)
-	cmd.Flag("hot-reload-path", "The webhook path for hot-reloading components that allow it.").Default("/hot-reload").StringVar(&c.hotReloadPath)
+	cmd.Flag("hot-reload-path", "The webhook path for hot-reloading components that allow it.").Default("/-/reload").StringVar(&c.hotReloadPath)
 	cmd.Flag("extra-labels", "Extra labels that will be added to all the generated Prometheus rules ('key=value' form, can be repeated).").Short('l').StringMapVar(&c.extraLabels)
 	cmd.Flag("sli-plugins-path", "The path to SLI plugins (can be repeated), if not set it disable plugins support.").Short('p').StringsVar(&c.sliPluginsPaths)
 
@@ -180,8 +180,15 @@ func (k kubeControllerCommand) Run(ctx context.Context, config RootConfig) error
 		}))
 
 		mux := http.NewServeMux()
+
 		// On request send signal for reload over the channel
-		mux.Handle(k.hotReloadPath, http.HandlerFunc(func(http.ResponseWriter, *http.Request) { hotReloadC <- struct{}{} }))
+		mux.Handle(k.hotReloadPath, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			if r.Method != http.MethodPost {
+				w.WriteHeader(http.StatusMethodNotAllowed)
+				return
+			}
+			hotReloadC <- struct{}{}
+		}))
 
 		server := &http.Server{
 			Addr:    k.hotReloadAddr,

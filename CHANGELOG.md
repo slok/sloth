@@ -4,7 +4,9 @@
 
 ### Added
 
-- Hot-reload on SLI plugin file loader, triggered by HTTP webhook.
+- Hot-reload SLI plugins file loader
+- Trigger hot-reload by HTTP webhook.
+- Trigger hot-reload by SIGHUP OS signal.
 - Added `hot-reload-addr` flag with the hot reload http server address.
 - Added `hot-reload-path` flag with the hot reload http server webhookpath webhook.
 

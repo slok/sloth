@@ -64,8 +64,8 @@ func NewKubeControllerCommand(app *kingpin.Application) Command {
 	cmd.Flag("namespace", "Run the controller targeting specific namespace, by default all.").StringVar(&c.namespace)
 	cmd.Flag("metrics-path", "The path for Prometheus metrics.").Default("/metrics").StringVar(&c.metricsPath)
 	cmd.Flag("metrics-listen-addr", "The listen address for Prometheus metrics and pprof.").Default(":8081").StringVar(&c.metricsListenAddr)
-	cmd.Flag("hot-reload-addr", "The listen address for hot-reloading configuration.").Default(":8082").StringVar(&c.hotReloadAddr)
-	cmd.Flag("hot-reload-path", "The path for configuration (plugins) hot reload webhook.").Default("/hot-reload").StringVar(&c.hotReloadPath)
+	cmd.Flag("hot-reload-addr", "The listen address for hot-reloading components that allow it.").Default(":8082").StringVar(&c.hotReloadAddr)
+	cmd.Flag("hot-reload-path", "The webhook path for hot-reloading components that allow it.").Default("/hot-reload").StringVar(&c.hotReloadPath)
 	cmd.Flag("extra-labels", "Extra labels that will be added to all the generated Prometheus rules ('key=value' form, can be repeated).").Short('l').StringMapVar(&c.extraLabels)
 	cmd.Flag("sli-plugins-path", "The path to SLI plugins (can be repeated), if not set it disable plugins support.").Short('p').StringsVar(&c.sliPluginsPaths)
 
@@ -132,19 +132,35 @@ func (k kubeControllerCommand) Run(ctx context.Context, config RootConfig) error
 	// OS signals.
 	{
 		sigC := make(chan os.Signal, 1)
+		reloadC := make(chan struct{})
 		exitC := make(chan struct{})
-		signal.Notify(sigC, syscall.SIGTERM, syscall.SIGINT)
+		signal.Notify(sigC, syscall.SIGTERM, syscall.SIGINT, syscall.SIGHUP)
+
+		// Add hot-reload notifier for SIGHUP.
+		reloadManager.On(reload.NotifierFunc(func(ctx context.Context) (string, error) {
+			<-reloadC
+			config.Logger.Infof("Hot-reload triggered from OS SIGHUP signal")
+			return "sighup", nil
+		}))
 
 		g.Add(
 			func() error {
 				config.Logger.Infof("OS signals listener started")
 				defer config.Logger.Infof("OS signals listener stopped")
-				select {
-				case s := <-sigC:
-					config.Logger.Infof("Signal %s received", s)
-					return nil
-				case <-exitC:
-					return nil
+				for {
+					select {
+					case s := <-sigC:
+						config.Logger.Infof("Signal %s received", s)
+						// Don't stop if SIGHUP, only reload.
+						if s == syscall.SIGHUP {
+							reloadC <- struct{}{}
+							continue
+						}
+
+						return nil
+					case <-exitC:
+						return nil
+					}
 				}
 			},
 			func(_ error) {

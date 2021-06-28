@@ -14,6 +14,7 @@ import (
 	"github.com/oklog/run"
 	monitoringclientset "github.com/prometheus-operator/prometheus-operator/pkg/client/versioned"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"github.com/slok/reload"
 	koopercontroller "github.com/spotahome/kooper/v2/controller"
 	kooperlog "github.com/spotahome/kooper/v2/log"
 	kooperprometheus "github.com/spotahome/kooper/v2/metrics/prometheus"
@@ -41,6 +42,8 @@ type kubeControllerCommand struct {
 	namespace         string
 	development       bool
 	metricsPath       string
+	hotReloadPath     string
+	hotReloadAddr     string
 	metricsListenAddr string
 	sliPluginsPaths   []string
 }
@@ -61,6 +64,8 @@ func NewKubeControllerCommand(app *kingpin.Application) Command {
 	cmd.Flag("namespace", "Run the controller targeting specific namespace, by default all.").StringVar(&c.namespace)
 	cmd.Flag("metrics-path", "The path for Prometheus metrics.").Default("/metrics").StringVar(&c.metricsPath)
 	cmd.Flag("metrics-listen-addr", "The listen address for Prometheus metrics and pprof.").Default(":8081").StringVar(&c.metricsListenAddr)
+	cmd.Flag("hot-reload-addr", "The listen address for hot-reloading components that allow it.").Default(":8082").StringVar(&c.hotReloadAddr)
+	cmd.Flag("hot-reload-path", "The webhook path for hot-reloading components that allow it.").Default("/-/reload").StringVar(&c.hotReloadPath)
 	cmd.Flag("extra-labels", "Extra labels that will be added to all the generated Prometheus rules ('key=value' form, can be repeated).").Short('l').StringMapVar(&c.extraLabels)
 	cmd.Flag("sli-plugins-path", "The path to SLI plugins (can be repeated), if not set it disable plugins support.").Short('p').StringsVar(&c.sliPluginsPaths)
 
@@ -100,27 +105,109 @@ func (k kubeControllerCommand) Run(ctx context.Context, config RootConfig) error
 	}
 	config.Logger.Debugf("PrometheusServiceLevel CRD ready")
 
-	// Prepare our run entrypoints.
+	// Prepare our run and reload entrypoints.
 	var g run.Group
+	reloadManager := reload.NewManager()
+
+	// Run hot-reload.
+	{
+		// Set SLI plugin repository reloader.
+		reloadManager.Add(1000, reload.ReloaderFunc(func(ctx context.Context, id string) error {
+			return pluginRepo.Reload(ctx)
+		}))
+
+		ctx, cancel := context.WithCancel(ctx)
+		g.Add(
+			func() error {
+				config.Logger.Infof("Hot-reload manager running")
+				defer config.Logger.Infof("Hot-reload manager stopped")
+				return reloadManager.Run(ctx)
+			},
+			func(_ error) {
+				cancel()
+			},
+		)
+	}
 
 	// OS signals.
 	{
 		sigC := make(chan os.Signal, 1)
+		reloadC := make(chan struct{})
 		exitC := make(chan struct{})
-		signal.Notify(sigC, syscall.SIGTERM, syscall.SIGINT)
+		signal.Notify(sigC, syscall.SIGTERM, syscall.SIGINT, syscall.SIGHUP)
+
+		// Add hot-reload notifier for SIGHUP.
+		reloadManager.On(reload.NotifierFunc(func(ctx context.Context) (string, error) {
+			<-reloadC
+			config.Logger.Infof("Hot-reload triggered from OS SIGHUP signal")
+			return "sighup", nil
+		}))
 
 		g.Add(
 			func() error {
-				select {
-				case s := <-sigC:
-					config.Logger.Infof("Signal %s received", s)
-					return nil
-				case <-exitC:
-					return nil
+				config.Logger.Infof("OS signals listener started")
+				defer config.Logger.Infof("OS signals listener stopped")
+				for {
+					select {
+					case s := <-sigC:
+						config.Logger.Infof("Signal %s received", s)
+						// Don't stop if SIGHUP, only reload.
+						if s == syscall.SIGHUP {
+							reloadC <- struct{}{}
+							continue
+						}
+
+						return nil
+					case <-exitC:
+						return nil
+					}
 				}
 			},
 			func(_ error) {
 				close(exitC)
+			},
+		)
+	}
+
+	// Hot-reloading HTTP server.
+	{
+		// Set reloader signaler.
+		hotReloadC := make(chan struct{})
+		reloadManager.On(reload.NotifierFunc(func(ctx context.Context) (string, error) {
+			<-hotReloadC
+			config.Logger.Infof("Hot-reload triggered from http webhook")
+			return "http", nil
+		}))
+
+		mux := http.NewServeMux()
+
+		// On request send signal for reload over the channel
+		mux.Handle(k.hotReloadPath, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			if r.Method != http.MethodPost {
+				w.WriteHeader(http.StatusMethodNotAllowed)
+				return
+			}
+			hotReloadC <- struct{}{}
+		}))
+
+		server := &http.Server{
+			Addr:    k.hotReloadAddr,
+			Handler: mux,
+		}
+
+		g.Add(
+			func() error {
+				config.Logger.WithValues(log.Kv{"addr": k.hotReloadAddr}).Infof("Hot-reload http server listening")
+				defer config.Logger.WithValues(log.Kv{"addr": k.hotReloadAddr}).Infof("Hot-reload http server stopped")
+				return server.ListenAndServe()
+			},
+			func(_ error) {
+				ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+				defer cancel()
+				err := server.Shutdown(ctx)
+				if err != nil {
+					config.Logger.Errorf("Error shutting down hot-reload server: %w", err)
+				}
 			},
 		)
 	}
@@ -147,6 +234,7 @@ func (k kubeControllerCommand) Run(ctx context.Context, config RootConfig) error
 		g.Add(
 			func() error {
 				config.Logger.WithValues(log.Kv{"addr": k.metricsListenAddr}).Infof("Metrics http server listening")
+				defer config.Logger.WithValues(log.Kv{"addr": k.metricsListenAddr}).Infof("Metrics http server stopped")
 				return server.ListenAndServe()
 			},
 			func(_ error) {
@@ -210,6 +298,8 @@ func (k kubeControllerCommand) Run(ctx context.Context, config RootConfig) error
 
 		g.Add(
 			func() error {
+				config.Logger.Infof("Kubernetes controller running")
+				defer config.Logger.Infof("Kubernetes controller stopped")
 				return ctrl.Run(ctx)
 			},
 			func(_ error) {

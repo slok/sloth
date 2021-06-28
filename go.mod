@@ -11,6 +11,7 @@ require (
 	github.com/prometheus/common v0.29.0
 	github.com/prometheus/prometheus v1.8.2-0.20210512173212-24c9b61221f7 // v2.27.0 (Avoid semver incompatibilies with commit).
 	github.com/sirupsen/logrus v1.8.1
+	github.com/slok/reload v0.0.0-20210626084015-0a501536aad9
 	github.com/spotahome/kooper/v2 v2.0.0-rc.2
 	github.com/stretchr/testify v1.7.0
 	github.com/traefik/yaegi v0.9.19

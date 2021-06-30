@@ -4,7 +4,9 @@
 
 ### Added
 
-- Hot-reload SLI plugins file loader
+- OpenSLO support on validate command.
+- OpenSLO support on generate command.
+- Hot-reload SLI plugins file loader.
 - Trigger hot-reload by HTTP webhook.
 - Trigger hot-reload by SIGHUP OS signal.
 - Added `hot-reload-addr` flag with the hot reload http server address.

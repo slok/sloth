@@ -11,6 +11,7 @@ const (
 	ModeTest                    = "test"
 	ModeCLIGenPrometheus        = "cli-gen-prom"
 	ModeCLIGenKubernetes        = "cli-gen-k8s"
+	ModeCLIGenOpenSLO           = "cli-gen-openslo"
 	ModeControllerGenKubernetes = "ctrl-gen-k8s"
 )
 

@@ -9,6 +9,7 @@ import (
 
 	"github.com/slok/sloth/internal/k8sprometheus"
 	"github.com/slok/sloth/internal/log"
+	"github.com/slok/sloth/internal/openslo"
 	"github.com/slok/sloth/internal/prometheus"
 	"gopkg.in/alecthomas/kingpin.v2"
 )
@@ -72,6 +73,7 @@ func (v validateCommand) Run(ctx context.Context, config RootConfig) error {
 	// Create Spec loaders.
 	promYAMLLoader := prometheus.NewYAMLSpecLoader(pluginRepo)
 	kubeYAMLLoader := k8sprometheus.NewYAMLSpecLoader(pluginRepo)
+	openSLOYAMLLoader := openslo.YAMLSpecLoader
 
 	// For every file load the data and start the validation process:
 	validations := []*fileValidation{}
@@ -114,10 +116,21 @@ func (v validateCommand) Run(ctx context.Context, config RootConfig) error {
 				continue
 			}
 
+			// 3 - OpenSLO generator.
+			slos, openSLOErr := openSLOYAMLLoader.LoadSpec(ctx, []byte(data))
+			if openSLOErr == nil {
+				err := generateOpenSLO(ctx, log.Noop, false, false, v.extraLabels, *slos, io.Discard)
+				if err != nil {
+					return fmt.Errorf("could not generate OpenSLO format rules: %w", err)
+				}
+				continue
+			}
+
 			// If we reached here means that we could not use any of the available spec types.
 			validation.Errs = []error{
 				fmt.Errorf("Tried loading raw prometheus SLOs spec, it couldn't: %w", promErr),
 				fmt.Errorf("Tried loading Kubernetes prometheus SLOs spec, it couldn't: %w", k8sErr),
+				fmt.Errorf("Tried loading OpenSLO SLOs spec, it couldn't: %s", openSLOErr),
 			}
 		}
 

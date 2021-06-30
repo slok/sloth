@@ -72,7 +72,7 @@ func (yamlSpecLoader) validateTimeWindow(spec openslov1alpha.SLO) error {
 
 	t := spec.Spec.TimeWindows[0]
 	if t.Count != 30 && strings.ToLower(t.Unit) == "day" {
-		return fmt.Errorf("only 30 day time window is supported")
+		return fmt.Errorf("only 30 days time window is supported")
 	}
 
 	return nil
@@ -90,8 +90,8 @@ var errorRatioRawQueryTpl = template.Must(template.New("").Parse(`
   )
 `))
 
-// getSLI gets the SLI from the OpenSLO slo objective, we only support ratio based openSLO objectives
-// however we will convert to a raw based sloth SLI because the ratio queries that we have differ form
+// getSLI gets the SLI from the OpenSLO slo objective, we only support ratio based openSLO objectives,
+// however we will convert to a raw based sloth SLI because the ratio queries that we have differ from
 // Sloth. Sloth uses bad/total events, OpenSLO uses good/total events. We get the ratio using good events
 // and then rest to 1, to get a raw error ratio query.
 func (y yamlSpecLoader) getSLI(spec openslov1alpha.SLOSpec, slo openslov1alpha.Objective) (*prometheus.SLI, error) {
@@ -103,19 +103,19 @@ func (y yamlSpecLoader) getSLI(spec openslov1alpha.SLOSpec, slo openslov1alpha.O
 	total := slo.RatioMetrics.Total
 
 	if good.Source != "prometheus" && good.Source != "sloth" {
-		return nil, fmt.Errorf("prometheus or sloth query ratio good source is required")
+		return nil, fmt.Errorf("prometheus or sloth query ratio 'good' source is required")
 	}
 
 	if total.Source != "prometheus" && good.Source != "sloth" {
-		return nil, fmt.Errorf("prometheus or sloth query ratio bad source is required")
+		return nil, fmt.Errorf("prometheus or sloth query ratio 'total' source is required")
 	}
 
 	if good.QueryType != "promql" {
-		return nil, fmt.Errorf("unsupported indicator query type: %s", good.QueryType)
+		return nil, fmt.Errorf("unsupported 'good' indicator query type: %s", good.QueryType)
 	}
 
 	if total.QueryType != "promql" {
-		return nil, fmt.Errorf("unsupported indicator query type: %s", total.QueryType)
+		return nil, fmt.Errorf("unsupported 'total' indicator query type: %s", total.QueryType)
 	}
 
 	// Map as good and total events as a raw query.
@@ -150,7 +150,7 @@ func (y yamlSpecLoader) getSLOs(spec openslov1alpha.SLO) ([]prometheus.SLO, erro
 			Description:     spec.Spec.Description,
 			TimeWindow:      time.Hour * 24 * 30,
 			SLI:             *sli,
-			Objective:       *slo.BudgetTarget * 100,
+			Objective:       *slo.BudgetTarget * 100, // OpenSLO uses ratios, we use percents.
 			PageAlertMeta:   prometheus.AlertMeta{Disable: true},
 			TicketAlertMeta: prometheus.AlertMeta{Disable: true},
 		})

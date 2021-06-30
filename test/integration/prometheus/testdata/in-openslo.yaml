@@ -1,16 +1,11 @@
-# This example shows the same example as getting-started.yml but using OpenSLO spec.
-# It will generate the Prometheus rules in a Prometheus rules format.
-#
-# `sloth generate -i ./examples/openslo-getting-started.yml`
-#
 apiVersion: openslo/v1alpha
 kind: SLO
 metadata:
-  name: sloth-slo-my-service
-  displayName: Requests Availability
+  name: slo1
+  displayName: Integration test SLO1
 spec:
-  service: my-service
-  description: "Common SLO based on availability for HTTP request responses."
+  service: svc01
+  description: "this is SLO1."
   budgetingMethod: Occurrences
   objectives:
     - ratioMetrics:

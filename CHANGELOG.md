@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [v0.5.0] - 2021-06-30
+
 ### Added
 
 - OpenSLO support on validate command.
@@ -87,7 +89,8 @@
 - Support raw query based SLI.
 - Kubernetes (prometheus-operator) CRD generation support.
 
-[unreleased]: https://github.com/slok/sloth/compare/v0.4.0...HEAD
+[unreleased]: https://github.com/slok/sloth/compare/v0.5.0...HEAD
+[v0.5.0]: https://github.com/slok/sloth/compare/v0.4.0...v0.5.0
 [v0.4.0]: https://github.com/slok/sloth/compare/v0.3.1...v0.4.0
 [v0.3.1]: https://github.com/slok/sloth/compare/v0.3.0...v0.3.1
 [v0.3.0]: https://github.com/slok/sloth/compare/v0.2.0...v0.3.0

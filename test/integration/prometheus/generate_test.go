@@ -90,6 +90,11 @@ func TestPrometheusGenerate(t *testing.T) {
 			expOut:     expectLoader.mustLoadExp("./testdata/out-multifile.yaml.tpl"),
 		},
 
+		"Generate using OpenSLO YAML should generate Prometheus rules.": {
+			genCmdArgs: "--input ./testdata/in-openslo.yaml",
+			expOut:     expectLoader.mustLoadExp("./testdata/out-openslo.yaml.tpl"),
+		},
+
 		"Generate using invalid version should fail.": {
 			genCmdArgs: "--input ./testdata/in-invalid-version.yaml",
 			expErr:     true,

@@ -6,6 +6,7 @@ import (
 	"io"
 	"os"
 
+	openslov1alpha "github.com/OpenSLO/oslo/pkg/manifest/v1alpha"
 	"gopkg.in/alecthomas/kingpin.v2"
 
 	"github.com/slok/sloth/internal/alert"
@@ -13,6 +14,7 @@ import (
 	"github.com/slok/sloth/internal/info"
 	"github.com/slok/sloth/internal/k8sprometheus"
 	"github.com/slok/sloth/internal/log"
+	"github.com/slok/sloth/internal/openslo"
 	"github.com/slok/sloth/internal/prometheus"
 	kubernetesv1 "github.com/slok/sloth/pkg/kubernetes/api/sloth/v1"
 	prometheusv1 "github.com/slok/sloth/pkg/prometheus/api/v1"
@@ -69,6 +71,7 @@ func (g generateCommand) Run(ctx context.Context, config RootConfig) error {
 	// Create Spec loaders.
 	promYAMLLoader := prometheus.NewYAMLSpecLoader(pluginRepo)
 	kubeYAMLLoader := k8sprometheus.NewYAMLSpecLoader(pluginRepo)
+	openSLOYAMLLoader := openslo.YAMLSpecLoader
 
 	// Prepare store output.
 	var out io.Writer = config.Stdout
@@ -106,9 +109,20 @@ func (g generateCommand) Run(ctx context.Context, config RootConfig) error {
 			continue
 		}
 
+		// 3 - OpenSLO generator.
+		slos, openSLOErr := openSLOYAMLLoader.LoadSpec(ctx, []byte(data))
+		if openSLOErr == nil {
+			err := generateOpenSLO(ctx, config.Logger, g.disableRecordings, g.disableAlerts, g.extraLabels, *slos, out)
+			if err != nil {
+				return fmt.Errorf("could not generate OpenSLO format rules: %w", err)
+			}
+			continue
+		}
+
 		// If we reached here means that we could not use any of the available spec types.
 		config.Logger.Errorf("Tried loading raw prometheus SLOs spec, it couldn't: %s", promErr)
 		config.Logger.Errorf("Tried loading Kubernetes prometheus SLOs spec, it couldn't: %s", k8sErr)
+		config.Logger.Errorf("Tried loading OpenSLO SLOs spec, it couldn't: %s", openSLOErr)
 		return fmt.Errorf("invalid spec, could not load with any of the supported spec types")
 	}
 
@@ -172,6 +186,38 @@ func generateKubernetes(ctx context.Context, logger log.Logger, disableRecs, dis
 	}
 
 	err = repo.StoreSLOs(ctx, sloGroup.K8sMeta, storageSLOs)
+	if err != nil {
+		return fmt.Errorf("could not store SLOS: %w", err)
+	}
+
+	return nil
+}
+
+// generateOpenSLO generates the SLOs based on a OpenSLO spec format input and
+// outs a Prometheus raw yaml.
+func generateOpenSLO(ctx context.Context, logger log.Logger, disableRecs, disableAlerts bool, extraLabels map[string]string, slos prometheus.SLOGroup, out io.Writer) error {
+	logger.Infof("Generating from OpenSLO spec")
+	info := info.Info{
+		Version: info.Version,
+		Mode:    info.ModeCLIGenOpenSLO,
+		Spec:    openslov1alpha.APIVersion,
+	}
+
+	result, err := generateRules(ctx, logger, info, disableRecs, disableAlerts, extraLabels, slos)
+	if err != nil {
+		return err
+	}
+
+	repo := prometheus.NewIOWriterGroupedRulesYAMLRepo(out, logger)
+	storageSLOs := make([]prometheus.StorageSLO, 0, len(result.PrometheusSLOs))
+	for _, s := range result.PrometheusSLOs {
+		storageSLOs = append(storageSLOs, prometheus.StorageSLO{
+			SLO:   s.SLO,
+			Rules: s.SLORules,
+		})
+	}
+
+	err = repo.StoreSLOs(ctx, storageSLOs)
 	if err != nil {
 		return fmt.Errorf("could not store SLOS: %w", err)
 	}

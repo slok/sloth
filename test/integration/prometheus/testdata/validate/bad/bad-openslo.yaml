@@ -1,0 +1,23 @@
+apiVersion: openslo/v1alpha
+kind: SLO
+metadata:
+  name: slo1
+  displayName: Integration test SLO1
+spec:
+  service: svc01
+  description: "this is SLO1."
+  budgetingMethod: Occurrences
+  objectives:
+    - ratioMetrics:
+        good:
+          source: prometheus
+          queryType: promql
+          query: sum(rate(http_request_duration_seconds_count{job="myservice",code!~"(5..|429)"}[{{.window}}]))
+        total:
+          source: prometheus
+          queryType: promql
+          query: sum(rate(http_request_duration_seconds_count{job="myservice"}[{{.window}}]))
+      target: 0.999
+  timeWindows:
+    - count: 28 # BAD!
+      unit: Day

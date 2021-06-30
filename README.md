@@ -35,6 +35,7 @@ _At this moment Sloth is focused on Prometheus, however depending on the demand 
 - Support different [SLI types](#sli-types-manifests).
 - Support for [SLI plugins](#sli-plugins)
 - A library with [common SLI plugins][common-sli-plugins].
+- [OpenSLO] support.
 
 ![Small Sloth SLO dashboard](docs/img/sloth_small_dashboard.png)
 
@@ -170,6 +171,24 @@ INFO[0000] SLO alert rules generated                     rules=2 slo=home-wifi-r
 
 ```
 
+#### [OpenSLO]
+
+Sloth supports [OpenSLO v1alpha](https://github.com/OpenSLO/OpenSLO) spec, however we need to take into account that it has some restrictions:
+
+- OpenSLO timewindow restricted to 30 day.
+- Only Objective ratio metrics are supported.
+- Only Prometheus and PromQL query types are supported.
+- Configuration fields not required by Sloth will be ignored.
+
+Regarding Sloth fatures, [OpenSLO] spec doesn't support all of the sloth features:
+
+- No Prometheus labels support.
+- No alerting support.
+- No SLI plugins support.
+- No Kubernetes support (at least until oficial OpenSLO CRDs are released).
+
+Check [examples](#examples) to see some OpenSLO example specs.
+
 ### Kubernetes Controller ([Prometheus-operator])
 
 `kubernetes-controller` command runs Sloth as a controller/operator that will react on [`sloth.slok.dev/v1/PrometheusServiceLevel`](pkg/kubernetes/api/sloth/v1) CRD. The controller will create the required [Prometheus-operator] [crd rules][prom-op-rules].
@@ -233,6 +252,9 @@ This command is very helpful on Gitops and CI pipelines to have a fast feedback 
   - [Regular manifest](examples/plugin-getting-started.yml)
   - [K8s manifest](examples/plugin-k8s-getting-started.yml)
   - [Plugin src](examples/plugins/getting-started/availability/plugin.go)
+- OpenSLO: Example showing [OpenSLO] spec.
+  - [Getting started](examples/openslo-getting-started.yml)
+  - [Kubernetes apiserver](examples/openslo-kubernetes-apiserver.yml)
 
 The resulting generated SLOs are in [examples/\_gen](examples/_gen).
 
@@ -448,3 +470,5 @@ In a few words, theres no right or wrong answer, pick your own flavour based on 
 [sloth-crd]: pkg/kubernetes/gen/crd/sloth.slok.dev_prometheusservicelevels.yaml
 [yaegi]: https://github.com/traefik/yaegi
 [common-sli-plugins]: https://github.com/slok/sloth-common-sli-plugins
+[openslo]: https://openslo.com/
+[openslo-getting-started]: examples/openslo-getting-started.yml

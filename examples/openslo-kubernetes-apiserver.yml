@@ -1,0 +1,68 @@
+# This example shows the same example as kubernetes-apiserver.yml but using OpenSLO spec.
+# It will generate the Prometheus rules in a Prometheus rules format.
+#
+# Take into account that OpenSLO spec has the concept of single SLO with multiple objectives
+#
+# `sloth generate -i ./examples/openslo-kubernetes-apiserver.yml`
+#
+apiVersion: openslo/v1alpha
+kind: SLO
+metadata:
+  name: requests-availability-openslo
+  displayName: Requests Availability
+spec:
+  service: k8s-apiserver
+  description: "Apiserver are returning correctly the requests to the clients (kubectl users, controllers...)."
+  budgetingMethod: Occurrences
+  objectives:
+    - ratioMetrics:
+        good:
+          source: prometheus
+          queryType: promql
+          query: sum(rate(apiserver_request_total{code!~"(5..|429)"}[{{.window}}]))
+        total:
+          source: prometheus
+          queryType: promql
+          query: sum(rate(apiserver_request_total[{{.window}}]))
+      target: 0.999
+
+  timeWindows:
+    - count: 30
+      unit: Day
+
+---
+apiVersion: openslo/v1alpha
+kind: SLO
+metadata:
+  name: requests-latency-openslo
+  displayName: Requests Latency
+spec:
+  service: k8s-apiserver
+  description: "Apiserver responses are being fast enough and this will affect the clients (kubectl users, controllers...)."
+  budgetingMethod: Occurrences
+  objectives:
+    - ratioMetrics:
+        good:
+          source: prometheus
+          queryType: promql
+          query: sum(rate(apiserver_request_duration_seconds_bucket{le="0.4",verb!="WATCH"}[{{.window}}]))
+        total:
+          source: prometheus
+          queryType: promql
+          query: sum(rate(apiserver_request_duration_seconds_count{verb!="WATCH"}[{{.window}}]))
+      target: 0.99
+
+    - ratioMetrics:
+        good:
+          source: prometheus
+          queryType: promql
+          query: sum(rate(apiserver_request_duration_seconds_bucket{le="5",verb!="WATCH"}[{{.window}}]))
+        total:
+          source: prometheus
+          queryType: promql
+          query: sum(rate(apiserver_request_duration_seconds_count{verb!="WATCH"}[{{.window}}]))
+      target: 0.999
+
+  timeWindows:
+    - count: 30
+      unit: Day

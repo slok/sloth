@@ -1,0 +1,28 @@
+# This example shows the same example as getting-started.yml but using OpenSLO spec.
+# It will generate the Prometheus rules in a Prometheus rules format.
+#
+# `sloth generate -i ./examples/openslo-getting-started.yml`
+#
+apiVersion: openslo/v1alpha
+kind: SLO
+metadata:
+  name: sloth-slo-my-service
+  displayName: Requests Availability
+spec:
+  service: my-service
+  description: "Common SLO based on availability for HTTP request responses."
+  budgetingMethod: Occurrences
+  objectives:
+    - ratioMetrics:
+        good:
+          source: prometheus
+          queryType: promql
+          query: sum(rate(http_request_duration_seconds_count{job="myservice",code!~"(5..|429)"}[{{.window}}]))
+        total:
+          source: prometheus
+          queryType: promql
+          query: sum(rate(http_request_duration_seconds_count{job="myservice"}[{{.window}}]))
+      target: 0.999
+  timeWindows:
+    - count: 30
+      unit: Day

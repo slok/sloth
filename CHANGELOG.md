@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Changed
+
+- Generate and validate commands now infer the spec type instead of bruteforce loading every spec type.
+
 ## [v0.5.0] - 2021-06-30
 
 ### Added

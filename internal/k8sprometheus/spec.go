@@ -3,6 +3,7 @@ package k8sprometheus
 import (
 	"context"
 	"fmt"
+	"regexp"
 	"time"
 
 	"k8s.io/apimachinery/pkg/runtime"
@@ -29,6 +30,15 @@ func NewYAMLSpecLoader(pluginsRepo SLIPluginRepo) YAMLSpecLoader {
 		pluginsRepo: pluginsRepo,
 		decoder:     scheme.Codecs.UniversalDeserializer(),
 	}
+}
+
+var (
+	specTypeV1RegexKind       = regexp.MustCompile(`(?m)^kind: +['"]?PrometheusServiceLevel['"]? *$`)
+	specTypeV1RegexAPIVersion = regexp.MustCompile(`(?m)^apiVersion: +['"]?sloth.slok.dev\/v1['"]? *$`)
+)
+
+func (y YAMLSpecLoader) IsSpecType(ctx context.Context, data []byte) bool {
+	return specTypeV1RegexKind.Match(data) && specTypeV1RegexAPIVersion.Match(data)
 }
 
 func (y YAMLSpecLoader) LoadSpec(ctx context.Context, data []byte) (*SLOGroup, error) {

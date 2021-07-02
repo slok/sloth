@@ -70,7 +70,7 @@ slos:
         error_query: sum(rate(http_request_duration_seconds_count{job="myservice",code=~"(5..|429)"}[{{.window}}]))
         total_query: sum(rate(http_request_duration_seconds_count{job="myservice"}[{{.window}}]))
     alerting:
-      name: MyServiceHighErrorRate
+      name: "MyServiceHighErrorRate"
       labels:
         category: "availability"
       annotations:
@@ -78,8 +78,8 @@ slos:
         summary: "High error rate on 'myservice' requests responses"
       page_alert:
         labels:
-          severity: pageteam
-          routing_key: myteam
+          severity: "pageteam"
+          routing_key: "myteam"
       ticket_alert:
         labels:
           severity: "slack"
@@ -175,7 +175,7 @@ INFO[0000] SLO alert rules generated                     rules=2 slo=home-wifi-r
 
 Sloth supports [OpenSLO v1alpha](https://github.com/OpenSLO/OpenSLO) spec, however we need to take into account that it has some restrictions:
 
-- OpenSLO timewindow restricted to 30 day.
+- OpenSLO timewindow restricted to 30 days.
 - Only Objective ratio metrics are supported.
 - Only Prometheus and PromQL query types are supported.
 - Configuration fields not required by Sloth will be ignored.
@@ -185,7 +185,7 @@ Regarding Sloth fatures, [OpenSLO] spec doesn't support all of the sloth feature
 - No Prometheus labels support.
 - No alerting support.
 - No SLI plugins support.
-- No Kubernetes support (at least until oficial OpenSLO CRDs are released).
+- No Kubernetes support (at least until official OpenSLO CRDs are released).
 
 Check [examples](#examples) to see some OpenSLO example specs.
 

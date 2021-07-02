@@ -316,3 +316,78 @@ spec:
 		})
 	}
 }
+
+func TestYAMLIsSpecType(t *testing.T) {
+	tests := map[string]struct {
+		specYaml string
+		exp      bool
+	}{
+		"An empty spec type shouldn't match": {
+			specYaml: ``,
+			exp:      false,
+		},
+
+		"An wrong spec type shouldn't match": {
+			specYaml: `{`,
+			exp:      false,
+		},
+
+		"An incorrect spec api version type shouldn't match": {
+			specYaml: `
+apiVersion: openslo/v1
+kind: SLO
+`,
+			exp: false,
+		},
+
+		"An incorrect spec kind type shouldn't match": {
+			specYaml: `
+apiVersion: openslo/v1alpha
+kind: service
+`,
+			exp: false,
+		},
+
+		"An correct spec type should match": {
+			specYaml: `
+apiVersion: "openslo/v1alpha"
+kind: "SLO"
+`,
+			exp: true,
+		},
+
+		"An correct spec type should match (no quotes)": {
+			specYaml: `
+apiVersion: openslo/v1alpha
+kind: SLO
+`,
+			exp: true,
+		},
+
+		"An correct spec type should match (single quotes)": {
+			specYaml: `
+apiVersion: 'openslo/v1alpha'
+kind: 'SLO'
+`,
+			exp: true,
+		},
+
+		"An correct spec type should match (multiple spaces)": {
+			specYaml: `
+apiVersion:          openslo/v1alpha     
+kind:              SLO     
+`,
+			exp: true,
+		},
+	}
+
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			assert := assert.New(t)
+
+			got := openslo.YAMLSpecLoader.IsSpecType(context.TODO(), []byte(test.specYaml))
+
+			assert.Equal(test.exp, got)
+		})
+	}
+}

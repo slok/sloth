@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"regexp"
 	"strings"
 	"text/template"
 	"time"
@@ -18,6 +19,15 @@ type yamlSpecLoader bool
 
 // YAMLSpecLoader knows how to load YAML specs and converts them to a model.
 const YAMLSpecLoader = yamlSpecLoader(false)
+
+var (
+	specTypeV1AlphaRegexKind       = regexp.MustCompile(`(?m)^kind: +['"]?SLO['"]? *$`)
+	specTypeV1AlphaRegexAPIVersion = regexp.MustCompile(`(?m)^apiVersion: +['"]?openslo\/v1alpha['"]? *$`)
+)
+
+func (y yamlSpecLoader) IsSpecType(ctx context.Context, data []byte) bool {
+	return specTypeV1AlphaRegexKind.Match(data) && specTypeV1AlphaRegexAPIVersion.Match(data)
+}
 
 func (y yamlSpecLoader) LoadSpec(ctx context.Context, data []byte) (*prometheus.SLOGroup, error) {
 	if len(data) == 0 {

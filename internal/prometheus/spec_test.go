@@ -296,3 +296,56 @@ slos:
 		})
 	}
 }
+
+func TestYAMLIsSpecType(t *testing.T) {
+	tests := map[string]struct {
+		specYaml string
+		exp      bool
+	}{
+		"An empty spec type shouldn't match": {
+			specYaml: ``,
+			exp:      false,
+		},
+
+		"An wrong spec type shouldn't match": {
+			specYaml: `{`,
+			exp:      false,
+		},
+
+		"An incorrect spec version type shouldn't match": {
+			specYaml: `version: "prometheus/v2"`,
+			exp:      false,
+		},
+
+		"An correct spec type should match": {
+			specYaml: `version: "prometheus/v1"`,
+			exp:      true,
+		},
+
+		"An correct spec type should match (no quotes)": {
+			specYaml: `version: prometheus/v1`,
+			exp:      true,
+		},
+
+		"An correct spec type should match (single quotes)": {
+			specYaml: `version: 'prometheus/v1'`,
+			exp:      true,
+		},
+
+		"An correct spec type should match (multiple spaces)": {
+			specYaml: `version:         "prometheus/v1"      `,
+			exp:      true,
+		},
+	}
+
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			assert := assert.New(t)
+
+			loader := prometheus.NewYAMLSpecLoader(testMemPluginsRepo(map[string]prometheus.SLIPlugin{}))
+			got := loader.IsSpecType(context.TODO(), []byte(test.specYaml))
+
+			assert.Equal(test.exp, got)
+		})
+	}
+}

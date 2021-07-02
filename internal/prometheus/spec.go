@@ -3,6 +3,7 @@ package prometheus
 import (
 	"context"
 	"fmt"
+	"regexp"
 	"time"
 
 	"gopkg.in/yaml.v2"
@@ -25,6 +26,12 @@ func NewYAMLSpecLoader(pluginsRepo SLIPluginRepo) YAMLSpecLoader {
 	return YAMLSpecLoader{
 		pluginsRepo: pluginsRepo,
 	}
+}
+
+var specTypeV1Regex = regexp.MustCompile(`(?m)^version: +['"]?prometheus\/v1['"]? *$`)
+
+func (y YAMLSpecLoader) IsSpecType(ctx context.Context, data []byte) bool {
+	return specTypeV1Regex.Match(data)
 }
 
 func (y YAMLSpecLoader) LoadSpec(ctx context.Context, data []byte) (*SLOGroup, error) {

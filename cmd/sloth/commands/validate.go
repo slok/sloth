@@ -95,42 +95,47 @@ func (v validateCommand) Run(ctx context.Context, config RootConfig) error {
 		for _, data := range splittedSLOsData {
 			totalValidations++
 
-			// Try loading spec with all the generators possible:
-			// 1 - Raw Prometheus generator.
-			slos, promErr := promYAMLLoader.LoadSpec(ctx, []byte(data))
-			if promErr == nil {
-				err := generatePrometheus(ctx, log.Noop, false, false, v.extraLabels, *slos, io.Discard)
-				if err != nil {
-					validation.Errs = []error{fmt.Errorf("could not generate Prometheus format rules: %w", err)}
+			dataB := []byte(data)
+			// Match the spec type to know how to validate.
+			switch {
+			case promYAMLLoader.IsSpecType(ctx, dataB):
+				slos, promErr := promYAMLLoader.LoadSpec(ctx, dataB)
+				if promErr == nil {
+					err := generatePrometheus(ctx, log.Noop, false, false, v.extraLabels, *slos, io.Discard)
+					if err != nil {
+						validation.Errs = []error{fmt.Errorf("Could not generate Prometheus format rules: %w", err)}
+					}
+					continue
 				}
-				continue
-			}
 
-			// 2 - Kubernetes Prometheus operator generator.
-			sloGroup, k8sErr := kubeYAMLLoader.LoadSpec(ctx, []byte(data))
-			if k8sErr == nil {
-				err := generateKubernetes(ctx, log.Noop, false, false, v.extraLabels, *sloGroup, io.Discard)
-				if err != nil {
-					validation.Errs = []error{fmt.Errorf("could not generate Kubernetes format rules: %w", err)}
+				validation.Errs = []error{fmt.Errorf("Tried loading raw prometheus SLOs spec, it couldn't: %w", promErr)}
+
+			case kubeYAMLLoader.IsSpecType(ctx, dataB):
+				sloGroup, k8sErr := kubeYAMLLoader.LoadSpec(ctx, dataB)
+				if k8sErr == nil {
+					err := generateKubernetes(ctx, log.Noop, false, false, v.extraLabels, *sloGroup, io.Discard)
+					if err != nil {
+						validation.Errs = []error{fmt.Errorf("could not generate Kubernetes format rules: %w", err)}
+					}
+					continue
 				}
-				continue
-			}
 
-			// 3 - OpenSLO generator.
-			slos, openSLOErr := openSLOYAMLLoader.LoadSpec(ctx, []byte(data))
-			if openSLOErr == nil {
-				err := generateOpenSLO(ctx, log.Noop, false, false, v.extraLabels, *slos, io.Discard)
-				if err != nil {
-					return fmt.Errorf("could not generate OpenSLO format rules: %w", err)
+				validation.Errs = []error{fmt.Errorf("Tried loading Kubernetes prometheus SLOs spec, it couldn't: %w", k8sErr)}
+
+			case openSLOYAMLLoader.IsSpecType(ctx, dataB):
+				slos, openSLOErr := openSLOYAMLLoader.LoadSpec(ctx, dataB)
+				if openSLOErr == nil {
+					err := generateOpenSLO(ctx, log.Noop, false, false, v.extraLabels, *slos, io.Discard)
+					if err != nil {
+						validation.Errs = []error{fmt.Errorf("Could not generate OpenSLO format rules: %w", err)}
+					}
+					continue
 				}
-				continue
-			}
 
-			// If we reached here means that we could not use any of the available spec types.
-			validation.Errs = []error{
-				fmt.Errorf("Tried loading raw prometheus SLOs spec, it couldn't: %w", promErr),
-				fmt.Errorf("Tried loading Kubernetes prometheus SLOs spec, it couldn't: %w", k8sErr),
-				fmt.Errorf("Tried loading OpenSLO SLOs spec, it couldn't: %s", openSLOErr),
+				validation.Errs = []error{fmt.Errorf("Tried loading OpenSLO SLOs spec, it couldn't: %s", openSLOErr)}
+
+			default:
+				validation.Errs = []error{fmt.Errorf("Unknown spec type")}
 			}
 		}
 

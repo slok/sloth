@@ -262,7 +262,7 @@ The resulting generated SLOs are in [examples/\_gen](examples/_gen).
 
 SLI plugins are small Go plugins (using [Yaegi]) that can be loaded on Sloth start.
 
-These plugins can be refenreced as an SLI on the SLO specs and will return a raw SLI type.
+These plugins can be referenced as an SLI on the SLO specs and will return a raw SLI type.
 
 Sloth will maintain a library with [common SLI plugins][common-sli-plugins] that can be used on your SLOs or used as examples to develop your own ones.
 

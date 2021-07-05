@@ -10,7 +10,7 @@ require (
 	github.com/prometheus-operator/prometheus-operator/pkg/client v0.48.1
 	github.com/prometheus/client_golang v1.11.0
 	github.com/prometheus/common v0.29.0
-	github.com/prometheus/prometheus v1.8.2-0.20210512173212-24c9b61221f7 // v2.27.0 (Avoid semver incompatibilies with commit).
+	github.com/prometheus/prometheus v1.8.2-0.20210701133801-b0944590a1c9 // v2.28.1 (Avoid semver incompatibilies with commit).
 	github.com/sirupsen/logrus v1.8.1
 	github.com/slok/reload v0.0.0-20210626084015-0a501536aad9
 	github.com/spotahome/kooper/v2 v2.0.0-rc.2
@@ -18,7 +18,7 @@ require (
 	github.com/traefik/yaegi v0.9.19
 	gopkg.in/alecthomas/kingpin.v2 v2.2.6
 	gopkg.in/yaml.v2 v2.4.0
-	k8s.io/api v0.21.1
-	k8s.io/apimachinery v0.21.1
-	k8s.io/client-go v0.21.1
+	k8s.io/api v0.21.2
+	k8s.io/apimachinery v0.21.2
+	k8s.io/client-go v0.21.2
 )

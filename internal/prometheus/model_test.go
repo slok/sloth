@@ -214,6 +214,16 @@ func TestModelValidationSpec(t *testing.T) {
 			expErrMessage: "Key: 'SLOGroup.SLOs[0].SLI.' Error:Field validation for '' failed on the 'one_sli_type' tag",
 		},
 
+		"SLO SLI event queries must be different.": {
+			slo: func() prometheus.SLOGroup {
+				s := getGoodSLOGroup()
+				s.SLOs[0].SLI.Events.TotalQuery = `sum(rate(grpc_server_handled_requests_count{job="myapp",code=~"Internal|Unavailable"}[{{ .window }}]))`
+				s.SLOs[0].SLI.Events.ErrorQuery = `sum(rate(grpc_server_handled_requests_count{job="myapp",code=~"Internal|Unavailable"}[{{ .window }}]))`
+				return s
+			},
+			expErrMessage: "Key: 'SLOGroup.SLOs[0].SLI.Events.' Error:Field validation for '' failed on the 'sli_events_queries_different' tag",
+		},
+
 		"SLO SLI error query should be valid Prometheus expr.": {
 			slo: func() prometheus.SLOGroup {
 				s := getGoodSLOGroup()

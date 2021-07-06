@@ -88,6 +88,7 @@ var modelSpecValidate = func() *validator.Validate {
 	mustRegisterValidation(v, "template_vars", validateTemplateVars)
 	v.RegisterStructValidation(validateOneSLI, SLI{})
 	v.RegisterStructValidation(validateSLOGroup, SLOGroup{})
+	v.RegisterStructValidation(validateSLIEvents, SLIEvents{})
 	return v
 }()
 
@@ -206,8 +207,27 @@ func validateTemplateVars(fl validator.FieldLevel) bool {
 	return tplWindowRegex.MatchString(v)
 }
 
-// validateOneSLIType implements validator.CustomTypeFunc by validating
-// only one SLI type is set and configured.
+// validateSLIEvents validates that both SLI event queries are different.
+func validateSLIEvents(sl validator.StructLevel) {
+	s, ok := sl.Current().Interface().(SLIEvents)
+	if !ok {
+		sl.ReportError(s, "", "SLIEvents", "not_sli_events", "")
+		return
+	}
+
+	// If empty we don't need to check.
+	if s.ErrorQuery == "" || s.TotalQuery == "" {
+		return
+	}
+
+	// If different, they are valid.
+	if s.ErrorQuery == s.TotalQuery {
+		sl.ReportError(s, "", "", "sli_events_queries_different", "")
+		return
+	}
+}
+
+// validateOneSLIType validates only one SLI type is set and configured.
 func validateOneSLI(sl validator.StructLevel) {
 	sli, ok := sl.Current().Interface().(SLI)
 	if !ok {
@@ -237,8 +257,7 @@ func validateOneSLI(sl validator.StructLevel) {
 	}
 }
 
-// validateSLOGroup implements validator.CustomTypeFunc by validating
-// SLO IDs are not repeated.
+// validateSLOGroup validates SLO IDs are not repeated.
 func validateSLOGroup(sl validator.StructLevel) {
 	sloGroup, ok := sl.Current().Interface().(SLOGroup)
 	if !ok {

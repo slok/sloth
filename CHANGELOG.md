@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Added
+
+- Model validates SLI event queries (error and total) are different.
+
 ### Changed
 
 - Generate and validate commands now infer the spec type instead of bruteforce loading every spec type.

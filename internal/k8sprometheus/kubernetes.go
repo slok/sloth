@@ -8,7 +8,6 @@ import (
 	monitoringclientset "github.com/prometheus-operator/prometheus-operator/pkg/client/versioned"
 	kubeerrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/watch"
 
 	"github.com/slok/sloth/internal/log"
@@ -31,16 +30,12 @@ func NewKubernetesService(slothCli slothclientset.Interface, monitoringCli monit
 	}
 }
 
-func (k KubernetesService) ListPrometheusServiceLevels(ctx context.Context, ns string, labelSelector map[string]string) (*slothv1.PrometheusServiceLevelList, error) {
-	return k.slothCli.SlothV1().PrometheusServiceLevels(ns).List(ctx, metav1.ListOptions{
-		LabelSelector: labels.Set(labelSelector).String(),
-	})
+func (k KubernetesService) ListPrometheusServiceLevels(ctx context.Context, ns string, opts metav1.ListOptions) (*slothv1.PrometheusServiceLevelList, error) {
+	return k.slothCli.SlothV1().PrometheusServiceLevels(ns).List(ctx, opts)
 }
 
-func (k KubernetesService) WatchPrometheusServiceLevels(ctx context.Context, ns string, labelSelector map[string]string) (watch.Interface, error) {
-	return k.slothCli.SlothV1().PrometheusServiceLevels(ns).Watch(ctx, metav1.ListOptions{
-		LabelSelector: labels.Set(labelSelector).String(),
-	})
+func (k KubernetesService) WatchPrometheusServiceLevels(ctx context.Context, ns string, opts metav1.ListOptions) (watch.Interface, error) {
+	return k.slothCli.SlothV1().PrometheusServiceLevels(ns).Watch(ctx, opts)
 }
 
 func (k KubernetesService) EnsurePrometheusRule(ctx context.Context, pr *monitoringv1.PrometheusRule) error {

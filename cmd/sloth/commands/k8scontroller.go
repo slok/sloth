@@ -19,6 +19,8 @@ import (
 	kooperlog "github.com/spotahome/kooper/v2/log"
 	kooperprometheus "github.com/spotahome/kooper/v2/metrics/prometheus"
 	"gopkg.in/alecthomas/kingpin.v2"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/labels"
 	_ "k8s.io/client-go/plugin/pkg/client/auth" // Init all available Kube client auth systems.
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
@@ -40,6 +42,7 @@ type kubeControllerCommand struct {
 	kubeContext       string
 	resyncInterval    time.Duration
 	namespace         string
+	labelSelector     string
 	development       bool
 	metricsPath       string
 	hotReloadPath     string
@@ -62,6 +65,7 @@ func NewKubeControllerCommand(app *kingpin.Application) Command {
 	cmd.Flag("workers", "Concurrent processing workers for each kubernetes controller.").Default("5").IntVar(&c.workers)
 	cmd.Flag("resync-interval", "The duration between all resources resync.").Default("15m").DurationVar(&c.resyncInterval)
 	cmd.Flag("namespace", "Run the controller targeting specific namespace, by default all.").StringVar(&c.namespace)
+	cmd.Flag("label-selector", "Kubernetes label selector that will make the controller filter resources by this selector.").StringVar(&c.labelSelector)
 	cmd.Flag("metrics-path", "The path for Prometheus metrics.").Default("/metrics").StringVar(&c.metricsPath)
 	cmd.Flag("metrics-listen-addr", "The listen address for Prometheus metrics and pprof.").Default(":8081").StringVar(&c.metricsListenAddr)
 	cmd.Flag("hot-reload-addr", "The listen address for hot-reloading components that allow it.").Default(":8082").StringVar(&c.hotReloadAddr)
@@ -95,11 +99,11 @@ func (k kubeControllerCommand) Run(ctx context.Context, config RootConfig) error
 	if err != nil {
 		return fmt.Errorf("could not create Kubernetes monitoring (prometheus-operator) client: %w", err)
 	}
-	ksvc := k8sprometheus.NewKubernetesService(kSlothcli, kmonitoringCli, config.Logger)
 
+	ksvc := k8sprometheus.NewKubernetesService(kSlothcli, kmonitoringCli, config.Logger)
 	// Check we can get Sloth CRs without problem before starting everything. This is a hard
-	// dependency, if we can't then fail.
-	_, err = ksvc.ListPrometheusServiceLevels(ctx, k.namespace, map[string]string{})
+	// dependency, if we can't, we must fail.
+	_, err = ksvc.ListPrometheusServiceLevels(ctx, k.namespace, metav1.ListOptions{})
 	if err != nil {
 		return fmt.Errorf("check for PrometheusServiceLevel CRD failed: could not list: %w", err)
 	}
@@ -280,7 +284,12 @@ func (k kubeControllerCommand) Run(ctx context.Context, config RootConfig) error
 		}
 
 		// Create retriever.
-		ret := kubecontroller.NewPrometheusServiceLevelsRetriver(k.namespace, ksvc)
+		lSelector, err := labels.Parse(k.labelSelector)
+		if err != nil {
+			return fmt.Errorf("invalid label selector %q: %w", k.labelSelector, err)
+		}
+
+		ret := kubecontroller.NewPrometheusServiceLevelsRetriver(k.namespace, lSelector, ksvc)
 
 		ctrl, err := koopercontroller.New(&koopercontroller.Config{
 			Handler:              handler,

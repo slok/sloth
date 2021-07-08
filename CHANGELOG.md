@@ -5,6 +5,7 @@
 ### Added
 
 - Model validates SLI event queries (error and total) are different.
+- On K8s controller Label selector to shard resources handling by labels.
 
 ### Changed
 

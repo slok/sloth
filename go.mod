@@ -4,7 +4,7 @@ go 1.16
 
 require (
 	github.com/OpenSLO/oslo v0.2.2-0.20210629193748-b882029ce777
-	github.com/go-playground/validator/v10 v10.6.1
+	github.com/go-playground/validator/v10 v10.7.0
 	github.com/oklog/run v1.1.0
 	github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring v0.48.1
 	github.com/prometheus-operator/prometheus-operator/pkg/client v0.48.1

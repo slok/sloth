@@ -70,7 +70,7 @@ func RunSlothController(ctx context.Context, config Config, ns string, cmdArgs s
 		fmt.Sprintf("SLOTH_KUBE_CONFIG=%s", config.KubeConfig),
 		fmt.Sprintf("SLOTH_KUBE_CONTEXT=%s", config.KubeContext),
 		fmt.Sprintf("SLOTH_KUBE_NAMESPACE=%s", ns),
-		fmt.Sprintf("SLOTH_DEVELOPMENT=%t", true),
+		fmt.Sprintf("SLOTH_KUBE_LOCAL=%t", true),
 		fmt.Sprintf("SLOTH_SLI_PLUGINS_PATH=%s", "./"),
 	}
 

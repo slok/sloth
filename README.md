@@ -335,6 +335,10 @@ By default you shouldn't unless you have scenarios where they can simplify, add 
 - The company or the team could have a repository with all the shared plugins and everyone could use them and contribute with new ones.
 - Automation power when templates are not enough.
 
+## Development and Contributing
+
+Check [CONTRIBUTING.md](CONTRIBUTING.md).
+
 ## F.A.Q
 
 - [Why Sloth](#faq-why-sloth)

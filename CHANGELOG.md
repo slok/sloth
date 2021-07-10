@@ -6,10 +6,13 @@
 
 - Model validates SLI event queries (error and total) are different.
 - On K8s controller Label selector to shard resources handling by labels.
+- On K8s controller Kubernetes dry-run mode for development.
+- On K8s controller Kubernetes fake mode for development without Kubernetes cluster.
 
 ### Changed
 
 - Generate and validate commands now infer the spec type instead of bruteforce loading every spec type.
+- `--development` flag has been renamed to `--kube-local`.
 
 ## [v0.5.0] - 2021-06-30
 

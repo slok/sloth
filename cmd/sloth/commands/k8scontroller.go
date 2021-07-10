@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/oklog/run"
+	monitoringv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
 	monitoringclientset "github.com/prometheus-operator/prometheus-operator/pkg/client/versioned"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/slok/reload"
@@ -21,6 +22,7 @@ import (
 	"gopkg.in/alecthomas/kingpin.v2"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
+	"k8s.io/apimachinery/pkg/watch"
 	_ "k8s.io/client-go/plugin/pkg/client/auth" // Init all available Kube client auth systems.
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
@@ -32,7 +34,19 @@ import (
 	"github.com/slok/sloth/internal/k8sprometheus"
 	"github.com/slok/sloth/internal/log"
 	"github.com/slok/sloth/internal/prometheus"
+	slothv1 "github.com/slok/sloth/pkg/kubernetes/api/sloth/v1"
 	slothclientset "github.com/slok/sloth/pkg/kubernetes/gen/clientset/versioned"
+)
+
+var controllerModes = []string{controllerModeDefault, controllerModeDryRun, controllerModeFake}
+
+const (
+	// default mode will run using real Kubernetes clients.
+	controllerModeDefault = "default"
+	// dry-run mode uses real kubernetes clients, but ignoring Kubernetes write operations.
+	controllerModeDryRun = "dry-run"
+	// fake mode fakes all the kubernetes client calls, a Kubernetes cluster is not required.
+	controllerModeFake = "fake"
 )
 
 type kubeControllerCommand struct {
@@ -43,7 +57,8 @@ type kubeControllerCommand struct {
 	resyncInterval    time.Duration
 	namespace         string
 	labelSelector     string
-	development       bool
+	kubeLocal         bool
+	runMode           string
 	metricsPath       string
 	hotReloadPath     string
 	hotReloadAddr     string
@@ -58,7 +73,8 @@ func NewKubeControllerCommand(app *kingpin.Application) Command {
 	cmd.Alias("controller")
 	cmd.Alias("k8s-controller")
 
-	cmd.Flag("development", "Enable development mode.").BoolVar(&c.development)
+	cmd.Flag("kube-local", "Enable local Kubernetes credentials load.").BoolVar(&c.kubeLocal)
+	cmd.Flag("mode", "Selects controller run mode.").Default(controllerModeDefault).EnumVar(&c.runMode, controllerModes...)
 	kubeHome := filepath.Join(homedir.HomeDir(), ".kube", "config")
 	cmd.Flag("kube-config", "kubernetes configuration path, only used when development mode enabled.").Default(kubeHome).StringVar(&c.kubeConfig)
 	cmd.Flag("kube-context", "kubernetes context, only used when development mode enabled.").StringVar(&c.kubeContext)
@@ -83,24 +99,11 @@ func (k kubeControllerCommand) Run(ctx context.Context, config RootConfig) error
 		return err
 	}
 
-	// Load Kubernetes clients.
-	config.Logger.Infof("Loading Kubernetes configuration...")
-	kcfg, err := k.loadKubernetesConfig()
+	ksvc, err := k.newKubernetesService(ctx, config)
 	if err != nil {
-		return fmt.Errorf("could not load Kubernetes configuration: %w", err)
+		return fmt.Errorf("could not create Kubernetes service: %w", err)
 	}
 
-	kSlothcli, err := slothclientset.NewForConfig(kcfg)
-	if err != nil {
-		return fmt.Errorf("could not create Kubernetes sloth client: %w", err)
-	}
-
-	kmonitoringCli, err := monitoringclientset.NewForConfig(kcfg)
-	if err != nil {
-		return fmt.Errorf("could not create Kubernetes monitoring (prometheus-operator) client: %w", err)
-	}
-
-	ksvc := k8sprometheus.NewKubernetesService(kSlothcli, kmonitoringCli, config.Logger)
 	// Check we can get Sloth CRs without problem before starting everything. This is a hard
 	// dependency, if we can't, we must fail.
 	_, err = ksvc.ListPrometheusServiceLevels(ctx, k.namespace, metav1.ListOptions{})
@@ -320,12 +323,58 @@ func (k kubeControllerCommand) Run(ctx context.Context, config RootConfig) error
 	return g.Run()
 }
 
+// kubernetesService is an internal interface so we can return all the Kubernetes service specific implemententations from the
+// same function (e.g: regular, dry-run, fake...).
+type kubernetesService interface {
+	ListPrometheusServiceLevels(ctx context.Context, ns string, opts metav1.ListOptions) (*slothv1.PrometheusServiceLevelList, error)
+	WatchPrometheusServiceLevels(ctx context.Context, ns string, opts metav1.ListOptions) (watch.Interface, error)
+	EnsurePrometheusRule(ctx context.Context, pr *monitoringv1.PrometheusRule) error
+	EnsurePrometheusServiceLevelStatus(ctx context.Context, slo *slothv1.PrometheusServiceLevel, err error) error
+}
+
+func (k kubeControllerCommand) newKubernetesService(ctx context.Context, config RootConfig) (kubernetesService, error) {
+	config.Logger.Infof("Loading Kubernetes configuration...")
+
+	// Fake mode.
+	if k.runMode == controllerModeFake {
+		return k8sprometheus.NewKubernetesServiceFake(config.Logger), nil
+	}
+
+	// Load Kubernetes clients.
+	kcfg, err := k.loadKubernetesConfig()
+	if err != nil {
+		return nil, fmt.Errorf("could not load Kubernetes configuration: %w", err)
+	}
+
+	kSlothcli, err := slothclientset.NewForConfig(kcfg)
+	if err != nil {
+		return nil, fmt.Errorf("could not create Kubernetes sloth client: %w", err)
+	}
+
+	kmonitoringCli, err := monitoringclientset.NewForConfig(kcfg)
+	if err != nil {
+		return nil, fmt.Errorf("could not create Kubernetes monitoring (prometheus-operator) client: %w", err)
+	}
+
+	// Create Kubernetes service.
+	ksvc := k8sprometheus.NewKubernetesService(kSlothcli, kmonitoringCli, config.Logger)
+
+	// Dry run mode.
+	if k.runMode == controllerModeDryRun {
+		config.Logger.Warningf("Kubernetes in dry run mode")
+		return k8sprometheus.NewKubernetesServiceDryRun(ksvc, config.Logger), nil
+	}
+
+	// Default mode.
+	return ksvc, nil
+}
+
 // loadKubernetesConfig loads kubernetes configuration based on flags.
 func (k kubeControllerCommand) loadKubernetesConfig() (*rest.Config, error) {
 	var cfg *rest.Config
 
-	// If devel mode then use configuration flag path.
-	if k.development {
+	// If kube local mode then use configuration flag path.
+	if k.kubeLocal {
 		config, err := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(
 			&clientcmd.ClientConfigLoadingRules{
 				ExplicitPath: k.kubeConfig,

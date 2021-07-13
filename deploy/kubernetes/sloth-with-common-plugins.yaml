@@ -1,0 +1,104 @@
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: sloth
+rules:
+  - apiGroups: ["sloth.slok.dev"]
+    resources: ["*"]
+    verbs: ["*"]
+
+  - apiGroups: ["monitoring.coreos.com"]
+    resources: ["prometheusrules"]
+    verbs: ["create", "list", "get", "update", "watch"]
+
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: sloth
+  namespace: monitoring
+  labels:
+    app: sloth
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: sloth
+  labels:
+    app: sloth
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: sloth
+subjects:
+  - kind: ServiceAccount
+    name: sloth
+    namespace: monitoring
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sloth
+  namespace: monitoring
+  labels:
+    app: sloth
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: sloth
+  template:
+    metadata:
+      labels:
+        app: sloth
+      annotations:
+        kubectl.kubernetes.io/default-container: sloth
+    spec:
+      serviceAccountName: sloth
+      containers:
+        - name: sloth
+          image: slok/sloth:v0.6.0
+          args:
+            - kubernetes-controller
+            - --resync-interval=3m
+            - --sli-plugins-path=/plugins
+          ports:
+            - containerPort: 8081
+              name: metrics
+              protocol: TCP
+          volumeMounts:
+            - name: sloth-common-sli-plugins
+              mountPath: /plugins/sloth-common-sli-plugins
+        - name: git-sync-plugins
+          image: k8s.gcr.io/git-sync/git-sync:v3.3.4
+          args:
+            - --repo=https://github.com/slok/sloth-common-sli-plugins
+            - --branch=main
+            - --wait=30
+            - --webhook-url=http://localhost:8082/-/reload
+          volumeMounts:
+            - name: sloth-common-sli-plugins
+              # Default path for git-sync.
+              mountPath: /tmp/git
+      volumes:
+        - name: sloth-common-sli-plugins
+          emptyDir: {}
+
+---
+apiVersion: monitoring.coreos.com/v1
+kind: PodMonitor
+metadata:
+  name: sloth
+  namespace: monitoring
+  labels:
+    app: sloth
+    prometheus: prometheus
+spec:
+  selector:
+    matchLabels:
+      app: sloth
+  podMetricsEndpoints:
+    - port: metrics

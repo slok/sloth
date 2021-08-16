@@ -79,6 +79,8 @@ spec:
         app: sloth
         app.kubernetes.io/name: sloth
         app.kubernetes.io/instance: sloth
+      annotations:
+        kubectl.kubernetes.io/default-container: sloth
     spec:
       serviceAccountName: sloth
       containers:

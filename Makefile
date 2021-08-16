@@ -77,8 +77,12 @@ kube-gen: build-dev-image  ## Generates go based code.
 examples-gen: build-dev-image  ## Generates sloth examples.
 	/bin/sh -c './scripts/examplesgen.sh'
 
+.PHONY: deploy-gen
+deploy-gen: build-dev-image  ## Generates sloth deploy.
+	/bin/sh -c './scripts/deploygen.sh'
+
 .PHONY: gen
-gen: kube-gen go-gen examples-gen ## Generates all.
+gen: kube-gen go-gen examples-gen deploy-gen ## Generates all.
 
 .PHONY: deps
 deps:  ## Fixes the dependencies

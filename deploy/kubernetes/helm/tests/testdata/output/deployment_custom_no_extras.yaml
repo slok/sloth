@@ -1,0 +1,49 @@
+---
+# Source: sloth/templates/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sloth-test
+  namespace: custom
+  labels:
+    helm.sh/chart: sloth-0.1.0
+    app.kubernetes.io/managed-by: Helm
+    app: sloth
+    app.kubernetes.io/name: sloth
+    app.kubernetes.io/instance: test
+    label-from: test
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: sloth
+      app.kubernetes.io/name: sloth
+      app.kubernetes.io/instance: test
+  template:
+    metadata:
+      labels:
+        helm.sh/chart: sloth-0.1.0
+        app.kubernetes.io/managed-by: Helm
+        app: sloth
+        app.kubernetes.io/name: sloth
+        app.kubernetes.io/instance: test
+        label-from: test
+      annotations:
+        kubectl.kubernetes.io/default-container: sloth
+    spec:
+      serviceAccountName: sloth-test
+      containers:
+        - name: sloth
+          image: slok/sloth-test:v1.42.42
+          args:
+            - kubernetes-controller
+            - --resync-interval=17m
+            - --label-selector=x=y,z!=y
+            - --extra-lables=k1=v1
+            - --extra-lables=k2=v2
+          resources:
+            limits:
+              memory: 150Mi
+            requests:
+              cpu: 5m
+              memory: 75Mi

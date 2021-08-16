@@ -1,0 +1,21 @@
+
+labels: {}
+
+image:
+  repository: slok/sloth
+  tag: v0.6.0
+
+sloth:
+  resyncInterval: 3m
+  labelSelector: ""   # Sloth will handle only the ones that match the selector.
+  extraLabels: {}     # Labels that will be added to all the generated SLO Rules.
+
+commonPlugins:
+  enabled: true
+  gitRepo:
+    url: https://github.com/slok/sloth-common-sli-plugins
+    branch: main
+
+metrics:
+  enabled: true
+  prometheusLabels: {}

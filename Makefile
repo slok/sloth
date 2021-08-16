@@ -10,6 +10,7 @@ UNIT_TEST_CMD := ./scripts/check/unit-test.sh
 INTEGRATION_TEST_CMD := ./scripts/check/integration-test.sh
 INTEGRATION_TEST_K8S_CMD := ./scripts/check/integration-test-k8s.sh
 INTEGRATION_TEST_CLI_CMD := ./scripts/check/integration-test-cli.sh
+HELM_TEST_CMD := ./scripts/check/helm-test.sh
 CHECK_CMD := ./scripts/check/check.sh
 
 DEV_IMAGE_NAME := slok/sloth-dev
@@ -52,6 +53,10 @@ build-all: build-dev-image ## Builds all archs production binaries.
 test: build-dev-image  ## Runs unit test.
 	@$(DOCKER_RUN_CMD) /bin/sh -c '$(UNIT_TEST_CMD)'
 
+.PHONY: helm-test
+helm-test: build-dev-image  ## Runs helm chart test.
+	@$(DOCKER_RUN_CMD) /bin/sh -c '$(HELM_TEST_CMD)'
+
 .PHONY: check
 check: build-dev-image  ## Runs checks.
 	@$(DOCKER_RUN_CMD) /bin/sh -c '$(CHECK_CMD)'
@@ -86,6 +91,10 @@ ci-build: ## Builds the production binary in CI environment (without docker).
 .PHONY: ci-unit-test
 ci-test:  ## Runs unit test in CI environment (without docker).
 	@$(UNIT_TEST_CMD)
+
+.PHONY: ci-helm-test
+ci-helm-test:  ## Runs helm chart tests in CI environment (without docker).
+	@$(HELM_TEST_CMD)
 
 .PHONY: ci-check
 ci-check:  ## Runs checks in CI environment (without docker).

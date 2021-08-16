@@ -27,6 +27,23 @@ jobs:
           file: ./.test_coverage.txt
           fail_ci_if_error: false
 
+  helm-chart-test:
+    name: Helm chart test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-go@v2
+        with:
+          go-version: 1.16
+      - name: Execute tests
+        env:
+          HELM_VERSION: v3.6.3
+        run: |
+          # Get dependencies.
+          echo "Getting dependencies..."
+          curl -L https://get.helm.sh/helm-${HELM_VERSION}-linux-amd64.tar.gz | tar -xz && mv ./linux-amd64/helm /usr/local/bin &&  chmod +x /usr/local/bin/helm
+          make ci-helm-test
+
   integration-test-cli:
     name: Integration test CLI
     runs-on: ubuntu-latest
@@ -92,7 +109,7 @@ jobs:
       TAG_IMAGE_LATEST: "true"
       PROD_IMAGE_NAME: ${GITHUB_REPOSITORY}
       VERSION: ${GITHUB_SHA}
-    needs: [check, unit-test, integration-test-cli, integration-test-k8s]
+    needs: [check, unit-test, integration-test-cli, integration-test-k8s, helm-chart-test]
     name: Release images
     runs-on: ubuntu-latest
     steps:
@@ -111,7 +128,7 @@ jobs:
     if: startsWith(github.ref, 'refs/tags/')
     env:
       PROD_IMAGE_NAME: ${GITHUB_REPOSITORY}
-    needs: [check, unit-test, integration-test-cli, integration-test-k8s]
+    needs: [check, unit-test, integration-test-cli, integration-test-k8s, helm-chart-test]
     name: Tagged release images
     runs-on: ubuntu-latest
     steps:
@@ -129,7 +146,7 @@ jobs:
   tagged-release-binaries:
     # Only on tags.
     if: startsWith(github.ref, 'refs/tags/')
-    needs: [check, unit-test, integration-test-cli, integration-test-k8s]
+    needs: [check, unit-test, integration-test-cli, integration-test-k8s, helm-chart-test]
     name: Tagged release binaries
     runs-on: ubuntu-latest
     steps:

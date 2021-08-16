@@ -1,0 +1,14 @@
+---
+# Source: sloth/templates/service-account.yaml
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: sloth-test
+  namespace: custom
+  labels:
+    helm.sh/chart: sloth-0.1.0
+    app.kubernetes.io/managed-by: Helm
+    app: sloth
+    app.kubernetes.io/name: sloth
+    app.kubernetes.io/instance: test
+    label-from: test

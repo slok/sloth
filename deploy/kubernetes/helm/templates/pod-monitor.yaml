@@ -1,0 +1,19 @@
+{{- if .Values.metrics.enabled }}
+---
+apiVersion: monitoring.coreos.com/v1
+kind: PodMonitor
+metadata:
+  name: {{ include "sloth.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "sloth.labels" . | nindent 4 }}
+    {{- with .Values.metrics.prometheusLabels }}
+    {{ toYaml . }}
+    {{- end }}
+spec:
+  selector:
+    matchLabels:
+      {{- include "sloth.selectorLabels" . | nindent 6 }}
+  podMetricsEndpoints:
+    - port: metrics
+{{- end }}

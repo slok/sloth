@@ -1,0 +1,26 @@
+---
+
+labels:
+  label-from: test
+
+image:
+  repository: slok/sloth-test
+  tag: v1.42.42
+
+sloth:
+  resyncInterval: 17m
+  labelSelector: "x=y,z!=y"
+  extraLabels:
+    k1: v1
+    k2: v2
+
+commonPlugins:
+  enabled: true
+  gitRepo:
+    url: https://github.com/slok/sloth-test-common-sli-plugins
+    branch: main
+
+metrics:
+  enabled: true
+  prometheusLabels:
+    kp1: vp1

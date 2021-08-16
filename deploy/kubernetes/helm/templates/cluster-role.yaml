@@ -1,0 +1,15 @@
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: {{ include "sloth.fullname" . }}
+  labels:
+    {{- include "sloth.labels" . | nindent 4 }}
+rules:
+  - apiGroups: ["sloth.slok.dev"]
+    resources: ["*"]
+    verbs: ["*"]
+
+  - apiGroups: ["monitoring.coreos.com"]
+    resources: ["prometheusrules"]
+    verbs: ["create", "list", "get", "update", "watch"]

@@ -1,0 +1,23 @@
+---
+# Source: sloth/templates/pod-monitor.yaml
+apiVersion: monitoring.coreos.com/v1
+kind: PodMonitor
+metadata:
+  name: sloth-test
+  namespace: custom
+  labels:
+    helm.sh/chart: sloth-0.1.0
+    app.kubernetes.io/managed-by: Helm
+    app: sloth
+    app.kubernetes.io/name: sloth
+    app.kubernetes.io/instance: test
+    label-from: test
+    kp1: vp1
+spec:
+  selector:
+    matchLabels:
+      app: sloth
+      app.kubernetes.io/name: sloth
+      app.kubernetes.io/instance: test
+  podMetricsEndpoints:
+    - port: metrics

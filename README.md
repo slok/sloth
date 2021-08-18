@@ -207,7 +207,7 @@ In the end the controller mode makes the same work as the CLI however integrates
 - [CRD](pkg/kubernetes/gen/crd/sloth.slok.dev_prometheusservicelevels.yaml)
 - [Raw manifests](deploy/kubernetes/raw)
 - [Helm chart](deploy/kubernetes/helm)
-- [Kustomize](deploy/kubernetes/kustomization.yaml)
+- [Kustomize](deploy/kubernetes/kustomize/kustomization.yaml)
 
 #### Example
 

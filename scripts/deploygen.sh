@@ -9,7 +9,7 @@ command -v helm >/dev/null 2>&1 || { echo 'please install helm'; exit 1; }
 HELM_CHART_PATH="${HELM_CHART_PATH:-./deploy/kubernetes/helm}"
 [ -z "$HELM_CHART_PATH" ] && echo "HELM_CHART_PATH env is needed" && exit 1;
 
-GEN_PATH="${GEN_PATH:-./deploy/kubernetes}"
+GEN_PATH="${GEN_PATH:-./deploy/kubernetes/raw}"
 [ -z "$GEN_PATH" ] && echo "GEN_PATH env is needed" && exit 1;
 
 mkdir -p "${GEN_PATH}"

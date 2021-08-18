@@ -5,6 +5,7 @@
 ### Added
 
 - Helm chart.
+- Kustomize.
 - Support Kubernetes 1.22
 
 ## [v0.6.0] - 2021-07-11

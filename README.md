@@ -202,7 +202,14 @@ In the end the controller mode makes the same work as the CLI however integrates
 - **Sloth CRD is required in the cluster: [Manifest][sloth-crd]**
 - **Prometheus operator Rule CRD is required in the cluster: [Manifest][prom-op-rules-crd]**
 
-Example:
+#### Deploy in Kubernetes
+
+- [CRD](pkg/kubernetes/gen/crd/sloth.slok.dev_prometheusservicelevels.yaml)
+- [Raw manifests](deploy/kubernetes/raw)
+- [Helm chart](deploy/kubernetes/helm)
+- [Kustomize](deploy/kubernetes/kustomization.yaml)
+
+#### Example
 
 ```bash
 # Register Sloth CRD.
@@ -213,7 +220,7 @@ $ kubectl apply -f ./pkg/kubernetes/gen/crd/sloth.slok.dev_prometheusserviceleve
 
 # Run sloth controller.
 $ kubectl create ns monitoring
-$ kubectl apply -f ./deploy/kubernetes/sloth.yaml
+$ kubectl apply -f ./deploy/kubernetes/raw/sloth.yaml
 
 # Deploy some SLOs.
 $ kubectl apply -f ./examples/k8s-getting-started.yml

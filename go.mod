@@ -15,7 +15,7 @@ require (
 	github.com/slok/reload v0.1.0
 	github.com/spotahome/kooper/v2 v2.0.0
 	github.com/stretchr/testify v1.7.0
-	github.com/traefik/yaegi v0.9.21
+	github.com/traefik/yaegi v0.9.23
 	gopkg.in/alecthomas/kingpin.v2 v2.2.6
 	gopkg.in/yaml.v2 v2.4.0
 	k8s.io/api v0.22.0

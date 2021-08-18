@@ -38,6 +38,8 @@ spec:
           args:
             - kubernetes-controller
             - --resync-interval=17m
+            - --workers=99
+            - --namespace=somens
             - --label-selector=x=y,z!=y
             - --extra-lables=k1=v1
             - --extra-lables=k2=v2

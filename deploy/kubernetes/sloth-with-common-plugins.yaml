@@ -88,7 +88,6 @@ spec:
           image: slok/sloth:v0.6.0
           args:
             - kubernetes-controller
-            - --resync-interval=3m
             - --sli-plugins-path=/plugins
           ports:
             - containerPort: 8081
@@ -119,7 +118,7 @@ spec:
               memory: 100Mi
             requests:
               cpu: 5m
-              memory: 50Mi  
+              memory: 50Mi
       volumes:
         - name: sloth-common-sli-plugins
           emptyDir: {}

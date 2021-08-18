@@ -88,7 +88,6 @@ spec:
           image: slok/sloth:v0.6.0
           args:
             - kubernetes-controller
-            - --resync-interval=3m
           ports:
             - containerPort: 8081
               name: metrics

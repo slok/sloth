@@ -9,7 +9,9 @@ image:
 
 sloth:
   resyncInterval: 17m
+  workers: 99
   labelSelector: "x=y,z!=y"
+  namespace: "somens"
   extraLabels:
     k1: v1
     k2: v2

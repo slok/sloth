@@ -6,8 +6,10 @@ image:
   tag: v0.6.0
 
 sloth:
-  resyncInterval: 3m
+  resyncInterval: ""  # The controller resync interval duration (e.g 15m).
+  workers: 0          # The number of concurrent controller workers (e.g 5).
   labelSelector: ""   # Sloth will handle only the ones that match the selector.
+  namespace: ""       # The namespace where sloth will the CRs to process.
   extraLabels: {}     # Labels that will be added to all the generated SLO Rules.
 
 commonPlugins:

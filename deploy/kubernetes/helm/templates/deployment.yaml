@@ -25,7 +25,15 @@ spec:
           image: {{ .Values.image.repository }}:{{ .Values.image.tag }}
           args:
             - kubernetes-controller
+            {{- if .Values.sloth.resyncInterval }}
             - --resync-interval={{ .Values.sloth.resyncInterval }}
+            {{- end}}
+            {{- if .Values.sloth.workers }}
+            - --workers={{ .Values.sloth.workers }}
+            {{- end}}
+            {{- if .Values.sloth.namespace }}
+            - --namespace={{ .Values.sloth.namespace }}
+            {{- end}}
             {{- if .Values.sloth.labelSelector }}
             - --label-selector={{ .Values.sloth.labelSelector }}
             {{- end}}
@@ -71,7 +79,7 @@ spec:
               cpu: 5m
               memory: 50Mi
         {{- end }}
-      {{- if .Values.commonPlugins.enabled }}  
+      {{- if .Values.commonPlugins.enabled }}
       volumes:
         - name: sloth-common-sli-plugins
           emptyDir: {}

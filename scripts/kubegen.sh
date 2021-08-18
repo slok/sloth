@@ -3,8 +3,8 @@
 set -o errexit
 set -o nounset
 
-IMAGE_CLI_GEN=quay.io/slok/kube-code-generator:v1.21.1
-IMAGE_CRD_GEN=quay.io/slok/kube-code-generator:v1.21.1
+IMAGE_CLI_GEN=quay.io/slok/kube-code-generator:v1.22.0
+IMAGE_CRD_GEN=quay.io/slok/kube-code-generator:v1.22.0
 ROOT_DIRECTORY=$(dirname "$(readlink -f "$0")")/../
 PROJECT_PACKAGE="github.com/slok/sloth"
 GEN_DIRECTORY="pkg/kubernetes/gen"

@@ -41,18 +41,18 @@ func TestKubernetesControllerPromOperatorGenerate(t *testing.T) {
 	require.NoError(t, err)
 
 	// KubeClis.
-	kClis, err := k8scontroller.NewKubernetesClients(context.TODO(), config)
+	kubeClis, err := k8scontroller.NewKubernetesClients(context.TODO(), config)
 	require.NoError(t, err)
 
 	// Tests.
 	tests := map[string]struct {
-		exec func(ctx context.Context, t *testing.T, ns string, kClis *k8scontroller.KubeClients)
+		exec func(ctx context.Context, t *testing.T, ns string, kubeClis *k8scontroller.KubeClients)
 	}{
 		"Having SLOs as a CRD should generate Prometheus operator CRD.": {
-			exec: func(ctx context.Context, t *testing.T, ns string, kClis *k8scontroller.KubeClients) {
+			exec: func(ctx context.Context, t *testing.T, ns string, kubeClis *k8scontroller.KubeClients) {
 				// Prepare our SLO on Kubernetes.
 				SLOs := getBasePrometheusServiceLevel()
-				_, err = kClis.Sloth.SlothV1().PrometheusServiceLevels(ns).Create(ctx, SLOs, metav1.CreateOptions{})
+				_, err = kubeClis.Sloth.SlothV1().PrometheusServiceLevels(ns).Create(ctx, SLOs, metav1.CreateOptions{})
 				require.NoError(t, err)
 
 				// Wait to be sure the controller had time for handling.
@@ -62,7 +62,7 @@ func TestKubernetesControllerPromOperatorGenerate(t *testing.T) {
 				expRule := getBasePromOpPrometheusRule(version)
 				expRule.Namespace = ns
 
-				gotRule, err := kClis.Monitoring.MonitoringV1().PrometheusRules(ns).Get(ctx, expRule.Name, metav1.GetOptions{})
+				gotRule, err := kubeClis.Monitoring.MonitoringV1().PrometheusRules(ns).Get(ctx, expRule.Name, metav1.GetOptions{})
 				gotRule = sanitizePrometheusRule(gotRule) // Remove variations.
 				require.NoError(t, err)
 
@@ -71,10 +71,10 @@ func TestKubernetesControllerPromOperatorGenerate(t *testing.T) {
 		},
 
 		"Having SLOs with plugins as a CRD should generate Prometheus operator CRD.": {
-			exec: func(ctx context.Context, t *testing.T, ns string, kClis *k8scontroller.KubeClients) {
+			exec: func(ctx context.Context, t *testing.T, ns string, kubeClis *k8scontroller.KubeClients) {
 				// Prepare our SLO on Kubernetes with plugin based SLO.
 				SLOs := getPluginPrometheusServiceLevel()
-				_, err = kClis.Sloth.SlothV1().PrometheusServiceLevels(ns).Create(ctx, SLOs, metav1.CreateOptions{})
+				_, err = kubeClis.Sloth.SlothV1().PrometheusServiceLevels(ns).Create(ctx, SLOs, metav1.CreateOptions{})
 				require.NoError(t, err)
 
 				// Wait to be sure the controller had time for handling.
@@ -84,7 +84,7 @@ func TestKubernetesControllerPromOperatorGenerate(t *testing.T) {
 				expRule := getPluginPromOpPrometheusRule(version)
 				expRule.Namespace = ns
 
-				gotRule, err := kClis.Monitoring.MonitoringV1().PrometheusRules(ns).Get(ctx, expRule.Name, metav1.GetOptions{})
+				gotRule, err := kubeClis.Monitoring.MonitoringV1().PrometheusRules(ns).Get(ctx, expRule.Name, metav1.GetOptions{})
 				gotRule = sanitizePrometheusRule(gotRule) // Remove variations.
 				require.NoError(t, err)
 
@@ -93,17 +93,17 @@ func TestKubernetesControllerPromOperatorGenerate(t *testing.T) {
 		},
 
 		"Having SLOs as a CRD should set the status as correct on the CRD.": {
-			exec: func(ctx context.Context, t *testing.T, ns string, kClis *k8scontroller.KubeClients) {
+			exec: func(ctx context.Context, t *testing.T, ns string, kubeClis *k8scontroller.KubeClients) {
 				// Prepare our SLO on Kubernetes.
 				SLOs := getBasePrometheusServiceLevel()
-				newSLOs, err := kClis.Sloth.SlothV1().PrometheusServiceLevels(ns).Create(ctx, SLOs, metav1.CreateOptions{})
+				newSLOs, err := kubeClis.Sloth.SlothV1().PrometheusServiceLevels(ns).Create(ctx, SLOs, metav1.CreateOptions{})
 				require.NoError(t, err)
 
 				// Wait to be sure the controller had time for handling.
 				time.Sleep(250 * time.Millisecond)
 
 				// Check.
-				gotSLOs, err := kClis.Sloth.SlothV1().PrometheusServiceLevels(ns).Get(ctx, SLOs.Name, metav1.GetOptions{})
+				gotSLOs, err := kubeClis.Sloth.SlothV1().PrometheusServiceLevels(ns).Get(ctx, SLOs.Name, metav1.GetOptions{})
 				require.NoError(t, err)
 
 				expStatus := slothv1.PrometheusServiceLevelStatus{
@@ -119,18 +119,18 @@ func TestKubernetesControllerPromOperatorGenerate(t *testing.T) {
 		},
 
 		"Having wrong SLOs as a CRD should set the status failed on the CRD.": {
-			exec: func(ctx context.Context, t *testing.T, ns string, kClis *k8scontroller.KubeClients) {
+			exec: func(ctx context.Context, t *testing.T, ns string, kubeClis *k8scontroller.KubeClients) {
 				// Prepare our wrong SLO on Kubernetes.
 				SLOs := getBasePrometheusServiceLevel()
 				SLOs.Spec.SLOs[0].Objective = 101 // Make the SLO invalid.
-				newSLOs, err := kClis.Sloth.SlothV1().PrometheusServiceLevels(ns).Create(ctx, SLOs, metav1.CreateOptions{})
+				newSLOs, err := kubeClis.Sloth.SlothV1().PrometheusServiceLevels(ns).Create(ctx, SLOs, metav1.CreateOptions{})
 				require.NoError(t, err)
 
 				// Wait to be sure the controller had time for handling.
 				time.Sleep(250 * time.Millisecond)
 
 				// Check.
-				gotSLOs, err := kClis.Sloth.SlothV1().PrometheusServiceLevels(ns).Get(ctx, SLOs.Name, metav1.GetOptions{})
+				gotSLOs, err := kubeClis.Sloth.SlothV1().PrometheusServiceLevels(ns).Get(ctx, SLOs.Name, metav1.GetOptions{})
 				require.NoError(t, err)
 
 				expStatus := slothv1.PrometheusServiceLevelStatus{
@@ -155,7 +155,7 @@ func TestKubernetesControllerPromOperatorGenerate(t *testing.T) {
 			defer cancel()
 
 			// Create NS and delete on test end.
-			ns, deleteNS, err := k8scontroller.NewKubernetesNamespace(ctx, kClis.Std)
+			ns, deleteNS, err := k8scontroller.NewKubernetesNamespace(ctx, kubeClis.Std)
 			require.NoError(err)
 			defer func() {
 				err := deleteNS(ctx)
@@ -168,7 +168,7 @@ func TestKubernetesControllerPromOperatorGenerate(t *testing.T) {
 			}()
 
 			// Execute test.
-			test.exec(ctx, t, ns, kClis)
+			test.exec(ctx, t, ns, kubeClis)
 		})
 	}
 }

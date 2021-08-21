@@ -341,23 +341,23 @@ func (k kubeControllerCommand) newKubernetesService(ctx context.Context, config 
 	}
 
 	// Load Kubernetes clients.
-	kcfg, err := k.loadKubernetesConfig()
+	kubeCfg, err := k.loadKubernetesConfig()
 	if err != nil {
 		return nil, fmt.Errorf("could not load Kubernetes configuration: %w", err)
 	}
 
-	kSlothcli, err := slothclientset.NewForConfig(kcfg)
+	kubeSlothcli, err := slothclientset.NewForConfig(kubeCfg)
 	if err != nil {
 		return nil, fmt.Errorf("could not create Kubernetes sloth client: %w", err)
 	}
 
-	kmonitoringCli, err := monitoringclientset.NewForConfig(kcfg)
+	kubeMonitoringCli, err := monitoringclientset.NewForConfig(kubeCfg)
 	if err != nil {
 		return nil, fmt.Errorf("could not create Kubernetes monitoring (prometheus-operator) client: %w", err)
 	}
 
 	// Create Kubernetes service.
-	ksvc := k8sprometheus.NewKubernetesService(kSlothcli, kmonitoringCli, config.Logger)
+	ksvc := k8sprometheus.NewKubernetesService(kubeSlothcli, kubeMonitoringCli, config.Logger)
 
 	// Dry run mode.
 	if k.runMode == controllerModeDryRun {

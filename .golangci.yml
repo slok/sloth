@@ -6,10 +6,9 @@ run:
 
 linters:
   enable:
+    - misspell
+    - goimports
+    - revive
+    - gofmt
     - depguard
     - godot
-    - golint
-    - goimports
-    - misspell
-# issues:
-#   exclude-use-default: false

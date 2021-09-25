@@ -106,3 +106,4 @@ Check [CONTRIBUTING.md](CONTRIBUTING.md).
 [common-sli-plugins]: https://github.com/slok/sloth-common-sli-plugins
 [docs-sli-plugins]: https://sloth.dev/usage/plugins/
 [docs]: https://sloth.dev
+

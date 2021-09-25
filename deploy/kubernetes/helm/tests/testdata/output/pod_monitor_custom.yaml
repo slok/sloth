@@ -6,7 +6,7 @@ metadata:
   name: sloth-test
   namespace: custom
   labels:
-    helm.sh/chart: sloth-0.1.0
+    helm.sh/chart: sloth-0.2.0
     app.kubernetes.io/managed-by: Helm
     app: sloth
     app.kubernetes.io/name: sloth

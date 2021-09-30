@@ -5,7 +5,7 @@ kind: ClusterRoleBinding
 metadata:
   name: sloth-test
   labels:
-    helm.sh/chart: sloth-0.2.0
+    helm.sh/chart: sloth-0.3.0
     app.kubernetes.io/managed-by: Helm
     app: sloth
     app.kubernetes.io/name: sloth

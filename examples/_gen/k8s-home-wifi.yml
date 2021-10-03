@@ -201,6 +201,7 @@ spec:
         context: home
         sloth_id: home-wifi-good-wifi-client-satisfaction
         sloth_mode: cli-gen-k8s
+        sloth_objective: "95"
         sloth_service: home-wifi
         sloth_slo: good-wifi-client-satisfaction
         sloth_spec: sloth.slok.dev/v1
@@ -434,6 +435,7 @@ spec:
         context: home
         sloth_id: home-wifi-risk-wifi-client-satisfaction
         sloth_mode: cli-gen-k8s
+        sloth_objective: "99.9"
         sloth_service: home-wifi
         sloth_slo: risk-wifi-client-satisfaction
         sloth_spec: sloth.slok.dev/v1

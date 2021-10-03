@@ -203,6 +203,7 @@ groups:
       owner: myteam
       sloth_id: myapp-http-availability
       sloth_mode: cli-gen-prom
+      sloth_objective: "99.99"
       sloth_service: myapp
       sloth_slo: http-availability
       sloth_spec: prometheus/v1

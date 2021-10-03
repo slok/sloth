@@ -203,6 +203,7 @@ groups:
       cmd: examplesgen.sh
       sloth_id: k8s-apiserver-requests-availability-openslo-0
       sloth_mode: cli-gen-openslo
+      sloth_objective: "99.9"
       sloth_service: k8s-apiserver
       sloth_slo: requests-availability-openslo-0
       sloth_spec: openslo/v1alpha
@@ -412,6 +413,7 @@ groups:
       cmd: examplesgen.sh
       sloth_id: k8s-apiserver-requests-latency-openslo-0
       sloth_mode: cli-gen-openslo
+      sloth_objective: "99"
       sloth_service: k8s-apiserver
       sloth_slo: requests-latency-openslo-0
       sloth_spec: openslo/v1alpha
@@ -615,6 +617,7 @@ groups:
       cmd: examplesgen.sh
       sloth_id: k8s-apiserver-requests-latency-openslo-1
       sloth_mode: cli-gen-openslo
+      sloth_objective: "99.9"
       sloth_service: k8s-apiserver
       sloth_slo: requests-latency-openslo-1
       sloth_spec: openslo/v1alpha

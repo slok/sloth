@@ -188,6 +188,7 @@ groups:
       repo: myorg/myservice
       sloth_id: myservice-requests-availability
       sloth_mode: cli-gen-prom
+      sloth_objective: "99.9"
       sloth_service: myservice
       sloth_slo: requests-availability
       sloth_spec: prometheus/v1

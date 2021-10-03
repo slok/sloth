@@ -189,6 +189,7 @@ groups:
       component: kubernetes
       sloth_id: k8s-apiserver-requests-availability
       sloth_mode: cli-gen-prom
+      sloth_objective: "99.9"
       sloth_service: k8s-apiserver
       sloth_slo: requests-availability
       sloth_spec: prometheus/v1
@@ -461,6 +462,7 @@ groups:
       component: kubernetes
       sloth_id: k8s-apiserver-requests-latency
       sloth_mode: cli-gen-prom
+      sloth_objective: "99"
       sloth_service: k8s-apiserver
       sloth_slo: requests-latency
       sloth_spec: prometheus/v1

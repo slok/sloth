@@ -197,6 +197,7 @@ spec:
         repo: myorg/myservice
         sloth_id: myservice-requests-availability
         sloth_mode: cli-gen-k8s
+        sloth_objective: "99.9"
         sloth_service: myservice
         sloth_slo: requests-availability
         sloth_spec: sloth.slok.dev/v1

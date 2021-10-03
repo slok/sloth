@@ -203,6 +203,7 @@ groups:
       cmd: examplesgen.sh
       sloth_id: my-service-sloth-slo-my-service-0
       sloth_mode: cli-gen-openslo
+      sloth_objective: "99.9"
       sloth_service: my-service
       sloth_slo: sloth-slo-my-service-0
       sloth_spec: openslo/v1alpha

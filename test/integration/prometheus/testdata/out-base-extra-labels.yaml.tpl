@@ -189,6 +189,7 @@ groups:
       global02k1: global02v1
       sloth_id: svc01-slo1
       sloth_mode: cli-gen-prom
+      sloth_objective: "99.9"
       sloth_service: svc01
       sloth_slo: slo1
       sloth_spec: prometheus/v1
@@ -433,6 +434,7 @@ groups:
       global03k1: global03v1
       sloth_id: svc01-slo02
       sloth_mode: cli-gen-prom
+      sloth_objective: "95"
       sloth_service: svc01
       sloth_slo: slo02
       sloth_spec: prometheus/v1

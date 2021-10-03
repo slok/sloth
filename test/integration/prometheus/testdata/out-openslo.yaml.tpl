@@ -189,6 +189,7 @@ groups:
     labels:
       sloth_id: svc01-slo1-0
       sloth_mode: cli-gen-openslo
+      sloth_objective: "99.9"
       sloth_service: svc01
       sloth_slo: slo1-0
       sloth_spec: openslo/v1alpha

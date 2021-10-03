@@ -210,6 +210,7 @@ groups:
       context: home
       sloth_id: home-wifi-wifi-client-satisfaction
       sloth_mode: cli-gen-prom
+      sloth_objective: "95"
       sloth_service: home-wifi
       sloth_slo: wifi-client-satisfaction
       sloth_spec: prometheus/v1

@@ -170,6 +170,7 @@ spec:
         global02k1: global02v1
         sloth_id: svc01-slo1
         sloth_mode: cli-gen-k8s
+        sloth_objective: "99.9"
         sloth_service: svc01
         sloth_slo: slo1
         sloth_spec: sloth.slok.dev/v1
@@ -386,6 +387,7 @@ spec:
         global03k1: global03v1
         sloth_id: svc01-slo02
         sloth_mode: cli-gen-k8s
+        sloth_objective: "95"
         sloth_service: svc01
         sloth_slo: slo02
         sloth_spec: sloth.slok.dev/v1
@@ -563,6 +565,7 @@ spec:
         global02k1: global02v1
         sloth_id: svc02-slo1
         sloth_mode: cli-gen-k8s
+        sloth_objective: "99.99"
         sloth_service: svc02
         sloth_slo: slo1
         sloth_spec: sloth.slok.dev/v1
@@ -779,6 +782,7 @@ spec:
         global03k1: global03v1
         sloth_id: svc02-slo02
         sloth_mode: cli-gen-k8s
+        sloth_objective: "95"
         sloth_service: svc02
         sloth_slo: slo02
         sloth_spec: sloth.slok.dev/v1

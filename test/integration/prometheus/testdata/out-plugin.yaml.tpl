@@ -167,6 +167,7 @@ groups:
       owner: myteam
       sloth_id: svc01-slo1
       sloth_mode: cli-gen-prom
+      sloth_objective: "99.9"
       sloth_service: svc01
       sloth_slo: slo1
       sloth_spec: prometheus/v1

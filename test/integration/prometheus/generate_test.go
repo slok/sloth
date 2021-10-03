@@ -86,8 +86,8 @@ func TestPrometheusGenerate(t *testing.T) {
 		},
 
 		"Generate using multifile YAML in single file should generate the correct rules for all the SLOs (Kubernetes).": {
-			genCmdArgs: "--input ./testdata/in-multifile.yaml",
-			expOut:     expectLoader.mustLoadExp("./testdata/out-multifile.yaml.tpl"),
+			genCmdArgs: "--input ./testdata/in-multifile-k8s.yaml",
+			expOut:     expectLoader.mustLoadExp("./testdata/out-multifile-k8s.yaml.tpl"),
 		},
 
 		"Generate using OpenSLO YAML should generate Prometheus rules.": {

@@ -7,6 +7,7 @@
 - Helm chart.
 - Kustomize.
 - Support Kubernetes 1.22
+- The SLO `info` metric has SLO objective as a label.
 
 ## [v0.6.0] - 2021-07-11
 

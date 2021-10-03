@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"strconv"
 	"text/template"
 	"time"
 
@@ -279,9 +280,10 @@ func (m metadataRecordingRulesGenerator) GenerateMetadataRecordingRules(ctx cont
 			Record: metricSLOInfo,
 			Expr:   `vector(1)`,
 			Labels: mergeLabels(labels, map[string]string{
-				sloVersionLabelName: info.Version,
-				sloModeLabelName:    string(info.Mode),
-				sloSpecLabelName:    info.Spec,
+				sloVersionLabelName:   info.Version,
+				sloModeLabelName:      string(info.Mode),
+				sloSpecLabelName:      info.Spec,
+				sloObjectiveLabelName: strconv.FormatFloat(slo.Objective, 'f', -1, 64),
 			}),
 		},
 	}

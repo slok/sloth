@@ -62,42 +62,40 @@ type SLO struct {
 }
 
 func (g generator) GenerateMWMBAlerts(ctx context.Context, slo SLO) (*MWMBAlertGroup, error) {
-	if slo.TimeWindow != 30*24*time.Hour {
-		return nil, fmt.Errorf("only 30 day SLO time window is supported")
-	}
+	windowMeta := newDefaultWindowMetadata(slo.TimeWindow)
 
 	errorBudget := 100 - slo.Objective
 
 	group := MWMBAlertGroup{
 		PageQuick: MWMBAlert{
 			ID:             fmt.Sprintf("%s-page-quick", slo.ID),
-			ShortWindow:    windowPageQuickShort,
-			LongWindow:     windowPageQuickLong,
-			BurnRateFactor: speedPageQuick,
+			ShortWindow:    windowMeta.WindowPageQuickShort,
+			LongWindow:     windowMeta.WindowPageQuickLong,
+			BurnRateFactor: windowMeta.GetSpeedPageQuick(),
 			ErrorBudget:    errorBudget,
 			Severity:       PageAlertSeverity,
 		},
 		PageSlow: MWMBAlert{
 			ID:             fmt.Sprintf("%s-page-slow", slo.ID),
-			ShortWindow:    windowPageSlowShort,
-			LongWindow:     windowPageSlowLong,
-			BurnRateFactor: speedPageSlow,
+			ShortWindow:    windowMeta.WindowPageSlowShort,
+			LongWindow:     windowMeta.WindowPageSlowLong,
+			BurnRateFactor: windowMeta.GetSpeedPageSlow(),
 			ErrorBudget:    errorBudget,
 			Severity:       PageAlertSeverity,
 		},
 		TicketQuick: MWMBAlert{
 			ID:             fmt.Sprintf("%s-ticket-quick", slo.ID),
-			ShortWindow:    windowTicketQuickShort,
-			LongWindow:     windowTicketQuickLong,
-			BurnRateFactor: speedTicketQuick,
+			ShortWindow:    windowMeta.WindowTicketQuickShort,
+			LongWindow:     windowMeta.WindowTicketQuickLong,
+			BurnRateFactor: windowMeta.GetSpeedTicketQuick(),
 			ErrorBudget:    errorBudget,
 			Severity:       TicketAlertSeverity,
 		},
 		TicketSlow: MWMBAlert{
 			ID:             fmt.Sprintf("%s-ticket-slow", slo.ID),
-			ShortWindow:    windowTicketSlowShort,
-			LongWindow:     windowTicketSlowLong,
-			BurnRateFactor: speedTicketSlow,
+			ShortWindow:    windowMeta.WindowTicketSlowShort,
+			LongWindow:     windowMeta.WindowTicketSlowLong,
+			BurnRateFactor: windowMeta.GetSpeedTicketSlow(),
 			ErrorBudget:    errorBudget,
 			Severity:       TicketAlertSeverity,
 		},
@@ -106,40 +104,53 @@ func (g generator) GenerateMWMBAlerts(ctx context.Context, slo SLO) (*MWMBAlertG
 	return &group, nil
 }
 
-// From https://sre.google/workbook/alerting-on-slos/#recommended_parameters_for_an_slo_based_a table.
-const (
-	// Time windows.
-	windowPageQuickShort   = 5 * time.Minute
-	windowPageQuickLong    = 1 * time.Hour
-	windowPageSlowShort    = 30 * time.Minute
-	windowPageSlowLong     = 6 * time.Hour
-	windowTicketQuickShort = 2 * time.Hour
-	windowTicketQuickLong  = 1 * 24 * time.Hour
-	windowTicketSlowShort  = 6 * time.Hour
-	windowTicketSlowLong   = 3 * 24 * time.Hour
+// WindowMetadata has the information required to calculate SLOs.
+type WindowMetadata struct {
+	WindowPeriod time.Duration
 
-	// Error budget percents for 30 day time window.
-	ErrBudgetPercentPageQuick30D   = 2
-	ErrBudgetPercentPageSlow30D    = 5
-	ErrBudgetPercentTicketQuick30D = 10
-	ErrBudgetPercentTicketSlow30D  = 10
-)
+	// Alerting required windows.
+	// Its a matrix of values with:
+	// - Alert severity: ["page", "ticket"].
+	// - Measure period: ["long", "short"].
+	WindowPageQuickShort   time.Duration
+	WindowPageQuickLong    time.Duration
+	WindowPageSlowShort    time.Duration
+	WindowPageSlowLong     time.Duration
+	WindowTicketQuickShort time.Duration
+	WindowTicketQuickLong  time.Duration
+	WindowTicketSlowShort  time.Duration
+	WindowTicketSlowLong   time.Duration
 
-var (
-	// Error budget speeds based on a 30 day window, however once we have the factor (speed)
-	// the value can be used with any time window, that's why we calculate here.
-	// We could hardcode the factors but this way we know how are generated and we use it
-	// as as documention.
-	baseWindow       = 30 * 24 * time.Hour
-	speedPageQuick   = getBurnRateFactor(baseWindow, ErrBudgetPercentPageQuick30D, windowPageQuickLong)     // Speed: 14.4.
-	speedPageSlow    = getBurnRateFactor(baseWindow, ErrBudgetPercentPageSlow30D, windowPageSlowLong)       // Speed: 6.
-	speedTicketQuick = getBurnRateFactor(baseWindow, ErrBudgetPercentTicketQuick30D, windowTicketQuickLong) // Speed: 3.
-	speedTicketSlow  = getBurnRateFactor(baseWindow, ErrBudgetPercentTicketSlow30D, windowTicketSlowLong)   // Speed: 1.
-)
+	// Error budget percent consumed for a full time window.
+	// Google gives us some defaults in its SRE workbook that work correctly most of the times:
+	// - Page quick:   2%
+	// - Page slow:    5%
+	// - Ticket quick: 10%
+	// - Ticket slow:  10%
+	ErrorBudgetPercPageQuick   float64
+	ErrorBudgetPercPageSlow    float64
+	ErrorBudgetPercTicketQuick float64
+	ErrorBudgetPercTicketSlow  float64
+}
+
+// Error budget speeds based on a full time window, however once we have the factor (speed)
+// the value can be used with any time window.
+func (w WindowMetadata) GetSpeedPageQuick() float64 {
+	return w.getBurnRateFactor(w.WindowPeriod, w.ErrorBudgetPercPageQuick, w.WindowPageQuickLong)
+}
+func (w WindowMetadata) GetSpeedPageSlow() float64 {
+	return w.getBurnRateFactor(w.WindowPeriod, w.ErrorBudgetPercPageSlow, w.WindowPageSlowLong)
+}
+func (w WindowMetadata) GetSpeedTicketQuick() float64 {
+	return w.getBurnRateFactor(w.WindowPeriod, w.ErrorBudgetPercTicketQuick, w.WindowTicketQuickLong)
+}
+func (w WindowMetadata) GetSpeedTicketSlow() float64 {
+	return w.getBurnRateFactor(w.WindowPeriod, w.ErrorBudgetPercTicketSlow, w.WindowTicketSlowLong)
+}
 
 // getBurnRateFactor calculates the burnRateFactor (speed) needed to consume all the error budget available percent
 // in a specific time window taking into account the total time window.
-func getBurnRateFactor(totalWindow time.Duration, errorBudgetPercent float64, consumptionWindow time.Duration) float64 {
+func (w WindowMetadata) getBurnRateFactor(totalWindow time.Duration, errorBudgetPercent float64, consumptionWindow time.Duration) float64 {
 	// First get the total hours required to consume the % of the error budget in the total window.
 	hoursRequiredConsumption := errorBudgetPercent * totalWindow.Hours() / 100
 
@@ -148,4 +159,28 @@ func getBurnRateFactor(totalWindow time.Duration, errorBudgetPercent float64, co
 	speed := hoursRequiredConsumption / consumptionWindow.Hours()
 
 	return speed
+}
+
+// newDefaultWindowMetadata returns a common and safe to use window metadata, normally this works well
+// with month based time windows like 28 day and 30 day. Is the most common kind of SLO based window metadata.
+//
+// From https://sre.google/workbook/alerting-on-slos/#recommended_parameters_for_an_slo_based_a table.
+func newDefaultWindowMetadata(windowPeriod time.Duration) WindowMetadata {
+	return WindowMetadata{
+		WindowPeriod: windowPeriod,
+
+		WindowPageQuickShort:   5 * time.Minute,
+		WindowPageQuickLong:    1 * time.Hour,
+		WindowPageSlowShort:    30 * time.Minute,
+		WindowPageSlowLong:     6 * time.Hour,
+		WindowTicketQuickShort: 2 * time.Hour,
+		WindowTicketQuickLong:  1 * 24 * time.Hour,
+		WindowTicketSlowShort:  6 * time.Hour,
+		WindowTicketSlowLong:   3 * 24 * time.Hour,
+
+		ErrorBudgetPercPageQuick:   2,
+		ErrorBudgetPercPageSlow:    5,
+		ErrorBudgetPercTicketQuick: 10,
+		ErrorBudgetPercTicketSlow:  10,
+	}
 }

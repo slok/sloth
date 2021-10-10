@@ -95,6 +95,11 @@ func TestPrometheusGenerate(t *testing.T) {
 			expOut:     expectLoader.mustLoadExp("./testdata/out-openslo.yaml.tpl"),
 		},
 
+		"Generate using 28 day time window should generate Prometheus rules.": {
+			genCmdArgs: "--window-days 28 --input ./testdata/in-base.yaml",
+			expOut:     expectLoader.mustLoadExp("./testdata/out-base-28d.yaml.tpl"),
+		},
+
 		"Generate using invalid version should fail.": {
 			genCmdArgs: "--input ./testdata/in-invalid-version.yaml",
 			expErr:     true,

@@ -2,6 +2,7 @@ package k8scontroller_test
 
 import (
 	"context"
+	"fmt"
 	"testing"
 	"time"
 
@@ -46,13 +47,15 @@ func TestKubernetesControllerPromOperatorGenerate(t *testing.T) {
 
 	// Tests.
 	tests := map[string]struct {
-		exec func(ctx context.Context, t *testing.T, ns string, kubeClis *k8scontroller.KubeClients)
+		windowDays int
+		exec       func(ctx context.Context, t *testing.T, ns string, kubeClis *k8scontroller.KubeClients)
 	}{
 		"Having SLOs as a CRD should generate Prometheus operator CRD.": {
+			windowDays: 30,
 			exec: func(ctx context.Context, t *testing.T, ns string, kubeClis *k8scontroller.KubeClients) {
 				// Prepare our SLO on Kubernetes.
 				SLOs := getBasePrometheusServiceLevel()
-				_, err = kubeClis.Sloth.SlothV1().PrometheusServiceLevels(ns).Create(ctx, SLOs, metav1.CreateOptions{})
+				_, err := kubeClis.Sloth.SlothV1().PrometheusServiceLevels(ns).Create(ctx, SLOs, metav1.CreateOptions{})
 				require.NoError(t, err)
 
 				// Wait to be sure the controller had time for handling.
@@ -70,11 +73,35 @@ func TestKubernetesControllerPromOperatorGenerate(t *testing.T) {
 			},
 		},
 
+		"Having SLOs with custom time windows (28 day) should generate Prometheus operator CRD.": {
+			windowDays: 28,
+			exec: func(ctx context.Context, t *testing.T, ns string, kubeClis *k8scontroller.KubeClients) {
+				// Prepare our SLO on Kubernetes.
+				SLOs := getBasePrometheusServiceLevel()
+				_, err := kubeClis.Sloth.SlothV1().PrometheusServiceLevels(ns).Create(ctx, SLOs, metav1.CreateOptions{})
+				require.NoError(t, err)
+
+				// Wait to be sure the controller had time for handling.
+				time.Sleep(250 * time.Millisecond)
+
+				// Check.
+				expRule := getBase28DayPromOpPrometheusRule(version)
+				expRule.Namespace = ns
+
+				gotRule, err := kubeClis.Monitoring.MonitoringV1().PrometheusRules(ns).Get(ctx, expRule.Name, metav1.GetOptions{})
+				gotRule = sanitizePrometheusRule(gotRule) // Remove variations.
+				require.NoError(t, err)
+
+				assert.Equal(t, expRule, gotRule)
+			},
+		},
+
 		"Having SLOs with plugins as a CRD should generate Prometheus operator CRD.": {
+			windowDays: 30,
 			exec: func(ctx context.Context, t *testing.T, ns string, kubeClis *k8scontroller.KubeClients) {
 				// Prepare our SLO on Kubernetes with plugin based SLO.
 				SLOs := getPluginPrometheusServiceLevel()
-				_, err = kubeClis.Sloth.SlothV1().PrometheusServiceLevels(ns).Create(ctx, SLOs, metav1.CreateOptions{})
+				_, err := kubeClis.Sloth.SlothV1().PrometheusServiceLevels(ns).Create(ctx, SLOs, metav1.CreateOptions{})
 				require.NoError(t, err)
 
 				// Wait to be sure the controller had time for handling.
@@ -93,6 +120,7 @@ func TestKubernetesControllerPromOperatorGenerate(t *testing.T) {
 		},
 
 		"Having SLOs as a CRD should set the status as correct on the CRD.": {
+			windowDays: 30,
 			exec: func(ctx context.Context, t *testing.T, ns string, kubeClis *k8scontroller.KubeClients) {
 				// Prepare our SLO on Kubernetes.
 				SLOs := getBasePrometheusServiceLevel()
@@ -119,6 +147,7 @@ func TestKubernetesControllerPromOperatorGenerate(t *testing.T) {
 		},
 
 		"Having wrong SLOs as a CRD should set the status failed on the CRD.": {
+			windowDays: 30,
 			exec: func(ctx context.Context, t *testing.T, ns string, kubeClis *k8scontroller.KubeClients) {
 				// Prepare our wrong SLO on Kubernetes.
 				SLOs := getBasePrometheusServiceLevel()
@@ -147,7 +176,9 @@ func TestKubernetesControllerPromOperatorGenerate(t *testing.T) {
 	}
 
 	for name, test := range tests {
+		test := test
 		t.Run(name, func(t *testing.T) {
+			t.Parallel()
 			require := require.New(t)
 
 			// Create a context with cancel so we can stop everything at the end of the test.
@@ -164,7 +195,8 @@ func TestKubernetesControllerPromOperatorGenerate(t *testing.T) {
 
 			// Run controller in background.
 			go func() {
-				_, _, _ = k8scontroller.RunSlothController(ctx, config, ns, "")
+				// Listen on `:0` and isolate per namespace so we can run in tests parallel safely.
+				_, _, _ = k8scontroller.RunSlothController(ctx, config, ns, fmt.Sprintf("--metrics-listen-addr=:0 --hot-reload-addr=:0 --namespace=%s --window-days=%d", ns, test.windowDays))
 			}()
 
 			// Execute test.

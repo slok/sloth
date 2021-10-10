@@ -15,21 +15,27 @@ import (
 	"github.com/slok/sloth/internal/prometheus"
 )
 
-type yamlSpecLoader bool
+type YAMLSpecLoader struct {
+	windowPeriod time.Duration
+}
 
 // YAMLSpecLoader knows how to load YAML specs and converts them to a model.
-const YAMLSpecLoader = yamlSpecLoader(false)
+func NewYAMLSpecLoader(windowPeriod time.Duration) YAMLSpecLoader {
+	return YAMLSpecLoader{
+		windowPeriod: windowPeriod,
+	}
+}
 
 var (
 	specTypeV1AlphaRegexKind       = regexp.MustCompile(`(?m)^kind: +['"]?SLO['"]? *$`)
 	specTypeV1AlphaRegexAPIVersion = regexp.MustCompile(`(?m)^apiVersion: +['"]?openslo\/v1alpha['"]? *$`)
 )
 
-func (y yamlSpecLoader) IsSpecType(ctx context.Context, data []byte) bool {
+func (y YAMLSpecLoader) IsSpecType(ctx context.Context, data []byte) bool {
 	return specTypeV1AlphaRegexKind.Match(data) && specTypeV1AlphaRegexAPIVersion.Match(data)
 }
 
-func (y yamlSpecLoader) LoadSpec(ctx context.Context, data []byte) (*prometheus.SLOGroup, error) {
+func (y YAMLSpecLoader) LoadSpec(ctx context.Context, data []byte) (*prometheus.SLOGroup, error) {
 	if len(data) == 0 {
 		return nil, fmt.Errorf("spec is required")
 	}
@@ -64,7 +70,7 @@ func (y yamlSpecLoader) LoadSpec(ctx context.Context, data []byte) (*prometheus.
 	return m, nil
 }
 
-func (y yamlSpecLoader) mapSpecToModel(spec openslov1alpha.SLO) (*prometheus.SLOGroup, error) {
+func (y YAMLSpecLoader) mapSpecToModel(spec openslov1alpha.SLO) (*prometheus.SLOGroup, error) {
 	slos, err := y.getSLOs(spec)
 	if err != nil {
 		return nil, fmt.Errorf("could not map SLOs correctly: %w", err)
@@ -75,14 +81,24 @@ func (y yamlSpecLoader) mapSpecToModel(spec openslov1alpha.SLO) (*prometheus.SLO
 
 // validateTimeWindow will validate that Sloth only supports 30 day based time windows
 // we need this because time windows are a required by OpenSLO.
-func (yamlSpecLoader) validateTimeWindow(spec openslov1alpha.SLO) error {
-	if len(spec.Spec.TimeWindows) != 1 {
+func (YAMLSpecLoader) validateTimeWindow(spec openslov1alpha.SLO) error {
+	if len(spec.Spec.TimeWindows) == 0 {
+		return nil
+	}
+
+	if len(spec.Spec.TimeWindows) > 1 {
 		return fmt.Errorf("only 1 time window is supported")
 	}
 
 	t := spec.Spec.TimeWindows[0]
-	if t.Count != 30 && strings.ToLower(t.Unit) == "day" {
-		return fmt.Errorf("only 30 days time window is supported")
+	if strings.ToLower(t.Unit) != "day" {
+		return fmt.Errorf("only days based time windows are supported")
+	}
+
+	duration := time.Duration(t.Count) * 24 * time.Hour
+	_, ok := prometheus.SupportedTimeWindows[duration]
+	if !ok {
+		return fmt.Errorf("not supported time window, use one of: %s", prometheus.SupportedTimeWindows)
 	}
 
 	return nil
@@ -104,7 +120,7 @@ var errorRatioRawQueryTpl = template.Must(template.New("").Parse(`
 // however we will convert to a raw based sloth SLI because the ratio queries that we have differ from
 // Sloth. Sloth uses bad/total events, OpenSLO uses good/total events. We get the ratio using good events
 // and then rest to 1, to get a raw error ratio query.
-func (y yamlSpecLoader) getSLI(spec openslov1alpha.SLOSpec, slo openslov1alpha.Objective) (*prometheus.SLI, error) {
+func (y YAMLSpecLoader) getSLI(spec openslov1alpha.SLOSpec, slo openslov1alpha.Objective) (*prometheus.SLI, error) {
 	if slo.RatioMetrics == nil {
 		return nil, fmt.Errorf("missing ratioMetrics")
 	}
@@ -143,7 +159,7 @@ func (y yamlSpecLoader) getSLI(spec openslov1alpha.SLOSpec, slo openslov1alpha.O
 // getSLOs will try getting all the objectives as individual SLOs, this way we can map
 // to what Sloth understands as an SLO, that OpenSLO understands as a list of objectives
 // for the same SLO.
-func (y yamlSpecLoader) getSLOs(spec openslov1alpha.SLO) ([]prometheus.SLO, error) {
+func (y YAMLSpecLoader) getSLOs(spec openslov1alpha.SLO) ([]prometheus.SLO, error) {
 	res := []prometheus.SLO{}
 
 	for idx, slo := range spec.Spec.Objectives {
@@ -152,13 +168,18 @@ func (y yamlSpecLoader) getSLOs(spec openslov1alpha.SLO) ([]prometheus.SLO, erro
 			return nil, fmt.Errorf("could not map SLI: %w", err)
 		}
 
+		timeWindow := y.windowPeriod
+		if len(spec.Spec.TimeWindows) > 0 {
+			timeWindow = time.Duration(spec.Spec.TimeWindows[0].Count) * 24 * time.Hour
+		}
+
 		// TODO(slok): Think about using `slo.Value` insted of idx (`slo.Value` is not mandatory).
 		res = append(res, prometheus.SLO{
 			ID:              fmt.Sprintf("%s-%s-%d", spec.Spec.Service, spec.Metadata.Name, idx),
 			Name:            fmt.Sprintf("%s-%d", spec.Metadata.Name, idx),
 			Service:         spec.Spec.Service,
 			Description:     spec.Spec.Description,
-			TimeWindow:      time.Hour * 24 * 30,
+			TimeWindow:      timeWindow,
 			SLI:             *sli,
 			Objective:       *slo.BudgetTarget * 100, // OpenSLO uses ratios, we use percents.
 			PageAlertMeta:   prometheus.AlertMeta{Disable: true},

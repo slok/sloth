@@ -7,6 +7,7 @@ import (
 	"io/fs"
 	"path/filepath"
 	"regexp"
+	"strconv"
 	"strings"
 
 	"github.com/slok/sloth/internal/log"
@@ -91,4 +92,12 @@ func discoverSLOManifests(logger log.Logger, exclude, include *regexp.Regexp, pa
 	}
 
 	return paths, nil
+}
+
+func supportedTimeWindows() []string {
+	tws := []string{}
+	for tw := range prometheus.SupportedTimeWindows {
+		tws = append(tws, strconv.Itoa(int(tw.Hours()/24)))
+	}
+	return tws
 }

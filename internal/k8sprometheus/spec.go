@@ -20,15 +20,17 @@ type SLIPluginRepo interface {
 
 // YAMLSpecLoader knows how to load Kubernetes ServiceLevel YAML specs and converts them to a model.
 type YAMLSpecLoader struct {
-	pluginsRepo SLIPluginRepo
-	decoder     runtime.Decoder
+	windowPeriod time.Duration
+	pluginsRepo  SLIPluginRepo
+	decoder      runtime.Decoder
 }
 
 // NewYAMLSpecLoader returns a YAML spec loader.
-func NewYAMLSpecLoader(pluginsRepo SLIPluginRepo) YAMLSpecLoader {
+func NewYAMLSpecLoader(pluginsRepo SLIPluginRepo, windowPeriod time.Duration) YAMLSpecLoader {
 	return YAMLSpecLoader{
-		pluginsRepo: pluginsRepo,
-		decoder:     scheme.Codecs.UniversalDeserializer(),
+		windowPeriod: windowPeriod,
+		pluginsRepo:  pluginsRepo,
+		decoder:      scheme.Codecs.UniversalDeserializer(),
 	}
 }
 
@@ -61,7 +63,7 @@ func (y YAMLSpecLoader) LoadSpec(ctx context.Context, data []byte) (*SLOGroup, e
 		return nil, fmt.Errorf("at least one SLO is required")
 	}
 
-	m, err := mapSpecToModel(ctx, y.pluginsRepo, kslo)
+	m, err := mapSpecToModel(ctx, y.windowPeriod, y.pluginsRepo, kslo)
 	if err != nil {
 		return nil, fmt.Errorf("could not map to model: %w", err)
 	}
@@ -70,22 +72,24 @@ func (y YAMLSpecLoader) LoadSpec(ctx context.Context, data []byte) (*SLOGroup, e
 }
 
 type CRSpecLoader struct {
-	pluginsRepo SLIPluginRepo
+	windowPeriod time.Duration
+	pluginsRepo  SLIPluginRepo
 }
 
 // CRSpecLoader knows how to load Kubernetes CRD specs and converts them to a model.
 
-func NewCRSpecLoader(pluginsRepo SLIPluginRepo) CRSpecLoader {
+func NewCRSpecLoader(pluginsRepo SLIPluginRepo, windowPeriod time.Duration) CRSpecLoader {
 	return CRSpecLoader{
-		pluginsRepo: pluginsRepo,
+		windowPeriod: windowPeriod,
+		pluginsRepo:  pluginsRepo,
 	}
 }
 
 func (c CRSpecLoader) LoadSpec(ctx context.Context, spec *k8sprometheusv1.PrometheusServiceLevel) (*SLOGroup, error) {
-	return mapSpecToModel(ctx, c.pluginsRepo, spec)
+	return mapSpecToModel(ctx, c.windowPeriod, c.pluginsRepo, spec)
 }
 
-func mapSpecToModel(ctx context.Context, pluginsRepo SLIPluginRepo, kspec *k8sprometheusv1.PrometheusServiceLevel) (*SLOGroup, error) {
+func mapSpecToModel(ctx context.Context, defaultWindowPeriod time.Duration, pluginsRepo SLIPluginRepo, kspec *k8sprometheusv1.PrometheusServiceLevel) (*SLOGroup, error) {
 	slos := make([]prometheus.SLO, 0, len(kspec.Spec.SLOs))
 	spec := kspec.Spec
 	for _, specSLO := range kspec.Spec.SLOs {
@@ -94,7 +98,7 @@ func mapSpecToModel(ctx context.Context, pluginsRepo SLIPluginRepo, kspec *k8spr
 			Name:            specSLO.Name,
 			Description:     specSLO.Description,
 			Service:         spec.Service,
-			TimeWindow:      30 * 24 * time.Hour, // Default and for now the only one supported.
+			TimeWindow:      defaultWindowPeriod,
 			Objective:       specSLO.Objective,
 			Labels:          mergeLabels(spec.Labels, specSLO.Labels),
 			PageAlertMeta:   prometheus.AlertMeta{Disable: true},

@@ -3,6 +3,7 @@ package k8sprometheus_test
 import (
 	"fmt"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 
@@ -28,9 +29,10 @@ func getGoodSLOGroup() k8sprometheus.SLOGroup {
 
 func getGoodSLO(name string) prometheus.SLO {
 	return prometheus.SLO{
-		ID:      fmt.Sprintf("%s-id", name),
-		Name:    name,
-		Service: "test-svc",
+		ID:         fmt.Sprintf("%s-id", name),
+		Name:       name,
+		Service:    "test-svc",
+		TimeWindow: 30 * 24 * time.Hour,
 		SLI: prometheus.SLI{
 			Events: &prometheus.SLIEvents{
 				ErrorQuery: `sum(rate(grpc_server_handled_requests_count{job="myapp",code=~"Internal|Unavailable"}[{{ .window }}]))`,

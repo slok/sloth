@@ -6,6 +6,8 @@ import (
 	"io"
 	"os"
 	"regexp"
+	"strconv"
+	"time"
 
 	"github.com/slok/sloth/internal/k8sprometheus"
 	"github.com/slok/sloth/internal/log"
@@ -20,6 +22,7 @@ type validateCommand struct {
 	slosIncludeRegex string
 	extraLabels      map[string]string
 	sliPluginsPaths  []string
+	windowDays       string
 }
 
 // NewValidateCommand returns the validate command.
@@ -31,12 +34,22 @@ func NewValidateCommand(app *kingpin.Application) Command {
 	cmd.Flag("fs-include", "Filter regex to include matched discovered SLO file paths, everything else will be ignored. Exclude has preference.").Short('n').StringVar(&c.slosIncludeRegex)
 	cmd.Flag("extra-labels", "Extra labels that will be added to all the generated Prometheus rules ('key=value' form, can be repeated).").Short('l').StringMapVar(&c.extraLabels)
 	cmd.Flag("sli-plugins-path", "The path to SLI plugins (can be repeated), if not set it disable plugins support.").Short('p').StringsVar(&c.sliPluginsPaths)
+	cmd.Flag("window-days", "The number of days for the SLO full time window period.").Short('w').Default("30").EnumVar(&c.windowDays, supportedTimeWindows()...)
 
 	return c
 }
 
 func (v validateCommand) Name() string { return "validate" }
 func (v validateCommand) Run(ctx context.Context, config RootConfig) error {
+	logger := config.Logger.WithValues(log.Kv{"window": fmt.Sprintf("%sd", v.windowDays)})
+
+	// Window.
+	days, err := strconv.Atoi(v.windowDays)
+	if err != nil {
+		return fmt.Errorf("window days is invalid: %w", err)
+	}
+	timeWindow := time.Duration(days) * 24 * time.Hour
+
 	// Set up files discovery filter regex.
 	var excludeRegex *regexp.Regexp
 	var includeRegex *regexp.Regexp
@@ -56,7 +69,7 @@ func (v validateCommand) Run(ctx context.Context, config RootConfig) error {
 	}
 
 	// Discover SLOs.
-	sloPaths, err := discoverSLOManifests(config.Logger, excludeRegex, includeRegex, v.slosInput)
+	sloPaths, err := discoverSLOManifests(logger, excludeRegex, includeRegex, v.slosInput)
 	if err != nil {
 		return fmt.Errorf("could not discover files: %w", err)
 	}
@@ -65,15 +78,15 @@ func (v validateCommand) Run(ctx context.Context, config RootConfig) error {
 	}
 
 	// Load plugins.
-	pluginRepo, err := createPluginLoader(ctx, config.Logger, v.sliPluginsPaths)
+	pluginRepo, err := createPluginLoader(ctx, logger, v.sliPluginsPaths)
 	if err != nil {
 		return err
 	}
 
 	// Create Spec loaders.
-	promYAMLLoader := prometheus.NewYAMLSpecLoader(pluginRepo)
-	kubeYAMLLoader := k8sprometheus.NewYAMLSpecLoader(pluginRepo)
-	openSLOYAMLLoader := openslo.YAMLSpecLoader
+	promYAMLLoader := prometheus.NewYAMLSpecLoader(pluginRepo, timeWindow)
+	kubeYAMLLoader := k8sprometheus.NewYAMLSpecLoader(pluginRepo, timeWindow)
+	openSLOYAMLLoader := openslo.NewYAMLSpecLoader(timeWindow)
 
 	// For every file load the data and start the validation process:
 	validations := []*fileValidation{}
@@ -140,7 +153,7 @@ func (v validateCommand) Run(ctx context.Context, config RootConfig) error {
 		}
 
 		// Don't wait until the end to show validation per file.
-		logger := config.Logger.WithValues(log.Kv{"file": validation.File})
+		logger := logger.WithValues(log.Kv{"file": validation.File})
 		logger.Debugf("File validated")
 		for _, err := range validation.Errs {
 			logger.Errorf("%s", err)
@@ -154,7 +167,7 @@ func (v validateCommand) Run(ctx context.Context, config RootConfig) error {
 		}
 	}
 
-	config.Logger.WithValues(log.Kv{"slo-specs": totalValidations}).Infof("Validation succeeded")
+	logger.WithValues(log.Kv{"slo-specs": totalValidations}).Infof("Validation succeeded")
 	return nil
 }
 

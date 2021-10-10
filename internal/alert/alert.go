@@ -61,8 +61,17 @@ type SLO struct {
 	Objective  float64
 }
 
+// windowMetadataCatalog are the current supported (and known that work) time windows for alerting.
+var windowMetadataCatalog = map[time.Duration]WindowMetadata{
+	28 * 24 * time.Hour: newMonthWindowMetadata(28 * 24 * time.Hour),
+	30 * 24 * time.Hour: newMonthWindowMetadata(30 * 24 * time.Hour),
+}
+
 func (g generator) GenerateMWMBAlerts(ctx context.Context, slo SLO) (*MWMBAlertGroup, error) {
-	windowMeta := newDefaultWindowMetadata(slo.TimeWindow)
+	windowMeta, ok := windowMetadataCatalog[slo.TimeWindow]
+	if !ok {
+		return nil, fmt.Errorf("the %s SLO period time window is not supported", slo.TimeWindow)
+	}
 
 	errorBudget := 100 - slo.Objective
 
@@ -161,11 +170,12 @@ func (w WindowMetadata) getBurnRateFactor(totalWindow time.Duration, errorBudget
 	return speed
 }
 
-// newDefaultWindowMetadata returns a common and safe to use window metadata, normally this works well
-// with month based time windows like 28 day and 30 day. Is the most common kind of SLO based window metadata.
+// newMonthWindowMetadata returns a common and safe approximate month window metadata. Normally this works well
+// with 4-5 weeks time windows like 28 day and 30 day.
+// Is the most common kind of SLO based window metadata.
 //
-// From https://sre.google/workbook/alerting-on-slos/#recommended_parameters_for_an_slo_based_a table.
-func newDefaultWindowMetadata(windowPeriod time.Duration) WindowMetadata {
+// Numbers obtained from https://sre.google/workbook/alerting-on-slos/#recommended_parameters_for_an_slo_based_a.
+func newMonthWindowMetadata(windowPeriod time.Duration) WindowMetadata {
 	return WindowMetadata{
 		WindowPeriod: windowPeriod,
 

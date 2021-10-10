@@ -23,10 +23,11 @@ func (t testMemPluginsRepo) GetSLIPlugin(ctx context.Context, id string) (*prome
 
 func TestYAMLoadSpec(t *testing.T) {
 	tests := map[string]struct {
-		specYaml string
-		plugins  map[string]prometheus.SLIPlugin
-		expModel *prometheus.SLOGroup
-		expErr   bool
+		specYaml     string
+		plugins      map[string]prometheus.SLIPlugin
+		windowPeriod time.Duration
+		expModel     *prometheus.SLOGroup
+		expErr       bool
 	}{
 		"Empty spec should fail.": {
 			specYaml: ``,
@@ -113,6 +114,7 @@ slos:
 		},
 
 		"Spec with SLI plugin should use the plugin correctly.": {
+			windowPeriod: 30 * 24 * time.Hour,
 			plugins: map[string]prometheus.SLIPlugin{
 				"test_plugin": {
 					ID: "test_plugin",
@@ -166,8 +168,46 @@ slos:
 			}},
 		},
 
-		"Correct spec should return the models correctly.": {
+		"Spec with different time window should use the specific time window.": {
+			windowPeriod: 28 * 24 * time.Hour,
+			specYaml: `
+service: test-svc
+version: "prometheus/v1"
+labels:
+  gk1: gv1
+slos:
+  - name: "slo-test"
+    objective: 99
+    sli:
+      raw:
+        error_ratio_query: test_expr_ratio_2
+    alerting:
+      page_alert:
+        disable: true
+      ticket_alert:
+        disable: true
+`,
+			expModel: &prometheus.SLOGroup{SLOs: []prometheus.SLO{
+				{
+					ID:         "test-svc-slo-test",
+					Name:       "slo-test",
+					Service:    "test-svc",
+					TimeWindow: 28 * 24 * time.Hour,
+					Labels:     map[string]string{"gk1": "gv1"},
+					SLI: prometheus.SLI{
+						Raw: &prometheus.SLIRaw{
+							ErrorRatioQuery: `test_expr_ratio_2`,
+						},
+					},
+					Objective:       99,
+					PageAlertMeta:   prometheus.AlertMeta{Disable: true},
+					TicketAlertMeta: prometheus.AlertMeta{Disable: true},
+				},
+			}},
+		},
 
+		"Correct spec should return the models correctly.": {
+			windowPeriod: 30 * 24 * time.Hour,
 			specYaml: `
 version: "prometheus/v1"
 service: "test-svc"
@@ -285,7 +325,7 @@ slos:
 		t.Run(name, func(t *testing.T) {
 			assert := assert.New(t)
 
-			loader := prometheus.NewYAMLSpecLoader(testMemPluginsRepo(test.plugins))
+			loader := prometheus.NewYAMLSpecLoader(testMemPluginsRepo(test.plugins), test.windowPeriod)
 			gotModel, err := loader.LoadSpec(context.TODO(), []byte(test.specYaml))
 
 			if test.expErr {
@@ -342,7 +382,7 @@ func TestYAMLIsSpecType(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			assert := assert.New(t)
 
-			loader := prometheus.NewYAMLSpecLoader(testMemPluginsRepo(map[string]prometheus.SLIPlugin{}))
+			loader := prometheus.NewYAMLSpecLoader(testMemPluginsRepo(map[string]prometheus.SLIPlugin{}), 0)
 			got := loader.IsSpecType(context.TODO(), []byte(test.specYaml))
 
 			assert.Equal(test.exp, got)

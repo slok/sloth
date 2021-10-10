@@ -2,6 +2,7 @@ package prometheus_test
 
 import (
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 
@@ -12,9 +13,10 @@ func getGoodSLOGroup() prometheus.SLOGroup {
 	return prometheus.SLOGroup{
 		SLOs: []prometheus.SLO{
 			{
-				ID:      "slo1-id",
-				Name:    "test.slo-0_1",
-				Service: "test-svc",
+				ID:         "slo1-id",
+				Name:       "test.slo-0_1",
+				Service:    "test-svc",
+				TimeWindow: 30 * 24 * time.Hour,
 				SLI: prometheus.SLI{
 					Events: &prometheus.SLIEvents{
 						ErrorQuery: `sum(rate(grpc_server_handled_requests_count{job="myapp",code=~"Internal|Unavailable"}[{{ .window }}]))`,
@@ -192,6 +194,15 @@ func TestModelValidationSpec(t *testing.T) {
 				return s
 			},
 			expErrMessage: "Key: 'SLOGroup.SLOs[0].Service' Error:Field validation for 'Service' failed on the 'name' tag",
+		},
+
+		"Time window should be valid and supported one.": {
+			slo: func() prometheus.SLOGroup {
+				s := getGoodSLOGroup()
+				s.SLOs[0].TimeWindow = 63 * 24 * time.Hour
+				return s
+			},
+			expErrMessage: "Key: 'SLOGroup.SLOs[0].TimeWindow' Error:Field validation for 'TimeWindow' failed on the 'time_window' tag",
 		},
 
 		"SLO without SLI type should fail.": {

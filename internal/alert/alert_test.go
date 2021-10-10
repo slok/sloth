@@ -16,6 +16,15 @@ func TestGenerateMWMBAlerts(t *testing.T) {
 		expAlerts *alert.MWMBAlertGroup
 		expErr    bool
 	}{
+		"Generating alerts different to 30 day time window should fail.": {
+			slo: alert.SLO{
+				ID:         "test",
+				TimeWindow: 31 * 24 * time.Hour,
+				Objective:  99.9,
+			},
+			expErr: true,
+		},
+
 		"Generating a 30 day time window alerts should generate the alerts correctly.": {
 			slo: alert.SLO{
 				ID:         "test",

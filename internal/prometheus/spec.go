@@ -18,13 +18,15 @@ type SLIPluginRepo interface {
 
 // YAMLSpecLoader knows how to load YAML specs and converts them to a model.
 type YAMLSpecLoader struct {
-	pluginsRepo SLIPluginRepo
+	windowPeriod time.Duration
+	pluginsRepo  SLIPluginRepo
 }
 
 // NewYAMLSpecLoader returns a YAML spec loader.
-func NewYAMLSpecLoader(pluginsRepo SLIPluginRepo) YAMLSpecLoader {
+func NewYAMLSpecLoader(pluginsRepo SLIPluginRepo, windowPeriod time.Duration) YAMLSpecLoader {
 	return YAMLSpecLoader{
-		pluginsRepo: pluginsRepo,
+		windowPeriod: windowPeriod,
+		pluginsRepo:  pluginsRepo,
 	}
 }
 
@@ -71,7 +73,7 @@ func (y YAMLSpecLoader) mapSpecToModel(ctx context.Context, spec prometheusv1.Sp
 			Name:            specSLO.Name,
 			Description:     specSLO.Description,
 			Service:         spec.Service,
-			TimeWindow:      30 * 24 * time.Hour, // Default and for now the only one supported.
+			TimeWindow:      y.windowPeriod,
 			Objective:       specSLO.Objective,
 			Labels:          mergeLabels(spec.Labels, specSLO.Labels),
 			PageAlertMeta:   AlertMeta{Disable: true},

@@ -354,7 +354,7 @@ spec:
 		t.Run(name, func(t *testing.T) {
 			assert := assert.New(t)
 
-			loader := k8sprometheus.NewYAMLSpecLoader(testMemPluginsRepo(test.plugins))
+			loader := k8sprometheus.NewYAMLSpecLoader(testMemPluginsRepo(test.plugins), 30*24*time.Hour)
 			gotModel, err := loader.LoadSpec(context.TODO(), []byte(test.specYaml))
 
 			if test.expErr {
@@ -434,7 +434,7 @@ kind:               PrometheusServiceLevel
 		t.Run(name, func(t *testing.T) {
 			assert := assert.New(t)
 
-			loader := k8sprometheus.NewYAMLSpecLoader(testMemPluginsRepo(map[string]prometheus.SLIPlugin{}))
+			loader := k8sprometheus.NewYAMLSpecLoader(testMemPluginsRepo(map[string]prometheus.SLIPlugin{}), 30*24*time.Hour)
 			got := loader.IsSpecType(context.TODO(), []byte(test.specYaml))
 
 			assert.Equal(test.exp, got)

@@ -2,6 +2,17 @@
 
 ## [Unreleased]
 
+### Changed
+
+- OpenSLO fallbacks to Sloths time window if not set.
+
+### Added
+
+- Time window validation.
+- Default time window is 30 day (same as before but was hardcoded, now can be set to a different one).
+- Support 28 day time windows.
+- Flag to select default time window.
+
 ## [v0.7.0] - 2021-10-05
 
 ### Added

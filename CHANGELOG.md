@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [v0.8.0] - 2021-10-12
+
 ### Changed
 
 - OpenSLO fallbacks to Sloths time window if not set.
@@ -127,7 +129,8 @@
 - Support raw query based SLI.
 - Kubernetes (prometheus-operator) CRD generation support.
 
-[unreleased]: https://github.com/slok/sloth/compare/v0.7.0...HEAD
+[unreleased]: https://github.com/slok/sloth/compare/v0.8.0...HEAD
+[v0.8.0]: https://github.com/slok/sloth/compare/v0.7.0...v0.8.0
 [v0.7.0]: https://github.com/slok/sloth/compare/v0.6.0...v0.7.0
 [v0.6.0]: https://github.com/slok/sloth/compare/v0.5.0...v0.6.0
 [v0.5.0]: https://github.com/slok/sloth/compare/v0.4.0...v0.5.0

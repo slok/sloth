@@ -19,6 +19,3 @@ vendor/
 
 # Binaries
 /bin
-
-#generated chart structure
-/charts

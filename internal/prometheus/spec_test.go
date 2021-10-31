@@ -206,6 +206,42 @@ slos:
 			}},
 		},
 
+		"Spec with 7d time window should use the specific time window.": {
+			windowPeriod: 7 * 24 * time.Hour,
+			specYaml: `
+service: test-svc
+version: "prometheus/v1"
+slos:
+  - name: "slo-test"
+    objective: 95
+    sli:
+      raw:
+        error_ratio_query: test_expr_ratio_2
+    alerting:
+      page_alert:
+        disable: true
+      ticket_alert:
+        disable: true
+`,
+			expModel: &prometheus.SLOGroup{SLOs: []prometheus.SLO{
+				{
+					ID:         "test-svc-slo-test",
+					Name:       "slo-test",
+					Service:    "test-svc",
+					TimeWindow: 7 * 24 * time.Hour,
+					Labels:     map[string]string{},
+					SLI: prometheus.SLI{
+						Raw: &prometheus.SLIRaw{
+							ErrorRatioQuery: `test_expr_ratio_2`,
+						},
+					},
+					Objective:       95,
+					PageAlertMeta:   prometheus.AlertMeta{Disable: true},
+					TicketAlertMeta: prometheus.AlertMeta{Disable: true},
+				},
+			}},
+		},
+
 		"Correct spec should return the models correctly.": {
 			windowPeriod: 30 * 24 * time.Hour,
 			specYaml: `

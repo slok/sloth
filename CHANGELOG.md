@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+- Support 7 day time windows.
+
 ## [v0.8.0] - 2021-10-12
 
 ### Changed

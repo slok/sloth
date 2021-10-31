@@ -65,6 +65,7 @@ type SLO struct {
 var windowMetadataCatalog = map[time.Duration]WindowMetadata{
 	28 * 24 * time.Hour: newMonthWindowMetadata(28 * 24 * time.Hour),
 	30 * 24 * time.Hour: newMonthWindowMetadata(30 * 24 * time.Hour),
+	7 * 24 * time.Hour:  newWeekWindowMetadata(7 * 24 * time.Hour),
 }
 
 func (g generator) GenerateMWMBAlerts(ctx context.Context, slo SLO) (*MWMBAlertGroup, error) {
@@ -192,5 +193,28 @@ func newMonthWindowMetadata(windowPeriod time.Duration) WindowMetadata {
 		ErrorBudgetPercPageSlow:    5,
 		ErrorBudgetPercTicketQuick: 10,
 		ErrorBudgetPercTicketSlow:  10,
+	}
+}
+
+// newWeekWindowMetadata returns window metadata optimized for 7d windows.
+// Quick page fires on similar burn rates as month window.
+// Any event that would consume error budget within 2 days fires a page.
+func newWeekWindowMetadata(windowPeriod time.Duration) WindowMetadata {
+	return WindowMetadata{
+		WindowPeriod: windowPeriod,
+
+		WindowPageQuickShort:   5 * time.Minute,
+		WindowPageQuickLong:    1 * time.Hour,
+		WindowPageSlowShort:    30 * time.Minute,
+		WindowPageSlowLong:     6 * time.Hour,
+		WindowTicketQuickShort: 2 * time.Hour,
+		WindowTicketQuickLong:  1 * 24 * time.Hour,
+		WindowTicketSlowShort:  6 * time.Hour,
+		WindowTicketSlowLong:   3 * 24 * time.Hour,
+
+		ErrorBudgetPercPageQuick:   8,
+		ErrorBudgetPercPageSlow:    12.5,
+		ErrorBudgetPercTicketQuick: 20,
+		ErrorBudgetPercTicketSlow:  42,
 	}
 }

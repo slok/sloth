@@ -6,8 +6,8 @@ require (
 	github.com/OpenSLO/oslo v0.2.2-0.20210629193748-b882029ce777
 	github.com/go-playground/validator/v10 v10.9.0
 	github.com/oklog/run v1.1.0
-	github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring v0.51.2
-	github.com/prometheus-operator/prometheus-operator/pkg/client v0.51.2
+	github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring v0.52.0
+	github.com/prometheus-operator/prometheus-operator/pkg/client v0.52.0
 	github.com/prometheus/client_golang v1.11.0
 	github.com/prometheus/common v0.32.1
 	github.com/prometheus/prometheus v1.8.2-0.20211005150130-f29caccc4255 // v2.30.3 (Avoid semver incompatibilies with commit).
@@ -18,9 +18,9 @@ require (
 	github.com/traefik/yaegi v0.10.0
 	gopkg.in/alecthomas/kingpin.v2 v2.2.6
 	gopkg.in/yaml.v2 v2.4.0
-	k8s.io/api v0.22.2
-	k8s.io/apimachinery v0.22.2
-	k8s.io/client-go v0.22.2
+	k8s.io/api v0.22.3
+	k8s.io/apimachinery v0.22.3
+	k8s.io/client-go v0.22.3
 )
 
 require (
@@ -90,7 +90,7 @@ require (
 	google.golang.org/protobuf v1.27.1 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect
-	k8s.io/apiextensions-apiserver v0.18.3 // indirect
+	k8s.io/apiextensions-apiserver v0.22.3 // indirect
 	k8s.io/klog/v2 v2.20.0 // indirect
 	k8s.io/kube-openapi v0.0.0-20210929172449-94abcedd1aa4 // indirect
 	k8s.io/utils v0.0.0-20210930125809-cb0fa318a74b // indirect

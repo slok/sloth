@@ -1,0 +1,15 @@
+apiVersion: v1
+entries:
+  sloth:
+  - apiVersion: v2
+    created: "2021-11-06T11:31:53.841168652Z"
+    description: Base chart for Sloth.
+    digest: 0824e00bb4ce0c7928707310f09448d2cae28f01630709e6f2c53ff191910613
+    home: https://github.com/slok/sloth
+    kubeVersion: '>= 1.19.0-0'
+    name: sloth
+    type: application
+    urls:
+    - https://github.com/slok/sloth/releases/download/sloth-0.3.0/sloth-0.3.0.tgz
+    version: 0.3.0
+generated: "2021-11-06T11:31:53.841173952Z"

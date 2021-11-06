@@ -47,11 +47,11 @@ func TestKubernetesControllerPromOperatorGenerate(t *testing.T) {
 
 	// Tests.
 	tests := map[string]struct {
-		windowDays int
-		exec       func(ctx context.Context, t *testing.T, ns string, kubeClis *k8scontroller.KubeClients)
+		sloPeriod string
+		exec      func(ctx context.Context, t *testing.T, ns string, kubeClis *k8scontroller.KubeClients)
 	}{
 		"Having SLOs as a CRD should generate Prometheus operator CRD.": {
-			windowDays: 30,
+			sloPeriod: "30d",
 			exec: func(ctx context.Context, t *testing.T, ns string, kubeClis *k8scontroller.KubeClients) {
 				// Prepare our SLO on Kubernetes.
 				SLOs := getBasePrometheusServiceLevel()
@@ -74,7 +74,7 @@ func TestKubernetesControllerPromOperatorGenerate(t *testing.T) {
 		},
 
 		"Having SLOs with custom time windows (28 day) should generate Prometheus operator CRD.": {
-			windowDays: 28,
+			sloPeriod: "28d",
 			exec: func(ctx context.Context, t *testing.T, ns string, kubeClis *k8scontroller.KubeClients) {
 				// Prepare our SLO on Kubernetes.
 				SLOs := getBasePrometheusServiceLevel()
@@ -97,7 +97,7 @@ func TestKubernetesControllerPromOperatorGenerate(t *testing.T) {
 		},
 
 		"Having SLOs with plugins as a CRD should generate Prometheus operator CRD.": {
-			windowDays: 30,
+			sloPeriod: "30d",
 			exec: func(ctx context.Context, t *testing.T, ns string, kubeClis *k8scontroller.KubeClients) {
 				// Prepare our SLO on Kubernetes with plugin based SLO.
 				SLOs := getPluginPrometheusServiceLevel()
@@ -120,7 +120,7 @@ func TestKubernetesControllerPromOperatorGenerate(t *testing.T) {
 		},
 
 		"Having SLOs as a CRD should set the status as correct on the CRD.": {
-			windowDays: 30,
+			sloPeriod: "30d",
 			exec: func(ctx context.Context, t *testing.T, ns string, kubeClis *k8scontroller.KubeClients) {
 				// Prepare our SLO on Kubernetes.
 				SLOs := getBasePrometheusServiceLevel()
@@ -147,7 +147,7 @@ func TestKubernetesControllerPromOperatorGenerate(t *testing.T) {
 		},
 
 		"Having wrong SLOs as a CRD should set the status failed on the CRD.": {
-			windowDays: 30,
+			sloPeriod: "30d",
 			exec: func(ctx context.Context, t *testing.T, ns string, kubeClis *k8scontroller.KubeClients) {
 				// Prepare our wrong SLO on Kubernetes.
 				SLOs := getBasePrometheusServiceLevel()
@@ -196,7 +196,7 @@ func TestKubernetesControllerPromOperatorGenerate(t *testing.T) {
 			// Run controller in background.
 			go func() {
 				// Listen on `:0` and isolate per namespace so we can run in tests parallel safely.
-				_, _, _ = k8scontroller.RunSlothController(ctx, config, ns, fmt.Sprintf("--metrics-listen-addr=:0 --hot-reload-addr=:0 --namespace=%s --window-days=%d", ns, test.windowDays))
+				_, _, _ = k8scontroller.RunSlothController(ctx, config, ns, fmt.Sprintf("--metrics-listen-addr=:0 --hot-reload-addr=:0 --namespace=%s --default-slo-period=%s", ns, test.sloPeriod))
 			}()
 
 			// Execute test.

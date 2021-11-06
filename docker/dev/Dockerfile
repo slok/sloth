@@ -53,8 +53,8 @@ RUN cd /tmp/cache && \
 # Helm testing app.
 USER root
 RUN mkdir -p /tmp/cache
-COPY deploy/kubernetes/helm/tests/go.mod /tmp/cache
-COPY deploy/kubernetes/helm/tests/go.sum /tmp/cache
+COPY deploy/kubernetes/helm/sloth/tests/go.mod /tmp/cache
+COPY deploy/kubernetes/helm/sloth/tests/go.sum /tmp/cache
 RUN chown app:app -R /tmp/cache
 USER app
 RUN cd /tmp/cache && \

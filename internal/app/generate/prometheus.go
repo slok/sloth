@@ -23,7 +23,7 @@ type ServiceConfig struct {
 
 func (c *ServiceConfig) defaults() error {
 	if c.AlertGenerator == nil {
-		c.AlertGenerator = alert.AlertGenerator
+		return fmt.Errorf("alert generator is required")
 	}
 
 	if c.SLIRecordingRulesGenerator == nil {

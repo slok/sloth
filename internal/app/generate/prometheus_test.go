@@ -392,7 +392,12 @@ or ignoring (sloth_window)
 			assert := assert.New(t)
 			require := require.New(t)
 
-			svc, err := generate.NewService(generate.ServiceConfig{})
+			windowsRepo, err := alert.NewFSWindowsRepo(alert.FSWindowsRepoConfig{})
+			require.NoError(err)
+
+			svc, err := generate.NewService(generate.ServiceConfig{
+				AlertGenerator: alert.NewGenerator(windowsRepo),
+			})
 			require.NoError(err)
 
 			gotResp, err := svc.Generate(context.TODO(), test.req)

@@ -95,12 +95,6 @@ func (YAMLSpecLoader) validateTimeWindow(spec openslov1alpha.SLO) error {
 		return fmt.Errorf("only days based time windows are supported")
 	}
 
-	duration := time.Duration(t.Count) * 24 * time.Hour
-	_, ok := prometheus.SupportedTimeWindows[duration]
-	if !ok {
-		return fmt.Errorf("not supported time window, use one of: %s", prometheus.SupportedTimeWindows)
-	}
-
 	return nil
 }
 

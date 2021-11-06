@@ -2,6 +2,16 @@
 
 ## [Unreleased]
 
+### Added
+
+- Added spec for declaring custom SLO period windows.
+- Added `--slo-period-windows-path` flag to load custom SLO period windows from a directory.
+
+### Changed
+
+- (BREAKING) `--window-days` flag renamed to `--default-period-windows` and now is a time.Duration instead of an integer.
+- Default 30 and 28 day windows are now loaded from spec files.
+
 ## [v0.8.0] - 2021-10-12
 
 ### Changed

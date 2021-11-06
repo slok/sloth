@@ -38,6 +38,8 @@ https://sloth.dev
 - Support for [SLI plugins](#sli-plugins)
 - A library with [common SLI plugins][common-sli-plugins].
 - [OpenSLO] support.
+- Safe SLO period windows for 30 and 28 days by default.
+- Customizable SLO period windows for advanced use cases.
 
 ![Small Sloth SLO dashboard](docs/img/sloth_small_dashboard.png)
 

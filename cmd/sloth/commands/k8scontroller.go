@@ -3,12 +3,12 @@ package commands
 import (
 	"context"
 	"fmt"
+	"io/fs"
 	"net/http"
 	"net/http/pprof"
 	"os"
 	"os/signal"
 	"path/filepath"
-	"strconv"
 	"syscall"
 	"time"
 
@@ -16,6 +16,7 @@ import (
 	monitoringv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
 	monitoringclientset "github.com/prometheus-operator/prometheus-operator/pkg/client/versioned"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+	prometheusmodel "github.com/prometheus/common/model"
 	"github.com/slok/reload"
 	koopercontroller "github.com/spotahome/kooper/v2/controller"
 	kooperlog "github.com/spotahome/kooper/v2/log"
@@ -51,21 +52,22 @@ const (
 )
 
 type kubeControllerCommand struct {
-	extraLabels       map[string]string
-	workers           int
-	kubeConfig        string
-	kubeContext       string
-	resyncInterval    time.Duration
-	namespace         string
-	labelSelector     string
-	kubeLocal         bool
-	runMode           string
-	metricsPath       string
-	hotReloadPath     string
-	hotReloadAddr     string
-	metricsListenAddr string
-	sliPluginsPaths   []string
-	windowDays        string
+	extraLabels          map[string]string
+	workers              int
+	kubeConfig           string
+	kubeContext          string
+	resyncInterval       time.Duration
+	namespace            string
+	labelSelector        string
+	kubeLocal            bool
+	runMode              string
+	metricsPath          string
+	hotReloadPath        string
+	hotReloadAddr        string
+	metricsListenAddr    string
+	sliPluginsPaths      []string
+	sloPeriodWindowsPath string
+	sloPeriod            string
 }
 
 // NewKubeControllerCommand returns the Kubernetes controller command.
@@ -90,26 +92,46 @@ func NewKubeControllerCommand(app *kingpin.Application) Command {
 	cmd.Flag("hot-reload-path", "The webhook path for hot-reloading components that allow it.").Default("/-/reload").StringVar(&c.hotReloadPath)
 	cmd.Flag("extra-labels", "Extra labels that will be added to all the generated Prometheus rules ('key=value' form, can be repeated).").Short('l').StringMapVar(&c.extraLabels)
 	cmd.Flag("sli-plugins-path", "The path to SLI plugins (can be repeated), if not set it disable plugins support.").Short('p').StringsVar(&c.sliPluginsPaths)
-	cmd.Flag("window-days", "The number of days for the SLO full time window period.").Short('w').Default("30").EnumVar(&c.windowDays, supportedTimeWindows()...)
+	cmd.Flag("slo-period-windows-path", "The directory path to custom SLO period windows catalog (replaces default ones).").StringVar(&c.sloPeriodWindowsPath)
+	cmd.Flag("default-period-windows", "The default SLO period window to be used for the SLOs.").Short('w').Default("720h").StringVar(&c.sloPeriod)
 
 	return c
 }
 
 func (k kubeControllerCommand) Name() string { return "kubernetes-controller" }
 func (k kubeControllerCommand) Run(ctx context.Context, config RootConfig) error {
-	logger := config.Logger.WithValues(log.Kv{"window": fmt.Sprintf("%sd", k.windowDays)})
+	logger := config.Logger.WithValues(log.Kv{"window": k.sloPeriod})
 
-	// Window.
-	days, err := strconv.Atoi(k.windowDays)
+	// SLO period.
+	sp, err := prometheusmodel.ParseDuration(k.sloPeriod)
 	if err != nil {
-		return fmt.Errorf("window days is invalid: %w", err)
+		return fmt.Errorf("invalid SLO period duration: %w", err)
 	}
-	timeWindow := time.Duration(days) * 24 * time.Hour
+	sloPeriod := time.Duration(sp)
 
 	// Plugins.
 	pluginRepo, err := createPluginLoader(ctx, logger, k.sliPluginsPaths)
 	if err != nil {
 		return err
+	}
+
+	// Windows repository.
+	var wfs fs.FS
+	if k.sloPeriodWindowsPath != "" {
+		wfs = os.DirFS(k.sloPeriodWindowsPath)
+	}
+	windowsRepo, err := alert.NewFSWindowsRepo(alert.FSWindowsRepoConfig{
+		FS:     wfs,
+		Logger: logger,
+	})
+	if err != nil {
+		return fmt.Errorf("could not load SLO period windows repository: %w", err)
+	}
+
+	// Check if the default slo period is supported by our windows repo.
+	_, err = windowsRepo.GetWindows(ctx, sloPeriod)
+	if err != nil {
+		return fmt.Errorf("invalid default slo period: %w", err)
 	}
 
 	// Kubernetes services.
@@ -276,7 +298,7 @@ func (k kubeControllerCommand) Run(ctx context.Context, config RootConfig) error
 
 		// Create the generate app service (the one that the CLIs use).
 		generator, err := generate.NewService(generate.ServiceConfig{
-			AlertGenerator:              alert.AlertGenerator,
+			AlertGenerator:              alert.NewGenerator(windowsRepo),
 			SLIRecordingRulesGenerator:  prometheus.SLIRecordingRulesGenerator,
 			MetaRecordingRulesGenerator: prometheus.MetadataRecordingRulesGenerator,
 			SLOAlertRulesGenerator:      prometheus.SLOAlertRulesGenerator,
@@ -289,7 +311,7 @@ func (k kubeControllerCommand) Run(ctx context.Context, config RootConfig) error
 		// Create handler.
 		config := kubecontroller.HandlerConfig{
 			Generator:        generator,
-			SpecLoader:       k8sprometheus.NewCRSpecLoader(pluginRepo, timeWindow),
+			SpecLoader:       k8sprometheus.NewCRSpecLoader(pluginRepo, sloPeriod),
 			Repository:       k8sprometheus.NewPrometheusOperatorCRDRepo(ksvc, logger),
 			KubeStatusStorer: ksvc,
 			ExtraLabels:      k.extraLabels,

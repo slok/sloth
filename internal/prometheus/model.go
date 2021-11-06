@@ -44,7 +44,7 @@ type SLO struct {
 	Description     string
 	Service         string            `validate:"required,name"`
 	SLI             SLI               `validate:"required"`
-	TimeWindow      time.Duration     `validate:"required,time_window"`
+	TimeWindow      time.Duration     `validate:"required"`
 	Objective       float64           `validate:"gt=0,lte=100"`
 	Labels          map[string]string `validate:"dive,keys,prom_label_key,endkeys,required,prom_label_value"`
 	PageAlertMeta   AlertMeta
@@ -86,7 +86,6 @@ var modelSpecValidate = func() *validator.Validate {
 	mustRegisterValidation(v, "name", validateName)
 	mustRegisterValidation(v, "required_if_enabled", validateRequiredEnabledAlertName)
 	mustRegisterValidation(v, "template_vars", validateTemplateVars)
-	mustRegisterValidation(v, "time_window", validateTimeWindow)
 	v.RegisterStructValidation(validateOneSLI, SLI{})
 	v.RegisterStructValidation(validateSLOGroup, SLOGroup{})
 	v.RegisterStructValidation(validateSLIEvents, SLIEvents{})
@@ -279,18 +278,6 @@ func validateSLOGroup(sl validator.StructLevel) {
 		}
 		sloIDs[slo.ID] = struct{}{}
 	}
-}
-
-// validateTimeWindow implements validator.CustomTypeFunc by validating
-// a time window.
-func validateTimeWindow(fl validator.FieldLevel) bool {
-	k, ok := fl.Field().Interface().(time.Duration)
-	if !ok {
-		return false
-	}
-
-	_, ok = SupportedTimeWindows[k]
-	return ok
 }
 
 // SLORules are the prometheus rules required by an SLO.

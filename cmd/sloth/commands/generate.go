@@ -45,7 +45,7 @@ func NewGenerateCommand(app *kingpin.Application) Command {
 	cmd.Flag("disable-alerts", "Disables alert rules generation.").BoolVar(&c.disableAlerts)
 	cmd.Flag("sli-plugins-path", "The path to SLI plugins (can be repeated), if not set it disable plugins support.").Short('p').StringsVar(&c.sliPluginsPaths)
 	cmd.Flag("slo-period-windows-path", "The directory path to custom SLO period windows catalog (replaces default ones).").StringVar(&c.sloPeriodWindowsPath)
-	cmd.Flag("default-period-windows", "The default SLO period window to be used for the SLOs.").Short('w').Default("30d").StringVar(&c.sloPeriod)
+	cmd.Flag("default-slo-period", "The default SLO period windows to be used for the SLOs.").Default("30d").StringVar(&c.sloPeriod)
 
 	return c
 }

@@ -9,7 +9,8 @@
 
 ### Changed
 
-- (BREAKING) `--window-days` flag renamed to `--default-period-windows` and now is a time.Duration instead of an integer.
+- (BREAKING) `--window-days` flag renamed to `--default-slo-period` and now is a time.Duration instead of an integer.
+- (BREAKING) `-w` short flag has been removed.
 - Default 30 and 28 day windows are now loaded from spec files.
 
 ## [v0.8.0] - 2021-10-12

@@ -3,6 +3,8 @@ ARG ARCH
 
 FROM golang:1.17.3-alpine as build-stage
 
+LABEL org.opencontainers.image.source https://github.com/slok/sloth
+
 RUN apk --no-cache add \
     g++ \
     git \

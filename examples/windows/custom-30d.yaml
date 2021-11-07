@@ -1,6 +1,3 @@
-# Common and safe month windows.
-#
-# Numbers obtained from https://sre.google/workbook/alerting-on-slos/#recommended_parameters_for_an_slo_based_a.
 version: "alertWindows/v1"
 
 sloPeriod: 30d

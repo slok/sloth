@@ -3,6 +3,7 @@ package k8scontroller_test
 import (
 	"context"
 	"fmt"
+	"strings"
 	"testing"
 	"time"
 
@@ -47,8 +48,9 @@ func TestKubernetesControllerPromOperatorGenerate(t *testing.T) {
 
 	// Tests.
 	tests := map[string]struct {
-		sloPeriod string
-		exec      func(ctx context.Context, t *testing.T, ns string, kubeClis *k8scontroller.KubeClients)
+		customSLOPeriods bool
+		sloPeriod        string
+		exec             func(ctx context.Context, t *testing.T, ns string, kubeClis *k8scontroller.KubeClients)
 	}{
 		"Having SLOs as a CRD should generate Prometheus operator CRD.": {
 			sloPeriod: "30d",
@@ -173,6 +175,30 @@ func TestKubernetesControllerPromOperatorGenerate(t *testing.T) {
 				assert.Equal(t, expStatus, gotSLOs.Status)
 			},
 		},
+
+		"Having SLOs with custom external time windows (7 day) should generate Prometheus operator CRD.": {
+			customSLOPeriods: true,
+			sloPeriod:        "7d",
+			exec: func(ctx context.Context, t *testing.T, ns string, kubeClis *k8scontroller.KubeClients) {
+				// Prepare our SLO on Kubernetes.
+				SLOs := getBasePrometheusServiceLevel()
+				_, err := kubeClis.Sloth.SlothV1().PrometheusServiceLevels(ns).Create(ctx, SLOs, metav1.CreateOptions{})
+				require.NoError(t, err)
+
+				// Wait to be sure the controller had time for handling.
+				time.Sleep(250 * time.Millisecond)
+
+				// Check.
+				expRule := getBase7DayPromOpPrometheusRule(version)
+				expRule.Namespace = ns
+
+				gotRule, err := kubeClis.Monitoring.MonitoringV1().PrometheusRules(ns).Get(ctx, expRule.Name, metav1.GetOptions{})
+				gotRule = sanitizePrometheusRule(gotRule) // Remove variations.
+				require.NoError(t, err)
+
+				assert.Equal(t, expRule, gotRule)
+			},
+		},
 	}
 
 	for name, test := range tests {
@@ -195,8 +221,20 @@ func TestKubernetesControllerPromOperatorGenerate(t *testing.T) {
 
 			// Run controller in background.
 			go func() {
+				// Prepare args.
+				args := []string{
+					"--metrics-listen-addr=:0",
+					"--hot-reload-addr=:0",
+					"--sli-plugins-path=./",
+					fmt.Sprintf("--namespace=%s", ns),
+					fmt.Sprintf("--default-slo-period=%s", test.sloPeriod),
+				}
+				if test.customSLOPeriods {
+					args = append(args, "--slo-period-windows-path=./windows")
+				}
+
 				// Listen on `:0` and isolate per namespace so we can run in tests parallel safely.
-				_, _, _ = k8scontroller.RunSlothController(ctx, config, ns, fmt.Sprintf("--metrics-listen-addr=:0 --hot-reload-addr=:0 --namespace=%s --default-slo-period=%s", ns, test.sloPeriod))
+				_, _, _ = k8scontroller.RunSlothController(ctx, config, ns, strings.Join(args, " "))
 			}()
 
 			// Execute test.

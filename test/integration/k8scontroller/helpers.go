@@ -71,7 +71,6 @@ func RunSlothController(ctx context.Context, config Config, ns string, cmdArgs s
 		fmt.Sprintf("SLOTH_KUBE_CONTEXT=%s", config.KubeContext),
 		fmt.Sprintf("SLOTH_KUBE_NAMESPACE=%s", ns),
 		fmt.Sprintf("SLOTH_KUBE_LOCAL=%t", true),
-		fmt.Sprintf("SLOTH_SLI_PLUGINS_PATH=%s", "./"),
 	}
 
 	return testutils.RunSloth(ctx, env, config.Binary, fmt.Sprintf("kubernetes-controller %s", cmdArgs), true)
@@ -98,6 +97,9 @@ func NewKubernetesClients(ctx context.Context, config Config) (*KubeClients, err
 	if err != nil {
 		return nil, fmt.Errorf("could not load Kubernetes configuration: %w", err)
 	}
+
+	kcfg.Burst = 100
+	kcfg.QPS = 100
 
 	stdCli, err := kubernetes.NewForConfig(kcfg)
 	if err != nil {

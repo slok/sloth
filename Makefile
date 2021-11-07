@@ -13,8 +13,8 @@ INTEGRATION_TEST_CLI_CMD := ./scripts/check/integration-test-cli.sh
 HELM_TEST_CMD := ./scripts/check/helm-test.sh
 CHECK_CMD := ./scripts/check/check.sh
 
-DEV_IMAGE_NAME := slok/sloth-dev
-PROD_IMAGE_NAME ?=  slok/sloth
+DEV_IMAGE_NAME := local/sloth-dev
+PROD_IMAGE_NAME ?=  ghcr.io/slok/sloth
 
 DOCKER_RUN_CMD := docker run --env ostype=$(OSTYPE) -v ${PWD}:/src --rm ${DEV_IMAGE_NAME}
 BUILD_BINARY_CMD := VERSION=${VERSION} ./scripts/build/bin/build.sh

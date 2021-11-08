@@ -6,7 +6,7 @@ IFS=$'\t\n'
 
 command -v helm >/dev/null 2>&1 || { echo 'please install helm'; exit 1; }
 
-HELM_CHART_PATH="${HELM_CHART_PATH:-./deploy/kubernetes/helm}"
+HELM_CHART_PATH="${HELM_CHART_PATH:-./deploy/kubernetes/helm/sloth}"
 [ -z "$HELM_CHART_PATH" ] && echo "HELM_CHART_PATH env is needed" && exit 1;
 
 GEN_PATH="${GEN_PATH:-./deploy/kubernetes/raw}"

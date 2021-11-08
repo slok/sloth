@@ -2,7 +2,7 @@
 labels: {}
 
 image:
-  repository: slok/sloth
+  repository: ghcr.io/slok/sloth
   tag: v0.8.0
 
 sloth:

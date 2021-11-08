@@ -7,6 +7,7 @@
 ### Changed
 
 - OpenSLO fallbacks to Sloths time window if not set.
+- Migrated container images from dockerhub to ghcr.io.
 
 ### Added
 

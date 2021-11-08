@@ -11,6 +11,10 @@
 ![Kubernetes release](https://img.shields.io/badge/Kubernetes-v1.22-green?logo=Kubernetes&style=flat&color=326CE5&logoColor=white)
 [![OpenSLO](https://img.shields.io/badge/OpenSLO-v1alpha-green?color=4974EA&style=flat)](https://github.com/OpenSLO/OpenSLO#slo)
 
+> ⚠️ Sloth has moved container images from `Dockerhub` to [ghcr.io](https://github.com/slok/sloth/pkgs/container/sloth).
+>
+> From now on, please use **`ghcr.io/slok/sloth`**. E.g: `docker pull ghcr.io/slok/sloth`.
+
 ## Introduction
 
 Meet the easiest way to generate [SLOs][google-slo] for Prometheus.

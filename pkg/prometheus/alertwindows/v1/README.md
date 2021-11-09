@@ -9,6 +9,7 @@ import "github.com/slok/sloth/pkg/prometheus/alertwindows/v1"
 ## Index
 
 - [Constants](<#constants>)
+- [type AlertWindows](<#type-alertwindows>)
 - [type PageWindow](<#type-pagewindow>)
 - [type QuickSlowWindow](<#type-quickslowwindow>)
 - [type Spec](<#type-spec>)
@@ -19,10 +20,24 @@ import "github.com/slok/sloth/pkg/prometheus/alertwindows/v1"
 ## Constants
 
 ```go
-const Version = "alertWindows/v1"
+const APIVersion = "sloth.slok.dev/v1"
 ```
 
-## type [PageWindow](<https://github.com/slok/sloth/blob/main/pkg/prometheus/alertwindows/v1/v1.go#L27-L29>)
+```go
+const Kind = "AlertWindows"
+```
+
+## type [AlertWindows](<https://github.com/slok/sloth/blob/main/pkg/prometheus/alertwindows/v1/v1.go#L12-L16>)
+
+```go
+type AlertWindows struct {
+    Kind       string `yaml:"kind"`
+    APIVersion string `yaml:"apiVersion"`
+    Spec       Spec   `yaml:"spec"`
+}
+```
+
+## type [PageWindow](<https://github.com/slok/sloth/blob/main/pkg/prometheus/alertwindows/v1/v1.go#L29-L31>)
 
 PageWindow represents the configuration for page alerting\.
 
@@ -32,7 +47,7 @@ type PageWindow struct {
 }
 ```
 
-## type [QuickSlowWindow](<https://github.com/slok/sloth/blob/main/pkg/prometheus/alertwindows/v1/v1.go#L36-L41>)
+## type [QuickSlowWindow](<https://github.com/slok/sloth/blob/main/pkg/prometheus/alertwindows/v1/v1.go#L38-L43>)
 
 ```go
 type QuickSlowWindow struct {
@@ -43,14 +58,12 @@ type QuickSlowWindow struct {
 }
 ```
 
-## type [Spec](<https://github.com/slok/sloth/blob/main/pkg/prometheus/alertwindows/v1/v1.go#L15-L24>)
+## type [Spec](<https://github.com/slok/sloth/blob/main/pkg/prometheus/alertwindows/v1/v1.go#L19-L26>)
 
 Spec represents the root type of the Alerting window\.
 
 ```go
 type Spec struct {
-    // Version is the version of the spec.
-    Version string `yaml:"version"`
     // SLOPeriod is the full slo period used for this windows.
     SLOPeriod prometheusmodel.Duration `yaml:"sloPeriod"`
     // Page represents the configuration for the page alerting windows.
@@ -60,7 +73,7 @@ type Spec struct {
 }
 ```
 
-## type [TicketWindow](<https://github.com/slok/sloth/blob/main/pkg/prometheus/alertwindows/v1/v1.go#L32-L34>)
+## type [TicketWindow](<https://github.com/slok/sloth/blob/main/pkg/prometheus/alertwindows/v1/v1.go#L34-L36>)
 
 PageWindow represents the configuration for ticket alerting\.
 
@@ -70,7 +83,7 @@ type TicketWindow struct {
 }
 ```
 
-## type [Window](<https://github.com/slok/sloth/blob/main/pkg/prometheus/alertwindows/v1/v1.go#L43-L51>)
+## type [Window](<https://github.com/slok/sloth/blob/main/pkg/prometheus/alertwindows/v1/v1.go#L45-L53>)
 
 ```go
 type Window struct {

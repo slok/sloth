@@ -39,6 +39,22 @@ type Window struct {
 	LongWindow time.Duration
 }
 
+func (w Window) validate() error {
+	if w.LongWindow == 0 {
+		return fmt.Errorf("long window is required")
+	}
+
+	if w.ShortWindow == 0 {
+		return fmt.Errorf("short window is required")
+	}
+
+	if w.ErrorBudgetPercent == 0 {
+		return fmt.Errorf("error budget is required")
+	}
+
+	return nil
+}
+
 // Windows has the information of the windows for multiwindow-multiburn SLO alerting.
 // Its a matrix of values with:
 // - Alert severity: ["page", "ticket"].
@@ -49,6 +65,34 @@ type Windows struct {
 	PageSlow    Window
 	TicketQuick Window
 	TicketSlow  Window
+}
+
+func (w Windows) validate() error {
+	if w.SLOPeriod == 0 {
+		return fmt.Errorf("slo period is required")
+	}
+
+	err := w.PageQuick.validate()
+	if err != nil {
+		return fmt.Errorf("invalid page quick: %w", err)
+	}
+
+	err = w.PageSlow.validate()
+	if err != nil {
+		return fmt.Errorf("invalid page slow: %w", err)
+	}
+
+	err = w.TicketQuick.validate()
+	if err != nil {
+		return fmt.Errorf("invalid ticket quick: %w", err)
+	}
+
+	err = w.TicketSlow.validate()
+	if err != nil {
+		return fmt.Errorf("invalid ticket slow: %w", err)
+	}
+
+	return nil
 }
 
 // Error budget speeds based on a full time window, however once we have the factor (speed)
@@ -146,12 +190,12 @@ func (f *FSWindowsRepo) load(ctx context.Context, windowsFS fs.FS) error {
 
 		data, err := fs.ReadFile(windowsFS, path)
 		if err != nil {
-			return fmt.Errorf("could not read alert windows data from file: %w", err)
+			return fmt.Errorf("could not read  %q  alert windows data from file: %w", path, err)
 		}
 
 		windows, err := f.loader.LoadWindow(ctx, data)
 		if err != nil {
-			return fmt.Errorf("could not load alert windows: %w", err)
+			return fmt.Errorf("could not load %q alert windows: %w", path, err)
 		}
 
 		_, ok := f.windows[windows.SLOPeriod]
@@ -201,7 +245,7 @@ func (l windowLoader) LoadWindow(ctx context.Context, data []byte) (*Windows, er
 
 	// Map to model.
 	// TODO(slok): Validate.
-	return &Windows{
+	w := &Windows{
 		SLOPeriod: time.Duration(s.Spec.SLOPeriod),
 		PageQuick: Window{
 			ErrorBudgetPercent: s.Spec.Page.Quick.ErrorBudgetPercent,
@@ -223,5 +267,11 @@ func (l windowLoader) LoadWindow(ctx context.Context, data []byte) (*Windows, er
 			ShortWindow:        time.Duration(s.Spec.Ticket.Slow.ShortWindow),
 			LongWindow:         time.Duration(s.Spec.Ticket.Slow.LongWindow),
 		},
-	}, nil
+	}
+
+	err = w.validate()
+	if err != nil {
+		return nil, fmt.Errorf("invalid alerting window: %w", err)
+	}
+	return w, nil
 }

@@ -1,6 +1,7 @@
 apiVersion: sloth.slok.dev/v1
 kind: AlertWindows
 spec:
+  sloPeriod: 30d
   page:
     quick:
       errorBudgetPercent: 1

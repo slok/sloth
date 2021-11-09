@@ -1,20 +1,22 @@
 // Package v1
-//
-// Example YAML spec with a window:
-//
 
 package v1
 
 import prometheusmodel "github.com/prometheus/common/model"
 
-const Version = "alertWindows/v1"
+const Kind = "AlertWindows"
+const APIVersion = "sloth.slok.dev/v1"
 
 //go:generate gomarkdoc -o ./README.md ./
 
+type AlertWindows struct {
+	Kind       string `yaml:"kind"`
+	APIVersion string `yaml:"apiVersion"`
+	Spec       Spec   `yaml:"spec"`
+}
+
 // Spec represents the root type of the Alerting window.
 type Spec struct {
-	// Version is the version of the spec.
-	Version string `yaml:"version"`
 	// SLOPeriod is the full slo period used for this windows.
 	SLOPeriod prometheusmodel.Duration `yaml:"sloPeriod"`
 	// Page represents the configuration for the page alerting windows.

@@ -186,40 +186,42 @@ func (l windowLoader) LoadWindow(ctx context.Context, data []byte) (*Windows, er
 		return nil, fmt.Errorf("spec is required")
 	}
 
-	s := alertwindowsv1.Spec{}
+	s := alertwindowsv1.AlertWindows{}
 	err := yaml.Unmarshal(data, &s)
 	if err != nil {
 		return nil, fmt.Errorf("could not unmarshall YAML spec correctly: %w", err)
 	}
 
 	// Check version.
-	if s.Version != alertwindowsv1.Version {
-		return nil, fmt.Errorf("invalid spec version, should be %q", alertwindowsv1.Version)
+	if s.APIVersion != alertwindowsv1.APIVersion || s.Kind != alertwindowsv1.Kind {
+		fmt.Println(s.APIVersion)
+		fmt.Println(s.Kind)
+		return nil, fmt.Errorf("invalid spec version")
 	}
 
 	// Map to model.
 	// TODO(slok): Validate.
 	return &Windows{
-		SLOPeriod: time.Duration(s.SLOPeriod),
+		SLOPeriod: time.Duration(s.Spec.SLOPeriod),
 		PageQuick: Window{
-			ErrorBudgetPercent: s.Page.Quick.ErrorBudgetPercent,
-			ShortWindow:        time.Duration(s.Page.Quick.ShortWindow),
-			LongWindow:         time.Duration(s.Page.Quick.LongWindow),
+			ErrorBudgetPercent: s.Spec.Page.Quick.ErrorBudgetPercent,
+			ShortWindow:        time.Duration(s.Spec.Page.Quick.ShortWindow),
+			LongWindow:         time.Duration(s.Spec.Page.Quick.LongWindow),
 		},
 		PageSlow: Window{
-			ErrorBudgetPercent: s.Page.Slow.ErrorBudgetPercent,
-			ShortWindow:        time.Duration(s.Page.Slow.ShortWindow),
-			LongWindow:         time.Duration(s.Page.Slow.LongWindow),
+			ErrorBudgetPercent: s.Spec.Page.Slow.ErrorBudgetPercent,
+			ShortWindow:        time.Duration(s.Spec.Page.Slow.ShortWindow),
+			LongWindow:         time.Duration(s.Spec.Page.Slow.LongWindow),
 		},
 		TicketQuick: Window{
-			ErrorBudgetPercent: s.Ticket.Quick.ErrorBudgetPercent,
-			ShortWindow:        time.Duration(s.Ticket.Quick.ShortWindow),
-			LongWindow:         time.Duration(s.Ticket.Quick.LongWindow),
+			ErrorBudgetPercent: s.Spec.Ticket.Quick.ErrorBudgetPercent,
+			ShortWindow:        time.Duration(s.Spec.Ticket.Quick.ShortWindow),
+			LongWindow:         time.Duration(s.Spec.Ticket.Quick.LongWindow),
 		},
 		TicketSlow: Window{
-			ErrorBudgetPercent: s.Ticket.Slow.ErrorBudgetPercent,
-			ShortWindow:        time.Duration(s.Ticket.Slow.ShortWindow),
-			LongWindow:         time.Duration(s.Ticket.Slow.LongWindow),
+			ErrorBudgetPercent: s.Spec.Ticket.Slow.ErrorBudgetPercent,
+			ShortWindow:        time.Duration(s.Spec.Ticket.Slow.ShortWindow),
+			LongWindow:         time.Duration(s.Spec.Ticket.Slow.LongWindow),
 		},
 	}, nil
 }

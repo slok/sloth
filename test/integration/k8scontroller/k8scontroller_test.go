@@ -61,7 +61,7 @@ func TestKubernetesControllerPromOperatorGenerate(t *testing.T) {
 				require.NoError(t, err)
 
 				// Wait to be sure the controller had time for handling.
-				time.Sleep(250 * time.Millisecond)
+				time.Sleep(500 * time.Millisecond)
 
 				// Check.
 				expRule := getBasePromOpPrometheusRule(version)
@@ -84,7 +84,7 @@ func TestKubernetesControllerPromOperatorGenerate(t *testing.T) {
 				require.NoError(t, err)
 
 				// Wait to be sure the controller had time for handling.
-				time.Sleep(250 * time.Millisecond)
+				time.Sleep(500 * time.Millisecond)
 
 				// Check.
 				expRule := getBase28DayPromOpPrometheusRule(version)
@@ -107,7 +107,7 @@ func TestKubernetesControllerPromOperatorGenerate(t *testing.T) {
 				require.NoError(t, err)
 
 				// Wait to be sure the controller had time for handling.
-				time.Sleep(250 * time.Millisecond)
+				time.Sleep(500 * time.Millisecond)
 
 				// Check.
 				expRule := getPluginPromOpPrometheusRule(version)
@@ -130,7 +130,7 @@ func TestKubernetesControllerPromOperatorGenerate(t *testing.T) {
 				require.NoError(t, err)
 
 				// Wait to be sure the controller had time for handling.
-				time.Sleep(250 * time.Millisecond)
+				time.Sleep(500 * time.Millisecond)
 
 				// Check.
 				gotSLOs, err := kubeClis.Sloth.SlothV1().PrometheusServiceLevels(ns).Get(ctx, SLOs.Name, metav1.GetOptions{})
@@ -158,7 +158,7 @@ func TestKubernetesControllerPromOperatorGenerate(t *testing.T) {
 				require.NoError(t, err)
 
 				// Wait to be sure the controller had time for handling.
-				time.Sleep(250 * time.Millisecond)
+				time.Sleep(500 * time.Millisecond)
 
 				// Check.
 				gotSLOs, err := kubeClis.Sloth.SlothV1().PrometheusServiceLevels(ns).Get(ctx, SLOs.Name, metav1.GetOptions{})
@@ -186,7 +186,7 @@ func TestKubernetesControllerPromOperatorGenerate(t *testing.T) {
 				require.NoError(t, err)
 
 				// Wait to be sure the controller had time for handling.
-				time.Sleep(250 * time.Millisecond)
+				time.Sleep(500 * time.Millisecond)
 
 				// Check.
 				expRule := getBase7DayPromOpPrometheusRule(version)

@@ -1,0 +1,25 @@
+# Common and safe month windows.
+#
+# Numbers obtained from https://sre.google/workbook/alerting-on-slos/#recommended_parameters_for_an_slo_based_a.
+apiVersion: "sloth.slok.dev/v1"
+kind: "AlertWindows"
+spec:
+  sloPeriod: 30d
+  page:
+    quick:
+      errorBudgetPercent: 2
+      shortWindow: 5m
+      longWindow: 1h
+    slow:
+      errorBudgetPercent: 5
+      shortWindow: 30m
+      longWindow: 6h
+  ticket:
+    quick:
+      errorBudgetPercent: 10
+      shortWindow: 2h
+      longWindow: 1d
+    slow:
+      errorBudgetPercent: 10
+      shortWindow: 6h
+      longWindow: 3d

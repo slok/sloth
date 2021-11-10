@@ -196,15 +196,6 @@ func TestModelValidationSpec(t *testing.T) {
 			expErrMessage: "Key: 'SLOGroup.SLOs[0].Service' Error:Field validation for 'Service' failed on the 'name' tag",
 		},
 
-		"Time window should be valid and supported one.": {
-			slo: func() prometheus.SLOGroup {
-				s := getGoodSLOGroup()
-				s.SLOs[0].TimeWindow = 63 * 24 * time.Hour
-				return s
-			},
-			expErrMessage: "Key: 'SLOGroup.SLOs[0].TimeWindow' Error:Field validation for 'TimeWindow' failed on the 'time_window' tag",
-		},
-
 		"SLO without SLI type should fail.": {
 			slo: func() prometheus.SLOGroup {
 				s := getGoodSLOGroup()

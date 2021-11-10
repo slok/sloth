@@ -1,0 +1,22 @@
+apiVersion: sloth.slok.dev/v1
+kind: AlertWindows
+spec:
+  sloPeriod: 30d
+  page:
+    quick:
+      errorBudgetPercent: 1
+      shortWindow: 2m
+      longWindow: 30m
+    slow:
+      errorBudgetPercent: 2
+      shortWindow: 15m
+      longWindow: 3h
+  ticket:
+    quick:
+      errorBudgetPercent: 5
+      shortWindow: 1h
+      longWindow: 12h
+    slow:
+      errorBudgetPercent: 5
+      shortWindow: 3h
+      longWindow: 36h

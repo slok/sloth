@@ -4,11 +4,12 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"io/fs"
 	"os"
-	"strconv"
 	"time"
 
 	openslov1alpha "github.com/OpenSLO/oslo/pkg/manifest/v1alpha"
+	prometheusmodel "github.com/prometheus/common/model"
 	"gopkg.in/alecthomas/kingpin.v2"
 
 	"github.com/slok/sloth/internal/alert"
@@ -23,13 +24,14 @@ import (
 )
 
 type generateCommand struct {
-	slosInput         string
-	slosOut           string
-	disableRecordings bool
-	disableAlerts     bool
-	extraLabels       map[string]string
-	sliPluginsPaths   []string
-	windowDays        string
+	slosInput            string
+	slosOut              string
+	disableRecordings    bool
+	disableAlerts        bool
+	extraLabels          map[string]string
+	sliPluginsPaths      []string
+	sloPeriodWindowsPath string
+	sloPeriod            string
 }
 
 // NewGenerateCommand returns the generate command.
@@ -42,25 +44,26 @@ func NewGenerateCommand(app *kingpin.Application) Command {
 	cmd.Flag("disable-recordings", "Disables recording rules generation.").BoolVar(&c.disableRecordings)
 	cmd.Flag("disable-alerts", "Disables alert rules generation.").BoolVar(&c.disableAlerts)
 	cmd.Flag("sli-plugins-path", "The path to SLI plugins (can be repeated), if not set it disable plugins support.").Short('p').StringsVar(&c.sliPluginsPaths)
-	cmd.Flag("window-days", "The number of days for the SLO full time window period.").Short('w').Default("30").EnumVar(&c.windowDays, supportedTimeWindows()...)
+	cmd.Flag("slo-period-windows-path", "The directory path to custom SLO period windows catalog (replaces default ones).").StringVar(&c.sloPeriodWindowsPath)
+	cmd.Flag("default-slo-period", "The default SLO period windows to be used for the SLOs.").Default("30d").StringVar(&c.sloPeriod)
 
 	return c
 }
 
 func (g generateCommand) Name() string { return "generate" }
 func (g generateCommand) Run(ctx context.Context, config RootConfig) error {
-	logger := config.Logger.WithValues(log.Kv{"window": fmt.Sprintf("%sd", g.windowDays)})
+	logger := config.Logger.WithValues(log.Kv{"window": g.sloPeriod})
+
+	// SLO period.
+	sp, err := prometheusmodel.ParseDuration(g.sloPeriod)
+	if err != nil {
+		return fmt.Errorf("invalid SLO period duration: %w", err)
+	}
+	sloPeriod := time.Duration(sp)
 
 	ctx = logger.SetValuesOnCtx(ctx, log.Kv{
 		"out": g.slosOut,
 	})
-
-	// Window.
-	days, err := strconv.Atoi(g.windowDays)
-	if err != nil {
-		return fmt.Errorf("window days is invalid: %w", err)
-	}
-	timeWindow := time.Duration(days) * 24 * time.Hour
 
 	// Get SLO spec data.
 	// TODO(slok): stdin.
@@ -81,10 +84,29 @@ func (g generateCommand) Run(ctx context.Context, config RootConfig) error {
 		return err
 	}
 
+	// Windows repository.
+	var wfs fs.FS
+	if g.sloPeriodWindowsPath != "" {
+		wfs = os.DirFS(g.sloPeriodWindowsPath)
+	}
+	windowsRepo, err := alert.NewFSWindowsRepo(alert.FSWindowsRepoConfig{
+		FS:     wfs,
+		Logger: logger,
+	})
+	if err != nil {
+		return fmt.Errorf("could not load SLO period windows repository: %w", err)
+	}
+
+	// Check if the default slo period is supported by our windows repo.
+	_, err = windowsRepo.GetWindows(ctx, sloPeriod)
+	if err != nil {
+		return fmt.Errorf("invalid default slo period: %w", err)
+	}
+
 	// Create Spec loaders.
-	promYAMLLoader := prometheus.NewYAMLSpecLoader(pluginRepo, timeWindow)
-	kubeYAMLLoader := k8sprometheus.NewYAMLSpecLoader(pluginRepo, timeWindow)
-	openSLOYAMLLoader := openslo.NewYAMLSpecLoader(timeWindow)
+	promYAMLLoader := prometheus.NewYAMLSpecLoader(pluginRepo, sloPeriod)
+	kubeYAMLLoader := k8sprometheus.NewYAMLSpecLoader(pluginRepo, sloPeriod)
+	openSLOYAMLLoader := openslo.NewYAMLSpecLoader(sloPeriod)
 
 	// Prepare store output.
 	var out io.Writer = config.Stdout
@@ -111,7 +133,7 @@ func (g generateCommand) Run(ctx context.Context, config RootConfig) error {
 				return fmt.Errorf("tried loading raw prometheus SLOs spec, it couldn't: %w", err)
 			}
 
-			err = generatePrometheus(ctx, logger, g.disableRecordings, g.disableAlerts, g.extraLabels, *slos, out)
+			err = generatePrometheus(ctx, logger, windowsRepo, g.disableRecordings, g.disableAlerts, g.extraLabels, *slos, out)
 			if err != nil {
 				return fmt.Errorf("could not generate Prometheus format rules: %w", err)
 			}
@@ -122,7 +144,7 @@ func (g generateCommand) Run(ctx context.Context, config RootConfig) error {
 				return fmt.Errorf("tried loading Kubernetes prometheus SLOs spec, it couldn't: %w", err)
 			}
 
-			err = generateKubernetes(ctx, logger, g.disableRecordings, g.disableAlerts, g.extraLabels, *sloGroup, out)
+			err = generateKubernetes(ctx, logger, windowsRepo, g.disableRecordings, g.disableAlerts, g.extraLabels, *sloGroup, out)
 			if err != nil {
 				return fmt.Errorf("could not generate Kubernetes format rules: %w", err)
 			}
@@ -133,7 +155,7 @@ func (g generateCommand) Run(ctx context.Context, config RootConfig) error {
 				return fmt.Errorf("tried loading OpenSLO SLOs spec, it couldn't: %w", err)
 			}
 
-			err = generateOpenSLO(ctx, logger, g.disableRecordings, g.disableAlerts, g.extraLabels, *slos, out)
+			err = generateOpenSLO(ctx, logger, windowsRepo, g.disableRecordings, g.disableAlerts, g.extraLabels, *slos, out)
 			if err != nil {
 				return fmt.Errorf("could not generate OpenSLO format rules: %w", err)
 			}
@@ -148,7 +170,7 @@ func (g generateCommand) Run(ctx context.Context, config RootConfig) error {
 
 // generatePrometheus generates the SLOs based on a raw regular Prometheus spec format input and
 // outs a Prometheus raw yaml.
-func generatePrometheus(ctx context.Context, logger log.Logger, disableRecs, disableAlerts bool, extraLabels map[string]string, slos prometheus.SLOGroup, out io.Writer) error {
+func generatePrometheus(ctx context.Context, logger log.Logger, windowsRepo alert.WindowsRepo, disableRecs, disableAlerts bool, extraLabels map[string]string, slos prometheus.SLOGroup, out io.Writer) error {
 	logger.Infof("Generating from Prometheus spec")
 	info := info.Info{
 		Version: info.Version,
@@ -156,7 +178,7 @@ func generatePrometheus(ctx context.Context, logger log.Logger, disableRecs, dis
 		Spec:    prometheusv1.Version,
 	}
 
-	result, err := generateRules(ctx, logger, info, disableRecs, disableAlerts, extraLabels, slos)
+	result, err := generateRules(ctx, logger, info, windowsRepo, disableRecs, disableAlerts, extraLabels, slos)
 	if err != nil {
 		return err
 	}
@@ -180,7 +202,7 @@ func generatePrometheus(ctx context.Context, logger log.Logger, disableRecs, dis
 
 // generateKubernetes generates the SLOs based on a Kuberentes spec format input and
 // outs a Kubernetes prometheus operator CRD yaml.
-func generateKubernetes(ctx context.Context, logger log.Logger, disableRecs, disableAlerts bool, extraLabels map[string]string, sloGroup k8sprometheus.SLOGroup, out io.Writer) error {
+func generateKubernetes(ctx context.Context, logger log.Logger, windowsRepo alert.WindowsRepo, disableRecs, disableAlerts bool, extraLabels map[string]string, sloGroup k8sprometheus.SLOGroup, out io.Writer) error {
 	logger.Infof("Generating from Kubernetes Prometheus spec")
 
 	info := info.Info{
@@ -188,7 +210,7 @@ func generateKubernetes(ctx context.Context, logger log.Logger, disableRecs, dis
 		Mode:    info.ModeCLIGenKubernetes,
 		Spec:    fmt.Sprintf("%s/%s", kubernetesv1.SchemeGroupVersion.Group, kubernetesv1.SchemeGroupVersion.Version),
 	}
-	result, err := generateRules(ctx, logger, info, disableRecs, disableAlerts, extraLabels, sloGroup.SLOGroup)
+	result, err := generateRules(ctx, logger, info, windowsRepo, disableRecs, disableAlerts, extraLabels, sloGroup.SLOGroup)
 	if err != nil {
 		return err
 	}
@@ -212,7 +234,7 @@ func generateKubernetes(ctx context.Context, logger log.Logger, disableRecs, dis
 
 // generateOpenSLO generates the SLOs based on a OpenSLO spec format input and
 // outs a Prometheus raw yaml.
-func generateOpenSLO(ctx context.Context, logger log.Logger, disableRecs, disableAlerts bool, extraLabels map[string]string, slos prometheus.SLOGroup, out io.Writer) error {
+func generateOpenSLO(ctx context.Context, logger log.Logger, windowsRepo alert.WindowsRepo, disableRecs, disableAlerts bool, extraLabels map[string]string, slos prometheus.SLOGroup, out io.Writer) error {
 	logger.Infof("Generating from OpenSLO spec")
 	info := info.Info{
 		Version: info.Version,
@@ -220,7 +242,7 @@ func generateOpenSLO(ctx context.Context, logger log.Logger, disableRecs, disabl
 		Spec:    openslov1alpha.APIVersion,
 	}
 
-	result, err := generateRules(ctx, logger, info, disableRecs, disableAlerts, extraLabels, slos)
+	result, err := generateRules(ctx, logger, info, windowsRepo, disableRecs, disableAlerts, extraLabels, slos)
 	if err != nil {
 		return err
 	}
@@ -244,7 +266,7 @@ func generateOpenSLO(ctx context.Context, logger log.Logger, disableRecs, disabl
 
 // generate is the main generator logic that all the spec types and storers share. Mainly
 // has the logic of the generate app service.
-func generateRules(ctx context.Context, logger log.Logger, info info.Info, disableRecs, disableAlerts bool, extraLabels map[string]string, slos prometheus.SLOGroup) (*generate.Response, error) {
+func generateRules(ctx context.Context, logger log.Logger, info info.Info, windowsRepo alert.WindowsRepo, disableRecs, disableAlerts bool, extraLabels map[string]string, slos prometheus.SLOGroup) (*generate.Response, error) {
 	// Disable recording rules if required.
 	var sliRuleGen generate.SLIRecordingRulesGenerator = generate.NoopSLIRecordingRulesGenerator
 	var metaRuleGen generate.MetadataRecordingRulesGenerator = generate.NoopMetadataRecordingRulesGenerator
@@ -261,7 +283,7 @@ func generateRules(ctx context.Context, logger log.Logger, info info.Info, disab
 
 	// Generate.
 	controller, err := generate.NewService(generate.ServiceConfig{
-		AlertGenerator:              alert.AlertGenerator,
+		AlertGenerator:              alert.NewGenerator(windowsRepo),
 		SLIRecordingRulesGenerator:  sliRuleGen,
 		MetaRecordingRulesGenerator: metaRuleGen,
 		SLOAlertRulesGenerator:      alertRuleGen,

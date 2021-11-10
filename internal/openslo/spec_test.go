@@ -65,38 +65,6 @@ spec:
 			expErr: true,
 		},
 
-		"Spec with wrong time window should fail.": {
-			specYaml: `
-apiVersion: openslo/v1alpha
-kind: SLO
-metadata:
-  displayName: Ratio
-  name: ratio
-spec:
-  budgetingMethod: Timeslices
-  description: A great description of a ratio based SLO
-  objectives:
-  - ratioMetrics:
-      good:
-        source: prometheus
-        queryType: promql
-        query: latency_west_c7{code="GOOD",instance="localhost:3000",job="prometheus",service="globacount"}
-      total:
-        source: prometheus
-        queryType: promql
-        query: latency_west_c7{code="ALL",instance="localhost:3000",job="prometheus",service="globacount"}
-    displayName: painful
-    target: 0.98
-    value: 1
-  service: my-test-service
-  timeWindows:
-  - count: 42
-    isRolling: true
-    unit: Day
-`,
-			expErr: true,
-		},
-
 		"Spec with wrong time window units should fail.": {
 			specYaml: `
 apiVersion: openslo/v1alpha

@@ -4,25 +4,29 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"io/fs"
 	"os"
 	"regexp"
-	"strconv"
 	"time"
 
+	prometheusmodel "github.com/prometheus/common/model"
+	"gopkg.in/alecthomas/kingpin.v2"
+
+	"github.com/slok/sloth/internal/alert"
 	"github.com/slok/sloth/internal/k8sprometheus"
 	"github.com/slok/sloth/internal/log"
 	"github.com/slok/sloth/internal/openslo"
 	"github.com/slok/sloth/internal/prometheus"
-	"gopkg.in/alecthomas/kingpin.v2"
 )
 
 type validateCommand struct {
-	slosInput        string
-	slosExcludeRegex string
-	slosIncludeRegex string
-	extraLabels      map[string]string
-	sliPluginsPaths  []string
-	windowDays       string
+	slosInput            string
+	slosExcludeRegex     string
+	slosIncludeRegex     string
+	extraLabels          map[string]string
+	sliPluginsPaths      []string
+	sloPeriodWindowsPath string
+	sloPeriod            string
 }
 
 // NewValidateCommand returns the validate command.
@@ -34,21 +38,22 @@ func NewValidateCommand(app *kingpin.Application) Command {
 	cmd.Flag("fs-include", "Filter regex to include matched discovered SLO file paths, everything else will be ignored. Exclude has preference.").Short('n').StringVar(&c.slosIncludeRegex)
 	cmd.Flag("extra-labels", "Extra labels that will be added to all the generated Prometheus rules ('key=value' form, can be repeated).").Short('l').StringMapVar(&c.extraLabels)
 	cmd.Flag("sli-plugins-path", "The path to SLI plugins (can be repeated), if not set it disable plugins support.").Short('p').StringsVar(&c.sliPluginsPaths)
-	cmd.Flag("window-days", "The number of days for the SLO full time window period.").Short('w').Default("30").EnumVar(&c.windowDays, supportedTimeWindows()...)
+	cmd.Flag("slo-period-windows-path", "The directory path to custom SLO period windows catalog (replaces default ones).").StringVar(&c.sloPeriodWindowsPath)
+	cmd.Flag("default-slo-period", "The default SLO period windows to be used for the SLOs.").Default("30d").StringVar(&c.sloPeriod)
 
 	return c
 }
 
 func (v validateCommand) Name() string { return "validate" }
 func (v validateCommand) Run(ctx context.Context, config RootConfig) error {
-	logger := config.Logger.WithValues(log.Kv{"window": fmt.Sprintf("%sd", v.windowDays)})
+	logger := config.Logger.WithValues(log.Kv{"window": v.sloPeriod})
 
-	// Window.
-	days, err := strconv.Atoi(v.windowDays)
+	// SLO period.
+	sp, err := prometheusmodel.ParseDuration(v.sloPeriod)
 	if err != nil {
-		return fmt.Errorf("window days is invalid: %w", err)
+		return fmt.Errorf("invalid SLO period duration: %w", err)
 	}
-	timeWindow := time.Duration(days) * 24 * time.Hour
+	sloPeriod := time.Duration(sp)
 
 	// Set up files discovery filter regex.
 	var excludeRegex *regexp.Regexp
@@ -83,10 +88,29 @@ func (v validateCommand) Run(ctx context.Context, config RootConfig) error {
 		return err
 	}
 
+	// Windows repository.
+	var wfs fs.FS
+	if v.sloPeriodWindowsPath != "" {
+		wfs = os.DirFS(v.sloPeriodWindowsPath)
+	}
+	windowsRepo, err := alert.NewFSWindowsRepo(alert.FSWindowsRepoConfig{
+		FS:     wfs,
+		Logger: logger,
+	})
+	if err != nil {
+		return fmt.Errorf("could not load SLO period windows repository: %w", err)
+	}
+
+	// Check if the default slo period is supported by our windows repo.
+	_, err = windowsRepo.GetWindows(ctx, sloPeriod)
+	if err != nil {
+		return fmt.Errorf("invalid default slo period: %w", err)
+	}
+
 	// Create Spec loaders.
-	promYAMLLoader := prometheus.NewYAMLSpecLoader(pluginRepo, timeWindow)
-	kubeYAMLLoader := k8sprometheus.NewYAMLSpecLoader(pluginRepo, timeWindow)
-	openSLOYAMLLoader := openslo.NewYAMLSpecLoader(timeWindow)
+	promYAMLLoader := prometheus.NewYAMLSpecLoader(pluginRepo, sloPeriod)
+	kubeYAMLLoader := k8sprometheus.NewYAMLSpecLoader(pluginRepo, sloPeriod)
+	openSLOYAMLLoader := openslo.NewYAMLSpecLoader(sloPeriod)
 
 	// For every file load the data and start the validation process:
 	validations := []*fileValidation{}
@@ -114,7 +138,7 @@ func (v validateCommand) Run(ctx context.Context, config RootConfig) error {
 			case promYAMLLoader.IsSpecType(ctx, dataB):
 				slos, promErr := promYAMLLoader.LoadSpec(ctx, dataB)
 				if promErr == nil {
-					err := generatePrometheus(ctx, log.Noop, false, false, v.extraLabels, *slos, io.Discard)
+					err := generatePrometheus(ctx, log.Noop, windowsRepo, false, false, v.extraLabels, *slos, io.Discard)
 					if err != nil {
 						validation.Errs = []error{fmt.Errorf("Could not generate Prometheus format rules: %w", err)}
 					}
@@ -126,7 +150,7 @@ func (v validateCommand) Run(ctx context.Context, config RootConfig) error {
 			case kubeYAMLLoader.IsSpecType(ctx, dataB):
 				sloGroup, k8sErr := kubeYAMLLoader.LoadSpec(ctx, dataB)
 				if k8sErr == nil {
-					err := generateKubernetes(ctx, log.Noop, false, false, v.extraLabels, *sloGroup, io.Discard)
+					err := generateKubernetes(ctx, log.Noop, windowsRepo, false, false, v.extraLabels, *sloGroup, io.Discard)
 					if err != nil {
 						validation.Errs = []error{fmt.Errorf("could not generate Kubernetes format rules: %w", err)}
 					}
@@ -138,7 +162,7 @@ func (v validateCommand) Run(ctx context.Context, config RootConfig) error {
 			case openSLOYAMLLoader.IsSpecType(ctx, dataB):
 				slos, openSLOErr := openSLOYAMLLoader.LoadSpec(ctx, dataB)
 				if openSLOErr == nil {
-					err := generateOpenSLO(ctx, log.Noop, false, false, v.extraLabels, *slos, io.Discard)
+					err := generateOpenSLO(ctx, log.Noop, windowsRepo, false, false, v.extraLabels, *slos, io.Discard)
 					if err != nil {
 						validation.Errs = []error{fmt.Errorf("Could not generate OpenSLO format rules: %w", err)}
 					}

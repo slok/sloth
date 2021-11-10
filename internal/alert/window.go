@@ -39,7 +39,7 @@ type Window struct {
 	LongWindow time.Duration
 }
 
-func (w Window) validate() error {
+func (w Window) Validate() error {
 	if w.LongWindow == 0 {
 		return fmt.Errorf("long window is required")
 	}
@@ -67,27 +67,27 @@ type Windows struct {
 	TicketSlow  Window
 }
 
-func (w Windows) validate() error {
+func (w Windows) Validate() error {
 	if w.SLOPeriod == 0 {
 		return fmt.Errorf("slo period is required")
 	}
 
-	err := w.PageQuick.validate()
+	err := w.PageQuick.Validate()
 	if err != nil {
 		return fmt.Errorf("invalid page quick: %w", err)
 	}
 
-	err = w.PageSlow.validate()
+	err = w.PageSlow.Validate()
 	if err != nil {
 		return fmt.Errorf("invalid page slow: %w", err)
 	}
 
-	err = w.TicketQuick.validate()
+	err = w.TicketQuick.Validate()
 	if err != nil {
 		return fmt.Errorf("invalid ticket quick: %w", err)
 	}
 
-	err = w.TicketSlow.validate()
+	err = w.TicketSlow.Validate()
 	if err != nil {
 		return fmt.Errorf("invalid ticket slow: %w", err)
 	}
@@ -238,13 +238,10 @@ func (l windowLoader) LoadWindow(ctx context.Context, data []byte) (*Windows, er
 
 	// Check version.
 	if s.APIVersion != alertwindowsv1.APIVersion || s.Kind != alertwindowsv1.Kind {
-		fmt.Println(s.APIVersion)
-		fmt.Println(s.Kind)
 		return nil, fmt.Errorf("invalid spec version")
 	}
 
 	// Map to model.
-	// TODO(slok): Validate.
 	w := &Windows{
 		SLOPeriod: time.Duration(s.Spec.SLOPeriod),
 		PageQuick: Window{
@@ -269,7 +266,7 @@ func (l windowLoader) LoadWindow(ctx context.Context, data []byte) (*Windows, er
 		},
 	}
 
-	err = w.validate()
+	err = w.Validate()
 	if err != nil {
 		return nil, fmt.Errorf("invalid alerting window: %w", err)
 	}

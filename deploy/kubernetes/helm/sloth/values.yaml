@@ -6,11 +6,12 @@ image:
   tag: v0.8.0
 
 sloth:
-  resyncInterval: ""  # The controller resync interval duration (e.g 15m).
-  workers: 0          # The number of concurrent controller workers (e.g 5).
-  labelSelector: ""   # Sloth will handle only the ones that match the selector.
-  namespace: ""       # The namespace where sloth will the CRs to process.
-  extraLabels: {}     # Labels that will be added to all the generated SLO Rules.
+  resyncInterval: ""    # The controller resync interval duration (e.g 15m).
+  workers: 0            # The number of concurrent controller workers (e.g 5).
+  labelSelector: ""     # Sloth will handle only the ones that match the selector.
+  namespace: ""         # The namespace where sloth will the CRs to process.
+  extraLabels: {}       # Labels that will be added to all the generated SLO Rules.
+  defaultSloPeriod: ""  # The slo period used by sloth (e.g. 30d)
 
 commonPlugins:
   enabled: true
@@ -21,3 +22,12 @@ commonPlugins:
 metrics:
   enabled: true
   prometheusLabels: {}
+
+customSloConfig:
+  enabled: false
+  path: /windows
+  data: {}
+#    apiVersion: sloth.slok.dev/v1
+#    kind: AlertWindows
+#    spec:
+#    ... See https://sloth.dev/usage/slo-period-windows/

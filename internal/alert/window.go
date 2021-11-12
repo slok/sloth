@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io/fs"
 	"path/filepath"
+	"reflect"
 	"time"
 
 	"gopkg.in/yaml.v2"
@@ -198,9 +199,15 @@ func (f *FSWindowsRepo) load(ctx context.Context, windowsFS fs.FS) error {
 			return fmt.Errorf("could not load %q alert windows: %w", path, err)
 		}
 
-		_, ok := f.windows[windows.SLOPeriod]
+		// Check if it was already loaded so we avoid conflicts and load race conditions, then add to the catalog.
+		storedWindows, ok := f.windows[windows.SLOPeriod]
 		if ok {
-			return fmt.Errorf("%q slo period is already loaded", windows.SLOPeriod)
+			// If is the same spec, just warn and don't fail.
+			if !reflect.DeepEqual(storedWindows, *windows) {
+				return fmt.Errorf("%q slo period is already loaded", windows.SLOPeriod)
+			}
+			f.logger.Warningf("Identical %q slo periods have been loaded multiple times", windows.SLOPeriod)
+			return nil
 		}
 		f.windows[windows.SLOPeriod] = *windows
 

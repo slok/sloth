@@ -18,6 +18,9 @@ spec:
         {{- include "sloth.labels" . | nindent 8 }}
       annotations:
         kubectl.kubernetes.io/default-container: sloth
+        {{- if .Values.customSloConfig.enabled }}
+        checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+        {{- end }}
     spec:
       serviceAccountName: {{ include "sloth.fullname" . }}
       containers:
@@ -55,6 +58,7 @@ spec:
               name: metrics
               protocol: TCP
           {{- end }}
+          {{- if or .Values.commonPlugins.enabled .Values.customSloConfig.enabled }}
           volumeMounts:
           {{- if .Values.commonPlugins.enabled }}
             - name: sloth-common-sli-plugins
@@ -63,6 +67,7 @@ spec:
           {{- if .Values.customSloConfig.enabled }}
             - name: sloth-windows
               mountPath: {{ .Values.customSloConfig.path }}
+          {{- end }}
           {{- end }}
           resources:
             limits:
@@ -89,6 +94,7 @@ spec:
               cpu: 5m
               memory: 50Mi
         {{- end }}
+      {{- if or .Values.commonPlugins.enabled .Values.customSloConfig.enabled }}
       volumes:
       {{- if .Values.commonPlugins.enabled }}
         - name: sloth-common-sli-plugins
@@ -99,5 +105,6 @@ spec:
           configMap:
             defaultMode: 420
             name: {{ include "sloth.fullname" . }}
+      {{- end }}
       {{- end }}
 

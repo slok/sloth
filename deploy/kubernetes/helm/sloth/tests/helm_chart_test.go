@@ -2,6 +2,7 @@ package tests
 
 import (
 	"os"
+	"regexp"
 	"strings"
 	"testing"
 
@@ -89,7 +90,7 @@ func TestChartDeployment(t *testing.T) {
 			expTplFile: "testdata/output/deployment_custom.yaml",
 		},
 
-		"A chart with values without metrics and plugins should correctly.": {
+		"A chart with values without metrics and plugins should render correctly.": {
 			name:       "test",
 			valuesFile: "testdata/input/custom.yaml",
 			namespace:  "custom",
@@ -99,7 +100,20 @@ func TestChartDeployment(t *testing.T) {
 			},
 			expTplFile: "testdata/output/deployment_custom_no_extras.yaml",
 		},
+
+		"A chart with custom slo config should render correctly.": {
+			name:       "test",
+			valuesFile: "testdata/input/custom.yaml",
+			namespace:  "custom",
+			values: map[string]string{
+				"commonPlugins.enabled":   "false",
+				"customSloConfig.enabled": "true",
+			},
+			expTplFile: "testdata/output/deployment_custom_slo_config.yaml",
+		},
 	}
+
+	checksumNormalizer := regexp.MustCompile(`checksum/config: [a-z0-9]+`)
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
@@ -120,6 +134,8 @@ func TestChartDeployment(t *testing.T) {
 			if test.expErr {
 				assert.Error(err)
 			} else if assert.NoError(err) {
+				gotTpl := checksumNormalizer.ReplaceAllString(gotTpl, "checksum/config: <checksum>")
+
 				expTpl, err := os.ReadFile(test.expTplFile)
 				require.NoError(err)
 				expTplS := strings.TrimSpace(string(expTpl))
@@ -285,6 +301,61 @@ func TestChartClusterRoleBinding(t *testing.T) {
 
 			// Execute.
 			gotTpl, err := helm.RenderTemplateE(t, options, chartDir, test.name, []string{"templates/cluster-role-binding.yaml"})
+
+			// Check.
+			if test.expErr {
+				assert.Error(err)
+			} else if assert.NoError(err) {
+				expTpl, err := os.ReadFile(test.expTplFile)
+				require.NoError(err)
+				expTplS := strings.TrimSpace(string(expTpl))
+
+				assert.Equal(expTplS, gotTpl)
+			}
+		})
+	}
+}
+
+func TestChartConfigMap(t *testing.T) {
+	tests := map[string]struct {
+		name       string
+		valuesFile string
+		namespace  string
+		values     map[string]string
+		expErr     bool
+		expTplFile string
+	}{
+		"A chart without values should not render a configmap.": {
+			name:       "sloth",
+			valuesFile: "testdata/input/default.yaml",
+			expErr: true,
+		},
+
+		"A chart with custom values should render correctly.": {
+			name:       "test",
+			valuesFile: "testdata/input/custom.yaml",
+			namespace:  "custom",
+			values:     map[string]string{
+				"customSloConfig.enabled": "true",
+			},
+			expTplFile: "testdata/output/configmap_slo_config.yaml",
+		},
+	}
+
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			assert := assert.New(t)
+			require := require.New(t)
+
+			// Prepare.
+			options := &helm.Options{
+				ValuesFiles:    []string{test.valuesFile},
+				SetValues:      test.values,
+				KubectlOptions: &k8s.KubectlOptions{Namespace: test.namespace},
+			}
+
+			// Execute.
+			gotTpl, err := helm.RenderTemplateE(t, options, chartDir, test.name, []string{"templates/configmap.yaml"})
 
 			// Check.
 			if test.expErr {

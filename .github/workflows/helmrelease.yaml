@@ -4,8 +4,6 @@ on:
   push:
     branches:
       - main
-    paths:
-      - "deploy/kubernetes/helm/**"
 
 jobs:
   release:
@@ -32,4 +30,3 @@ jobs:
           charts_dir: deploy/kubernetes/helm
         env:
           CR_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
-          CR_RELEASE_NAME_TEMPLATE: "sloth-helm-chart-{{ .Version }}"

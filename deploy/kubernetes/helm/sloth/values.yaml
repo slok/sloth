@@ -3,7 +3,7 @@ labels: {}
 
 image:
   repository: ghcr.io/slok/sloth
-  tag: v0.8.0
+  tag: v0.9.0
 
 sloth:
   resyncInterval: ""    # The controller resync interval duration (e.g 15m).

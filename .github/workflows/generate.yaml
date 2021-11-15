@@ -14,7 +14,7 @@ jobs:
       - uses: actions/checkout@v2
       - name: download and setup generator binary
         run: |       
-          wget https://github.com/slok/sloth/releases/download/v0.8.0/sloth-linux-amd64
+          wget https://github.com/slok/sloth/releases/download/v0.9.0/sloth-linux-amd64
           chmod +x sloth-linux-amd64
           ./sloth-linux-amd64 generate -i ./examples/getting-started.yml -o ./examples/_gen/getting-started.yml
           ./sloth-linux-amd64 generate -i ./examples/no-alerts.yml -o ./examples/_gen/no-alerts.yml

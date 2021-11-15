@@ -1,0 +1,17 @@
+---
+# Source: sloth/templates/configmap.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: sloth-test
+  namespace: custom
+  labels:
+    helm.sh/chart: sloth-0.3.1
+    app.kubernetes.io/managed-by: Helm
+    app: sloth
+    app.kubernetes.io/name: sloth
+    app.kubernetes.io/instance: test
+    label-from: test
+data:
+  window.yaml: |
+    customKey: customValue

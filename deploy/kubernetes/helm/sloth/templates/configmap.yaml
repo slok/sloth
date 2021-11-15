@@ -1,0 +1,12 @@
+{{- if .Values.customSloConfig.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "sloth.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "sloth.labels" . | nindent 4 }}
+data:
+  window.yaml: |
+    {{- toYaml .Values.customSloConfig.data | nindent 4 }}
+{{- end }}

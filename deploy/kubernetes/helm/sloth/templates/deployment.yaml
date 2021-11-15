@@ -18,6 +18,9 @@ spec:
         {{- include "sloth.labels" . | nindent 8 }}
       annotations:
         kubectl.kubernetes.io/default-container: sloth
+        {{- if .Values.customSloConfig.enabled }}
+        checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+        {{- end }}
     spec:
       serviceAccountName: {{ include "sloth.fullname" . }}
       containers:
@@ -43,16 +46,28 @@ spec:
             {{- if .Values.commonPlugins.enabled }}
             - --sli-plugins-path=/plugins
             {{- end }}
+            {{- with .Values.sloth.defaultSloPeriod }}
+            - --default-slo-period={{ . }}
+            {{- end }}
+            {{- if .Values.customSloConfig.enabled }}
+            - --slo-period-windows-path={{ .Values.customSloConfig.path }}
+            {{- end }}
           {{- if .Values.metrics.enabled }}
           ports:
             - containerPort: 8081
               name: metrics
               protocol: TCP
           {{- end }}
-          {{- if .Values.commonPlugins.enabled }}
+          {{- if or .Values.commonPlugins.enabled .Values.customSloConfig.enabled }}
           volumeMounts:
+          {{- if .Values.commonPlugins.enabled }}
             - name: sloth-common-sli-plugins
               mountPath: /plugins/sloth-common-sli-plugins
+          {{- end }}
+          {{- if .Values.customSloConfig.enabled }}
+            - name: sloth-windows
+              mountPath: {{ .Values.customSloConfig.path }}
+          {{- end }}
           {{- end }}
           resources:
             limits:
@@ -79,9 +94,17 @@ spec:
               cpu: 5m
               memory: 50Mi
         {{- end }}
-      {{- if .Values.commonPlugins.enabled }}
+      {{- if or .Values.commonPlugins.enabled .Values.customSloConfig.enabled }}
       volumes:
+      {{- if .Values.commonPlugins.enabled }}
         - name: sloth-common-sli-plugins
           emptyDir: {}
+      {{- end }}
+      {{- if .Values.customSloConfig.enabled }}
+        - name: sloth-windows
+          configMap:
+            defaultMode: 420
+            name: {{ include "sloth.fullname" . }}
+      {{- end }}
       {{- end }}
 

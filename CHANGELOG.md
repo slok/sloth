@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+## Added
+
+- Support Kubernetes v1.23
+
 ## [v0.9.0] - 2021-11-15
 
 ### Added

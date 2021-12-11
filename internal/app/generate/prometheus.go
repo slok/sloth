@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/prometheus/prometheus/pkg/rulefmt"
+	"github.com/prometheus/prometheus/model/rulefmt"
 
 	"github.com/slok/sloth/internal/alert"
 	"github.com/slok/sloth/internal/info"

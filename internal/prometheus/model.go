@@ -10,7 +10,7 @@ import (
 
 	"github.com/go-playground/validator/v10"
 	prommodel "github.com/prometheus/common/model"
-	"github.com/prometheus/prometheus/pkg/rulefmt"
+	"github.com/prometheus/prometheus/model/rulefmt"
 	promqlparser "github.com/prometheus/prometheus/promql/parser"
 )
 

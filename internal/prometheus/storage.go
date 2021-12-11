@@ -6,7 +6,7 @@ import (
 	"io"
 
 	prommodel "github.com/prometheus/common/model"
-	"github.com/prometheus/prometheus/pkg/rulefmt"
+	"github.com/prometheus/prometheus/model/rulefmt"
 	"gopkg.in/yaml.v2"
 
 	"github.com/slok/sloth/internal/info"

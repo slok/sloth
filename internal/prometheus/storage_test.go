@@ -5,7 +5,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/prometheus/prometheus/pkg/rulefmt"
+	"github.com/prometheus/prometheus/model/rulefmt"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/slok/sloth/internal/log"

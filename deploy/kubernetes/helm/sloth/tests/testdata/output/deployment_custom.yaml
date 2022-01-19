@@ -41,8 +41,8 @@ spec:
             - --workers=99
             - --namespace=somens
             - --label-selector=x=y,z!=y
-            - --extra-lables=k1=v1
-            - --extra-lables=k2=v2
+            - --extra-labels=k1=v1
+            - --extra-labels=k2=v2
             - --sli-plugins-path=/plugins
           ports:
             - containerPort: 8081

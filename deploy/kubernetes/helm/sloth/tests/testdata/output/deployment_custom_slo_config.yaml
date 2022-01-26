@@ -6,7 +6,7 @@ metadata:
   name: sloth-test
   namespace: custom
   labels:
-    helm.sh/chart: sloth-0.4.0
+    helm.sh/chart: sloth-0.4.1
     app.kubernetes.io/managed-by: Helm
     app: sloth
     app.kubernetes.io/name: sloth
@@ -22,7 +22,7 @@ spec:
   template:
     metadata:
       labels:
-        helm.sh/chart: sloth-0.4.0
+        helm.sh/chart: sloth-0.4.1
         app.kubernetes.io/managed-by: Helm
         app: sloth
         app.kubernetes.io/name: sloth
@@ -42,8 +42,8 @@ spec:
             - --workers=99
             - --namespace=somens
             - --label-selector=x=y,z!=y
-            - --extra-lables=k1=v1
-            - --extra-lables=k2=v2
+            - --extra-labels=k1=v1
+            - --extra-labels=k2=v2
             - --slo-period-windows-path=/windows
           ports:
             - containerPort: 8081

@@ -27,7 +27,7 @@ jobs:
           version: v3.7.1
 
       - name: Run chart-releaser
-        uses: helm/chart-releaser-action@v1.2.1
+        uses: helm/chart-releaser-action@v1.3.0
         with:
           charts_dir: deploy/kubernetes/helm
         env:

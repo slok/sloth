@@ -11,6 +11,8 @@ sloth:
   namespace: ""         # The namespace where sloth will the CRs to process.
   extraLabels: {}       # Labels that will be added to all the generated SLO Rules.
   defaultSloPeriod: ""  # The slo period used by sloth (e.g. 30d)
+  debug:
+    enabled: false
 
 commonPlugins:
   enabled: true

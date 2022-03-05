@@ -9,14 +9,14 @@ jobs:
     # Execute the checks inside the container instead the VM.
     container: golangci/golangci-lint:v1.43.0-alpine
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - run: ./scripts/check/check.sh
 
   unit-test:
     name: Unit test
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - uses: actions/setup-go@v2
         with:
           go-version: 1.17
@@ -31,7 +31,7 @@ jobs:
     name: Helm chart test
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - uses: actions/setup-go@v2
         with:
           go-version: 1.17
@@ -48,7 +48,7 @@ jobs:
     name: Integration test CLI
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - uses: actions/setup-go@v2
         with:
           go-version: 1.17
@@ -70,7 +70,7 @@ jobs:
       matrix:
         kubernetes: [1.19.11, 1.20.7, 1.21.1, 1.22.0, 1.23.0]
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - uses: actions/setup-go@v2
         with:
           go-version: 1.17
@@ -113,7 +113,7 @@ jobs:
     name: Release images
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: Docker login
         run: docker login ghcr.io -u ${{ github.actor }} -p "${{ secrets.GITHUB_TOKEN }}"
       - name: Build and publish docker images
@@ -129,7 +129,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - run: echo "VERSION=${GITHUB_REF#refs/*/}" >> ${GITHUB_ENV} # Sets VERSION env var.
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: Docker login
         run: docker login ghcr.io -u ${{ github.actor }} -p "${{ secrets.GITHUB_TOKEN }}"
       - name: Build and publish docker images
@@ -143,7 +143,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - run: echo "VERSION=${GITHUB_REF#refs/*/}" >> ${GITHUB_ENV} # Sets VERSION env var.
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: Build binaries
         run: |
           mkdir -p ./bin

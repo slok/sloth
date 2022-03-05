@@ -138,7 +138,7 @@ func (v validateCommand) Run(ctx context.Context, config RootConfig) error {
 			case promYAMLLoader.IsSpecType(ctx, dataB):
 				slos, promErr := promYAMLLoader.LoadSpec(ctx, dataB)
 				if promErr == nil {
-					err := generatePrometheus(ctx, log.Noop, windowsRepo, false, false, v.extraLabels, *slos, io.Discard)
+					err := generatePrometheus(ctx, log.Noop, windowsRepo, false, false, false, v.extraLabels, *slos, io.Discard)
 					if err != nil {
 						validation.Errs = []error{fmt.Errorf("Could not generate Prometheus format rules: %w", err)}
 					}
@@ -150,7 +150,7 @@ func (v validateCommand) Run(ctx context.Context, config RootConfig) error {
 			case kubeYAMLLoader.IsSpecType(ctx, dataB):
 				sloGroup, k8sErr := kubeYAMLLoader.LoadSpec(ctx, dataB)
 				if k8sErr == nil {
-					err := generateKubernetes(ctx, log.Noop, windowsRepo, false, false, v.extraLabels, *sloGroup, io.Discard)
+					err := generateKubernetes(ctx, log.Noop, windowsRepo, false, false, false, v.extraLabels, *sloGroup, io.Discard)
 					if err != nil {
 						validation.Errs = []error{fmt.Errorf("could not generate Kubernetes format rules: %w", err)}
 					}
@@ -162,7 +162,7 @@ func (v validateCommand) Run(ctx context.Context, config RootConfig) error {
 			case openSLOYAMLLoader.IsSpecType(ctx, dataB):
 				slos, openSLOErr := openSLOYAMLLoader.LoadSpec(ctx, dataB)
 				if openSLOErr == nil {
-					err := generateOpenSLO(ctx, log.Noop, windowsRepo, false, false, v.extraLabels, *slos, io.Discard)
+					err := generateOpenSLO(ctx, log.Noop, windowsRepo, false, false, false, v.extraLabels, *slos, io.Discard)
 					if err != nil {
 						validation.Errs = []error{fmt.Errorf("Could not generate OpenSLO format rules: %w", err)}
 					}

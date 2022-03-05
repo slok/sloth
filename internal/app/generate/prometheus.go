@@ -27,7 +27,7 @@ func (c *ServiceConfig) defaults() error {
 	}
 
 	if c.SLIRecordingRulesGenerator == nil {
-		c.SLIRecordingRulesGenerator = prometheus.SLIRecordingRulesGenerator
+		c.SLIRecordingRulesGenerator = prometheus.OptimizedSLIRecordingRulesGenerator
 	}
 
 	if c.MetaRecordingRulesGenerator == nil {

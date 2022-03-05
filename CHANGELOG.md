@@ -5,6 +5,7 @@
 ## Added
 
 - Support Kubernetes v1.23
+- Allow disabling optimized rules using `--disable-optimized-rules`. These will disable the period window (e.g 30d) to be as the other window rules and not be optimized.
 
 ## [v0.9.0] - 2021-11-15
 

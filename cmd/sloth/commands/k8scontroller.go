@@ -52,22 +52,23 @@ const (
 )
 
 type kubeControllerCommand struct {
-	extraLabels          map[string]string
-	workers              int
-	kubeConfig           string
-	kubeContext          string
-	resyncInterval       time.Duration
-	namespace            string
-	labelSelector        string
-	kubeLocal            bool
-	runMode              string
-	metricsPath          string
-	hotReloadPath        string
-	hotReloadAddr        string
-	metricsListenAddr    string
-	sliPluginsPaths      []string
-	sloPeriodWindowsPath string
-	sloPeriod            string
+	extraLabels           map[string]string
+	workers               int
+	kubeConfig            string
+	kubeContext           string
+	resyncInterval        time.Duration
+	namespace             string
+	labelSelector         string
+	kubeLocal             bool
+	runMode               string
+	metricsPath           string
+	hotReloadPath         string
+	hotReloadAddr         string
+	metricsListenAddr     string
+	sliPluginsPaths       []string
+	sloPeriodWindowsPath  string
+	sloPeriod             string
+	disableOptimizedRules bool
 }
 
 // NewKubeControllerCommand returns the Kubernetes controller command.
@@ -94,6 +95,7 @@ func NewKubeControllerCommand(app *kingpin.Application) Command {
 	cmd.Flag("sli-plugins-path", "The path to SLI plugins (can be repeated), if not set it disable plugins support.").Short('p').StringsVar(&c.sliPluginsPaths)
 	cmd.Flag("slo-period-windows-path", "The directory path to custom SLO period windows catalog (replaces default ones).").StringVar(&c.sloPeriodWindowsPath)
 	cmd.Flag("default-slo-period", "The default SLO period windows to be used for the SLOs.").Default("30d").StringVar(&c.sloPeriod)
+	cmd.Flag("disable-optimized-rules", "If enabled it will disable optimized generated rules.").BoolVar(&c.disableOptimizedRules)
 
 	return c
 }
@@ -296,10 +298,16 @@ func (k kubeControllerCommand) Run(ctx context.Context, config RootConfig) error
 		ctx, cancel := context.WithCancel(ctx)
 		defer cancel()
 
+		// Disable optimized rules.
+		sliRuleGen := prometheus.OptimizedSLIRecordingRulesGenerator
+		if k.disableOptimizedRules {
+			sliRuleGen = prometheus.SLIRecordingRulesGenerator
+		}
+
 		// Create the generate app service (the one that the CLIs use).
 		generator, err := generate.NewService(generate.ServiceConfig{
 			AlertGenerator:              alert.NewGenerator(windowsRepo),
-			SLIRecordingRulesGenerator:  prometheus.SLIRecordingRulesGenerator,
+			SLIRecordingRulesGenerator:  sliRuleGen,
 			MetaRecordingRulesGenerator: prometheus.MetadataRecordingRulesGenerator,
 			SLOAlertRulesGenerator:      prometheus.SLOAlertRulesGenerator,
 			Logger:                      generatorLogger{Logger: logger},

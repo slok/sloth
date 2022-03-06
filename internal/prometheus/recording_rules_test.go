@@ -35,13 +35,19 @@ func getAlertGroup() alert.MWMBAlertGroup {
 }
 
 func TestGenerateSLIRecordingRules(t *testing.T) {
+	type generator interface {
+		GenerateSLIRecordingRules(ctx context.Context, slo prometheus.SLO, alerts alert.MWMBAlertGroup) ([]rulefmt.Rule, error)
+	}
+
 	tests := map[string]struct {
+		generator  func() generator
 		slo        prometheus.SLO
 		alertGroup alert.MWMBAlertGroup
 		expRules   []rulefmt.Rule
 		expErr     bool
 	}{
 		"Having and SLO with invalid expression should fail.": {
+			generator: func() generator { return prometheus.OptimizedSLIRecordingRulesGenerator },
 			slo: prometheus.SLO{
 				ID:         "test",
 				Name:       "test-name",
@@ -62,6 +68,7 @@ func TestGenerateSLIRecordingRules(t *testing.T) {
 		},
 
 		"Having and wrong variable in the expression should fail.": {
+			generator: func() generator { return prometheus.OptimizedSLIRecordingRulesGenerator },
 			slo: prometheus.SLO{
 				ID:         "test",
 				Name:       "test-name",
@@ -81,7 +88,8 @@ func TestGenerateSLIRecordingRules(t *testing.T) {
 			expErr:     true,
 		},
 
-		"Having an SLO with SLI(events)  and its mwmb alerts should create the recording rules.": {
+		"Having an SLO with SLI(events) and its mwmb alerts should create the recording rules.": {
+			generator: func() generator { return prometheus.OptimizedSLIRecordingRulesGenerator },
 			slo: prometheus.SLO{
 				ID:         "test",
 				Name:       "test-name",
@@ -186,7 +194,118 @@ func TestGenerateSLIRecordingRules(t *testing.T) {
 			},
 		},
 
-		"Having an SLO with SLI(raw)  and its mwmb alerts should create the recording rules.": {
+		"Having an SLO with SLI(events) and its mwmb alerts should create the recording rules (Non optimized).": {
+			generator: func() generator { return prometheus.SLIRecordingRulesGenerator },
+			slo: prometheus.SLO{
+				ID:         "test",
+				Name:       "test-name",
+				Service:    "test-svc",
+				TimeWindow: 30 * 24 * time.Hour,
+				SLI: prometheus.SLI{
+					Events: &prometheus.SLIEvents{
+						ErrorQuery: `rate(my_metric[{{.window}}]{error="true"})`,
+						TotalQuery: `rate(my_metric[{{.window}}])`,
+					},
+				},
+				Labels: map[string]string{
+					"kind": "test",
+				},
+			},
+			alertGroup: getAlertGroup(),
+			expRules: []rulefmt.Rule{
+				{
+					Record: "slo:sli_error:ratio_rate5m",
+					Expr:   "(rate(my_metric[5m]{error=\"true\"}))\n/\n(rate(my_metric[5m]))\n",
+					Labels: map[string]string{
+						"kind":          "test",
+						"sloth_service": "test-svc",
+						"sloth_slo":     "test-name",
+						"sloth_id":      "test",
+						"sloth_window":  "5m",
+					},
+				},
+				{
+					Record: "slo:sli_error:ratio_rate30m",
+					Expr:   "(rate(my_metric[30m]{error=\"true\"}))\n/\n(rate(my_metric[30m]))\n",
+					Labels: map[string]string{
+						"kind":          "test",
+						"sloth_service": "test-svc",
+						"sloth_slo":     "test-name",
+						"sloth_id":      "test",
+						"sloth_window":  "30m",
+					},
+				},
+				{
+					Record: "slo:sli_error:ratio_rate1h",
+					Expr:   "(rate(my_metric[1h]{error=\"true\"}))\n/\n(rate(my_metric[1h]))\n",
+					Labels: map[string]string{
+						"kind":          "test",
+						"sloth_service": "test-svc",
+						"sloth_slo":     "test-name",
+						"sloth_id":      "test",
+						"sloth_window":  "1h",
+					},
+				},
+				{
+					Record: "slo:sli_error:ratio_rate2h",
+					Expr:   "(rate(my_metric[2h]{error=\"true\"}))\n/\n(rate(my_metric[2h]))\n",
+					Labels: map[string]string{
+						"kind":          "test",
+						"sloth_service": "test-svc",
+						"sloth_slo":     "test-name",
+						"sloth_id":      "test",
+						"sloth_window":  "2h",
+					},
+				},
+				{
+					Record: "slo:sli_error:ratio_rate6h",
+					Expr:   "(rate(my_metric[6h]{error=\"true\"}))\n/\n(rate(my_metric[6h]))\n",
+					Labels: map[string]string{
+						"kind":          "test",
+						"sloth_service": "test-svc",
+						"sloth_slo":     "test-name",
+						"sloth_id":      "test",
+						"sloth_window":  "6h",
+					},
+				},
+				{
+					Record: "slo:sli_error:ratio_rate1d",
+					Expr:   "(rate(my_metric[1d]{error=\"true\"}))\n/\n(rate(my_metric[1d]))\n",
+					Labels: map[string]string{
+						"kind":          "test",
+						"sloth_service": "test-svc",
+						"sloth_slo":     "test-name",
+						"sloth_id":      "test",
+						"sloth_window":  "1d",
+					},
+				},
+				{
+					Record: "slo:sli_error:ratio_rate3d",
+					Expr:   "(rate(my_metric[3d]{error=\"true\"}))\n/\n(rate(my_metric[3d]))\n",
+					Labels: map[string]string{
+						"kind":          "test",
+						"sloth_service": "test-svc",
+						"sloth_slo":     "test-name",
+						"sloth_id":      "test",
+						"sloth_window":  "3d",
+					},
+				},
+				{
+					Record: "slo:sli_error:ratio_rate30d",
+					Expr:   "(rate(my_metric[30d]{error=\"true\"}))\n/\n(rate(my_metric[30d]))\n",
+					Labels: map[string]string{
+						"kind":          "test",
+						"sloth_service": "test-svc",
+						"sloth_slo":     "test-name",
+						"sloth_id":      "test",
+						"sloth_window":  "30d",
+					},
+				},
+			},
+		},
+
+		"Having an SLO with SLI (raw) and its mwmb alerts should create the recording rules.": {
+			generator: func() generator { return prometheus.OptimizedSLIRecordingRulesGenerator },
 			slo: prometheus.SLO{
 				ID:         "test",
 				Name:       "test-name",
@@ -291,6 +410,7 @@ func TestGenerateSLIRecordingRules(t *testing.T) {
 		},
 
 		"An SLO alert with duplicated time windows should appear once and sorted.": {
+			generator: func() generator { return prometheus.OptimizedSLIRecordingRulesGenerator },
 			slo: prometheus.SLO{
 				ID:         "test",
 				Name:       "test-name",
@@ -361,7 +481,7 @@ func TestGenerateSLIRecordingRules(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			assert := assert.New(t)
 
-			gotRules, err := prometheus.SLIRecordingRulesGenerator.GenerateSLIRecordingRules(context.TODO(), test.slo, test.alertGroup)
+			gotRules, err := test.generator().GenerateSLIRecordingRules(context.TODO(), test.slo, test.alertGroup)
 
 			if test.expErr {
 				assert.Error(err)

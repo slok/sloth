@@ -5,7 +5,7 @@ kind: ClusterRole
 metadata:
   name: sloth
   labels:
-    helm.sh/chart: sloth-0.4.2
+    helm.sh/chart: sloth-<version>
     app.kubernetes.io/managed-by: Helm
     app: sloth
     app.kubernetes.io/name: sloth

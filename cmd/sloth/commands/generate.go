@@ -6,6 +6,10 @@ import (
 	"io"
 	"io/fs"
 	"os"
+	"path"
+	"path/filepath"
+	"regexp"
+	"strings"
 	"time"
 
 	openslov1alpha "github.com/OpenSLO/oslo/pkg/manifest/v1alpha"
@@ -26,6 +30,8 @@ import (
 type generateCommand struct {
 	slosInput             string
 	slosOut               string
+	slosExcludeRegex      string
+	slosIncludeRegex      string
 	disableRecordings     bool
 	disableAlerts         bool
 	disableOptimizedRules bool
@@ -39,8 +45,11 @@ type generateCommand struct {
 func NewGenerateCommand(app *kingpin.Application) Command {
 	c := &generateCommand{extraLabels: map[string]string{}}
 	cmd := app.Command("generate", "Generates Prometheus SLOs.")
-	cmd.Flag("input", "SLO spec input file path.").Short('i').Required().StringVar(&c.slosInput)
-	cmd.Flag("out", "Generated rules output file path. If `-` it will use stdout.").Short('o').Default("-").StringVar(&c.slosOut)
+	cmd.Flag("input", "SLO spec input file path or directory (if directory is used, slos will be discovered recursively and out must be a directory).").Short('i').StringVar(&c.slosInput)
+	cmd.Flag("out", "Generated rules output file path or directory. If `-` it will use stdout (if input is a directory this must be a directory).").Default("-").Short('o').StringVar(&c.slosOut)
+	cmd.Flag("fs-exclude", "Filter regex to ignore matched discovered SLO file paths (used with directory based input/output).").Short('e').StringVar(&c.slosExcludeRegex)
+	cmd.Flag("fs-include", "Filter regex to include matched discovered SLO file paths, everything else will be ignored. Exclude has preference (used with directory based input/output).").Short('n').StringVar(&c.slosIncludeRegex)
+
 	cmd.Flag("extra-labels", "Extra labels that will be added to all the generated Prometheus rules ('key=value' form, can be repeated).").Short('l').StringMapVar(&c.extraLabels)
 	cmd.Flag("disable-recordings", "Disables recording rules generation.").BoolVar(&c.disableRecordings)
 	cmd.Flag("disable-alerts", "Disables alert rules generation.").BoolVar(&c.disableAlerts)
@@ -56,6 +65,35 @@ func (g generateCommand) Name() string { return "generate" }
 func (g generateCommand) Run(ctx context.Context, config RootConfig) error {
 	logger := config.Logger.WithValues(log.Kv{"window": g.sloPeriod})
 
+	// Check input and output.
+	inputInfo, err := os.Stat(g.slosInput)
+	if err != nil {
+		return err
+	}
+	if inputInfo.IsDir() {
+		// If input is a dir, output must be a directory.
+		outInfo, err := os.Stat(g.slosOut)
+		if err != nil {
+			return err
+		}
+		if !outInfo.IsDir() {
+			return fmt.Errorf("the path %q is not a directory, however input is a directory", g.slosOut)
+		}
+
+		// Check input and output are not the same.
+		ia, err := filepath.Abs(g.slosInput)
+		if err != nil {
+			return err
+		}
+		oa, err := filepath.Abs(g.slosOut)
+		if err != nil {
+			return err
+		}
+		if ia == oa {
+			return fmt.Errorf("input and output can't be the same directory: %s", ia)
+		}
+	}
+
 	// SLO period.
 	sp, err := prometheusmodel.ParseDuration(g.sloPeriod)
 	if err != nil {
@@ -66,19 +104,6 @@ func (g generateCommand) Run(ctx context.Context, config RootConfig) error {
 	ctx = logger.SetValuesOnCtx(ctx, log.Kv{
 		"out": g.slosOut,
 	})
-
-	// Get SLO spec data.
-	// TODO(slok): stdin.
-	f, err := os.Open(g.slosInput)
-	if err != nil {
-		return fmt.Errorf("could not open SLOs spec file: %w", err)
-	}
-	defer f.Close()
-
-	slxData, err := io.ReadAll(f)
-	if err != nil {
-		return fmt.Errorf("could not read SLOs spec file data: %w", err)
-	}
 
 	// Load plugins
 	pluginRepo, err := createPluginLoader(ctx, logger, g.sliPluginsPaths)
@@ -110,22 +135,111 @@ func (g generateCommand) Run(ctx context.Context, config RootConfig) error {
 	kubeYAMLLoader := k8sprometheus.NewYAMLSpecLoader(pluginRepo, sloPeriod)
 	openSLOYAMLLoader := openslo.NewYAMLSpecLoader(sloPeriod)
 
-	// Prepare store output.
-	var out io.Writer = config.Stdout
-	if g.slosOut != "-" {
-		f, err := os.Create(g.slosOut)
+	// Get SLO targets.
+	genTargets := []generateTarget{}
+
+	// FIle based input/outputs.
+	if !inputInfo.IsDir() {
+		// Get SLO spec data.
+		f, err := os.Open(g.slosInput)
 		if err != nil {
-			return fmt.Errorf("could not create out file: %w", err)
+			return fmt.Errorf("could not open SLOs spec file: %w", err)
 		}
 		defer f.Close()
-		out = f
+
+		slxData, err := io.ReadAll(f)
+		if err != nil {
+			return fmt.Errorf("could not read SLOs spec file data: %w", err)
+		}
+
+		// Split YAMLs in case we have multiple yaml files in a single file.
+		splittedSLOsData := splitYAML(slxData)
+
+		// Prepare store output.
+		var out io.Writer = config.Stdout
+		if g.slosOut != "-" {
+			outFile, err := os.Create(g.slosOut)
+			if err != nil {
+				return fmt.Errorf("could not create out file: %w", err)
+			}
+			defer f.Close()
+			out = outFile
+		}
+		for _, s := range splittedSLOsData {
+			genTargets = append(genTargets, generateTarget{
+				SLOData: s,
+				Out:     out,
+			})
+		}
+	} else {
+		// Directory based input/outpus.
+		var excludeRegex *regexp.Regexp
+		var includeRegex *regexp.Regexp
+		if g.slosExcludeRegex != "" {
+			r, err := regexp.Compile(g.slosExcludeRegex)
+			if err != nil {
+				return fmt.Errorf("invalid exclude regex: %w", err)
+			}
+			excludeRegex = r
+		}
+		if g.slosIncludeRegex != "" {
+			r, err := regexp.Compile(g.slosIncludeRegex)
+			if err != nil {
+				return fmt.Errorf("invalid include regex: %w", err)
+			}
+			includeRegex = r
+		}
+
+		sloPaths, err := discoverSLOManifests(logger, excludeRegex, includeRegex, g.slosInput)
+		if err != nil {
+			return fmt.Errorf("could not discover files: %w", err)
+		}
+		if len(sloPaths) == 0 {
+			return fmt.Errorf("0 slo specs have been discovered")
+		}
+
+		for _, sloPath := range sloPaths {
+			f, err := os.Open(sloPath)
+			if err != nil {
+				return fmt.Errorf("could not open SLOs spec file: %w", err)
+			}
+			defer f.Close()
+
+			slxData, err := io.ReadAll(f)
+			if err != nil {
+				return fmt.Errorf("could not read SLOs spec file data: %w", err)
+			}
+
+			// Infer output path.
+			outputPath := strings.TrimPrefix(path.Clean(sloPath), strings.TrimPrefix(g.slosInput, "./"))
+			outputPath = path.Join(g.slosOut, outputPath)
+
+			// Ensure the file path is ready.
+			err = os.MkdirAll(path.Dir(outputPath), os.ModePerm)
+			if err != nil {
+				return err
+			}
+
+			// Create the target file.
+			outFile, err := os.Create(outputPath)
+			if err != nil {
+				return fmt.Errorf("could not create out file: %w", err)
+			}
+			defer outFile.Close()
+
+			// Split YAMLs in case we have multiple yaml files in a single file.
+			splittedSLOsData := splitYAML(slxData)
+			for _, s := range splittedSLOsData {
+				genTargets = append(genTargets, generateTarget{
+					SLOData: s,
+					Out:     outFile,
+				})
+			}
+		}
 	}
 
-	// Split YAMLs in case we have multiple yaml files in a single file.
-	splittedSLOsData := splitYAML(slxData)
-
-	for _, data := range splittedSLOsData {
-		dataB := []byte(data)
+	for _, genTarget := range genTargets {
+		dataB := []byte(genTarget.SLOData)
 
 		// Match the spec type to know how to generate.
 		switch {
@@ -135,7 +249,7 @@ func (g generateCommand) Run(ctx context.Context, config RootConfig) error {
 				return fmt.Errorf("tried loading raw prometheus SLOs spec, it couldn't: %w", err)
 			}
 
-			err = generatePrometheus(ctx, logger, windowsRepo, g.disableRecordings, g.disableAlerts, g.disableOptimizedRules, g.extraLabels, *slos, out)
+			err = generatePrometheus(ctx, logger, windowsRepo, g.disableRecordings, g.disableAlerts, g.disableOptimizedRules, g.extraLabels, *slos, genTarget.Out)
 			if err != nil {
 				return fmt.Errorf("could not generate Prometheus format rules: %w", err)
 			}
@@ -146,7 +260,7 @@ func (g generateCommand) Run(ctx context.Context, config RootConfig) error {
 				return fmt.Errorf("tried loading Kubernetes prometheus SLOs spec, it couldn't: %w", err)
 			}
 
-			err = generateKubernetes(ctx, logger, windowsRepo, g.disableRecordings, g.disableAlerts, g.disableOptimizedRules, g.extraLabels, *sloGroup, out)
+			err = generateKubernetes(ctx, logger, windowsRepo, g.disableRecordings, g.disableAlerts, g.disableOptimizedRules, g.extraLabels, *sloGroup, genTarget.Out)
 			if err != nil {
 				return fmt.Errorf("could not generate Kubernetes format rules: %w", err)
 			}
@@ -157,7 +271,7 @@ func (g generateCommand) Run(ctx context.Context, config RootConfig) error {
 				return fmt.Errorf("tried loading OpenSLO SLOs spec, it couldn't: %w", err)
 			}
 
-			err = generateOpenSLO(ctx, logger, windowsRepo, g.disableRecordings, g.disableAlerts, g.disableOptimizedRules, g.extraLabels, *slos, out)
+			err = generateOpenSLO(ctx, logger, windowsRepo, g.disableRecordings, g.disableAlerts, g.disableOptimizedRules, g.extraLabels, *slos, genTarget.Out)
 			if err != nil {
 				return fmt.Errorf("could not generate OpenSLO format rules: %w", err)
 			}
@@ -309,4 +423,9 @@ func generateRules(ctx context.Context, logger log.Logger, info info.Info, windo
 	}
 
 	return result, nil
+}
+
+type generateTarget struct {
+	Out     io.Writer
+	SLOData string
 }

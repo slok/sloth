@@ -6,6 +6,8 @@
 
 - Support Kubernetes v1.23
 - Allow disabling optimized rules using `--disable-optimized-rules`. These will disable the period window (e.g 30d) to be as the other window rules and not be optimized.
+- `generate` command now accepts a directory that will discover SLOs and generate with the same structure in an output directory.
+- Added `--fs-exclude` and `--fs-include` flags to `generate` command, that will be used when generate inputs are a directory.
 
 ## [v0.9.0] - 2021-11-15
 

@@ -1,6 +1,6 @@
 module github.com/slok/sloth
 
-go 1.17
+go 1.18
 
 require (
 	github.com/OpenSLO/oslo v0.2.2-0.20210629193748-b882029ce777

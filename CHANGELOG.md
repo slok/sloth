@@ -2,12 +2,15 @@
 
 ## [Unreleased]
 
+## [v0.10.0] - 2022-03-22
+
 ## Added
 
 - Support Kubernetes v1.23
 - Allow disabling optimized rules using `--disable-optimized-rules`. These will disable the period window (e.g 30d) to be as the other window rules and not be optimized.
 - `generate` command now accepts a directory that will discover SLOs and generate with the same structure in an output directory.
 - Added `--fs-exclude` and `--fs-include` flags to `generate` command, that will be used when generate inputs are a directory.
+- Update Go 1.18
 
 ## [v0.9.0] - 2021-11-15
 
@@ -150,7 +153,8 @@
 - Support raw query based SLI.
 - Kubernetes (prometheus-operator) CRD generation support.
 
-[unreleased]: https://github.com/slok/sloth/compare/v0.9.0...HEAD
+[unreleased]: https://github.com/slok/sloth/compare/v0.10.0...HEAD
+[v0.10.0]: https://github.com/slok/sloth/compare/v0.9.0...v0.10.0
 [v0.9.0]: https://github.com/slok/sloth/compare/v0.8.0...v0.9.0
 [v0.8.0]: https://github.com/slok/sloth/compare/v0.7.0...v0.8.0
 [v0.7.0]: https://github.com/slok/sloth/compare/v0.6.0...v0.7.0

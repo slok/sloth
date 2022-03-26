@@ -49,6 +49,9 @@ spec:
             {{- with .Values.sloth.defaultSloPeriod }}
             - --default-slo-period={{ . }}
             {{- end }}
+            {{- if not .Values.sloth.optimizedRules }}
+            - --disable-optimized-rules
+            {{- end }}
             {{- if .Values.customSloConfig.enabled }}
             - --slo-period-windows-path={{ .Values.customSloConfig.path }}
             {{- end }}

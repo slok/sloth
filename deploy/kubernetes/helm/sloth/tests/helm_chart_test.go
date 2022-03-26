@@ -13,6 +13,7 @@ import (
 )
 
 const chartDir = "../"
+var versionNormalizer = regexp.MustCompile(`helm\.sh/chart: sloth-[0-9\\.]+`)
 
 func TestChartServiceAccount(t *testing.T) {
 	tests := map[string]struct {
@@ -61,7 +62,7 @@ func TestChartServiceAccount(t *testing.T) {
 				require.NoError(err)
 				expTplS := strings.TrimSpace(string(expTpl))
 
-				assert.Equal(expTplS, gotTpl)
+				assert.Equal(expTplS, normalizeVersion(gotTpl))
 			}
 		})
 	}
@@ -140,7 +141,7 @@ func TestChartDeployment(t *testing.T) {
 				require.NoError(err)
 				expTplS := strings.TrimSpace(string(expTpl))
 
-				assert.Equal(expTplS, gotTpl)
+				assert.Equal(expTplS, normalizeVersion(gotTpl))
 			}
 		})
 	}
@@ -204,7 +205,7 @@ func TestChartPodMonitor(t *testing.T) {
 				require.NoError(err)
 				expTplS := strings.TrimSpace(string(expTpl))
 
-				assert.Equal(expTplS, gotTpl)
+				assert.Equal(expTplS, normalizeVersion(gotTpl))
 			}
 		})
 	}
@@ -257,7 +258,7 @@ func TestChartClusterRole(t *testing.T) {
 				require.NoError(err)
 				expTplS := strings.TrimSpace(string(expTpl))
 
-				assert.Equal(expTplS, gotTpl)
+				assert.Equal(expTplS, normalizeVersion(gotTpl))
 			}
 		})
 	}
@@ -310,7 +311,7 @@ func TestChartClusterRoleBinding(t *testing.T) {
 				require.NoError(err)
 				expTplS := strings.TrimSpace(string(expTpl))
 
-				assert.Equal(expTplS, gotTpl)
+				assert.Equal(expTplS, normalizeVersion(gotTpl))
 			}
 		})
 	}
@@ -365,8 +366,12 @@ func TestChartConfigMap(t *testing.T) {
 				require.NoError(err)
 				expTplS := strings.TrimSpace(string(expTpl))
 
-				assert.Equal(expTplS, gotTpl)
+				assert.Equal(expTplS, normalizeVersion(gotTpl))
 			}
 		})
 	}
+}
+
+func normalizeVersion(tpl string) string {
+	return versionNormalizer.ReplaceAllString(tpl, "helm.sh/chart: sloth-<version>")
 }

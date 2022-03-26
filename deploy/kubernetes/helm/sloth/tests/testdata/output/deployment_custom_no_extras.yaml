@@ -6,7 +6,7 @@ metadata:
   name: sloth-test
   namespace: custom
   labels:
-    helm.sh/chart: sloth-0.4.2
+    helm.sh/chart: sloth-<version>
     app.kubernetes.io/managed-by: Helm
     app: sloth
     app.kubernetes.io/name: sloth
@@ -22,7 +22,7 @@ spec:
   template:
     metadata:
       labels:
-        helm.sh/chart: sloth-0.4.2
+        helm.sh/chart: sloth-<version>
         app.kubernetes.io/managed-by: Helm
         app: sloth
         app.kubernetes.io/name: sloth
@@ -43,6 +43,7 @@ spec:
             - --label-selector=x=y,z!=y
             - --extra-labels=k1=v1
             - --extra-labels=k2=v2
+            - --disable-optimized-rules
           resources:
             limits:
               memory: 150Mi

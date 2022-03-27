@@ -30,3 +30,7 @@ docker run -it --rm \
 	-e CRD_TYPES_PATH=/src/pkg/kubernetes/api \
 	-e CRD_OUT_PATH=/src/pkg/kubernetes/gen/crd \
 	${IMAGE_CRD_GEN} update-crd.sh
+
+echo "Copying crd to helm chart..."
+rm ./deploy/kubernetes/helm/sloth/crds/*
+cp "${GEN_DIRECTORY}/crd"/* deploy/kubernetes/helm/sloth/crds/

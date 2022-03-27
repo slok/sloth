@@ -3,8 +3,8 @@ module github.com/slok/sloth/helm
 go 1.16
 
 require (
-	github.com/aws/aws-sdk-go v1.38.28 // indirect
-	github.com/gruntwork-io/terratest v0.30.15
+	github.com/elazarl/goproxy v0.0.0-20190911111923-ecfe977594f1 // indirect
+	github.com/go-errors/errors v1.0.2-0.20180813162953-d98b870cc4e0 // indirect
+	github.com/slok/go-helm-template v0.2.0
 	github.com/stretchr/testify v1.7.0
-	k8s.io/client-go v0.19.0 // indirect
 )

@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Changed
+
+- Optimized SLI recording rules now have the same labels as the non-optimized ones.
+
 ## [v0.10.0] - 2022-03-22
 
 ## Added

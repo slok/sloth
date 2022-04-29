@@ -105,6 +105,11 @@ spec:
         / ignoring (sloth_window)
         count_over_time(slo:sli_error:ratio_rate5m{sloth_id="svc01-slo1", sloth_service="svc01", sloth_slo="slo1"}[30d])
       labels:
+        global01k1: global01v1
+        global02k1: global02v1
+        sloth_id: svc01-slo1
+        sloth_service: svc01
+        sloth_slo: slo1
         sloth_window: 30d
       record: slo:sli_error:ratio_rate30d
   - name: sloth-slo-meta-recordings-svc01-slo1
@@ -322,6 +327,11 @@ spec:
         / ignoring (sloth_window)
         count_over_time(slo:sli_error:ratio_rate5m{sloth_id="svc01-slo02", sloth_service="svc01", sloth_slo="slo02"}[30d])
       labels:
+        global01k1: global01v1
+        global03k1: global03v1
+        sloth_id: svc01-slo02
+        sloth_service: svc01
+        sloth_slo: slo02
         sloth_window: 30d
       record: slo:sli_error:ratio_rate30d
   - name: sloth-slo-meta-recordings-svc01-slo02
@@ -500,6 +510,11 @@ spec:
         / ignoring (sloth_window)
         count_over_time(slo:sli_error:ratio_rate5m{sloth_id="svc02-slo1", sloth_service="svc02", sloth_slo="slo1"}[30d])
       labels:
+        global01k1: global01v1
+        global02k1: global02v1
+        sloth_id: svc02-slo1
+        sloth_service: svc02
+        sloth_slo: slo1
         sloth_window: 30d
       record: slo:sli_error:ratio_rate30d
   - name: sloth-slo-meta-recordings-svc02-slo1
@@ -717,6 +732,11 @@ spec:
         / ignoring (sloth_window)
         count_over_time(slo:sli_error:ratio_rate5m{sloth_id="svc02-slo02", sloth_service="svc02", sloth_slo="slo02"}[30d])
       labels:
+        global01k1: global01v1
+        global03k1: global03v1
+        sloth_id: svc02-slo02
+        sloth_service: svc02
+        sloth_slo: slo02
         sloth_window: 30d
       record: slo:sli_error:ratio_rate30d
   - name: sloth-slo-meta-recordings-svc02-slo02

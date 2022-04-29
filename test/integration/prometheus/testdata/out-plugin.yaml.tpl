@@ -103,7 +103,12 @@ groups:
       / ignoring (sloth_window)
       count_over_time(slo:sli_error:ratio_rate5m{sloth_id="svc01-slo1", sloth_service="svc01", sloth_slo="slo1"}[30d])
     labels:
+      owner: myteam
+      sloth_id: svc01-slo1
+      sloth_service: svc01
+      sloth_slo: slo1
       sloth_window: 30d
+      tier: "2"
 - name: sloth-slo-meta-recordings-svc01-slo1
   rules:
   - record: slo:objective:ratio

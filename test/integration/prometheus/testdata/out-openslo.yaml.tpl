@@ -138,6 +138,9 @@ groups:
       / ignoring (sloth_window)
       count_over_time(slo:sli_error:ratio_rate5m{sloth_id="svc01-slo1-0", sloth_service="svc01", sloth_slo="slo1-0"}[30d])
     labels:
+      sloth_id: svc01-slo1-0
+      sloth_service: svc01
+      sloth_slo: slo1-0
       sloth_window: 30d
 - name: sloth-slo-meta-recordings-svc01-slo1-0
   rules:

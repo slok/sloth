@@ -6,8 +6,8 @@ require (
 	github.com/OpenSLO/oslo v0.2.2-0.20210629193748-b882029ce777
 	github.com/go-playground/validator/v10 v10.11.0
 	github.com/oklog/run v1.1.0
-	github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring v0.56.0
-	github.com/prometheus-operator/prometheus-operator/pkg/client v0.56.0
+	github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring v0.56.2
+	github.com/prometheus-operator/prometheus-operator/pkg/client v0.56.2
 	github.com/prometheus/client_golang v1.12.1
 	github.com/prometheus/common v0.34.0
 	github.com/prometheus/prometheus v1.8.2-0.20211207162831-755efd38f9a7 // v2.32.0-rc.1 (Avoid semver incompatibilies with commit).

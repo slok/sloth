@@ -13,6 +13,7 @@ metadata:
     app.kubernetes.io/instance: test
     label-from: test
     kp1: vp1
+    kp2: vp2
 spec:
   selector:
     matchLabels:

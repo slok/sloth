@@ -8,7 +8,7 @@ metadata:
   labels:
     {{- include "sloth.labels" . | nindent 4 }}
     {{- with .Values.metrics.prometheusLabels }}
-    {{ toYaml . }}
+    {{- toYaml . | nindent 4 }}
     {{- end }}
 spec:
   selector:

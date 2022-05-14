@@ -218,7 +218,7 @@ func getBase7DayPromOpPrometheusRule(slothVersion string) *monitoringv1.Promethe
 					Rules: []monitoringv1.Rule{
 						{
 							Alert: "myServiceAlert",
-							Expr:  intstr.FromString("(\n    (slo:sli_error:ratio_rate5m{sloth_id=\"svc01-slo01\", sloth_service=\"svc01\", sloth_slo=\"slo01\"} > (13.44 * 0.0009999999999999432))\n    and ignoring (sloth_window)\n    (slo:sli_error:ratio_rate1h{sloth_id=\"svc01-slo01\", sloth_service=\"svc01\", sloth_slo=\"slo01\"} > (13.44 * 0.0009999999999999432))\n)\nor ignoring (sloth_window)\n(\n    (slo:sli_error:ratio_rate30m{sloth_id=\"svc01-slo01\", sloth_service=\"svc01\", sloth_slo=\"slo01\"} > (3.5 * 0.0009999999999999432))\n    and ignoring (sloth_window)\n    (slo:sli_error:ratio_rate6h{sloth_id=\"svc01-slo01\", sloth_service=\"svc01\", sloth_slo=\"slo01\"} > (3.5 * 0.0009999999999999432))\n)\n"),
+							Expr:  intstr.FromString("(\n    max(slo:sli_error:ratio_rate5m{sloth_id=\"svc01-slo01\", sloth_service=\"svc01\", sloth_slo=\"slo01\"} > (13.44 * 0.0009999999999999432)) without (sloth_window)\n    and\n    max(slo:sli_error:ratio_rate1h{sloth_id=\"svc01-slo01\", sloth_service=\"svc01\", sloth_slo=\"slo01\"} > (13.44 * 0.0009999999999999432)) without (sloth_window)\n)\nor\n(\n    max(slo:sli_error:ratio_rate30m{sloth_id=\"svc01-slo01\", sloth_service=\"svc01\", sloth_slo=\"slo01\"} > (3.5 * 0.0009999999999999432)) without (sloth_window)\n    and\n    max(slo:sli_error:ratio_rate6h{sloth_id=\"svc01-slo01\", sloth_service=\"svc01\", sloth_slo=\"slo01\"} > (3.5 * 0.0009999999999999432)) without (sloth_window)\n)\n"),
 							Labels: map[string]string{
 								"alert01k1":      "alert01v1",
 								"sloth_severity": "page",
@@ -231,7 +231,7 @@ func getBase7DayPromOpPrometheusRule(slothVersion string) *monitoringv1.Promethe
 						},
 						{
 							Alert: "myServiceAlert",
-							Expr:  intstr.FromString("(\n    (slo:sli_error:ratio_rate2h{sloth_id=\"svc01-slo01\", sloth_service=\"svc01\", sloth_slo=\"slo01\"} > (1.4000000000000001 * 0.0009999999999999432))\n    and ignoring (sloth_window)\n    (slo:sli_error:ratio_rate1d{sloth_id=\"svc01-slo01\", sloth_service=\"svc01\", sloth_slo=\"slo01\"} > (1.4000000000000001 * 0.0009999999999999432))\n)\nor ignoring (sloth_window)\n(\n    (slo:sli_error:ratio_rate6h{sloth_id=\"svc01-slo01\", sloth_service=\"svc01\", sloth_slo=\"slo01\"} > (0.98 * 0.0009999999999999432))\n    and ignoring (sloth_window)\n    (slo:sli_error:ratio_rate3d{sloth_id=\"svc01-slo01\", sloth_service=\"svc01\", sloth_slo=\"slo01\"} > (0.98 * 0.0009999999999999432))\n)\n"),
+							Expr:  intstr.FromString("(\n    max(slo:sli_error:ratio_rate2h{sloth_id=\"svc01-slo01\", sloth_service=\"svc01\", sloth_slo=\"slo01\"} > (1.4000000000000001 * 0.0009999999999999432)) without (sloth_window)\n    and\n    max(slo:sli_error:ratio_rate1d{sloth_id=\"svc01-slo01\", sloth_service=\"svc01\", sloth_slo=\"slo01\"} > (1.4000000000000001 * 0.0009999999999999432)) without (sloth_window)\n)\nor\n(\n    max(slo:sli_error:ratio_rate6h{sloth_id=\"svc01-slo01\", sloth_service=\"svc01\", sloth_slo=\"slo01\"} > (0.98 * 0.0009999999999999432)) without (sloth_window)\n    and\n    max(slo:sli_error:ratio_rate3d{sloth_id=\"svc01-slo01\", sloth_service=\"svc01\", sloth_slo=\"slo01\"} > (0.98 * 0.0009999999999999432)) without (sloth_window)\n)\n"),
 							Labels: map[string]string{
 								"alert01k1":      "alert01v1",
 								"sloth_severity": "ticket",

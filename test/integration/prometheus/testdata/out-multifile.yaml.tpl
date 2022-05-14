@@ -93,7 +93,7 @@ groups:
   - record: slo:sli_error:ratio_rate30d
     expr: |
       sum_over_time(slo:sli_error:ratio_rate5m{sloth_id="svc01-slo1", sloth_service="svc01", sloth_slo="slo1"}[30d])
-      /
+      / ignoring (sloth_window)
       count_over_time(slo:sli_error:ratio_rate5m{sloth_id="svc01-slo1", sloth_service="svc01", sloth_slo="slo1"}[30d])
     labels:
       global01k1: global01v1
@@ -315,7 +315,7 @@ groups:
   - record: slo:sli_error:ratio_rate30d
     expr: |
       sum_over_time(slo:sli_error:ratio_rate5m{sloth_id="svc01-slo02", sloth_service="svc01", sloth_slo="slo02"}[30d])
-      /
+      / ignoring (sloth_window)
       count_over_time(slo:sli_error:ratio_rate5m{sloth_id="svc01-slo02", sloth_service="svc01", sloth_slo="slo02"}[30d])
     labels:
       global01k1: global01v1
@@ -488,7 +488,7 @@ groups:
   - record: slo:sli_error:ratio_rate30d
     expr: |
       sum_over_time(slo:sli_error:ratio_rate5m{sloth_id="svc02-slo1", sloth_service="svc02", sloth_slo="slo1"}[30d])
-      /
+      / ignoring (sloth_window)
       count_over_time(slo:sli_error:ratio_rate5m{sloth_id="svc02-slo1", sloth_service="svc02", sloth_slo="slo1"}[30d])
     labels:
       global01k1: global01v1
@@ -710,7 +710,7 @@ groups:
   - record: slo:sli_error:ratio_rate30d
     expr: |
       sum_over_time(slo:sli_error:ratio_rate5m{sloth_id="svc02-slo02", sloth_service="svc02", sloth_slo="slo02"}[30d])
-      /
+      / ignoring (sloth_window)
       count_over_time(slo:sli_error:ratio_rate5m{sloth_id="svc02-slo02", sloth_service="svc02", sloth_slo="slo02"}[30d])
     labels:
       global01k1: global01v1

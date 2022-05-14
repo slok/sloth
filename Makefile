@@ -105,13 +105,13 @@ ci-check:  ## Runs checks in CI environment (without docker).
 	@$(CHECK_CMD)
 
 .PHONY: ci-integration
-ci-integration: ## Runs integraton test in CI environment (without docker).
+ci-integration: ## Runs integration test in CI environment (without docker).
 	@$(INTEGRATION_TEST_CMD)
 
 .PHONY: ci-integration-cli
-ci-integration-cli: ## Runs integraton test for CLI in CI environment (without docker).
+ci-integration-cli: ## Runs integration test for CLI in CI environment (without docker).
 	@$(INTEGRATION_TEST_CLI_CMD)
 
 .PHONY: ci-integration-k8s
-ci-integration-k8s: ## Runs integraton test for K8s in CI environment (without docker).
+ci-integration-k8s: ## Runs integration test for K8s in CI environment (without docker).
 	@$(INTEGRATION_TEST_K8S_CMD)

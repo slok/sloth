@@ -167,6 +167,15 @@ func (h handler) handlePrometheusServiceLevelV1(ctx context.Context, psl *slothv
 			Rules: s.SLORules,
 		})
 	}
+
+	if model.K8sMeta.Labels == nil {
+		model.K8sMeta.Labels = make(map[string]string)
+	}
+
+	for k, v := range h.extraLabels {
+		model.K8sMeta.Labels[k] = v
+	}
+
 	err = h.repository.StoreSLOs(ctx, model.K8sMeta, storageSLOs)
 	if err != nil {
 		return fmt.Errorf("could not store SLOs: %w", err)

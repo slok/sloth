@@ -4,6 +4,10 @@ kind: ConfigMap
 metadata:
   name: {{ include "sloth.fullname" . }}
   namespace: {{ .Release.Namespace }}
+  {{- if .Values.annotations }}
+  annotations:
+    {{- toYaml .Values.annotations | nindent 4 }}
+  {{- end }}
   labels:
     {{- include "sloth.labels" . | nindent 4 }}
 data:

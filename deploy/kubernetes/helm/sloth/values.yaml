@@ -1,4 +1,8 @@
+# Key/value pairs that are attached to all resources.
 labels: {}
+
+# Key/value pairs that are attached to all resources.
+annotations: {}
 
 image:
   repository: ghcr.io/slok/sloth

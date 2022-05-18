@@ -5,6 +5,10 @@ kind: Deployment
 metadata:
   name: {{ include "sloth.fullname" . }}
   namespace: {{ .Release.Namespace }}
+  {{- if .Values.annotations }}
+  annotations:
+    {{- toYaml .Values.annotations | nindent 4 }}
+  {{- end }}
   labels:
     {{- include "sloth.labels" . | nindent 4 }}
 spec:
@@ -14,6 +18,10 @@ spec:
       {{- include "sloth.selectorLabels" . | nindent 6 }}
   template:
     metadata:
+      {{- if .Values.annotations }}
+      annotations:
+        {{- toYaml .Values.annotations | nindent 8 }}
+      {{- end }}
       labels:
         {{- include "sloth.labels" . | nindent 8 }}
       annotations:

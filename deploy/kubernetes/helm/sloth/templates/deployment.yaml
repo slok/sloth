@@ -83,7 +83,7 @@ spec:
               memory: 75Mi
         {{- if .Values.commonPlugins.enabled }}
         - name: git-sync-plugins
-          image: k8s.gcr.io/git-sync/git-sync:v3.3.4
+          image: {{ .Values.commonPlugins.image.repository }}:{{ .Values.commonPlugins.image.tag }}
           args:
             - --repo={{.Values.commonPlugins.gitRepo.url}}
             - --branch={{.Values.commonPlugins.gitRepo.branch}}

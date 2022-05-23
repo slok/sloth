@@ -81,6 +81,10 @@ spec:
             requests:
               cpu: 5m
               memory: 75Mi
+          {{- with .Values.tolerations }}
+          tolerations:
+{{ toYaml . | trim | indent 12 }}
+          {{- end }}
         {{- if .Values.commonPlugins.enabled }}
         - name: git-sync-plugins
           image: k8s.gcr.io/git-sync/git-sync:v3.3.4

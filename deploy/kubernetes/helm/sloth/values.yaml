@@ -33,3 +33,10 @@ customSloConfig:
 #    kind: AlertWindows
 #    spec:
 #    ... See https://sloth.dev/usage/slo-period-windows/
+
+# add deployment pod tolerations
+# tolerations:
+#   - key: kubernetes.azure.com/scalesetpriority
+#     operator: Equal
+#     value: spot
+#     effect: NoSchedule

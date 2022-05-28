@@ -340,15 +340,15 @@ slo:error_budget:ratio{sloth_id="test-id", sloth_service="test-svc", sloth_slo="
 								{
 									Alert: "p_alert_test_name",
 									Expr: `(
-    (slo:sli_error:ratio_rate5m{sloth_id="test-id", sloth_service="test-svc", sloth_slo="test-name"} > (14.4 * 0.0009999999999999432))
-    and ignoring (sloth_window)
-    (slo:sli_error:ratio_rate1h{sloth_id="test-id", sloth_service="test-svc", sloth_slo="test-name"} > (14.4 * 0.0009999999999999432))
+    max(slo:sli_error:ratio_rate5m{sloth_id="test-id", sloth_service="test-svc", sloth_slo="test-name"} > (14.4 * 0.0009999999999999432)) without (sloth_window)
+    and
+    max(slo:sli_error:ratio_rate1h{sloth_id="test-id", sloth_service="test-svc", sloth_slo="test-name"} > (14.4 * 0.0009999999999999432)) without (sloth_window)
 )
-or ignoring (sloth_window)
+or
 (
-    (slo:sli_error:ratio_rate30m{sloth_id="test-id", sloth_service="test-svc", sloth_slo="test-name"} > (6 * 0.0009999999999999432))
-    and ignoring (sloth_window)
-    (slo:sli_error:ratio_rate6h{sloth_id="test-id", sloth_service="test-svc", sloth_slo="test-name"} > (6 * 0.0009999999999999432))
+    max(slo:sli_error:ratio_rate30m{sloth_id="test-id", sloth_service="test-svc", sloth_slo="test-name"} > (6 * 0.0009999999999999432)) without (sloth_window)
+    and
+    max(slo:sli_error:ratio_rate6h{sloth_id="test-id", sloth_service="test-svc", sloth_slo="test-name"} > (6 * 0.0009999999999999432)) without (sloth_window)
 )
 `,
 									Labels: map[string]string{
@@ -364,15 +364,15 @@ or ignoring (sloth_window)
 								{
 									Alert: "t_alert_test_name",
 									Expr: `(
-    (slo:sli_error:ratio_rate2h{sloth_id="test-id", sloth_service="test-svc", sloth_slo="test-name"} > (3 * 0.0009999999999999432))
-    and ignoring (sloth_window)
-    (slo:sli_error:ratio_rate1d{sloth_id="test-id", sloth_service="test-svc", sloth_slo="test-name"} > (3 * 0.0009999999999999432))
+    max(slo:sli_error:ratio_rate2h{sloth_id="test-id", sloth_service="test-svc", sloth_slo="test-name"} > (3 * 0.0009999999999999432)) without (sloth_window)
+    and
+    max(slo:sli_error:ratio_rate1d{sloth_id="test-id", sloth_service="test-svc", sloth_slo="test-name"} > (3 * 0.0009999999999999432)) without (sloth_window)
 )
-or ignoring (sloth_window)
+or
 (
-    (slo:sli_error:ratio_rate6h{sloth_id="test-id", sloth_service="test-svc", sloth_slo="test-name"} > (1 * 0.0009999999999999432))
-    and ignoring (sloth_window)
-    (slo:sli_error:ratio_rate3d{sloth_id="test-id", sloth_service="test-svc", sloth_slo="test-name"} > (1 * 0.0009999999999999432))
+    max(slo:sli_error:ratio_rate6h{sloth_id="test-id", sloth_service="test-svc", sloth_slo="test-name"} > (1 * 0.0009999999999999432)) without (sloth_window)
+    and
+    max(slo:sli_error:ratio_rate3d{sloth_id="test-id", sloth_service="test-svc", sloth_slo="test-name"} > (1 * 0.0009999999999999432)) without (sloth_window)
 )
 `,
 									Labels: map[string]string{

@@ -21,7 +21,7 @@ BUILD_BINARY_CMD := VERSION=${VERSION} ./scripts/build/bin/build.sh
 BUILD_BINARY_ALL_CMD := VERSION=${VERSION} ./scripts/build/bin/build-all.sh
 BUILD_DEV_IMAGE_CMD := IMAGE=${DEV_IMAGE_NAME} DOCKER_FILE_PATH=./docker/dev/Dockerfile VERSION=latest ./scripts/build/docker/build-image-dev.sh
 BUILD_PROD_IMAGE_CMD := IMAGE=${PROD_IMAGE_NAME} DOCKER_FILE_PATH=./docker/prod/Dockerfile VERSION=${VERSION} ./scripts/build/docker/build-image.sh
-BUILD_PUBLSIH_PROD_IMAGE_ALL_CMD := IMAGE=${PROD_IMAGE_NAME} DOCKER_FILE_PATH=./docker/prod/Dockerfile VERSION=${VERSION} ./scripts/build/docker/build-publish-image-all.sh
+BUILD_PUBLISH_PROD_IMAGE_ALL_CMD := IMAGE=${PROD_IMAGE_NAME} DOCKER_FILE_PATH=./docker/prod/Dockerfile VERSION=${VERSION} ./scripts/build/docker/build-publish-image-all.sh
 PUBLISH_PROD_IMAGE_CMD := IMAGE=${PROD_IMAGE_NAME} VERSION=${VERSION} ./scripts/build/docker/publish-image.sh
 
 
@@ -37,7 +37,7 @@ build-image: ## Builds the production docker image.
 	@$(BUILD_PROD_IMAGE_CMD)
 
 build-publish-image-all: ## Builds and publishes all the production docker images (multiarch).
-	@$(BUILD_PUBLSIH_PROD_IMAGE_ALL_CMD)
+	@$(BUILD_PUBLISH_PROD_IMAGE_ALL_CMD)
 
 .PHONY: build-dev-image
 build-dev-image:  ## Builds the development docker image.
@@ -105,13 +105,13 @@ ci-check:  ## Runs checks in CI environment (without docker).
 	@$(CHECK_CMD)
 
 .PHONY: ci-integration
-ci-integration: ## Runs integraton test in CI environment (without docker).
+ci-integration: ## Runs integration test in CI environment (without docker).
 	@$(INTEGRATION_TEST_CMD)
 
 .PHONY: ci-integration-cli
-ci-integration-cli: ## Runs integraton test for CLI in CI environment (without docker).
+ci-integration-cli: ## Runs integration test for CLI in CI environment (without docker).
 	@$(INTEGRATION_TEST_CLI_CMD)
 
 .PHONY: ci-integration-k8s
-ci-integration-k8s: ## Runs integraton test for K8s in CI environment (without docker).
+ci-integration-k8s: ## Runs integration test for K8s in CI environment (without docker).
 	@$(INTEGRATION_TEST_K8S_CMD)

@@ -223,15 +223,15 @@ spec:
           burn rate is too fast.
       expr: |
         (
-            (slo:sli_error:ratio_rate5m{sloth_id="myservice-requests-availability", sloth_service="myservice", sloth_slo="requests-availability"} > (14.4 * 0.0009999999999999432))
-            and ignoring (sloth_window)
-            (slo:sli_error:ratio_rate1h{sloth_id="myservice-requests-availability", sloth_service="myservice", sloth_slo="requests-availability"} > (14.4 * 0.0009999999999999432))
+            max(slo:sli_error:ratio_rate5m{sloth_id="myservice-requests-availability", sloth_service="myservice", sloth_slo="requests-availability"} > (14.4 * 0.0009999999999999432)) without (sloth_window)
+            and
+            max((slo:sli_error:ratio_rate1h{sloth_id="myservice-requests-availability", sloth_service="myservice", sloth_slo="requests-availability"} > (14.4 * 0.0009999999999999432))) without (sloth_window)
         )
-        or ignoring (sloth_window)
+        or
         (
-            (slo:sli_error:ratio_rate30m{sloth_id="myservice-requests-availability", sloth_service="myservice", sloth_slo="requests-availability"} > (6 * 0.0009999999999999432))
-            and ignoring (sloth_window)
-            (slo:sli_error:ratio_rate6h{sloth_id="myservice-requests-availability", sloth_service="myservice", sloth_slo="requests-availability"} > (6 * 0.0009999999999999432))
+            max(slo:sli_error:ratio_rate30m{sloth_id="myservice-requests-availability", sloth_service="myservice", sloth_slo="requests-availability"} > (6 * 0.0009999999999999432)) without (sloth_window)
+            and
+            max(slo:sli_error:ratio_rate6h{sloth_id="myservice-requests-availability", sloth_service="myservice", sloth_slo="requests-availability"} > (6 * 0.0009999999999999432)) without (sloth_window)
         )
       labels:
         category: availability
@@ -243,15 +243,15 @@ spec:
           budget burn rate is too fast.
       expr: |
         (
-            (slo:sli_error:ratio_rate2h{sloth_id="myservice-requests-availability", sloth_service="myservice", sloth_slo="requests-availability"} > (3 * 0.0009999999999999432))
-            and ignoring (sloth_window)
-            (slo:sli_error:ratio_rate1d{sloth_id="myservice-requests-availability", sloth_service="myservice", sloth_slo="requests-availability"} > (3 * 0.0009999999999999432))
+            max(slo:sli_error:ratio_rate2h{sloth_id="myservice-requests-availability", sloth_service="myservice", sloth_slo="requests-availability"} > (3 * 0.0009999999999999432)) without (sloth_window)
+            and
+            max((slo:sli_error:ratio_rate1d{sloth_id="myservice-requests-availability", sloth_service="myservice", sloth_slo="requests-availability"} > (3 * 0.0009999999999999432))) without (sloth_window)
         )
-        or ignoring (sloth_window)
+        or
         (
-            (slo:sli_error:ratio_rate6h{sloth_id="myservice-requests-availability", sloth_service="myservice", sloth_slo="requests-availability"} > (1 * 0.0009999999999999432))
-            and ignoring (sloth_window)
-            (slo:sli_error:ratio_rate3d{sloth_id="myservice-requests-availability", sloth_service="myservice", sloth_slo="requests-availability"} > (1 * 0.0009999999999999432))
+            max(slo:sli_error:ratio_rate6h{sloth_id="myservice-requests-availability", sloth_service="myservice", sloth_slo="requests-availability"} > (1 * 0.0009999999999999432)) without (sloth_window)
+            and
+            max(slo:sli_error:ratio_rate3d{sloth_id="myservice-requests-availability", sloth_service="myservice", sloth_slo="requests-availability"} > (1 * 0.0009999999999999432)) without (sloth_window)
         )
       labels:
         category: availability

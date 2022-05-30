@@ -176,15 +176,15 @@ groups:
   - alert: myServiceAlert
     expr: |
       (
-          (slo:sli_error:ratio_rate5m{sloth_id="svc01-slo1", sloth_service="svc01", sloth_slo="slo1"} > (14.4 * 0.0009999999999999432))
-          and ignoring (sloth_window)
-          (slo:sli_error:ratio_rate1h{sloth_id="svc01-slo1", sloth_service="svc01", sloth_slo="slo1"} > (14.4 * 0.0009999999999999432))
+          max(slo:sli_error:ratio_rate5m{sloth_id="svc01-slo1", sloth_service="svc01", sloth_slo="slo1"} > (14.4 * 0.0009999999999999432)) without (sloth_window)
+          and
+          max(slo:sli_error:ratio_rate1h{sloth_id="svc01-slo1", sloth_service="svc01", sloth_slo="slo1"} > (14.4 * 0.0009999999999999432)) without (sloth_window)
       )
-      or ignoring (sloth_window)
+      or
       (
-          (slo:sli_error:ratio_rate30m{sloth_id="svc01-slo1", sloth_service="svc01", sloth_slo="slo1"} > (6 * 0.0009999999999999432))
-          and ignoring (sloth_window)
-          (slo:sli_error:ratio_rate6h{sloth_id="svc01-slo1", sloth_service="svc01", sloth_slo="slo1"} > (6 * 0.0009999999999999432))
+          max(slo:sli_error:ratio_rate30m{sloth_id="svc01-slo1", sloth_service="svc01", sloth_slo="slo1"} > (6 * 0.0009999999999999432)) without (sloth_window)
+          and
+          max(slo:sli_error:ratio_rate6h{sloth_id="svc01-slo1", sloth_service="svc01", sloth_slo="slo1"} > (6 * 0.0009999999999999432)) without (sloth_window)
       )
     labels:
       alert01k1: alert01v1
@@ -199,15 +199,15 @@ groups:
   - alert: myServiceAlert
     expr: |
       (
-          (slo:sli_error:ratio_rate2h{sloth_id="svc01-slo1", sloth_service="svc01", sloth_slo="slo1"} > (3 * 0.0009999999999999432))
-          and ignoring (sloth_window)
-          (slo:sli_error:ratio_rate1d{sloth_id="svc01-slo1", sloth_service="svc01", sloth_slo="slo1"} > (3 * 0.0009999999999999432))
+          max(slo:sli_error:ratio_rate2h{sloth_id="svc01-slo1", sloth_service="svc01", sloth_slo="slo1"} > (3 * 0.0009999999999999432)) without (sloth_window)
+          and
+          max(slo:sli_error:ratio_rate1d{sloth_id="svc01-slo1", sloth_service="svc01", sloth_slo="slo1"} > (3 * 0.0009999999999999432)) without (sloth_window)
       )
-      or ignoring (sloth_window)
+      or
       (
-          (slo:sli_error:ratio_rate6h{sloth_id="svc01-slo1", sloth_service="svc01", sloth_slo="slo1"} > (1 * 0.0009999999999999432))
-          and ignoring (sloth_window)
-          (slo:sli_error:ratio_rate3d{sloth_id="svc01-slo1", sloth_service="svc01", sloth_slo="slo1"} > (1 * 0.0009999999999999432))
+          max(slo:sli_error:ratio_rate6h{sloth_id="svc01-slo1", sloth_service="svc01", sloth_slo="slo1"} > (1 * 0.0009999999999999432)) without (sloth_window)
+          and
+          max(slo:sli_error:ratio_rate3d{sloth_id="svc01-slo1", sloth_service="svc01", sloth_slo="slo1"} > (1 * 0.0009999999999999432)) without (sloth_window)
       )
     labels:
       alert01k1: alert01v1
@@ -571,15 +571,15 @@ groups:
   - alert: myServiceAlert
     expr: |
       (
-          (slo:sli_error:ratio_rate5m{sloth_id="svc02-slo1", sloth_service="svc02", sloth_slo="slo1"} > (14.4 * 0.00010000000000005117))
-          and ignoring (sloth_window)
-          (slo:sli_error:ratio_rate1h{sloth_id="svc02-slo1", sloth_service="svc02", sloth_slo="slo1"} > (14.4 * 0.00010000000000005117))
+          max(slo:sli_error:ratio_rate5m{sloth_id="svc02-slo1", sloth_service="svc02", sloth_slo="slo1"} > (14.4 * 0.00010000000000005117)) without (sloth_window)
+          and
+          max(slo:sli_error:ratio_rate1h{sloth_id="svc02-slo1", sloth_service="svc02", sloth_slo="slo1"} > (14.4 * 0.00010000000000005117)) without (sloth_window)
       )
-      or ignoring (sloth_window)
+      or
       (
-          (slo:sli_error:ratio_rate30m{sloth_id="svc02-slo1", sloth_service="svc02", sloth_slo="slo1"} > (6 * 0.00010000000000005117))
-          and ignoring (sloth_window)
-          (slo:sli_error:ratio_rate6h{sloth_id="svc02-slo1", sloth_service="svc02", sloth_slo="slo1"} > (6 * 0.00010000000000005117))
+          max(slo:sli_error:ratio_rate30m{sloth_id="svc02-slo1", sloth_service="svc02", sloth_slo="slo1"} > (6 * 0.00010000000000005117)) without (sloth_window)
+          and
+          max(slo:sli_error:ratio_rate6h{sloth_id="svc02-slo1", sloth_service="svc02", sloth_slo="slo1"} > (6 * 0.00010000000000005117)) without (sloth_window)
       )
     labels:
       alert01k1: alert01v1
@@ -594,15 +594,15 @@ groups:
   - alert: myServiceAlert
     expr: |
       (
-          (slo:sli_error:ratio_rate2h{sloth_id="svc02-slo1", sloth_service="svc02", sloth_slo="slo1"} > (3 * 0.00010000000000005117))
-          and ignoring (sloth_window)
-          (slo:sli_error:ratio_rate1d{sloth_id="svc02-slo1", sloth_service="svc02", sloth_slo="slo1"} > (3 * 0.00010000000000005117))
+          max(slo:sli_error:ratio_rate2h{sloth_id="svc02-slo1", sloth_service="svc02", sloth_slo="slo1"} > (3 * 0.00010000000000005117)) without (sloth_window)
+          and
+          max(slo:sli_error:ratio_rate1d{sloth_id="svc02-slo1", sloth_service="svc02", sloth_slo="slo1"} > (3 * 0.00010000000000005117)) without (sloth_window)
       )
-      or ignoring (sloth_window)
+      or
       (
-          (slo:sli_error:ratio_rate6h{sloth_id="svc02-slo1", sloth_service="svc02", sloth_slo="slo1"} > (1 * 0.00010000000000005117))
-          and ignoring (sloth_window)
-          (slo:sli_error:ratio_rate3d{sloth_id="svc02-slo1", sloth_service="svc02", sloth_slo="slo1"} > (1 * 0.00010000000000005117))
+          max(slo:sli_error:ratio_rate6h{sloth_id="svc02-slo1", sloth_service="svc02", sloth_slo="slo1"} > (1 * 0.00010000000000005117)) without (sloth_window)
+          and
+          max(slo:sli_error:ratio_rate3d{sloth_id="svc02-slo1", sloth_service="svc02", sloth_slo="slo1"} > (1 * 0.00010000000000005117)) without (sloth_window)
       )
     labels:
       alert01k1: alert01v1

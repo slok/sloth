@@ -76,11 +76,7 @@ spec:
           {{- end }}
           {{- end }}
           resources:
-            limits:
-              memory: 150Mi
-            requests:
-              cpu: 5m
-              memory: 75Mi
+          {{ toYaml .Values.resources | nindent 12 }}
         {{- if .Values.commonPlugins.enabled }}
         - name: git-sync-plugins
           image: {{ .Values.commonPlugins.image.repository }}:{{ .Values.commonPlugins.image.tag }}

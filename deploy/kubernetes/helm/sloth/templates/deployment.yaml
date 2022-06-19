@@ -81,6 +81,10 @@ spec:
             requests:
               cpu: 5m
               memory: 75Mi
+          {{- with .Values.tolerations }}
+          tolerations:
+{{ toYaml . | trim | indent 12 }}
+          {{- end }}
         {{- if .Values.commonPlugins.enabled }}
         - name: git-sync-plugins
           image: {{ .Values.commonPlugins.image.repository }}:{{ .Values.commonPlugins.image.tag }}

@@ -4,6 +4,14 @@ image:
   repository: ghcr.io/slok/sloth
   tag: v0.10.0
 
+# -- Container resources: requests and limits for CPU, Memory
+resources:
+  limits:
+    memory: 150Mi
+  requests:
+    cpu: 5m
+    memory: 75Mi
+
 sloth:
   resyncInterval: ""    # The controller resync interval duration (e.g 15m).
   workers: 0            # The number of concurrent controller workers (e.g 5).

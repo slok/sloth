@@ -15,20 +15,19 @@
 {{- end }}
 {{- end }}
 
-
 {{- define "sloth.labels" -}}
 helm.sh/chart: {{ include "sloth.chart" . }}
 {{- if .Chart.AppVersion }}
 app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
 {{- end }}
+app.kubernetes.io/component: metrics
 app.kubernetes.io/managed-by: {{ .Release.Service }}
+app.kubernetes.io/part-of: {{ include "sloth.name" . }}
 {{ include "sloth.selectorLabels" . }}
 {{- with .Values.labels }}
 {{ toYaml . }}
 {{- end }}
 {{- end }}
-
-
 
 {{- define "sloth.selectorLabels" -}}
 app: {{ include "sloth.name" . }}

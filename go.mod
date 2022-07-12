@@ -9,7 +9,7 @@ require (
 	github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring v0.57.0
 	github.com/prometheus-operator/prometheus-operator/pkg/client v0.57.0
 	github.com/prometheus/client_golang v1.12.2
-	github.com/prometheus/common v0.35.0
+	github.com/prometheus/common v0.36.0
 	github.com/prometheus/prometheus v1.8.2-0.20211207162831-755efd38f9a7 // v2.32.0-rc.1 (Avoid semver incompatibilies with commit).
 	github.com/sirupsen/logrus v1.8.1
 	github.com/slok/reload v0.1.0

@@ -43,3 +43,18 @@ customSloConfig:
 #     operator: Equal
 #     value: spot
 #     effect: NoSchedule
+
+# add securityContext for pod and container level
+securityContext:
+    pod:
+      runAsNonRoot: true
+      runAsGroup: 1000
+      runAsUser: 100
+      fsGroup: 100
+      supplementalGroups:
+        - 100
+    container:
+      allowPrivilegeEscalation: false
+      capabilities:
+        drop:
+          - ALL

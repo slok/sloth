@@ -23,6 +23,10 @@ spec:
         {{- end }}
     spec:
       serviceAccountName: {{ include "sloth.fullname" . }}
+      securityContext:
+        {{- with .Values.securityContext.pod }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
       containers:
         - name: sloth
           image: {{ .Values.image.repository }}:{{ .Values.image.tag }}
@@ -75,6 +79,10 @@ spec:
               mountPath: {{ .Values.customSloConfig.path }}
           {{- end }}
           {{- end }}
+          securityContext:
+            {{- with .Values.securityContext.container }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
           resources:
             limits:
               memory: 150Mi
@@ -97,6 +105,10 @@ spec:
             - name: sloth-common-sli-plugins
               # Default path for git-sync.
               mountPath: /tmp/git
+          securityContext:
+            {{- with .Values.securityContext.container }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
           resources:
             limits:
               memory: 100Mi

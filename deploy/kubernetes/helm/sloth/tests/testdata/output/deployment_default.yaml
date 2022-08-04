@@ -45,6 +45,7 @@ spec:
               mountPath: /plugins/sloth-common-sli-plugins
           resources:
             limits:
+              cpu: 50m
               memory: 150Mi
             requests:
               cpu: 5m
@@ -62,6 +63,7 @@ spec:
               mountPath: /tmp/git
           resources:
             limits:
+              cpu: 50m
               memory: 100Mi
             requests:
               cpu: 5m

@@ -76,7 +76,7 @@ spec:
           {{- end }}
           {{- end }}
           resources:
-          {{ toYaml .Values.resources | nindent 12 }}
+          {{- toYaml .Values.resources | nindent 12 }}
           {{- with .Values.tolerations }}
           tolerations:
 {{ toYaml . | trim | indent 12 }}
@@ -94,11 +94,7 @@ spec:
               # Default path for git-sync.
               mountPath: /tmp/git
           resources:
-            limits:
-              memory: 100Mi
-            requests:
-              cpu: 5m
-              memory: 50Mi
+          {{- toYaml .Values.commonPlugins.gitRepo.resources | nindent 12 }}
         {{- end }}
       {{- if or .Values.commonPlugins.enabled .Values.customSloConfig.enabled }}
       volumes:

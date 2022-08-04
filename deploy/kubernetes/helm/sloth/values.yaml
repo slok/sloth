@@ -7,6 +7,7 @@ image:
 # -- Container resources: requests and limits for CPU, Memory
 resources:
   limits:
+    cpu: 50m
     memory: 150Mi
   requests:
     cpu: 5m
@@ -31,6 +32,13 @@ commonPlugins:
   gitRepo:
     url: https://github.com/slok/sloth-common-sli-plugins
     branch: main
+    resources:
+      limits:
+        cpu: 50m
+        memory: 100Mi
+      requests:
+        cpu: 5m
+        memory: 50Mi
 
 metrics:
   enabled: true

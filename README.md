@@ -76,11 +76,11 @@ slos:
       annotations:
         # Overwrite default Sloth SLO alert summmary on ticket and page alerts.
         summary: "High error rate on 'myservice' requests responses"
-      page_alert:
+      pageAlert:
         labels:
           severity: "pageteam"
           routing_key: "myteam"
-      ticket_alert:
+      ticketAlert:
         labels:
           severity: "slack"
           slack_channel: "#alerts-myteam"

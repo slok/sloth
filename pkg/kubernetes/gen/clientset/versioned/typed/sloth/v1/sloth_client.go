@@ -12,12 +12,17 @@ import (
 
 type SlothV1Interface interface {
 	RESTClient() rest.Interface
+	ManagedPrometheusServiceLevelsGetter
 	PrometheusServiceLevelsGetter
 }
 
 // SlothV1Client is used to interact with features provided by the sloth.slok.dev group.
 type SlothV1Client struct {
 	restClient rest.Interface
+}
+
+func (c *SlothV1Client) ManagedPrometheusServiceLevels(namespace string) ManagedPrometheusServiceLevelInterface {
+	return newManagedPrometheusServiceLevels(c, namespace)
 }
 
 func (c *SlothV1Client) PrometheusServiceLevels(namespace string) PrometheusServiceLevelInterface {

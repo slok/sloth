@@ -12,6 +12,10 @@ type FakeSlothV1 struct {
 	*testing.Fake
 }
 
+func (c *FakeSlothV1) ManagedPrometheusServiceLevels(namespace string) v1.ManagedPrometheusServiceLevelInterface {
+	return &FakeManagedPrometheusServiceLevels{c, namespace}
+}
+
 func (c *FakeSlothV1) PrometheusServiceLevels(namespace string) v1.PrometheusServiceLevelInterface {
 	return &FakePrometheusServiceLevels{c, namespace}
 }

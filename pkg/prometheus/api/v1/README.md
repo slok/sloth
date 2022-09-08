@@ -82,7 +82,7 @@ slos:
 const Version = "prometheus/v1"
 ```
 
-## type Alert
+## type [Alert](<https://github.com/Smartum/sloth/blob/main/pkg/prometheus/api/v1/v1.go#L152-L161>)
 
 Alert configures specific SLO alert\.
 
@@ -99,7 +99,7 @@ type Alert struct {
 }
 ```
 
-## type Alerting
+## type [Alerting](<https://github.com/Smartum/sloth/blob/main/pkg/prometheus/api/v1/v1.go#L137-L149>)
 
 Alerting wraps all the configuration required by the SLO alerts\.
 
@@ -119,7 +119,7 @@ type Alerting struct {
 }
 ```
 
-## type SLI
+## type [SLI](<https://github.com/Smartum/sloth/blob/main/pkg/prometheus/api/v1/v1.go#L99-L106>)
 
 SLI will tell what is good or bad for the SLO\. All SLIs will be get based on time windows\, that's why Sloth needs the queries to use \`\{\{\.window\}\}\` template variable\.
 
@@ -136,7 +136,7 @@ type SLI struct {
 }
 ```
 
-## type SLIEvents
+## type [SLIEvents](<https://github.com/Smartum/sloth/blob/main/pkg/prometheus/api/v1/v1.go#L117-L126>)
 
 SLIEvents is an SLI that is calculated as the division of bad events and total events\, giving a ratio SLI\. Normally this is the most common ratio type\.
 
@@ -153,7 +153,7 @@ type SLIEvents struct {
 }
 ```
 
-## type SLIPlugin
+## type [SLIPlugin](<https://github.com/Smartum/sloth/blob/main/pkg/prometheus/api/v1/v1.go#L129-L134>)
 
 SLIPlugin will use the SLI returned by the SLI plugin selected along with the options\.
 
@@ -166,7 +166,7 @@ type SLIPlugin struct {
 }
 ```
 
-## type SLIRaw
+## type [SLIRaw](<https://github.com/Smartum/sloth/blob/main/pkg/prometheus/api/v1/v1.go#L110-L113>)
 
 SLIRaw is a error ratio SLI already calculated\. Normally this will be used when the SLI is already calculated by other recording rule\, system\.\.\.
 
@@ -177,7 +177,7 @@ type SLIRaw struct {
 }
 ```
 
-## type SLO
+## type [SLO](<https://github.com/Smartum/sloth/blob/main/pkg/prometheus/api/v1/v1.go#L76-L92>)
 
 SLO is the configuration/declaration of the service level objective of a service\.
 
@@ -201,7 +201,7 @@ type SLO struct {
 }
 ```
 
-## type Spec
+## type [Spec](<https://github.com/Smartum/sloth/blob/main/pkg/prometheus/api/v1/v1.go#L62-L72>)
 
 Spec represents the root type of the SLOs declaration specification\.
 

@@ -3,6 +3,8 @@ package commands
 import (
 	"context"
 	"fmt"
+	"github.com/slok/sloth/internal/k8sprometheus/managedprometheus"
+	"github.com/slok/sloth/internal/k8sprometheus/prometheusoperator"
 	"io"
 	"io/fs"
 	"os"
@@ -132,8 +134,9 @@ func (g generateCommand) Run(ctx context.Context, config RootConfig) error {
 
 	// Create Spec loaders.
 	promYAMLLoader := prometheus.NewYAMLSpecLoader(pluginRepo, sloPeriod)
-	kubeYAMLLoader := k8sprometheus.NewYAMLSpecLoader(pluginRepo, sloPeriod)
+	kubeYAMLLoader := prometheusoperator.NewYAMLSpecLoader(pluginRepo, sloPeriod)
 	openSLOYAMLLoader := openslo.NewYAMLSpecLoader(sloPeriod)
+	managedPromYAMLLoader := managedprometheus.NewYAMLSpecLoader(pluginRepo, sloPeriod)
 
 	// Get SLO targets.
 	genTargets := []generateTarget{}
@@ -276,6 +279,17 @@ func (g generateCommand) Run(ctx context.Context, config RootConfig) error {
 				return fmt.Errorf("could not generate OpenSLO format rules: %w", err)
 			}
 
+		case managedPromYAMLLoader.IsSpecType(ctx, dataB):
+			sloGroup, err := managedPromYAMLLoader.LoadSpec(ctx, dataB)
+			if err != nil {
+				return fmt.Errorf("tried loading Managed prometheus SLOs spec, it couldn't: %w", err)
+			}
+
+			err = generateManagedPrometheus(ctx, logger, windowsRepo, g.disableRecordings, g.disableAlerts, g.disableOptimizedRules, g.extraLabels, *sloGroup, genTarget.Out)
+			if err != nil {
+				return fmt.Errorf("could not generate Kubernetes format rules: %w", err)
+			}
+
 		default:
 			return fmt.Errorf("invalid spec, could not load with any of the supported spec types")
 		}
@@ -331,7 +345,7 @@ func generateKubernetes(ctx context.Context, logger log.Logger, windowsRepo aler
 		return err
 	}
 
-	repo := k8sprometheus.NewIOWriterPrometheusOperatorYAMLRepo(out, logger)
+	repo := prometheusoperator.NewIOWriterYAMLRepo(out, logger)
 	storageSLOs := make([]k8sprometheus.StorageSLO, 0, len(result.PrometheusSLOs))
 	for _, s := range result.PrometheusSLOs {
 		storageSLOs = append(storageSLOs, k8sprometheus.StorageSLO{
@@ -373,6 +387,38 @@ func generateOpenSLO(ctx context.Context, logger log.Logger, windowsRepo alert.W
 	}
 
 	err = repo.StoreSLOs(ctx, storageSLOs)
+	if err != nil {
+		return fmt.Errorf("could not store SLOS: %w", err)
+	}
+
+	return nil
+}
+
+// generateManagedPrometheus generates the SLOs based on a Kubernetes spec format input and
+// outs a Kubernetes Managed prometheus operator CRD yaml.
+func generateManagedPrometheus(ctx context.Context, logger log.Logger, windowsRepo alert.WindowsRepo, disableRecs, disableAlerts, disableOptimizedRules bool, extraLabels map[string]string, sloGroup k8sprometheus.SLOGroup, out io.Writer) error {
+	logger.Infof("Generating from Google Managed Prometheus spec")
+
+	info := info.Info{
+		Version: info.Version,
+		Mode:    info.ModeCLIGenManagedProm,
+		Spec:    fmt.Sprintf("%s/%s", kubernetesv1.SchemeGroupVersion.Group, kubernetesv1.SchemeGroupVersion.Version),
+	}
+	result, err := generateRules(ctx, logger, info, windowsRepo, disableRecs, disableAlerts, disableOptimizedRules, extraLabels, sloGroup.SLOGroup)
+	if err != nil {
+		return err
+	}
+
+	repo := managedprometheus.NewIOWriterYAMLRepo(out, logger)
+	storageSLOs := make([]k8sprometheus.StorageSLO, 0, len(result.PrometheusSLOs))
+	for _, s := range result.PrometheusSLOs {
+		storageSLOs = append(storageSLOs, k8sprometheus.StorageSLO{
+			SLO:   s.SLO,
+			Rules: s.SLORules,
+		})
+	}
+
+	err = repo.StoreSLOs(ctx, sloGroup.K8sMeta, storageSLOs)
 	if err != nil {
 		return fmt.Errorf("could not store SLOS: %w", err)
 	}

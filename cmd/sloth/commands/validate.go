@@ -3,6 +3,8 @@ package commands
 import (
 	"context"
 	"fmt"
+	"github.com/slok/sloth/internal/k8sprometheus/managedprometheus"
+	"github.com/slok/sloth/internal/k8sprometheus/prometheusoperator"
 	"io"
 	"io/fs"
 	"os"
@@ -13,7 +15,6 @@ import (
 	"gopkg.in/alecthomas/kingpin.v2"
 
 	"github.com/slok/sloth/internal/alert"
-	"github.com/slok/sloth/internal/k8sprometheus"
 	"github.com/slok/sloth/internal/log"
 	"github.com/slok/sloth/internal/openslo"
 	"github.com/slok/sloth/internal/prometheus"
@@ -109,8 +110,9 @@ func (v validateCommand) Run(ctx context.Context, config RootConfig) error {
 
 	// Create Spec loaders.
 	promYAMLLoader := prometheus.NewYAMLSpecLoader(pluginRepo, sloPeriod)
-	kubeYAMLLoader := k8sprometheus.NewYAMLSpecLoader(pluginRepo, sloPeriod)
+	kubeYAMLLoader := prometheusoperator.NewYAMLSpecLoader(pluginRepo, sloPeriod)
 	openSLOYAMLLoader := openslo.NewYAMLSpecLoader(sloPeriod)
+	managedPromYAMLLoader := managedprometheus.NewYAMLSpecLoader(pluginRepo, sloPeriod)
 
 	// For every file load the data and start the validation process:
 	validations := []*fileValidation{}
@@ -170,6 +172,18 @@ func (v validateCommand) Run(ctx context.Context, config RootConfig) error {
 				}
 
 				validation.Errs = []error{fmt.Errorf("Tried loading OpenSLO SLOs spec, it couldn't: %s", openSLOErr)}
+
+			case managedPromYAMLLoader.IsSpecType(ctx, dataB):
+				sloGroup, k8sErr := managedPromYAMLLoader.LoadSpec(ctx, dataB)
+				if k8sErr == nil {
+					err := generateManagedPrometheus(ctx, log.Noop, windowsRepo, false, false, false, v.extraLabels, *sloGroup, io.Discard)
+					if err != nil {
+						validation.Errs = []error{fmt.Errorf("could not generate Kubernetes format rules: %w", err)}
+					}
+					continue
+				}
+
+				validation.Errs = []error{fmt.Errorf("Tried loading Kubernetes managed-prometheus SLOs spec, it couldn't: %w", k8sErr)}
 
 			default:
 				validation.Errs = []error{fmt.Errorf("Unknown spec type")}

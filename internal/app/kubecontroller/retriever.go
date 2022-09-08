@@ -17,6 +17,8 @@ import (
 type RetrieverKubernetesRepository interface {
 	ListPrometheusServiceLevels(ctx context.Context, ns string, opts metav1.ListOptions) (*slothv1.PrometheusServiceLevelList, error)
 	WatchPrometheusServiceLevels(ctx context.Context, ns string, opts metav1.ListOptions) (watch.Interface, error)
+	ListManagedPrometheusServiceLevels(ctx context.Context, ns string, opts metav1.ListOptions) (*slothv1.ManagedPrometheusServiceLevelList, error)
+	WatchManagedPrometheusServiceLevels(ctx context.Context, ns string, opts metav1.ListOptions) (watch.Interface, error)
 }
 
 // NewPrometheusServiceLevelsRetriver returns the retriever for Prometheus service levels events.
@@ -29,6 +31,20 @@ func NewPrometheusServiceLevelsRetriver(ns string, labelSelector labels.Selector
 		WatchFunc: func(options metav1.ListOptions) (watch.Interface, error) {
 			options.LabelSelector = labelSelector.String()
 			return repo.WatchPrometheusServiceLevels(context.Background(), ns, options)
+		},
+	})
+}
+
+// NewManagedPrometheusServiceLevelsRetriver returns the retriever for Managed Prometheus service levels events.
+func NewManagedPrometheusServiceLevelsRetriver(ns string, labelSelector labels.Selector, repo RetrieverKubernetesRepository) controller.Retriever {
+	return controller.MustRetrieverFromListerWatcher(&cache.ListWatch{
+		ListFunc: func(options metav1.ListOptions) (runtime.Object, error) {
+			options.LabelSelector = labelSelector.String()
+			return repo.ListManagedPrometheusServiceLevels(context.Background(), ns, options)
+		},
+		WatchFunc: func(options metav1.ListOptions) (watch.Interface, error) {
+			options.LabelSelector = labelSelector.String()
+			return repo.WatchManagedPrometheusServiceLevels(context.Background(), ns, options)
 		},
 	})
 }

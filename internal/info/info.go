@@ -13,6 +13,7 @@ const (
 	ModeCLIGenKubernetes        = "cli-gen-k8s"
 	ModeCLIGenOpenSLO           = "cli-gen-openslo"
 	ModeControllerGenKubernetes = "ctrl-gen-k8s"
+	ModeCLIGenManagedProm       = "cli-gen-managed-prom"
 )
 
 // Info is the information of the app and request based for SLO generators.

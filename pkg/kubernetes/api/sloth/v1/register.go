@@ -42,6 +42,8 @@ func addKnownTypes(scheme *runtime.Scheme) error {
 	scheme.AddKnownTypes(SchemeGroupVersion,
 		&PrometheusServiceLevel{},
 		&PrometheusServiceLevelList{},
+		&ManagedPrometheusServiceLevel{},
+		&ManagedPrometheusServiceLevelList{},
 	)
 	metav1.AddToGroupVersion(scheme, SchemeGroupVersion)
 	return nil

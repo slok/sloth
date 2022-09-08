@@ -17,7 +17,7 @@ import (
 
 // SpecLoader Knows how to load a Kubernetes Spec into an app model.
 type SpecLoader interface {
-	LoadSpec(ctx context.Context, spec *slothv1.PrometheusServiceLevel) (*k8sprometheus.SLOGroup, error)
+	LoadSpec(ctx context.Context, spec runtime.Object) (*k8sprometheus.SLOGroup, error)
 }
 
 // Generator Knows how to generate SLO prometheus rules from app SLO model.
@@ -33,6 +33,7 @@ type Repository interface {
 // KubeStatusStorer knows how to set the status of Prometheus service levels Kubernetes CRD.
 type KubeStatusStorer interface {
 	EnsurePrometheusServiceLevelStatus(ctx context.Context, slo *slothv1.PrometheusServiceLevel, err error) error
+	EnsureManagedPrometheusServiceLevelStatus(ctx context.Context, slo *slothv1.ManagedPrometheusServiceLevel, err error) error
 }
 
 // HandlerConfig is the controller handler configuration.
@@ -112,6 +113,8 @@ func (h handler) Handle(ctx context.Context, obj runtime.Object) error {
 	switch v := obj.(type) {
 	case *slothv1.PrometheusServiceLevel:
 		return h.handlePrometheusServiceLevelV1(ctx, v)
+	case *slothv1.ManagedPrometheusServiceLevel:
+		return h.handleMangedPrometheusServiceLevelV1(ctx, v)
 	default:
 		h.logger.Warningf("Unsuported Kubernetes object type: %s", obj.GetObjectKind())
 	}
@@ -143,8 +146,34 @@ func (h handler) handlePrometheusServiceLevelV1(ctx context.Context, psl *slothv
 	if err != nil {
 		return fmt.Errorf("could not load CR spec into model: %w", err)
 	}
+	return h.storeSLOs(ctx, model)
+}
 
-	// Generate rules.
+func (h handler) handleMangedPrometheusServiceLevelV1(ctx context.Context, psl *slothv1.ManagedPrometheusServiceLevel) (err error) {
+	ctx = h.logger.SetValuesOnCtx(ctx, log.Kv{"ns": psl.Namespace, "name": psl.Name})
+	logger := h.logger.WithCtxValues(ctx)
+
+	ignoreReason, ignore := h.ignoreHandleManagedPrometheusServiceLevelV1(ctx, psl)
+	if ignore {
+		logger.Debugf("Ignoring object due to %q", ignoreReason)
+		return nil
+	}
+
+	defer func() {
+		storedErr := h.kubeStatusStorer.EnsureManagedPrometheusServiceLevelStatus(ctx, psl, err)
+		if storedErr != nil {
+			logger.Errorf("Could not set ManagedPrometheusServiceLevel CRD status: %s", storedErr)
+		}
+	}()
+
+	model, err := h.specLoader.LoadSpec(ctx, psl)
+	if err != nil {
+		return fmt.Errorf("could not load CR spec into model: %w", err)
+	}
+	return h.storeSLOs(ctx, model)
+}
+
+func (h handler) storeSLOs(ctx context.Context, model *k8sprometheus.SLOGroup) error {
 	req := generate.Request{
 		Info: info.Info{
 			Version: info.Version,
@@ -171,7 +200,6 @@ func (h handler) handlePrometheusServiceLevelV1(ctx context.Context, psl *slothv
 	if err != nil {
 		return fmt.Errorf("could not store SLOs: %w", err)
 	}
-
 	return nil
 }
 
@@ -194,6 +222,22 @@ func (h handler) ignoreHandlePrometheusServiceLevelV1(ctx context.Context, psl *
 	if psl.Generation == psl.Status.ObservedGeneration &&
 		psl.Status.PromOpRulesGenerated &&
 		time.Since(psl.Status.LastPromOpRulesSuccessfulGenerated.Time) < h.ignoreHandleBefore {
+		return "no spec change in correct state object", true
+	}
+
+	return "", false
+}
+
+func (h handler) ignoreHandleManagedPrometheusServiceLevelV1(ctx context.Context, psl *slothv1.ManagedPrometheusServiceLevel) (reason string, ignore bool) {
+	// If the received object is being deleted, ignore.
+	deleteInProgress := !psl.DeletionTimestamp.IsZero()
+	if deleteInProgress {
+		return "deletion in progress", true
+	}
+
+	if psl.Generation == psl.Status.ObservedGeneration &&
+		psl.Status.ManagedPromOpRulesGenerated &&
+		time.Since(psl.Status.LastManagedPromOpRulesSuccessfulGenerated.Time) < h.ignoreHandleBefore {
 		return "no spec change in correct state object", true
 	}
 

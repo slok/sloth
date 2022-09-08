@@ -2,8 +2,11 @@ package k8sprometheus
 
 import (
 	"context"
+	managedpromv1 "github.com/GoogleCloudPlatform/prometheus-engine/pkg/operator/apis/monitoring/v1"
 	"time"
 
+	managedprometheusclientset "github.com/GoogleCloudPlatform/prometheus-engine/pkg/operator/generated/clientset/versioned"
+	managedprometheusclientsetfake "github.com/GoogleCloudPlatform/prometheus-engine/pkg/operator/generated/clientset/versioned/fake"
 	monitoringv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
 	monitoringclientset "github.com/prometheus-operator/prometheus-operator/pkg/client/versioned"
 	monitoringclientsetfake "github.com/prometheus-operator/prometheus-operator/pkg/client/versioned/fake"
@@ -19,17 +22,24 @@ import (
 )
 
 type KubernetesService struct {
-	slothCli      slothclientset.Interface
-	monitoringCli monitoringclientset.Interface
-	logger        log.Logger
+	slothCli       slothclientset.Interface
+	monitoringCli  monitoringclientset.Interface
+	managedPromCli managedprometheusclientset.Interface
+	logger         log.Logger
 }
 
 // NewKubernetesService returns a new Kubernetes Service.
-func NewKubernetesService(slothCli slothclientset.Interface, monitoringCli monitoringclientset.Interface, logger log.Logger) KubernetesService {
+func NewKubernetesService(
+	slothCli slothclientset.Interface,
+	monitoringCli monitoringclientset.Interface,
+	managedPromCli managedprometheusclientset.Interface,
+	logger log.Logger,
+) KubernetesService {
 	return KubernetesService{
-		slothCli:      slothCli,
-		monitoringCli: monitoringCli,
-		logger:        logger.WithValues(log.Kv{"service": "k8sprometheus.Service"}),
+		slothCli:       slothCli,
+		monitoringCli:  monitoringCli,
+		managedPromCli: managedPromCli,
+		logger:         logger.WithValues(log.Kv{"service": "k8sprometheus.Service"}),
 	}
 }
 
@@ -91,6 +101,59 @@ func (k KubernetesService) EnsurePrometheusServiceLevelStatus(ctx context.Contex
 	return err
 }
 
+func (k KubernetesService) ListManagedPrometheusServiceLevels(ctx context.Context, ns string, opts metav1.ListOptions) (*slothv1.ManagedPrometheusServiceLevelList, error) {
+	return k.slothCli.SlothV1().ManagedPrometheusServiceLevels(ns).List(ctx, opts)
+}
+
+func (k KubernetesService) WatchManagedPrometheusServiceLevels(ctx context.Context, ns string, opts metav1.ListOptions) (watch.Interface, error) {
+	return k.slothCli.SlothV1().ManagedPrometheusServiceLevels(ns).Watch(ctx, opts)
+}
+
+func (k KubernetesService) EnsureManagedPrometheusRule(ctx context.Context, pr *managedpromv1.Rules) error {
+	logger := k.logger.WithCtxValues(ctx)
+	pr = pr.DeepCopy()
+	stored, err := k.managedPromCli.MonitoringV1().Rules(pr.Namespace).Get(ctx, pr.Name, metav1.GetOptions{})
+	if err != nil {
+		if !kubeerrors.IsNotFound(err) {
+			return err
+		}
+		_, err = k.managedPromCli.MonitoringV1().Rules(pr.Namespace).Create(ctx, pr, metav1.CreateOptions{})
+		if err != nil {
+			return err
+		}
+		logger.Debugf("rules.monitoring.googleapis.com has been created")
+		return nil
+	}
+
+	pr.ObjectMeta.ResourceVersion = stored.ResourceVersion
+	_, err = k.managedPromCli.MonitoringV1().Rules(pr.Namespace).Update(ctx, pr, metav1.UpdateOptions{})
+	if err != nil {
+		return err
+	}
+	logger.Debugf("rules.monitoring.googleapis.com has been overwritten")
+
+	return nil
+}
+
+func (k KubernetesService) EnsureManagedPrometheusServiceLevelStatus(ctx context.Context, slo *slothv1.ManagedPrometheusServiceLevel, err error) error {
+	slo = slo.DeepCopy()
+
+	slo.Status.ManagedPromOpRulesGenerated = false
+	slo.Status.ManagedPromOpRulesGeneratedSLOs = 0
+	slo.Status.ProcessedSLOs = len(slo.Spec.SLOs)
+	slo.Status.ObservedGeneration = slo.Generation
+
+	if err == nil {
+		slo.Status.ManagedPromOpRulesGenerated = true
+		slo.Status.ManagedPromOpRulesGeneratedSLOs = len(slo.Spec.SLOs)
+		slo.Status.LastManagedPromOpRulesSuccessfulGenerated = &metav1.Time{Time: time.Now().UTC()}
+	}
+
+	_, err = k.slothCli.SlothV1().ManagedPrometheusServiceLevels(slo.Namespace).UpdateStatus(ctx, slo, metav1.UpdateOptions{})
+
+	return nil
+}
+
 type DryRunKubernetesService struct {
 	svc    KubernetesService
 	logger log.Logger
@@ -122,6 +185,24 @@ func (d DryRunKubernetesService) EnsurePrometheusServiceLevelStatus(ctx context.
 	return nil
 }
 
+func (d DryRunKubernetesService) ListManagedPrometheusServiceLevels(ctx context.Context, ns string, opts metav1.ListOptions) (*slothv1.ManagedPrometheusServiceLevelList, error) {
+	return d.svc.ListManagedPrometheusServiceLevels(ctx, ns, opts)
+}
+
+func (d DryRunKubernetesService) WatchManagedPrometheusServiceLevels(ctx context.Context, ns string, opts metav1.ListOptions) (watch.Interface, error) {
+	return d.svc.WatchManagedPrometheusServiceLevels(ctx, ns, opts)
+}
+
+func (d DryRunKubernetesService) EnsureManagedPrometheusRule(ctx context.Context, pr *managedpromv1.Rules) error {
+	d.logger.Infof("Dry run EnsureManagedPrometheusRule")
+	return nil
+}
+
+func (d DryRunKubernetesService) EnsureManagedPrometheusServiceLevelStatus(ctx context.Context, slo *slothv1.ManagedPrometheusServiceLevel, err error) error {
+	d.logger.Infof("Dry run EnsureManagedPrometheusServiceLevelStatus")
+	return nil
+}
+
 type FakeKubernetesService struct {
 	ksvc KubernetesService
 }
@@ -133,6 +214,7 @@ func NewKubernetesServiceFake(logger log.Logger) FakeKubernetesService {
 		ksvc: NewKubernetesService(
 			slothclientsetfake.NewSimpleClientset(prometheusServiceLevelFakes...),
 			monitoringclientsetfake.NewSimpleClientset(),
+			managedprometheusclientsetfake.NewSimpleClientset(),
 			logger),
 	}
 }
@@ -153,6 +235,22 @@ func (f FakeKubernetesService) EnsurePrometheusServiceLevelStatus(ctx context.Co
 	return f.ksvc.EnsurePrometheusServiceLevelStatus(ctx, slo, err)
 }
 
+func (f FakeKubernetesService) ListManagedPrometheusServiceLevels(ctx context.Context, ns string, opts metav1.ListOptions) (*slothv1.ManagedPrometheusServiceLevelList, error) {
+	return f.ksvc.ListManagedPrometheusServiceLevels(ctx, ns, opts)
+}
+
+func (f FakeKubernetesService) WatchManagedPrometheusServiceLevels(ctx context.Context, ns string, opts metav1.ListOptions) (watch.Interface, error) {
+	return f.ksvc.WatchManagedPrometheusServiceLevels(ctx, ns, opts)
+}
+
+func (f FakeKubernetesService) EnsureManagedPrometheusRule(ctx context.Context, pr *managedpromv1.Rules) error {
+	return f.ksvc.EnsureManagedPrometheusRule(ctx, pr)
+}
+
+func (f FakeKubernetesService) EnsureManagedPrometheusServiceLevelStatus(ctx context.Context, slo *slothv1.ManagedPrometheusServiceLevel, err error) error {
+	return f.ksvc.EnsureManagedPrometheusServiceLevelStatus(ctx, slo, err)
+}
+
 var prometheusServiceLevelFakes = []runtime.Object{
 	&slothv1.PrometheusServiceLevel{
 		ObjectMeta: metav1.ObjectMeta{
@@ -162,6 +260,59 @@ var prometheusServiceLevelFakes = []runtime.Object{
 			},
 		},
 		Spec: slothv1.PrometheusServiceLevelSpec{
+			Service: "svc01",
+			Labels: map[string]string{
+				"globalk1": "globalv1",
+			},
+			SLOs: []slothv1.SLO{
+				{
+					Name:      "slo01",
+					Objective: 99.9,
+					Labels: map[string]string{
+						"slo01k1": "slo01v1",
+					},
+					SLI: slothv1.SLI{Events: &slothv1.SLIEvents{
+						ErrorQuery: `sum(rate(http_request_duration_seconds_count{job="myservice",code=~"(5..|429)"}[{{.window}}]))`,
+						TotalQuery: `sum(rate(http_request_duration_seconds_count{job="myservice"}[{{.window}}]))`,
+					}},
+					Alerting: slothv1.Alerting{
+						Name: "myServiceAlert",
+						Labels: map[string]string{
+							"alert01k1": "alert01v1",
+						},
+						Annotations: map[string]string{
+							"alert02k1": "alert02v1",
+						},
+						PageAlert:   slothv1.Alert{},
+						TicketAlert: slothv1.Alert{},
+					},
+				},
+				{
+					Name:      "slo02",
+					Objective: 99.99,
+					SLI: slothv1.SLI{Raw: &slothv1.SLIRaw{
+						ErrorRatioQuery: `
+sum(rate(http_request_duration_seconds_count{job="myservice2",code=~"(5..|429)"}[{{.window}}]))
+/
+sum(rate(http_request_duration_seconds_count{job="myservice2"}[{{.window}}]))
+`,
+					}},
+					Alerting: slothv1.Alerting{
+						PageAlert:   slothv1.Alert{Disable: true},
+						TicketAlert: slothv1.Alert{Disable: true},
+					},
+				},
+			},
+		},
+	},
+	&slothv1.ManagedPrometheusServiceLevel{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "fake01",
+			Labels: map[string]string{
+				"prometheus": "default",
+			},
+		},
+		Spec: slothv1.ManagedPrometheusServiceLevelSpec{
 			Service: "svc01",
 			Labels: map[string]string{
 				"globalk1": "globalv1",

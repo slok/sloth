@@ -1,8 +1,9 @@
-package k8sprometheus_test
+package managedprometheus_test
 
 import (
 	"context"
 	"fmt"
+	"github.com/slok/sloth/internal/k8sprometheus/managedprometheus"
 	"testing"
 	"time"
 
@@ -75,7 +76,7 @@ metadata:
 		"An spec without SLOs should fail.": {
 			specYaml: `
 apiVersion: sloth.slok.dev/v1
-kind: PrometheusServiceLevel
+kind: ManagedPrometheusServiceLevel
 metadata:
   name: sloth-slo-home-wifi
   namespace: monitoring
@@ -92,7 +93,7 @@ spec:
 		"An spec without unknown SLI plugin should fail.": {
 			specYaml: `
 apiVersion: sloth.slok.dev/v1
-kind: PrometheusServiceLevel
+kind: ManagedPrometheusServiceLevel
 metadata:
   name: k8s-test-svc
   namespace: test-ns
@@ -130,7 +131,7 @@ spec:
 			},
 			specYaml: `
 apiVersion: sloth.slok.dev/v1
-kind: PrometheusServiceLevel
+kind: ManagedPrometheusServiceLevel
 metadata:
   name: k8s-test-svc
   namespace: test-ns
@@ -155,7 +156,7 @@ spec:
 `,
 			expModel: &k8sprometheus.SLOGroup{
 				K8sMeta: k8sprometheus.K8sMeta{
-					Kind:       "PrometheusServiceLevel",
+					Kind:       "ManagedPrometheusServiceLevel",
 					APIVersion: "sloth.slok.dev/v1",
 					UID:        "",
 					Name:       "k8s-test-svc",
@@ -192,7 +193,7 @@ spec:
 			},
 			specYaml: `
 apiVersion: sloth.slok.dev/v1
-kind: PrometheusServiceLevel
+kind: ManagedPrometheusServiceLevel
 metadata:
   name: k8s-test-svc
   namespace: test-ns
@@ -216,7 +217,7 @@ spec:
 		"Correct spec should return the models correctly.": {
 			specYaml: `
 apiVersion: sloth.slok.dev/v1
-kind: PrometheusServiceLevel
+kind: ManagedPrometheusServiceLevel
 metadata:
   name: k8s-test-svc
   namespace: test-ns
@@ -273,7 +274,7 @@ spec:
 `,
 			expModel: &k8sprometheus.SLOGroup{
 				K8sMeta: k8sprometheus.K8sMeta{
-					Kind:        "PrometheusServiceLevel",
+					Kind:        "ManagedPrometheusServiceLevel",
 					APIVersion:  "sloth.slok.dev/v1",
 					UID:         "",
 					Name:        "k8s-test-svc",
@@ -354,7 +355,7 @@ spec:
 		t.Run(name, func(t *testing.T) {
 			assert := assert.New(t)
 
-			loader := k8sprometheus.NewYAMLSpecLoader(testMemPluginsRepo(test.plugins), 30*24*time.Hour)
+			loader := managedprometheus.NewYAMLSpecLoader(testMemPluginsRepo(test.plugins), 30*24*time.Hour)
 			gotModel, err := loader.LoadSpec(context.TODO(), []byte(test.specYaml))
 
 			if test.expErr {
@@ -384,7 +385,7 @@ func TestYAMLIsSpecType(t *testing.T) {
 		"An incorrect spec api version type shouldn't match": {
 			specYaml: `
 apiVersion: sloth.slok.dev/v2
-kind: PrometheusServiceLevel
+kind: ManagedPrometheusServiceLevel
 `,
 			exp: false,
 		},
@@ -400,7 +401,7 @@ kind: PrometheusService
 		"An correct spec type should match": {
 			specYaml: `
 apiVersion: "sloth.slok.dev/v1"
-kind: "PrometheusServiceLevel"
+kind: "ManagedPrometheusServiceLevel"
 `,
 			exp: true,
 		},
@@ -408,7 +409,7 @@ kind: "PrometheusServiceLevel"
 		"An correct spec type should match (no quotes)": {
 			specYaml: `
 apiVersion: sloth.slok.dev/v1
-kind: PrometheusServiceLevel
+kind: ManagedPrometheusServiceLevel
 `,
 			exp: true,
 		},
@@ -416,7 +417,7 @@ kind: PrometheusServiceLevel
 		"An correct spec type should match (single quotes)": {
 			specYaml: `
 apiVersion: 'sloth.slok.dev/v1'
-kind: 'PrometheusServiceLevel'
+kind: 'ManagedPrometheusServiceLevel'
 `,
 			exp: true,
 		},
@@ -424,7 +425,7 @@ kind: 'PrometheusServiceLevel'
 		"An correct spec type should match (multiple spaces)": {
 			specYaml: `
 apiVersion:       sloth.slok.dev/v1           
-kind:               PrometheusServiceLevel      
+kind:               ManagedPrometheusServiceLevel      
 `,
 			exp: true,
 		},
@@ -434,7 +435,7 @@ kind:               PrometheusServiceLevel
 		t.Run(name, func(t *testing.T) {
 			assert := assert.New(t)
 
-			loader := k8sprometheus.NewYAMLSpecLoader(testMemPluginsRepo(map[string]prometheus.SLIPlugin{}), 30*24*time.Hour)
+			loader := managedprometheus.NewYAMLSpecLoader(testMemPluginsRepo(map[string]prometheus.SLIPlugin{}), 30*24*time.Hour)
 			got := loader.IsSpecType(context.TODO(), []byte(test.specYaml))
 
 			assert.Equal(test.exp, got)

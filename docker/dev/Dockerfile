@@ -2,8 +2,8 @@ FROM golang:1.19.0
 
 LABEL org.opencontainers.image.source https://github.com/slok/sloth
 
-ARG GOLANGCI_LINT_VERSION="1.43.0"
-ARG MOCKERY_VERSION="2.5.1"
+ARG GOLANGCI_LINT_VERSION="1.49.0"
+ARG MOCKERY_VERSION="2.14.0"
 ARG GOMARKDOC_VERSION="0.1.3"
 ARG HELM_VERSION="3.6.3"
 ARG ostype=Linux

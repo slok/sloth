@@ -3,6 +3,7 @@ package k8scontroller
 import (
 	"context"
 	"fmt"
+	managedprometheusclientset "github.com/GoogleCloudPlatform/prometheus-engine/pkg/operator/generated/clientset/versioned"
 	"os"
 	"os/exec"
 	"testing"
@@ -77,9 +78,10 @@ func RunSlothController(ctx context.Context, config Config, ns string, cmdArgs s
 }
 
 type KubeClients struct {
-	Std        kubernetes.Interface
-	Sloth      slothclientset.Interface
-	Monitoring monitoringclientset.Interface
+	Std               kubernetes.Interface
+	Sloth             slothclientset.Interface
+	Monitoring        monitoringclientset.Interface
+	ManagedPrometheus managedprometheusclientset.Interface
 }
 
 // NewKubernetesClients returns Kubernetes clients.
@@ -116,10 +118,16 @@ func NewKubernetesClients(ctx context.Context, config Config) (*KubeClients, err
 		return nil, fmt.Errorf("could not create Kubernetes monitoring (prometheus-operator) client: %w", err)
 	}
 
+	managedPromCli, err := managedprometheusclientset.NewForConfig(kcfg)
+	if err != nil {
+		return nil, fmt.Errorf("could not create Kubernetes monitoring (managed-prometheus-operator) client: %w", err)
+	}
+
 	return &KubeClients{
-		Std:        stdCli,
-		Sloth:      slothcli,
-		Monitoring: monitoringCli,
+		Std:               stdCli,
+		Sloth:             slothcli,
+		Monitoring:        monitoringCli,
+		ManagedPrometheus: managedPromCli,
 	}, nil
 }
 

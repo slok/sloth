@@ -193,3 +193,67 @@ type PrometheusServiceLevelList struct {
 
 	Items []PrometheusServiceLevel `json:"items"`
 }
+
+// +genclient
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+// +kubebuilder:subresource:status
+// +kubebuilder:printcolumn:name="SERVICE",type="string",JSONPath=".spec.service"
+// +kubebuilder:printcolumn:name="DESIRED SLOs",type="integer",JSONPath=".status.processedSLOs"
+// +kubebuilder:printcolumn:name="READY SLOs",type="integer",JSONPath=".status.managedPromOpRulesGeneratedSLOs"
+// +kubebuilder:printcolumn:name="GEN OK",type="boolean",JSONPath=".status.managedPromOpRulesGenerated"
+// +kubebuilder:printcolumn:name="GEN AGE",type="date",JSONPath=".status.lastManagedPromOpRulesSuccessfulGenerated"
+// +kubebuilder:printcolumn:name="AGE",type="date",JSONPath=".metadata.creationTimestamp"
+// +kubebuilder:resource:singular=managedprometheusservicelevel,path=managedprometheusservicelevels,shortName=mpsl;mpslo,scope=Namespaced,categories=slo;slos;sli;slis
+//
+// ManagedPrometheusServiceLevel is the expected service quality level using Prometheus
+// as the backend used by Sloth.
+type ManagedPrometheusServiceLevel struct {
+	metav1.TypeMeta   `json:",inline"`
+	metav1.ObjectMeta `json:"metadata,omitempty"`
+
+	Spec   ManagedPrometheusServiceLevelSpec   `json:"spec,omitempty"`
+	Status ManagedPrometheusServiceLevelStatus `json:"status,omitempty"`
+}
+
+// ServiceLevelSpec is the spec for a ManagedPrometheusServiceLevel.
+type ManagedPrometheusServiceLevelSpec struct {
+	// +kubebuilder:validation:Required
+	//
+	// Service is the application of the SLOs.
+	Service string `json:"service"`
+
+	// Labels are the Prometheus labels that will have all the recording
+	// and alerting rules generated for the service SLOs.
+	Labels map[string]string `json:"labels,omitempty"`
+
+	// +kubebuilder:validation:MinItems=1
+	//
+	// SLOs are the SLOs of the service.
+	SLOs []SLO `json:"slos,omitempty"`
+}
+
+type ManagedPrometheusServiceLevelStatus struct {
+	// ManagedPromOpRulesGeneratedSLOs tells how many SLOs have been processed and generated for Google Managed Prometheus operator successfully.
+	ManagedPromOpRulesGeneratedSLOs int `json:"managedPromOpRulesGeneratedSLOs"`
+	// ProcessedSLOs tells how many SLOs haven been processed for Managed Prometheus operator.
+	ProcessedSLOs int `json:"processedSLOs"`
+	// ManagedPromOpRulesGenerated tells if the rules for Google Managed Prometheus operator CRD have been generated.
+	ManagedPromOpRulesGenerated bool `json:"managedPromOpRulesGenerated"`
+	// LastManagedPromOpRulesGeneration tells the last atemp made for a successful SLO rules generate.
+	// +optional
+	LastManagedPromOpRulesSuccessfulGenerated *metav1.Time `json:"lastManagedPromOpRulesSuccessfulGenerated,omitempty"`
+	// ObservedGeneration tells the generation was acted on, normally this is required to stop an
+	// infinite loop when the status is updated because it sends a watch updated event to the watchers
+	// of the K8s object.
+	ObservedGeneration int64 `json:"observedGeneration"`
+}
+
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+//
+// ManagedPrometheusServiceLevelList is a list of ManagedPrometheusServiceLevel resources.
+type ManagedPrometheusServiceLevelList struct {
+	metav1.TypeMeta `json:",inline"`
+	metav1.ListMeta `json:"metadata"`
+
+	Items []ManagedPrometheusServiceLevel `json:"items"`
+}

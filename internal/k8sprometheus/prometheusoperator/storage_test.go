@@ -1,9 +1,10 @@
-package k8sprometheus_test
+package prometheusoperator_test
 
 import (
 	"bytes"
 	"context"
 	"fmt"
+	"github.com/slok/sloth/internal/k8sprometheus/prometheusoperator"
 	"testing"
 
 	monitoringv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
@@ -353,7 +354,7 @@ spec:
 			assert := assert.New(t)
 
 			var gotYAML bytes.Buffer
-			repo := k8sprometheus.NewIOWriterPrometheusOperatorYAMLRepo(&gotYAML, log.Noop)
+			repo := prometheusoperator.NewIOWriterYAMLRepo(&gotYAML, log.Noop)
 			err := repo.StoreSLOs(context.TODO(), test.k8sMeta, test.slos)
 
 			if test.expErr {
@@ -608,7 +609,7 @@ func TestPrometheusOperatorCRDRepo(t *testing.T) {
 			mpre := &k8sprometheusmock.PrometheusRulesEnsurer{}
 			test.mock(mpre)
 
-			repo := k8sprometheus.NewPrometheusOperatorCRDRepo(mpre, log.Noop)
+			repo := prometheusoperator.NewPrometheusOperatorCRDRepo(mpre, log.Noop)
 			err := repo.StoreSLOs(context.TODO(), test.k8sMeta, test.slos)
 
 			if test.expErr {

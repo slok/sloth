@@ -3,6 +3,11 @@ package commands
 import (
 	"context"
 	"fmt"
+	managedpromv1 "github.com/GoogleCloudPlatform/prometheus-engine/pkg/operator/apis/monitoring/v1"
+	managedprometheusclientset "github.com/GoogleCloudPlatform/prometheus-engine/pkg/operator/generated/clientset/versioned"
+	monitoringv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
+	"github.com/slok/sloth/internal/k8sprometheus/managedprometheus"
+	"github.com/slok/sloth/internal/k8sprometheus/prometheusoperator"
 	"io/fs"
 	"net/http"
 	"net/http/pprof"
@@ -13,7 +18,6 @@ import (
 	"time"
 
 	"github.com/oklog/run"
-	monitoringv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
 	monitoringclientset "github.com/prometheus-operator/prometheus-operator/pkg/client/versioned"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	prometheusmodel "github.com/prometheus/common/model"
@@ -149,6 +153,12 @@ func (k kubeControllerCommand) Run(ctx context.Context, config RootConfig) error
 		return fmt.Errorf("check for PrometheusServiceLevel CRD failed: could not list: %w", err)
 	}
 	logger.Debugf("PrometheusServiceLevel CRD ready")
+
+	_, err = ksvc.ListManagedPrometheusServiceLevels(ctx, k.namespace, metav1.ListOptions{})
+	if err != nil {
+		return fmt.Errorf("check for ManagedPrometheusServiceLevel CRD failed: could not list: %w", err)
+	}
+	logger.Debugf("ManagedPrometheusServiceLevel CRD ready")
 
 	// Prepare our run and reload entrypoints.
 	var g run.Group
@@ -293,34 +303,41 @@ func (k kubeControllerCommand) Run(ctx context.Context, config RootConfig) error
 		)
 	}
 
-	// Main controller.
+	// Disable optimized rules.
+	sliRuleGen := prometheus.OptimizedSLIRecordingRulesGenerator
+	if k.disableOptimizedRules {
+		sliRuleGen = prometheus.SLIRecordingRulesGenerator
+	}
+
+	// Create the generate app service (the one that the CLIs use).
+	generator, err := generate.NewService(generate.ServiceConfig{
+		AlertGenerator:              alert.NewGenerator(windowsRepo),
+		SLIRecordingRulesGenerator:  sliRuleGen,
+		MetaRecordingRulesGenerator: prometheus.MetadataRecordingRulesGenerator,
+		SLOAlertRulesGenerator:      prometheus.SLOAlertRulesGenerator,
+		Logger:                      generatorLogger{Logger: logger},
+	})
+	if err != nil {
+		return fmt.Errorf("could not create Prometheus rules generator: %w", err)
+	}
+
+	lSelector, err := labels.Parse(k.labelSelector)
+	if err != nil {
+		return fmt.Errorf("invalid label selector %q: %w", k.labelSelector, err)
+	}
+
+	metricsRecorder := kooperprometheus.New(kooperprometheus.Config{})
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
+
+	// Controller for PrometheusServiceLevel.
 	{
-		ctx, cancel := context.WithCancel(ctx)
-		defer cancel()
-
-		// Disable optimized rules.
-		sliRuleGen := prometheus.OptimizedSLIRecordingRulesGenerator
-		if k.disableOptimizedRules {
-			sliRuleGen = prometheus.SLIRecordingRulesGenerator
-		}
-
-		// Create the generate app service (the one that the CLIs use).
-		generator, err := generate.NewService(generate.ServiceConfig{
-			AlertGenerator:              alert.NewGenerator(windowsRepo),
-			SLIRecordingRulesGenerator:  sliRuleGen,
-			MetaRecordingRulesGenerator: prometheus.MetadataRecordingRulesGenerator,
-			SLOAlertRulesGenerator:      prometheus.SLOAlertRulesGenerator,
-			Logger:                      generatorLogger{Logger: logger},
-		})
-		if err != nil {
-			return fmt.Errorf("could not create Prometheus rules generator: %w", err)
-		}
 
 		// Create handler.
 		config := kubecontroller.HandlerConfig{
 			Generator:        generator,
-			SpecLoader:       k8sprometheus.NewCRSpecLoader(pluginRepo, sloPeriod),
-			Repository:       k8sprometheus.NewPrometheusOperatorCRDRepo(ksvc, logger),
+			SpecLoader:       prometheusoperator.NewCRSpecLoader(pluginRepo, sloPeriod),
+			Repository:       prometheusoperator.NewPrometheusOperatorCRDRepo(ksvc, logger),
 			KubeStatusStorer: ksvc,
 			ExtraLabels:      k.extraLabels,
 			Logger:           logger,
@@ -331,22 +348,63 @@ func (k kubeControllerCommand) Run(ctx context.Context, config RootConfig) error
 		}
 
 		// Create retriever.
-		lSelector, err := labels.Parse(k.labelSelector)
-		if err != nil {
-			return fmt.Errorf("invalid label selector %q: %w", k.labelSelector, err)
-		}
-
 		ret := kubecontroller.NewPrometheusServiceLevelsRetriver(k.namespace, lSelector, ksvc)
 
 		ctrl, err := koopercontroller.New(&koopercontroller.Config{
 			Handler:              handler,
 			Retriever:            ret,
 			Logger:               kooperlogger{Logger: logger.WithValues(log.Kv{"lib": "kooper"})},
-			Name:                 "sloth",
+			Name:                 "sloth-controller-prometheusservicelevels",
 			ConcurrentWorkers:    k.workers,
 			ProcessingJobRetries: 2,
 			ResyncInterval:       k.resyncInterval,
-			MetricsRecorder:      kooperprometheus.New(kooperprometheus.Config{}),
+			MetricsRecorder:      metricsRecorder,
+		})
+		if err != nil {
+			return fmt.Errorf("could not create namespace controller: %w", err)
+		}
+
+		g.Add(
+			func() error {
+				logger.Infof("Kubernetes controller running")
+				defer logger.Infof("Kubernetes controller stopped")
+				return ctrl.Run(ctx)
+			},
+			func(_ error) {
+				cancel()
+			},
+		)
+	}
+
+	// Controller for ManagedPrometheusServiceLevel.
+	{
+
+		// Create handler.
+		config := kubecontroller.HandlerConfig{
+			Generator:        generator,
+			SpecLoader:       managedprometheus.NewCRSpecLoader(pluginRepo, sloPeriod),
+			Repository:       managedprometheus.NewCRDRepo(ksvc, logger),
+			KubeStatusStorer: ksvc,
+			ExtraLabels:      k.extraLabels,
+			Logger:           logger,
+		}
+		handler, err := kubecontroller.NewHandler(config)
+		if err != nil {
+			return fmt.Errorf("could not create controller handler: %w", err)
+		}
+
+		// Create retriever.
+		ret := kubecontroller.NewManagedPrometheusServiceLevelsRetriver(k.namespace, lSelector, ksvc)
+
+		ctrl, err := koopercontroller.New(&koopercontroller.Config{
+			Handler:              handler,
+			Retriever:            ret,
+			Logger:               kooperlogger{Logger: logger.WithValues(log.Kv{"lib": "kooper"})},
+			Name:                 "sloth-controller-managedprometheusservicelevels",
+			ConcurrentWorkers:    k.workers,
+			ProcessingJobRetries: 2,
+			ResyncInterval:       k.resyncInterval,
+			MetricsRecorder:      metricsRecorder,
 		})
 		if err != nil {
 			return fmt.Errorf("could not create namespace controller: %w", err)
@@ -374,6 +432,10 @@ type kubernetesService interface {
 	WatchPrometheusServiceLevels(ctx context.Context, ns string, opts metav1.ListOptions) (watch.Interface, error)
 	EnsurePrometheusRule(ctx context.Context, pr *monitoringv1.PrometheusRule) error
 	EnsurePrometheusServiceLevelStatus(ctx context.Context, slo *slothv1.PrometheusServiceLevel, err error) error
+	ListManagedPrometheusServiceLevels(ctx context.Context, ns string, opts metav1.ListOptions) (*slothv1.ManagedPrometheusServiceLevelList, error)
+	EnsureManagedPrometheusRule(ctx context.Context, pr *managedpromv1.Rules) error
+	WatchManagedPrometheusServiceLevels(ctx context.Context, ns string, opts metav1.ListOptions) (watch.Interface, error)
+	EnsureManagedPrometheusServiceLevelStatus(ctx context.Context, slo *slothv1.ManagedPrometheusServiceLevel, err error) error
 }
 
 func (k kubeControllerCommand) newKubernetesService(ctx context.Context, config RootConfig) (kubernetesService, error) {
@@ -400,8 +462,13 @@ func (k kubeControllerCommand) newKubernetesService(ctx context.Context, config 
 		return nil, fmt.Errorf("could not create Kubernetes monitoring (prometheus-operator) client: %w", err)
 	}
 
+	kubeManagedPromCli, err := managedprometheusclientset.NewForConfig(kubeCfg)
+	if err != nil {
+		return nil, fmt.Errorf("could not create Kubernetes monitoring (managed-prometheus-operator) client: %w", err)
+	}
+
 	// Create Kubernetes service.
-	ksvc := k8sprometheus.NewKubernetesService(kubeSlothcli, kubeMonitoringCli, config.Logger)
+	ksvc := k8sprometheus.NewKubernetesService(kubeSlothcli, kubeMonitoringCli, kubeManagedPromCli, config.Logger)
 
 	// Dry run mode.
 	if k.runMode == controllerModeDryRun {

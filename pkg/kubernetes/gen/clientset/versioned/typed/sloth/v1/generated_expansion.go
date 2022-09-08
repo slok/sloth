@@ -2,4 +2,6 @@
 
 package v1
 
+type ManagedPrometheusServiceLevelExpansion interface{}
+
 type PrometheusServiceLevelExpansion interface{}

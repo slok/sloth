@@ -27,7 +27,7 @@ const APIVersion = "sloth.slok.dev/v1"
 const Kind = "AlertWindows"
 ```
 
-## type AlertWindows
+## type [AlertWindows](<https://github.com/Smartum/sloth/blob/main/pkg/prometheus/alertwindows/v1/v1.go#L12-L16>)
 
 ```go
 type AlertWindows struct {
@@ -37,7 +37,7 @@ type AlertWindows struct {
 }
 ```
 
-## type PageWindow
+## type [PageWindow](<https://github.com/Smartum/sloth/blob/main/pkg/prometheus/alertwindows/v1/v1.go#L29-L31>)
 
 PageWindow represents the configuration for page alerting\.
 
@@ -47,7 +47,7 @@ type PageWindow struct {
 }
 ```
 
-## type QuickSlowWindow
+## type [QuickSlowWindow](<https://github.com/Smartum/sloth/blob/main/pkg/prometheus/alertwindows/v1/v1.go#L38-L43>)
 
 ```go
 type QuickSlowWindow struct {
@@ -58,7 +58,7 @@ type QuickSlowWindow struct {
 }
 ```
 
-## type Spec
+## type [Spec](<https://github.com/Smartum/sloth/blob/main/pkg/prometheus/alertwindows/v1/v1.go#L19-L26>)
 
 Spec represents the root type of the Alerting window\.
 
@@ -73,7 +73,7 @@ type Spec struct {
 }
 ```
 
-## type TicketWindow
+## type [TicketWindow](<https://github.com/Smartum/sloth/blob/main/pkg/prometheus/alertwindows/v1/v1.go#L34-L36>)
 
 PageWindow represents the configuration for ticket alerting\.
 
@@ -83,7 +83,7 @@ type TicketWindow struct {
 }
 ```
 
-## type Window
+## type [Window](<https://github.com/Smartum/sloth/blob/main/pkg/prometheus/alertwindows/v1/v1.go#L45-L53>)
 
 ```go
 type Window struct {

@@ -19,3 +19,7 @@ vendor/
 
 # Binaries
 /bin
+
+# IntelliJ
+.idea
+*.iml

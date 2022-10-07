@@ -3,6 +3,9 @@ labels: {}
 image:
   repository: ghcr.io/slok/sloth
   tag: v0.10.0
+  secret: 
+    enabled: true
+    name: "change-me"
 
 sloth:
   resyncInterval: ""    # The controller resync interval duration (e.g 15m).

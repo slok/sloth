@@ -104,6 +104,10 @@ spec:
               cpu: 5m
               memory: 50Mi
         {{- end }}
+      {{- if .Values.image.secret.enabled }}
+      imagePullSecrets:
+      - name: {{ .Values.image.secret.name }}
+      {{- end }}
       {{- if or .Values.commonPlugins.enabled .Values.customSloConfig.enabled }}
       volumes:
       {{- if .Values.commonPlugins.enabled }}

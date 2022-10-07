@@ -39,3 +39,12 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 {{- define "sloth.chart" -}}
 {{- printf "%s-%s" .Chart.Name .Chart.Version | replace "+" "_" | trunc 63 | trimSuffix "-" }}
 {{- end }}
+{{- define "sloth.imagePullSecrets" -}}
+{{- range .Values.imagePullSecrets }}
+  {{- if eq (typeOf .) "map[string]interface {}" }}
+- {{ toYaml . | trim }}
+  {{- else }}
+- name: {{ . }}
+  {{- end }}
+{{- end }}
+{{- end }}

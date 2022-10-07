@@ -4,6 +4,10 @@ image:
   repository: ghcr.io/slok/sloth
   tag: v0.10.0
 
+imagePullSecrets: []
+#  - name: secret1
+#  - name: secret2
+
 sloth:
   resyncInterval: ""    # The controller resync interval duration (e.g 15m).
   workers: 0            # The number of concurrent controller workers (e.g 5).

@@ -104,9 +104,9 @@ spec:
               cpu: 5m
               memory: 50Mi
         {{- end }}
-      {{- if .Values.image.secret.enabled }}
+      {{- if .Values.imagePullSecrets }}
       imagePullSecrets:
-      - name: {{ .Values.image.secret.name }}
+{{ include "sloth.imagePullSecrets" . | trim | indent 8 }}
       {{- end }}
       {{- if or .Values.commonPlugins.enabled .Values.customSloConfig.enabled }}
       volumes:

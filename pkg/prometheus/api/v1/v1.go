@@ -2,56 +2,56 @@
 //
 // Example YAML spec with 2 SLOs:
 //
-//    version: "prometheus/v1"
-//    service: "k8s-apiserver"
-//    labels:
-//      cluster: "valhalla"
-//      component: "kubernetes"
-//    slos:
-//      - name: "requests-availability"
-//        objective: 99.9
-//        description: "Common SLO based on availability for Kubernetes apiserver HTTP request responses."
-//        sli:
-//          events:
-//            error_query: sum(rate(apiserver_request_total{code=~"(5..|429)"}[{{.window}}]))
-//            total_query: sum(rate(apiserver_request_total[{{.window}}]))
-//        alerting:
-//          name: K8sApiserverAvailabilityAlert
-//          labels:
-//            category: "availability"
-//          annotations:
-//            runbook: "https://github.com/kubernetes-monitoring/kubernetes-mixin/tree/master/runbook.md#alert-name-kubeapierrorshigh"
-//          page_alert:
-//            labels:
-//              severity: critical
-//          ticket_alert:
-//            labels:
-//              severity: warning
+//	version: "prometheus/v1"
+//	service: "k8s-apiserver"
+//	labels:
+//	  cluster: "valhalla"
+//	  component: "kubernetes"
+//	slos:
+//	  - name: "requests-availability"
+//	    objective: 99.9
+//	    description: "Common SLO based on availability for Kubernetes apiserver HTTP request responses."
+//	    sli:
+//	      events:
+//	        error_query: sum(rate(apiserver_request_total{code=~"(5..|429)"}[{{.window}}]))
+//	        total_query: sum(rate(apiserver_request_total[{{.window}}]))
+//	    alerting:
+//	      name: K8sApiserverAvailabilityAlert
+//	      labels:
+//	        category: "availability"
+//	      annotations:
+//	        runbook: "https://github.com/kubernetes-monitoring/kubernetes-mixin/tree/master/runbook.md#alert-name-kubeapierrorshigh"
+//	      page_alert:
+//	        labels:
+//	          severity: critical
+//	      ticket_alert:
+//	        labels:
+//	          severity: warning
 //
-//      - name: "requests-latency"
-//        objective: 99
-//        description: "Common SLO based on latency for Kubernetes apiserver HTTP request responses."
-//        sli:
-//          events:
-//            error_query: |
-//              (
-//                sum(rate(apiserver_request_duration_seconds_count{verb!="WATCH"}[{{.window}}]))
-//                -
-//                sum(rate(apiserver_request_duration_seconds_bucket{le="0.4",verb!="WATCH"}[{{.window}}]))
-//              )
-//            total_query: sum(rate(apiserver_request_duration_seconds_count{verb!="WATCH"}[{{.window}}]))
-//        alerting:
-//          name: K8sApiserverLatencyAlert
-//          labels:
-//            category: "latency"
-//          annotations:
-//            runbook: "https://github.com/kubernetes-monitoring/kubernetes-mixin/tree/master/runbook.md#alert-name-kubeapilatencyhigh"
-//          page_alert:
-//            labels:
-//              severity: critical
-//          ticket_alert:
-//            labels:
-//              disable: true
+//	  - name: "requests-latency"
+//	    objective: 99
+//	    description: "Common SLO based on latency for Kubernetes apiserver HTTP request responses."
+//	    sli:
+//	      events:
+//	        error_query: |
+//	          (
+//	            sum(rate(apiserver_request_duration_seconds_count{verb!="WATCH"}[{{.window}}]))
+//	            -
+//	            sum(rate(apiserver_request_duration_seconds_bucket{le="0.4",verb!="WATCH"}[{{.window}}]))
+//	          )
+//	        total_query: sum(rate(apiserver_request_duration_seconds_count{verb!="WATCH"}[{{.window}}]))
+//	    alerting:
+//	      name: K8sApiserverLatencyAlert
+//	      labels:
+//	        category: "latency"
+//	      annotations:
+//	        runbook: "https://github.com/kubernetes-monitoring/kubernetes-mixin/tree/master/runbook.md#alert-name-kubeapilatencyhigh"
+//	      page_alert:
+//	        labels:
+//	          severity: critical
+//	      ticket_alert:
+//	        labels:
+//	          disable: true
 package v1
 
 const Version = "prometheus/v1"

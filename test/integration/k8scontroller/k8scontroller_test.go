@@ -27,7 +27,6 @@ func sanitizePrometheusRule(pr *monitoringv1.PrometheusRule) *monitoringv1.Prome
 	pr.ResourceVersion = ""
 	pr.Generation = 0
 	pr.CreationTimestamp = metav1.Time{}
-	pr.SelfLink = ""
 
 	for i := range pr.OwnerReferences {
 		pr.OwnerReferences[i].UID = ""

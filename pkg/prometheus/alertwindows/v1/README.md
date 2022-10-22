@@ -39,7 +39,7 @@ type AlertWindows struct {
 
 ## type PageWindow
 
-PageWindow represents the configuration for page alerting\.
+PageWindow represents the configuration for page alerting.
 
 ```go
 type PageWindow struct {
@@ -60,7 +60,7 @@ type QuickSlowWindow struct {
 
 ## type Spec
 
-Spec represents the root type of the Alerting window\.
+Spec represents the root type of the Alerting window.
 
 ```go
 type Spec struct {
@@ -75,7 +75,7 @@ type Spec struct {
 
 ## type TicketWindow
 
-PageWindow represents the configuration for ticket alerting\.
+PageWindow represents the configuration for ticket alerting.
 
 ```go
 type TicketWindow struct {

@@ -145,6 +145,10 @@ groups:
       / ignoring (sloth_window)
       count_over_time(slo:sli_error:ratio_rate5m{sloth_id="my-service-sloth-slo-my-service-0", sloth_service="my-service", sloth_slo="sloth-slo-my-service-0"}[30d])
     labels:
+      cmd: examplesgen.sh
+      sloth_id: my-service-sloth-slo-my-service-0
+      sloth_service: my-service
+      sloth_slo: sloth-slo-my-service-0
       sloth_window: 30d
 - name: sloth-slo-meta-recordings-my-service-sloth-slo-my-service-0
   rules:

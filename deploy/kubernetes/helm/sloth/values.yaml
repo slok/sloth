@@ -2,7 +2,7 @@ labels: {}
 
 image:
   repository: ghcr.io/slok/sloth
-  tag: v0.10.0
+  tag: v0.11.0
 
 sloth:
   resyncInterval: ""    # The controller resync interval duration (e.g 15m).
@@ -19,7 +19,7 @@ commonPlugins:
   enabled: true
   image:
     repository: k8s.gcr.io/git-sync/git-sync
-    tag: v3.3.4
+    tag: v3.6.1
   gitRepo:
     url: https://github.com/slok/sloth-common-sli-plugins
     branch: main

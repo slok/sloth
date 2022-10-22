@@ -138,6 +138,11 @@ groups:
       / ignoring (sloth_window)
       count_over_time(slo:sli_error:ratio_rate5m{sloth_id="myapp-http-availability", sloth_service="myapp", sloth_slo="http-availability"}[30d])
     labels:
+      cmd: examplesgen.sh
+      owner: myteam
+      sloth_id: myapp-http-availability
+      sloth_service: myapp
+      sloth_slo: http-availability
       sloth_window: 30d
 - name: sloth-slo-meta-recordings-myapp-http-availability
   rules:

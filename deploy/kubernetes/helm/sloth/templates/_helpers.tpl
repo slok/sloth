@@ -41,10 +41,6 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end }}
 {{- define "sloth.imagePullSecrets" -}}
 {{- range .Values.imagePullSecrets }}
-  {{- if eq (typeOf .) "map[string]interface {}" }}
 - {{ toYaml . | trim }}
-  {{- else }}
-- name: {{ . }}
-  {{- end }}
 {{- end }}
 {{- end }}

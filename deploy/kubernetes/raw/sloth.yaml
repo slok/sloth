@@ -6,7 +6,7 @@ metadata:
   name: sloth
   namespace: monitoring
   labels:
-    helm.sh/chart: sloth-0.6.1
+    helm.sh/chart: sloth-0.6.2
     app.kubernetes.io/managed-by: Helm
     app: sloth
     app.kubernetes.io/name: sloth
@@ -18,7 +18,7 @@ kind: ClusterRole
 metadata:
   name: sloth
   labels:
-    helm.sh/chart: sloth-0.6.1
+    helm.sh/chart: sloth-0.6.2
     app.kubernetes.io/managed-by: Helm
     app: sloth
     app.kubernetes.io/name: sloth
@@ -38,7 +38,7 @@ kind: ClusterRoleBinding
 metadata:
   name: sloth
   labels:
-    helm.sh/chart: sloth-0.6.1
+    helm.sh/chart: sloth-0.6.2
     app.kubernetes.io/managed-by: Helm
     app: sloth
     app.kubernetes.io/name: sloth
@@ -59,7 +59,7 @@ metadata:
   name: sloth
   namespace: monitoring
   labels:
-    helm.sh/chart: sloth-0.6.1
+    helm.sh/chart: sloth-0.6.2
     app.kubernetes.io/managed-by: Helm
     app: sloth
     app.kubernetes.io/name: sloth
@@ -74,7 +74,7 @@ spec:
   template:
     metadata:
       labels:
-        helm.sh/chart: sloth-0.6.1
+        helm.sh/chart: sloth-0.6.2
         app.kubernetes.io/managed-by: Helm
         app: sloth
         app.kubernetes.io/name: sloth
@@ -107,7 +107,7 @@ metadata:
   name: sloth
   namespace: monitoring
   labels:
-    helm.sh/chart: sloth-0.6.1
+    helm.sh/chart: sloth-0.6.2
     app.kubernetes.io/managed-by: Helm
     app: sloth
     app.kubernetes.io/name: sloth

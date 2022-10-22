@@ -2,11 +2,14 @@
 
 ## [Unreleased]
 
+## [v0.11.0] - 2022-10-22
+
 ### Changed
 
-- Optimized SLI recording rules now have the same labels as the non-optimized ones.
-- Update to Go 1.19
-- Update to Kubernetes v1.25
+- Optimized SLI recording rules now have the same labels as the non-optimized ones, avoiding promtool check warnings.
+- Update to Go 1.19.
+- Update to Kubernetes v1.25.
+- `sloth_window` is ignored in alerts reducing the noise of refiring alerts.
 
 ## [v0.10.0] - 2022-03-22
 
@@ -159,7 +162,8 @@
 - Support raw query based SLI.
 - Kubernetes (prometheus-operator) CRD generation support.
 
-[unreleased]: https://github.com/slok/sloth/compare/v0.10.0...HEAD
+[unreleased]: https://github.com/slok/sloth/compare/v0.11.0...HEAD
+[v0.11.0]: https://github.com/slok/sloth/compare/v0.10.0...v0.11.0
 [v0.10.0]: https://github.com/slok/sloth/compare/v0.9.0...v0.10.0
 [v0.9.0]: https://github.com/slok/sloth/compare/v0.8.0...v0.9.0
 [v0.8.0]: https://github.com/slok/sloth/compare/v0.7.0...v0.8.0

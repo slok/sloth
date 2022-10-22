@@ -119,7 +119,14 @@ spec:
         / ignoring (sloth_window)
         count_over_time(slo:sli_error:ratio_rate5m{sloth_id="myservice-requests-availability", sloth_service="myservice", sloth_slo="requests-availability"}[30d])
       labels:
+        cmd: examplesgen.sh
+        owner: myteam
+        repo: myorg/myservice
+        sloth_id: myservice-requests-availability
+        sloth_service: myservice
+        sloth_slo: requests-availability
         sloth_window: 30d
+        tier: "2"
       record: slo:sli_error:ratio_rate30d
   - name: sloth-slo-meta-recordings-myservice-requests-availability
     rules:
@@ -215,7 +222,7 @@ spec:
         (
             max(slo:sli_error:ratio_rate5m{sloth_id="myservice-requests-availability", sloth_service="myservice", sloth_slo="requests-availability"} > (14.4 * 0.0009999999999999432)) without (sloth_window)
             and
-            max((slo:sli_error:ratio_rate1h{sloth_id="myservice-requests-availability", sloth_service="myservice", sloth_slo="requests-availability"} > (14.4 * 0.0009999999999999432))) without (sloth_window)
+            max(slo:sli_error:ratio_rate1h{sloth_id="myservice-requests-availability", sloth_service="myservice", sloth_slo="requests-availability"} > (14.4 * 0.0009999999999999432)) without (sloth_window)
         )
         or
         (
@@ -237,7 +244,7 @@ spec:
         (
             max(slo:sli_error:ratio_rate2h{sloth_id="myservice-requests-availability", sloth_service="myservice", sloth_slo="requests-availability"} > (3 * 0.0009999999999999432)) without (sloth_window)
             and
-            max((slo:sli_error:ratio_rate1d{sloth_id="myservice-requests-availability", sloth_service="myservice", sloth_slo="requests-availability"} > (3 * 0.0009999999999999432))) without (sloth_window)
+            max(slo:sli_error:ratio_rate1d{sloth_id="myservice-requests-availability", sloth_service="myservice", sloth_slo="requests-availability"} > (3 * 0.0009999999999999432)) without (sloth_window)
         )
         or
         (
@@ -371,7 +378,14 @@ spec:
         / ignoring (sloth_window)
         count_over_time(slo:sli_error:ratio_rate5m{sloth_id="myservice2-requests-availability", sloth_service="myservice2", sloth_slo="requests-availability"}[30d])
       labels:
+        cmd: examplesgen.sh
+        owner: myteam2
+        repo: myorg/myservice2
+        sloth_id: myservice2-requests-availability
+        sloth_service: myservice2
+        sloth_slo: requests-availability
         sloth_window: 30d
+        tier: "1"
       record: slo:sli_error:ratio_rate30d
   - name: sloth-slo-meta-recordings-myservice2-requests-availability
     rules:
@@ -467,7 +481,7 @@ spec:
         (
             max(slo:sli_error:ratio_rate5m{sloth_id="myservice2-requests-availability", sloth_service="myservice2", sloth_slo="requests-availability"} > (14.4 * 0.00010000000000005117)) without (sloth_window)
             and
-            max((slo:sli_error:ratio_rate1h{sloth_id="myservice2-requests-availability", sloth_service="myservice2", sloth_slo="requests-availability"} > (14.4 * 0.00010000000000005117))) without (sloth_window)
+            max(slo:sli_error:ratio_rate1h{sloth_id="myservice2-requests-availability", sloth_service="myservice2", sloth_slo="requests-availability"} > (14.4 * 0.00010000000000005117)) without (sloth_window)
         )
         or
         (
@@ -489,7 +503,7 @@ spec:
         (
             max(slo:sli_error:ratio_rate2h{sloth_id="myservice2-requests-availability", sloth_service="myservice2", sloth_slo="requests-availability"} > (3 * 0.00010000000000005117)) without (sloth_window)
             and
-            max((slo:sli_error:ratio_rate1d{sloth_id="myservice2-requests-availability", sloth_service="myservice2", sloth_slo="requests-availability"} > (3 * 0.00010000000000005117))) without (sloth_window)
+            max(slo:sli_error:ratio_rate1d{sloth_id="myservice2-requests-availability", sloth_service="myservice2", sloth_slo="requests-availability"} > (3 * 0.00010000000000005117)) without (sloth_window)
         )
         or
         (

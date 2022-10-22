@@ -156,7 +156,7 @@ func (g generateCommand) Run(ctx context.Context, config RootConfig) error {
 		splittedSLOsData := splitYAML(slxData)
 
 		// Prepare store output.
-		var out io.Writer = config.Stdout
+		var out = config.Stdout
 		if g.slosOut != "-" {
 			outFile, err := os.Create(g.slosOut)
 			if err != nil {

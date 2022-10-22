@@ -2,10 +2,10 @@ FROM golang:1.19.0
 
 LABEL org.opencontainers.image.source https://github.com/slok/sloth
 
-ARG GOLANGCI_LINT_VERSION="1.43.0"
-ARG MOCKERY_VERSION="2.5.1"
-ARG GOMARKDOC_VERSION="0.1.3"
-ARG HELM_VERSION="3.6.3"
+ARG GOLANGCI_LINT_VERSION="1.50.0"
+ARG MOCKERY_VERSION="2.14.0"
+ARG GOMARKDOC_VERSION="0.4.1"
+ARG HELM_VERSION="3.10.0"
 ARG ostype=Linux
 
 RUN apt-get update && apt-get install -y \

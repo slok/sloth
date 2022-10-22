@@ -7,7 +7,7 @@ jobs:
     name: Check
     runs-on: ubuntu-latest
     # Execute the checks inside the container instead the VM.
-    container: golangci/golangci-lint:v1.43.0-alpine
+    container: golangci/golangci-lint:v1.50.0-alpine
     steps:
       - uses: actions/checkout@v3
       - run: ./scripts/check/check.sh
@@ -19,9 +19,9 @@ jobs:
       - uses: actions/checkout@v3
       - uses: actions/setup-go@v3
         with:
-          go-version: 1.18
+          go-version-file: go.mod
       - run: make ci-test
-      - uses: codecov/codecov-action@v3.1.0
+      - uses: codecov/codecov-action@v3.1.1
         with:
           token: ${{ secrets.CODECOV_UPLOAD_TOKEN }}
           file: ./.test_coverage.txt
@@ -34,7 +34,7 @@ jobs:
       - uses: actions/checkout@v3
       - uses: actions/setup-go@v3
         with:
-          go-version: 1.18
+          go-version-file: go.mod
       - name: Execute tests
         env:
           HELM_VERSION: v3.6.3
@@ -51,7 +51,7 @@ jobs:
       - uses: actions/checkout@v3
       - uses: actions/setup-go@v3
         with:
-          go-version: 1.18
+          go-version-file: go.mod
       - name: Execute tests
         run: |
           # Build binary.
@@ -68,15 +68,15 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        kubernetes: [1.19.11, 1.20.7, 1.21.1, 1.22.0, 1.23.0]
+        kubernetes: [1.21.14, 1.22.15, 1.23.12, 1.24.6, 1.25.2]
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-go@v3
         with:
-          go-version: 1.18
+          go-version-file: go.mod
       - name: Execute tests
         env:
-          KIND_VERSION: v0.11.0
+          KIND_VERSION: v0.16.0
         run: |
           # Get dependencies.
           echo "Getting dependencies..."
@@ -150,7 +150,7 @@ jobs:
           chmod -R 0777 ./bin
           make build-all
       - name: Upload binaries
-        uses: xresloader/upload-to-github-release@v1.3.4
+        uses: xresloader/upload-to-github-release@v1.3.7
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:

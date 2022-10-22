@@ -5,6 +5,8 @@
 ### Changed
 
 - Optimized SLI recording rules now have the same labels as the non-optimized ones.
+- Update to Go 1.19
+- Update to Kubernetes v1.25
 
 ## [v0.10.0] - 2022-03-22
 

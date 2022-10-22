@@ -96,6 +96,10 @@ spec:
           resources:
           {{- toYaml .Values.commonPlugins.gitRepo.resources | nindent 12 }}
         {{- end }}
+      {{- if .Values.imagePullSecrets }}
+      imagePullSecrets:
+{{ include "sloth.imagePullSecrets" . | trim | indent 8 }}
+      {{- end }}
       {{- if or .Values.commonPlugins.enabled .Values.customSloConfig.enabled }}
       volumes:
       {{- if .Values.commonPlugins.enabled }}

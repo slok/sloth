@@ -13,6 +13,10 @@ resources:
     cpu: 5m
     memory: 75Mi
 
+imagePullSecrets: []
+#  - name: secret1
+#  - name: secret2
+
 sloth:
   resyncInterval: ""    # The controller resync interval duration (e.g 15m).
   workers: 0            # The number of concurrent controller workers (e.g 5).

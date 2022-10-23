@@ -25,7 +25,7 @@ slos:
     sli:
       raw:
         # Get the averate satisfaction ratio and rest 1 (max good) to get the error ratio.
-        error_ratio_query: |
+        errorRatioQuery: |
           1 - (
             sum(sum_over_time(unifipoller_client_satisfaction_ratio[{{.window}}]))
             /

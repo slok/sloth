@@ -32,7 +32,7 @@ slos:
       global03k1: global03v1
     sli:
       raw:
-        error_ratio_query: |
+        errorRatioQuery: |
           sum(rate(http_request_duration_seconds_count{job="myservice",code=~"(5..|429)"}[{{.window}}]))
           /
           sum(rate(http_request_duration_seconds_count{job="myservice"}[{{.window}}]))
@@ -76,7 +76,7 @@ slos:
       global03k1: global03v1
     sli:
       raw:
-        error_ratio_query: |
+        errorRatioQuery: |
           sum(rate(http_request_duration_seconds_count{job="myservice",code=~"(5..|429)"}[{{.window}}]))
           /
           sum(rate(http_request_duration_seconds_count{job="myservice"}[{{.window}}]))

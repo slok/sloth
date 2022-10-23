@@ -173,7 +173,7 @@ SLIRaw is a error ratio SLI already calculated. Normally this will be used when 
 ```go
 type SLIRaw struct {
     // ErrorRatioQuery is a Prometheus query that will get the raw error ratio (0-1) for the SLO.
-    ErrorRatioQuery string `yaml:"error_ratio_query"`
+    ErrorRatioQuery string `yaml:"errorRatioQuery"`
 }
 ```
 

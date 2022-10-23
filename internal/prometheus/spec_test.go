@@ -180,7 +180,7 @@ slos:
     objective: 99
     sli:
       raw:
-        error_ratio_query: test_expr_ratio_2
+        errorRatioQuery: test_expr_ratio_2
     alerting:
       page_alert:
         disable: true
@@ -247,7 +247,7 @@ slos:
     objective: 99.9
     sli:
       raw:
-        error_ratio_query: test_expr_ratio_2
+        errorRatioQuery: test_expr_ratio_2
     alerting:
       page_alert:
         disable: true

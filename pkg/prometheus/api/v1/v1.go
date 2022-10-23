@@ -109,7 +109,7 @@ type SLI struct {
 // is already calculated by other recording rule, system...
 type SLIRaw struct {
 	// ErrorRatioQuery is a Prometheus query that will get the raw error ratio (0-1) for the SLO.
-	ErrorRatioQuery string `yaml:"error_ratio_query"`
+	ErrorRatioQuery string `yaml:"errorRatioQuery"`
 }
 
 // SLIEvents is an SLI that is calculated as the division of bad events and total events, giving

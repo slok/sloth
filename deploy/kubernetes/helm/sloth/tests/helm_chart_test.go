@@ -399,7 +399,7 @@ func TestChartSecurityContext(t *testing.T) {
 				return v
 			},
 			expTplFile: "testdata/output/deployment_securityContext.yaml",
-		}
+		},
 	}
 
 	checksumNormalizer := regexp.MustCompile(`checksum/config: [a-z0-9]+`)

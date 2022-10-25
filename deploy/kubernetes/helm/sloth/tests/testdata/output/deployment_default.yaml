@@ -33,7 +33,7 @@ spec:
       securityContext:
       containers:
         - name: sloth
-          image: ghcr.io/slok/sloth:v0.10.0
+          image: ghcr.io/slok/sloth:v0.11.0
           args:
             - kubernetes-controller
             - --sli-plugins-path=/plugins
@@ -52,7 +52,7 @@ spec:
               cpu: 5m
               memory: 75Mi
         - name: git-sync-plugins
-          image: k8s.gcr.io/git-sync/git-sync:v3.3.4
+          image: k8s.gcr.io/git-sync/git-sync:v3.6.1
           args:
             - --repo=https://github.com/slok/sloth-common-sli-plugins
             - --branch=main
@@ -65,6 +65,7 @@ spec:
           securityContext:
           resources:
             limits:
+              cpu: 50m
               memory: 100Mi
             requests:
               cpu: 5m

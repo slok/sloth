@@ -55,6 +55,7 @@ spec:
               drop: ALL
           resources:
             limits:
+              cpu: 50m
               memory: 150Mi
             requests:
               cpu: 5m

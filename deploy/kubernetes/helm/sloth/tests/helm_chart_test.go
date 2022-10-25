@@ -390,10 +390,10 @@ func TestChartSecurityContext(t *testing.T) {
 		},
 
 		"A chart with custom security values should render correctly.": {
-			name:       "test",
-			namespace:  "custom",
+			name:      "test",
+			namespace: "custom",
 			values: func() map[string]interface{} {
-				v := customValues()
+				v := securityValues()
 				v["securityContext"].(msi)["enabled"] = true
 
 				return v

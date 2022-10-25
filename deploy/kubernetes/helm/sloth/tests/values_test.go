@@ -50,22 +50,23 @@ func customValues() msi {
 				"customKey": "customValue",
 			},
 		},
+	}
+}
 
+func securityValues() msi {
+	return msi{
 		"securityContext": msi{
 			"pod": msi{
-				"runAsNonRoot": true,
-				"runAsGroup": 1000,
-				"runAsUser": 100,
-				"fsGroup": 100,
-				"supplementalGroups": msi{
-					"100",
-				},
+				"runAsNonRoot":       true,
+				"runAsGroup":         1000,
+				"runAsUser":          100,
+				"fsGroup":            100,
+				"supplementalGroups": "100",
 			},
-		  	"container": msi{
+			"container": msi{
 				"allowPrivilegeEscalation": false,
-				"capabilities":
-				"drop": msi{
-					"ALL",
+				"capabilities": msi{
+					"drop": "ALL",
 				},
 			},
 		},

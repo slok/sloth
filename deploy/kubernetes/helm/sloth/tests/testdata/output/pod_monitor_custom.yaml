@@ -22,3 +22,4 @@ spec:
       app.kubernetes.io/instance: test
   podMetricsEndpoints:
     - port: metrics
+      interval: 45s

@@ -33,6 +33,10 @@ spec:
     spec:
       serviceAccountName: sloth-test
       securityContext:
+        fsGroup: 100
+        runAsGroup: 1000
+        runAsNonRoot: true
+        runAsUser: 100
       containers:
         - name: sloth
           image: slok/sloth-test:v1.42.42
@@ -46,6 +50,7 @@ spec:
             - --extra-labels=k2=v2
             - --disable-optimized-rules
           securityContext:
+            allowPrivilegeEscalation: false
           resources:
             limits:
               cpu: 50m

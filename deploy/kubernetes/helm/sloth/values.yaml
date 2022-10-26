@@ -63,3 +63,8 @@ customSloConfig:
 #     operator: Equal
 #     value: spot
 #     effect: NoSchedule
+
+# add securityContext for pod and container level
+securityContext:
+    pod: {}
+    container: {}

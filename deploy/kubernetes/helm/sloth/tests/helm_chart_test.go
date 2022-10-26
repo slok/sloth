@@ -373,3 +373,62 @@ func TestChartConfigMap(t *testing.T) {
 		})
 	}
 }
+
+func TestChartSecurityContext(t *testing.T) {
+	tests := map[string]struct {
+		name       string
+		namespace  string
+		values     func() map[string]interface{}
+		expErr     bool
+		expTplFile string
+	}{
+		"A chart without security values should render correctly.": {
+			name:       "sloth",
+			namespace:  "default",
+			values:     defaultValues,
+			expTplFile: "testdata/output/deployment_default.yaml",
+		},
+
+		"A chart with custom security values should render correctly.": {
+			name:      "test",
+			namespace: "custom",
+			values: func() map[string]interface{} {
+				v := securityValues()
+				v["securityContext"].(msi)["enabled"] = true
+
+				return v
+			},
+			expTplFile: "testdata/output/deployment_securityContext.yaml",
+		},
+	}
+
+	checksumNormalizer := regexp.MustCompile(`checksum/config: [a-z0-9]+`)
+
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			assert := assert.New(t)
+			require := require.New(t)
+
+			gotTpl, err := helm.Template(context.TODO(), helm.TemplateConfig{
+				Chart:       slothChart,
+				Namespace:   test.namespace,
+				ReleaseName: test.name,
+				Values:      test.values(),
+				ShowFiles:   []string{"templates/deployment.yaml"},
+			})
+
+			// Check.
+			if test.expErr {
+				assert.Error(err)
+			} else if assert.NoError(err) {
+				gotTpl := checksumNormalizer.ReplaceAllString(gotTpl, "checksum/config: <checksum>")
+
+				expTpl, err := os.ReadFile(test.expTplFile)
+				require.NoError(err)
+				expTplS := strings.TrimSpace(string(expTpl))
+
+				assert.Equal(expTplS, normalizeVersion(gotTpl))
+			}
+		})
+	}
+}

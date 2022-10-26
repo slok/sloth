@@ -32,6 +32,7 @@ spec:
         kubectl.kubernetes.io/default-container: sloth
     spec:
       serviceAccountName: sloth-test
+      securityContext:
       containers:
         - name: sloth
           image: slok/sloth-test:v1.42.42
@@ -44,6 +45,7 @@ spec:
             - --extra-labels=k1=v1
             - --extra-labels=k2=v2
             - --disable-optimized-rules
+          securityContext:
           resources:
             limits:
               cpu: 50m

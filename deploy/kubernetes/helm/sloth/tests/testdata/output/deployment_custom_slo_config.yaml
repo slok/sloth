@@ -33,6 +33,7 @@ spec:
         checksum/config: <checksum>
     spec:
       serviceAccountName: sloth-test
+      securityContext:
       containers:
         - name: sloth
           image: slok/sloth-test:v1.42.42
@@ -53,6 +54,7 @@ spec:
           volumeMounts:
             - name: sloth-windows
               mountPath: /windows
+          securityContext:
           resources:
             limits:
               cpu: 50m

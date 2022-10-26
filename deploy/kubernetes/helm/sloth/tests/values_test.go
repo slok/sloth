@@ -38,7 +38,8 @@ func customValues() msi {
 		},
 
 		"metrics": msi{
-			"enabled": true,
+			"enabled":        true,
+			"scrapeInterval": "45s",
 			"prometheusLabels": msi{
 				"kp1": "vp1",
 				"kp2": "vp2",

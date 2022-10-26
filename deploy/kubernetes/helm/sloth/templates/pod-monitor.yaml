@@ -16,4 +16,7 @@ spec:
       {{- include "sloth.selectorLabels" . | nindent 6 }}
   podMetricsEndpoints:
     - port: metrics
+    {{- with .Values.metrics.scrapeInterval }}
+      interval: {{.}}
+    {{- end }}
 {{- end }}

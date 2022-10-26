@@ -46,6 +46,7 @@ commonPlugins:
 
 metrics:
   enabled: true
+  #scrapeInterval: 30s
   prometheusLabels: {}
 
 customSloConfig:

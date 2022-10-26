@@ -33,6 +33,10 @@ spec:
     spec:
       serviceAccountName: sloth-test
       securityContext:
+        fsGroup: 100
+        runAsGroup: 1000
+        runAsNonRoot: true
+        runAsUser: 100
       containers:
         - name: sloth
           image: slok/sloth-test:v1.42.42
@@ -54,6 +58,7 @@ spec:
             - name: sloth-common-sli-plugins
               mountPath: /plugins/sloth-common-sli-plugins
           securityContext:
+            allowPrivilegeEscalation: false
           resources:
             limits:
               cpu: 50m
@@ -73,6 +78,7 @@ spec:
               # Default path for git-sync.
               mountPath: /tmp/git
           securityContext:
+            allowPrivilegeEscalation: false
           resources:
             limits:
               cpu: 50m

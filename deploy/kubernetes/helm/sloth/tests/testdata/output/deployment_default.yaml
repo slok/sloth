@@ -30,7 +30,6 @@ spec:
         kubectl.kubernetes.io/default-container: sloth
     spec:
       serviceAccountName: sloth
-      securityContext:
       containers:
         - name: sloth
           image: ghcr.io/slok/sloth:v0.11.0
@@ -44,7 +43,6 @@ spec:
           volumeMounts:
             - name: sloth-common-sli-plugins
               mountPath: /plugins/sloth-common-sli-plugins
-          securityContext:
           resources:
             limits:
               cpu: 50m
@@ -63,7 +61,6 @@ spec:
             - name: sloth-common-sli-plugins
               # Default path for git-sync.
               mountPath: /tmp/git
-          securityContext:
           resources:
             limits:
               cpu: 50m

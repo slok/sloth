@@ -10,6 +10,6 @@ rules:
     resources: ["*"]
     verbs: ["*"]
 
-  - apiGroups: ["monitoring.coreos.com"]
-    resources: ["prometheusrules"]
+  - apiGroups: ["deckhouse.io"]
+    resources: ["customprometheusrules"]
     verbs: ["create", "list", "get", "update", "watch"]

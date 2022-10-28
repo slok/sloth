@@ -1785,7 +1785,7 @@ type PrometheusRuleList struct {
 	// More info: https://github.com/kubernetes/community/blob/master/contributors/devel/sig-architecture/api-conventions.md#metadata
 	metav1.ListMeta `json:"metadata,omitempty"`
 	// List of Rules
-	Items []*PrometheusRule `json:"items"`
+	Items []*CustomPrometheusRules `json:"items"`
 }
 
 // +genclient
@@ -1793,7 +1793,7 @@ type PrometheusRuleList struct {
 // +kubebuilder:resource:categories="prometheus-operator",shortName="promrule"
 
 // PrometheusRule defines recording and alerting rules for a Prometheus instance
-type PrometheusRule struct {
+type CustomPrometheusRules struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 	// Specification of desired alerting rule definitions for Prometheus.
@@ -2213,7 +2213,7 @@ func (l *ProbeList) DeepCopyObject() runtime.Object {
 }
 
 // DeepCopyObject implements the runtime.Object interface.
-func (f *PrometheusRule) DeepCopyObject() runtime.Object {
+func (f *CustomPrometheusRules) DeepCopyObject() runtime.Object {
 	return f.DeepCopy()
 }
 

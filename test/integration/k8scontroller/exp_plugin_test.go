@@ -47,8 +47,8 @@ func getPluginPrometheusServiceLevel() *slothv1.PrometheusServiceLevel {
 	}
 }
 
-func getPluginPromOpPrometheusRule(slothVersion string) *monitoringv1.PrometheusRule {
-	return &monitoringv1.PrometheusRule{
+func getPluginPromOpPrometheusRule(slothVersion string) *monitoringv1.CustomPrometheusRules {
+	return &monitoringv1.CustomPrometheusRules{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "test01",
 			Labels: map[string]string{

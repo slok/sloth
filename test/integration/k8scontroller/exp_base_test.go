@@ -63,8 +63,8 @@ sum(rate(http_request_duration_seconds_count{job="myservice2"}[{{.window}}]))
 	}
 }
 
-func getBasePromOpPrometheusRule(slothVersion string) *monitoringv1.PrometheusRule {
-	return &monitoringv1.PrometheusRule{
+func getBasePromOpPrometheusRule(slothVersion string) *monitoringv1.CustomPrometheusRules {
+	return &monitoringv1.CustomPrometheusRules{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "test01",
 			Labels: map[string]string{

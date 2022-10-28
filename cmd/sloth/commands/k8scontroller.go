@@ -372,7 +372,7 @@ func (k kubeControllerCommand) Run(ctx context.Context, config RootConfig) error
 type kubernetesService interface {
 	ListPrometheusServiceLevels(ctx context.Context, ns string, opts metav1.ListOptions) (*slothv1.PrometheusServiceLevelList, error)
 	WatchPrometheusServiceLevels(ctx context.Context, ns string, opts metav1.ListOptions) (watch.Interface, error)
-	EnsurePrometheusRule(ctx context.Context, pr *monitoringv1.PrometheusRule) error
+	EnsurePrometheusRule(ctx context.Context, pr *monitoringv1.CustomPrometheusRules) error
 	EnsurePrometheusServiceLevelStatus(ctx context.Context, slo *slothv1.PrometheusServiceLevel, err error) error
 }
 

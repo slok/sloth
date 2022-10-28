@@ -489,10 +489,10 @@ func TestPrometheusOperatorCRDRepo(t *testing.T) {
 				},
 			},
 			mock: func(m *k8sprometheusmock.PrometheusRulesEnsurer) {
-				exp := &monitoringv1.PrometheusRule{
+				exp := &monitoringv1.CustomPrometheusRules{
 					TypeMeta: metav1.TypeMeta{
-						APIVersion: "monitoring.coreos.com/v1",
-						Kind:       "PrometheusRule",
+						APIVersion: "deckhouse.io/v1",
+						Kind:       "CustomPrometheusRules",
 					},
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      "test-name",

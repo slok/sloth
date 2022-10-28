@@ -19,7 +19,7 @@ import (
 
 // sanitizePrometheusRule will remove all the dynamic fields on a monitoringv1.PrometheusRule object
 // these fileds are normally set by Kubernetes.
-func sanitizePrometheusRule(pr *monitoringv1.PrometheusRule) *monitoringv1.PrometheusRule {
+func sanitizePrometheusRule(pr *monitoringv1.CustomPrometheusRules) *monitoringv1.CustomPrometheusRules {
 	pr = pr.DeepCopy()
 
 	pr.ManagedFields = nil

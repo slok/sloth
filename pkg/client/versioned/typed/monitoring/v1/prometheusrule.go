@@ -36,14 +36,14 @@ type PrometheusRulesGetter interface {
 
 // PrometheusRuleInterface has methods to work with PrometheusRule resources.
 type PrometheusRuleInterface interface {
-	Create(ctx context.Context, prometheusRule *v1.PrometheusRule, opts metav1.CreateOptions) (*v1.PrometheusRule, error)
-	Update(ctx context.Context, prometheusRule *v1.PrometheusRule, opts metav1.UpdateOptions) (*v1.PrometheusRule, error)
+	Create(ctx context.Context, prometheusRule *v1.CustomPrometheusRules, opts metav1.CreateOptions) (*v1.CustomPrometheusRules, error)
+	Update(ctx context.Context, prometheusRule *v1.CustomPrometheusRules, opts metav1.UpdateOptions) (*v1.CustomPrometheusRules, error)
 	Delete(ctx context.Context, name string, opts metav1.DeleteOptions) error
 	DeleteCollection(ctx context.Context, opts metav1.DeleteOptions, listOpts metav1.ListOptions) error
-	Get(ctx context.Context, name string, opts metav1.GetOptions) (*v1.PrometheusRule, error)
+	Get(ctx context.Context, name string, opts metav1.GetOptions) (*v1.CustomPrometheusRules, error)
 	List(ctx context.Context, opts metav1.ListOptions) (*v1.PrometheusRuleList, error)
 	Watch(ctx context.Context, opts metav1.ListOptions) (watch.Interface, error)
-	Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts metav1.PatchOptions, subresources ...string) (result *v1.PrometheusRule, err error)
+	Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts metav1.PatchOptions, subresources ...string) (result *v1.CustomPrometheusRules, err error)
 	PrometheusRuleExpansion
 }
 
@@ -62,11 +62,11 @@ func newPrometheusRules(c *MonitoringV1Client, namespace string) *prometheusRule
 }
 
 // Get takes name of the prometheusRule, and returns the corresponding prometheusRule object, and an error if there is any.
-func (c *prometheusRules) Get(ctx context.Context, name string, options metav1.GetOptions) (result *v1.PrometheusRule, err error) {
-	result = &v1.PrometheusRule{}
+func (c *prometheusRules) Get(ctx context.Context, name string, options metav1.GetOptions) (result *v1.CustomPrometheusRules, err error) {
+	result = &v1.CustomPrometheusRules{}
 	err = c.client.Get().
-		Namespace(c.ns).
-		Resource("prometheusrules").
+		// Namespace(c.ns).
+		Resource("customprometheusrules").
 		Name(name).
 		VersionedParams(&options, scheme.ParameterCodec).
 		Do(ctx).
@@ -82,8 +82,8 @@ func (c *prometheusRules) List(ctx context.Context, opts metav1.ListOptions) (re
 	}
 	result = &v1.PrometheusRuleList{}
 	err = c.client.Get().
-		Namespace(c.ns).
-		Resource("prometheusrules").
+		// Namespace(c.ns).
+		Resource("customprometheusrules").
 		VersionedParams(&opts, scheme.ParameterCodec).
 		Timeout(timeout).
 		Do(ctx).
@@ -99,19 +99,19 @@ func (c *prometheusRules) Watch(ctx context.Context, opts metav1.ListOptions) (w
 	}
 	opts.Watch = true
 	return c.client.Get().
-		Namespace(c.ns).
-		Resource("prometheusrules").
+		// Namespace(c.ns).
+		Resource("customprometheusrules").
 		VersionedParams(&opts, scheme.ParameterCodec).
 		Timeout(timeout).
 		Watch(ctx)
 }
 
 // Create takes the representation of a prometheusRule and creates it.  Returns the server's representation of the prometheusRule, and an error, if there is any.
-func (c *prometheusRules) Create(ctx context.Context, prometheusRule *v1.PrometheusRule, opts metav1.CreateOptions) (result *v1.PrometheusRule, err error) {
-	result = &v1.PrometheusRule{}
+func (c *prometheusRules) Create(ctx context.Context, prometheusRule *v1.CustomPrometheusRules, opts metav1.CreateOptions) (result *v1.CustomPrometheusRules, err error) {
+	result = &v1.CustomPrometheusRules{}
 	err = c.client.Post().
-		Namespace(c.ns).
-		Resource("prometheusrules").
+		// Namespace(c.ns).
+		Resource("customprometheusrules").
 		VersionedParams(&opts, scheme.ParameterCodec).
 		Body(prometheusRule).
 		Do(ctx).
@@ -120,11 +120,11 @@ func (c *prometheusRules) Create(ctx context.Context, prometheusRule *v1.Prometh
 }
 
 // Update takes the representation of a prometheusRule and updates it. Returns the server's representation of the prometheusRule, and an error, if there is any.
-func (c *prometheusRules) Update(ctx context.Context, prometheusRule *v1.PrometheusRule, opts metav1.UpdateOptions) (result *v1.PrometheusRule, err error) {
-	result = &v1.PrometheusRule{}
+func (c *prometheusRules) Update(ctx context.Context, prometheusRule *v1.CustomPrometheusRules, opts metav1.UpdateOptions) (result *v1.CustomPrometheusRules, err error) {
+	result = &v1.CustomPrometheusRules{}
 	err = c.client.Put().
-		Namespace(c.ns).
-		Resource("prometheusrules").
+		// Namespace(c.ns).
+		Resource("customprometheusrules").
 		Name(prometheusRule.Name).
 		VersionedParams(&opts, scheme.ParameterCodec).
 		Body(prometheusRule).
@@ -136,8 +136,8 @@ func (c *prometheusRules) Update(ctx context.Context, prometheusRule *v1.Prometh
 // Delete takes name of the prometheusRule and deletes it. Returns an error if one occurs.
 func (c *prometheusRules) Delete(ctx context.Context, name string, opts metav1.DeleteOptions) error {
 	return c.client.Delete().
-		Namespace(c.ns).
-		Resource("prometheusrules").
+		// Namespace(c.ns).
+		Resource("customprometheusrules").
 		Name(name).
 		Body(&opts).
 		Do(ctx).
@@ -151,8 +151,8 @@ func (c *prometheusRules) DeleteCollection(ctx context.Context, opts metav1.Dele
 		timeout = time.Duration(*listOpts.TimeoutSeconds) * time.Second
 	}
 	return c.client.Delete().
-		Namespace(c.ns).
-		Resource("prometheusrules").
+		// Namespace(c.ns).
+		Resource("customprometheusrules").
 		VersionedParams(&listOpts, scheme.ParameterCodec).
 		Timeout(timeout).
 		Body(&opts).
@@ -161,11 +161,11 @@ func (c *prometheusRules) DeleteCollection(ctx context.Context, opts metav1.Dele
 }
 
 // Patch applies the patch and returns the patched prometheusRule.
-func (c *prometheusRules) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts metav1.PatchOptions, subresources ...string) (result *v1.PrometheusRule, err error) {
-	result = &v1.PrometheusRule{}
+func (c *prometheusRules) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts metav1.PatchOptions, subresources ...string) (result *v1.CustomPrometheusRules, err error) {
+	result = &v1.CustomPrometheusRules{}
 	err = c.client.Patch(pt).
-		Namespace(c.ns).
-		Resource("prometheusrules").
+		// Namespace(c.ns).
+		Resource("customprometheusrules").
 		Name(name).
 		SubResource(subresources...).
 		VersionedParams(&opts, scheme.ParameterCodec).

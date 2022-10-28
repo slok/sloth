@@ -41,7 +41,7 @@ func (k KubernetesService) WatchPrometheusServiceLevels(ctx context.Context, ns 
 	return k.slothCli.SlothV1().PrometheusServiceLevels(ns).Watch(ctx, opts)
 }
 
-func (k KubernetesService) EnsurePrometheusRule(ctx context.Context, pr *monitoringv1.PrometheusRule) error {
+func (k KubernetesService) EnsurePrometheusRule(ctx context.Context, pr *monitoringv1.CustomPrometheusRules) error {
 	logger := k.logger.WithCtxValues(ctx)
 	pr = pr.DeepCopy()
 	stored, err := k.monitoringCli.MonitoringV1().PrometheusRules(pr.Namespace).Get(ctx, pr.Name, metav1.GetOptions{})
@@ -112,7 +112,7 @@ func (d DryRunKubernetesService) WatchPrometheusServiceLevels(ctx context.Contex
 	return d.svc.WatchPrometheusServiceLevels(ctx, ns, opts)
 }
 
-func (d DryRunKubernetesService) EnsurePrometheusRule(ctx context.Context, pr *monitoringv1.PrometheusRule) error {
+func (d DryRunKubernetesService) EnsurePrometheusRule(ctx context.Context, pr *monitoringv1.CustomPrometheusRules) error {
 	d.logger.Infof("Dry run EnsurePrometheusRule")
 	return nil
 }
@@ -145,7 +145,7 @@ func (f FakeKubernetesService) WatchPrometheusServiceLevels(ctx context.Context,
 	return f.ksvc.WatchPrometheusServiceLevels(ctx, ns, opts)
 }
 
-func (f FakeKubernetesService) EnsurePrometheusRule(ctx context.Context, pr *monitoringv1.PrometheusRule) error {
+func (f FakeKubernetesService) EnsurePrometheusRule(ctx context.Context, pr *monitoringv1.CustomPrometheusRules) error {
 	return f.ksvc.EnsurePrometheusRule(ctx, pr)
 }
 

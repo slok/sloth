@@ -15,5 +15,5 @@
 package monitoring
 
 const (
-	GroupName = "monitoring.coreos.com"
+	GroupName = "deckhouse.io"
 )

@@ -57,7 +57,7 @@ func addKnownTypes(scheme *runtime.Scheme) error {
 		&ProbeList{},
 		&Alertmanager{},
 		&AlertmanagerList{},
-		&PrometheusRule{},
+		&CustomPrometheusRules{},
 		&PrometheusRuleList{},
 		&ThanosRuler{},
 		&ThanosRulerList{},

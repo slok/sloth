@@ -6,8 +6,8 @@ import (
 	"k8s.io/apimachinery/pkg/util/intstr"
 )
 
-func getBase7DayPromOpPrometheusRule(slothVersion string) *monitoringv1.PrometheusRule {
-	return &monitoringv1.PrometheusRule{
+func getBase7DayPromOpPrometheusRule(slothVersion string) *monitoringv1.CustomPrometheusRules {
+	return &monitoringv1.CustomPrometheusRules{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "test01",
 			Labels: map[string]string{

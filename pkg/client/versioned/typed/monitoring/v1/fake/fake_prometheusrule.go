@@ -39,14 +39,14 @@ var prometheusrulesResource = schema.GroupVersionResource{Group: "monitoring.cor
 var prometheusrulesKind = schema.GroupVersionKind{Group: "monitoring.coreos.com", Version: "v1", Kind: "PrometheusRule"}
 
 // Get takes name of the prometheusRule, and returns the corresponding prometheusRule object, and an error if there is any.
-func (c *FakePrometheusRules) Get(ctx context.Context, name string, options v1.GetOptions) (result *monitoringv1.PrometheusRule, err error) {
+func (c *FakePrometheusRules) Get(ctx context.Context, name string, options v1.GetOptions) (result *monitoringv1.CustomPrometheusRules, err error) {
 	obj, err := c.Fake.
-		Invokes(testing.NewGetAction(prometheusrulesResource, c.ns, name), &monitoringv1.PrometheusRule{})
+		Invokes(testing.NewGetAction(prometheusrulesResource, c.ns, name), &monitoringv1.CustomPrometheusRules{})
 
 	if obj == nil {
 		return nil, err
 	}
-	return obj.(*monitoringv1.PrometheusRule), err
+	return obj.(*monitoringv1.CustomPrometheusRules), err
 }
 
 // List takes label and field selectors, and returns the list of PrometheusRules that match those selectors.
@@ -79,31 +79,31 @@ func (c *FakePrometheusRules) Watch(ctx context.Context, opts v1.ListOptions) (w
 }
 
 // Create takes the representation of a prometheusRule and creates it.  Returns the server's representation of the prometheusRule, and an error, if there is any.
-func (c *FakePrometheusRules) Create(ctx context.Context, prometheusRule *monitoringv1.PrometheusRule, opts v1.CreateOptions) (result *monitoringv1.PrometheusRule, err error) {
+func (c *FakePrometheusRules) Create(ctx context.Context, prometheusRule *monitoringv1.CustomPrometheusRules, opts v1.CreateOptions) (result *monitoringv1.CustomPrometheusRules, err error) {
 	obj, err := c.Fake.
-		Invokes(testing.NewCreateAction(prometheusrulesResource, c.ns, prometheusRule), &monitoringv1.PrometheusRule{})
+		Invokes(testing.NewCreateAction(prometheusrulesResource, c.ns, prometheusRule), &monitoringv1.CustomPrometheusRules{})
 
 	if obj == nil {
 		return nil, err
 	}
-	return obj.(*monitoringv1.PrometheusRule), err
+	return obj.(*monitoringv1.CustomPrometheusRules), err
 }
 
 // Update takes the representation of a prometheusRule and updates it. Returns the server's representation of the prometheusRule, and an error, if there is any.
-func (c *FakePrometheusRules) Update(ctx context.Context, prometheusRule *monitoringv1.PrometheusRule, opts v1.UpdateOptions) (result *monitoringv1.PrometheusRule, err error) {
+func (c *FakePrometheusRules) Update(ctx context.Context, prometheusRule *monitoringv1.CustomPrometheusRules, opts v1.UpdateOptions) (result *monitoringv1.CustomPrometheusRules, err error) {
 	obj, err := c.Fake.
-		Invokes(testing.NewUpdateAction(prometheusrulesResource, c.ns, prometheusRule), &monitoringv1.PrometheusRule{})
+		Invokes(testing.NewUpdateAction(prometheusrulesResource, c.ns, prometheusRule), &monitoringv1.CustomPrometheusRules{})
 
 	if obj == nil {
 		return nil, err
 	}
-	return obj.(*monitoringv1.PrometheusRule), err
+	return obj.(*monitoringv1.CustomPrometheusRules), err
 }
 
 // Delete takes name of the prometheusRule and deletes it. Returns an error if one occurs.
 func (c *FakePrometheusRules) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
 	_, err := c.Fake.
-		Invokes(testing.NewDeleteActionWithOptions(prometheusrulesResource, c.ns, name, opts), &monitoringv1.PrometheusRule{})
+		Invokes(testing.NewDeleteActionWithOptions(prometheusrulesResource, c.ns, name, opts), &monitoringv1.CustomPrometheusRules{})
 
 	return err
 }
@@ -117,12 +117,12 @@ func (c *FakePrometheusRules) DeleteCollection(ctx context.Context, opts v1.Dele
 }
 
 // Patch applies the patch and returns the patched prometheusRule.
-func (c *FakePrometheusRules) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *monitoringv1.PrometheusRule, err error) {
+func (c *FakePrometheusRules) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *monitoringv1.CustomPrometheusRules, err error) {
 	obj, err := c.Fake.
-		Invokes(testing.NewPatchSubresourceAction(prometheusrulesResource, c.ns, name, pt, data, subresources...), &monitoringv1.PrometheusRule{})
+		Invokes(testing.NewPatchSubresourceAction(prometheusrulesResource, c.ns, name, pt, data, subresources...), &monitoringv1.CustomPrometheusRules{})
 
 	if obj == nil {
 		return nil, err
 	}
-	return obj.(*monitoringv1.PrometheusRule), err
+	return obj.(*monitoringv1.CustomPrometheusRules), err
 }

@@ -67,7 +67,7 @@ func (i IOWriterPrometheusOperatorYAMLRepo) StoreSLOs(ctx context.Context, kmeta
 	return nil
 }
 
-func mapModelToPrometheusOperator(ctx context.Context, kmeta K8sMeta, slos []StorageSLO) (*monitoringv1.PrometheusRule, error) {
+func mapModelToPrometheusOperator(ctx context.Context, kmeta K8sMeta, slos []StorageSLO) (*monitoringv1.CustomPrometheusRules, error) {
 	// Add extra labels.
 	labels := map[string]string{
 		"app.kubernetes.io/component":  "SLO",
@@ -77,7 +77,7 @@ func mapModelToPrometheusOperator(ctx context.Context, kmeta K8sMeta, slos []Sto
 		labels[k] = v
 	}
 
-	rule := &monitoringv1.PrometheusRule{
+	rule := &monitoringv1.CustomPrometheusRules{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "monitoring.coreos.com/v1",
 			Kind:       "PrometheusRule",
@@ -172,7 +172,7 @@ type PrometheusOperatorCRDRepo struct {
 }
 
 type PrometheusRulesEnsurer interface {
-	EnsurePrometheusRule(ctx context.Context, pr *monitoringv1.PrometheusRule) error
+	EnsurePrometheusRule(ctx context.Context, pr *monitoringv1.CustomPrometheusRules) error
 }
 
 //go:generate mockery --case underscore --output k8sprometheusmock --outpkg k8sprometheusmock --name PrometheusRulesEnsurer

@@ -16,11 +16,11 @@ type PrometheusRulesEnsurer struct {
 }
 
 // EnsurePrometheusRule provides a mock function with given fields: ctx, pr
-func (_m *PrometheusRulesEnsurer) EnsurePrometheusRule(ctx context.Context, pr *v1.PrometheusRule) error {
+func (_m *PrometheusRulesEnsurer) EnsurePrometheusRule(ctx context.Context, pr *v1.CustomPrometheusRules) error {
 	ret := _m.Called(ctx, pr)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, *v1.PrometheusRule) error); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *v1.CustomPrometheusRules) error); ok {
 		r0 = rf(ctx, pr)
 	} else {
 		r0 = ret.Error(0)

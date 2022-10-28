@@ -69,7 +69,7 @@ func NewFilteredPrometheusRuleInformer(client versioned.Interface, namespace str
 				return client.MonitoringV1().PrometheusRules(namespace).Watch(context.TODO(), options)
 			},
 		},
-		&monitoringv1.PrometheusRule{},
+		&monitoringv1.CustomPrometheusRules{},
 		resyncPeriod,
 		indexers,
 	)
@@ -80,7 +80,7 @@ func (f *prometheusRuleInformer) defaultInformer(client versioned.Interface, res
 }
 
 func (f *prometheusRuleInformer) Informer() cache.SharedIndexInformer {
-	return f.factory.InformerFor(&monitoringv1.PrometheusRule{}, f.defaultInformer)
+	return f.factory.InformerFor(&monitoringv1.CustomPrometheusRules{}, f.defaultInformer)
 }
 
 func (f *prometheusRuleInformer) Lister() v1.PrometheusRuleLister {

@@ -28,7 +28,7 @@ import (
 type PrometheusRuleLister interface {
 	// List lists all PrometheusRules in the indexer.
 	// Objects returned here must be treated as read-only.
-	List(selector labels.Selector) (ret []*v1.PrometheusRule, err error)
+	List(selector labels.Selector) (ret []*v1.CustomPrometheusRules, err error)
 	// PrometheusRules returns an object that can list and get PrometheusRules.
 	PrometheusRules(namespace string) PrometheusRuleNamespaceLister
 	PrometheusRuleListerExpansion
@@ -45,9 +45,9 @@ func NewPrometheusRuleLister(indexer cache.Indexer) PrometheusRuleLister {
 }
 
 // List lists all PrometheusRules in the indexer.
-func (s *prometheusRuleLister) List(selector labels.Selector) (ret []*v1.PrometheusRule, err error) {
+func (s *prometheusRuleLister) List(selector labels.Selector) (ret []*v1.CustomPrometheusRules, err error) {
 	err = cache.ListAll(s.indexer, selector, func(m interface{}) {
-		ret = append(ret, m.(*v1.PrometheusRule))
+		ret = append(ret, m.(*v1.CustomPrometheusRules))
 	})
 	return ret, err
 }
@@ -62,10 +62,10 @@ func (s *prometheusRuleLister) PrometheusRules(namespace string) PrometheusRuleN
 type PrometheusRuleNamespaceLister interface {
 	// List lists all PrometheusRules in the indexer for a given namespace.
 	// Objects returned here must be treated as read-only.
-	List(selector labels.Selector) (ret []*v1.PrometheusRule, err error)
+	List(selector labels.Selector) (ret []*v1.CustomPrometheusRules, err error)
 	// Get retrieves the PrometheusRule from the indexer for a given namespace and name.
 	// Objects returned here must be treated as read-only.
-	Get(name string) (*v1.PrometheusRule, error)
+	Get(name string) (*v1.CustomPrometheusRules, error)
 	PrometheusRuleNamespaceListerExpansion
 }
 
@@ -77,15 +77,15 @@ type prometheusRuleNamespaceLister struct {
 }
 
 // List lists all PrometheusRules in the indexer for a given namespace.
-func (s prometheusRuleNamespaceLister) List(selector labels.Selector) (ret []*v1.PrometheusRule, err error) {
+func (s prometheusRuleNamespaceLister) List(selector labels.Selector) (ret []*v1.CustomPrometheusRules, err error) {
 	err = cache.ListAllByNamespace(s.indexer, s.namespace, selector, func(m interface{}) {
-		ret = append(ret, m.(*v1.PrometheusRule))
+		ret = append(ret, m.(*v1.CustomPrometheusRules))
 	})
 	return ret, err
 }
 
 // Get retrieves the PrometheusRule from the indexer for a given namespace and name.
-func (s prometheusRuleNamespaceLister) Get(name string) (*v1.PrometheusRule, error) {
+func (s prometheusRuleNamespaceLister) Get(name string) (*v1.CustomPrometheusRules, error) {
 	obj, exists, err := s.indexer.GetByKey(s.namespace + "/" + name)
 	if err != nil {
 		return nil, err
@@ -93,5 +93,5 @@ func (s prometheusRuleNamespaceLister) Get(name string) (*v1.PrometheusRule, err
 	if !exists {
 		return nil, errors.NewNotFound(v1.Resource("prometheusrule"), name)
 	}
-	return obj.(*v1.PrometheusRule), nil
+	return obj.(*v1.CustomPrometheusRules), nil
 }

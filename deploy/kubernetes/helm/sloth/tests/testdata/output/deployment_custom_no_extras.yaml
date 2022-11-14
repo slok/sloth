@@ -49,6 +49,7 @@ spec:
             - --extra-labels=k1=v1
             - --extra-labels=k2=v2
             - --disable-optimized-rules
+            - --logger=default
           securityContext:
             allowPrivilegeEscalation: false
           resources:

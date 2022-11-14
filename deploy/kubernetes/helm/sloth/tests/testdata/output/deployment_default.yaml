@@ -36,6 +36,7 @@ spec:
           args:
             - kubernetes-controller
             - --sli-plugins-path=/plugins
+            - --logger=default
           ports:
             - containerPort: 8081
               name: metrics

@@ -51,6 +51,7 @@ spec:
             - --extra-labels=k2=v2
             - --disable-optimized-rules
             - --slo-period-windows-path=/windows
+            - --logger=default
           ports:
             - containerPort: 8081
               name: metrics

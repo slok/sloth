@@ -119,6 +119,13 @@ func mapSpecToModel(ctx context.Context, defaultWindowPeriod time.Duration, plug
 			}
 		}
 
+		if specSLO.SLI.DenominatorCorrected != nil {
+			slo.SLI.DenominatorCorrected = &prometheus.SLIEvents{
+				ErrorQuery: specSLO.SLI.DenominatorCorrected.ErrorQuery,
+				TotalQuery: specSLO.SLI.DenominatorCorrected.TotalQuery,
+			}
+		}
+
 		if specSLO.SLI.Plugin != nil {
 			plugin, err := pluginsRepo.GetSLIPlugin(ctx, specSLO.SLI.Plugin.ID)
 			if err != nil {

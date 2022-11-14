@@ -4,4 +4,4 @@ description: Base chart for Sloth.
 type: application
 home: https://github.com/slok/sloth
 kubeVersion: ">= 1.19.0-0"
-version: 0.6.4
+version: 0.7.0

@@ -18,7 +18,7 @@ import (
 type SLI struct {
 	Raw                  *SLIRaw
 	Events               *SLIEvents
-	DenominatorCorrected *SLIEvents
+	DenominatorCorrected *SLIDenominatorCorrectedEvents
 }
 
 type SLIRaw struct {
@@ -28,6 +28,12 @@ type SLIRaw struct {
 type SLIEvents struct {
 	ErrorQuery string `validate:"required,prom_expr,template_vars"`
 	TotalQuery string `validate:"required,prom_expr,template_vars"`
+}
+
+type SLIDenominatorCorrectedEvents struct {
+	ErrorQuery   *string // `validate:"prom_expr,template_vars"` // TODO fix validation
+	SuccessQuery *string //`validate:"prom_expr,template_vars"`  // TODO fix validation
+	TotalQuery   string  `validate:"required,prom_expr,template_vars"`
 }
 
 // AlertMeta is the metadata of an alert settings.
@@ -90,6 +96,7 @@ var modelSpecValidate = func() *validator.Validate {
 	v.RegisterStructValidation(validateOneSLI, SLI{})
 	v.RegisterStructValidation(validateSLOGroup, SLOGroup{})
 	v.RegisterStructValidation(validateSLIEvents, SLIEvents{})
+	v.RegisterStructValidation(validateDenominatorCorrected, SLIDenominatorCorrectedEvents{})
 	return v
 }()
 
@@ -255,6 +262,22 @@ func validateOneSLI(sl validator.StructLevel) {
 	// No SLI types set.
 	if !sliSet {
 		sl.ReportError(sli, "", "", "sli_type_required", "")
+	}
+}
+
+func validateDenominatorCorrected(sl validator.StructLevel) {
+	denominator_corrected, ok := sl.Current().Interface().(SLIDenominatorCorrectedEvents)
+	if !ok {
+		sl.ReportError(denominator_corrected, "", "SLIDenominatorCorrectedEvents", "not_denominator_corrected", "")
+		return
+	}
+
+	if denominator_corrected.ErrorQuery != nil && denominator_corrected.SuccessQuery != nil {
+		sl.ReportError(denominator_corrected, "", "", "query_repeated", "")
+	}
+
+	if denominator_corrected.ErrorQuery == nil && denominator_corrected.SuccessQuery == nil {
+		sl.ReportError(denominator_corrected, "", "", "no_query_supplied", "")
 	}
 }
 

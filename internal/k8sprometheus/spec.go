@@ -120,9 +120,10 @@ func mapSpecToModel(ctx context.Context, defaultWindowPeriod time.Duration, plug
 		}
 
 		if specSLO.SLI.DenominatorCorrected != nil {
-			slo.SLI.DenominatorCorrected = &prometheus.SLIEvents{
-				ErrorQuery: specSLO.SLI.DenominatorCorrected.ErrorQuery,
-				TotalQuery: specSLO.SLI.DenominatorCorrected.TotalQuery,
+			slo.SLI.DenominatorCorrected = &prometheus.SLIDenominatorCorrectedEvents{
+				ErrorQuery:   specSLO.SLI.DenominatorCorrected.ErrorQuery,
+				SuccessQuery: specSLO.SLI.DenominatorCorrected.SuccessQuery,
+				TotalQuery:   specSLO.SLI.DenominatorCorrected.TotalQuery,
 			}
 		}
 

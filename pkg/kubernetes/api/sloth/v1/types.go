@@ -96,7 +96,7 @@ type SLI struct {
 
 	// Events is the events SLI type.
 	// +optional
-	DenominatorCorrected *SLIEvents `json:"denominator_corrected,omitempty"`
+	DenominatorCorrected *SLIDenominatorCorrected `json:"denominator_corrected,omitempty"`
 
 	// Plugin is the pluggable SLI type.
 	// +optional
@@ -117,6 +117,25 @@ type SLIEvents struct {
 	// that we consider that are bad for the SLO (e.g "http 5xx", "latency > 250ms"...).
 	// Requires the usage of `{{.window}}` template variable.
 	ErrorQuery string `json:"errorQuery"`
+
+	// TotalQuery is a Prometheus query that will get the total number/count of events
+	// for the SLO (e.g "all http requests"...).
+	// Requires the usage of `{{.window}}` template variable.
+	TotalQuery string `json:"totalQuery"`
+}
+
+// SLIDenominatorCorrected is an SLI that is calculated as the division of bad events and total events, or
+// 1 - (good / total) events giving a ratio SLI
+type SLIDenominatorCorrected struct {
+	// ErrorQuery is a Prometheus query that will get the number/count of events
+	// that we consider that are bad for the SLO (e.g "http 5xx", "latency > 250ms"...).
+	// Requires the usage of `{{.window}}` template variable.
+	ErrorQuery *string `json:"errorQuery,omitempty"`
+
+	// ErrorQuery is a Prometheus query that will get the number/count of events
+	// that we consider that are bad for the SLO (e.g "http 5xx", "latency > 250ms"...).
+	// Requires the usage of `{{.window}}` template variable.
+	SuccessQuery *string `json:"successQuery,omitempty"`
 
 	// TotalQuery is a Prometheus query that will get the total number/count of events
 	// for the SLO (e.g "all http requests"...).

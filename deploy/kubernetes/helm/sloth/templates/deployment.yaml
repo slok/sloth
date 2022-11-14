@@ -59,6 +59,7 @@ spec:
             {{- if .Values.customSloConfig.enabled }}
             - --slo-period-windows-path={{ .Values.customSloConfig.path }}
             {{- end }}
+            - --logger={{ .Values.sloth.logger }}
             {{- if .Values.sloth.debug.enabled }}
             - --debug
             {{- end}}

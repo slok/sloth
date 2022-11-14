@@ -144,7 +144,10 @@ func eventsSLIRecordGenerator(slo SLO, window time.Duration, alerts alert.MWMBAl
 }
 
 func denominatorCorrectedSLIRecordGenerator(slo SLO, window time.Duration, alerts alert.MWMBAlertGroup) (*rulefmt.Rule, error) {
-	const sliExprTplFmt = `(
+	var sliExprTpl string
+
+	if slo.SLI.DenominatorCorrected.ErrorQuery != nil {
+		const sliExprTplFmt = `(
 slo:numerator_correction:ratio{{.window}}{{.filter}}
 * on()
 %s
@@ -152,14 +155,21 @@ slo:numerator_correction:ratio{{.window}}{{.filter}}
 /
 (%s)
 `
-	// 	const sliExprTplFmt = `sum_over_time({{.metric}}{{.filter}}[{{.window}}])
-	// / ignoring ({{.windowKey}})
-	// count_over_time({{.metric}}{{.filter}}[{{.window}}])
-
-	// sloth_id: deployments-velo_expected_errors
-	// sloth_service: deployments
-	// sloth_slo: velo_expected_errors
-	sliExprTpl := fmt.Sprintf(sliExprTplFmt, slo.SLI.DenominatorCorrected.ErrorQuery, slo.SLI.DenominatorCorrected.TotalQuery)
+		sliExprTpl = fmt.Sprintf(sliExprTplFmt, *slo.SLI.DenominatorCorrected.ErrorQuery, slo.SLI.DenominatorCorrected.TotalQuery)
+	} else if slo.SLI.DenominatorCorrected.SuccessQuery != nil {
+		const sliExprTplFmt = `slo:numerator_correction:ratio{{.window}}{{.filter}}
+* on() (1 -
+(
+%s
+)
+/
+(%s)
+)
+`
+		sliExprTpl = fmt.Sprintf(sliExprTplFmt, *slo.SLI.DenominatorCorrected.SuccessQuery, slo.SLI.DenominatorCorrected.TotalQuery)
+	} else {
+		return nil, fmt.Errorf("missing error or success query")
+	}
 
 	// Render with our templated data.
 	tpl, err := template.New("sliExpr").Option("missingkey=error").Parse(sliExprTpl)

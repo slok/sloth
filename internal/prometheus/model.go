@@ -16,8 +16,9 @@ import (
 
 // SLI reprensents an SLI with custom error and total expressions.
 type SLI struct {
-	Raw    *SLIRaw
-	Events *SLIEvents
+	Raw                  *SLIRaw
+	Events               *SLIEvents
+	DenominatorCorrected *SLIEvents
 }
 
 type SLIRaw struct {

@@ -94,6 +94,10 @@ type SLI struct {
 	// +optional
 	Events *SLIEvents `json:"events,omitempty"`
 
+	// Events is the events SLI type.
+	// +optional
+	DenominatorCorrected *SLIEvents `json:"denominator_corrected,omitempty"`
+
 	// Plugin is the pluggable SLI type.
 	// +optional
 	Plugin *SLIPlugin `json:"plugin,omitempty"`

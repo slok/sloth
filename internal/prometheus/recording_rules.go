@@ -401,7 +401,7 @@ func createNumeratorCorrection(slo SLO, labels map[string]string, window time.Du
 		return nil, fmt.Errorf("could not create numerator for %s: %w", metricSLONumeratorCorrection, err)
 	}
 
-	denominatorWindow := timeDurationToPromStr(time.Hour * 24 * 7)
+	denominatorWindow := timeDurationToPromStr(time.Hour * 24 * 30)
 	var denominatorBuffer bytes.Buffer
 	err = tpl.Execute(&denominatorBuffer, map[string]string{
 		tplKeyWindow: denominatorWindow,

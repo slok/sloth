@@ -150,7 +150,7 @@ jobs:
           chmod -R 0777 ./bin
           make build-all
       - name: Upload binaries
-        uses: xresloader/upload-to-github-release@v1.3.8
+        uses: xresloader/upload-to-github-release@v1.3.9
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:

@@ -125,6 +125,12 @@ func (v validateCommand) Run(ctx context.Context, config RootConfig) error {
 		// Split YAMLs in case we have multiple yaml files in a single file.
 		splittedSLOsData := splitYAML(slxData)
 
+		gen := generator{
+			logger:      log.Noop,
+			windowsRepo: windowsRepo,
+			extraLabels: v.extraLabels,
+		}
+
 		// Prepare file validation result and start validation result for every SLO in the file.
 		// TODO(slok): Add service meta to validation.
 		validation := &fileValidation{File: input}
@@ -138,7 +144,7 @@ func (v validateCommand) Run(ctx context.Context, config RootConfig) error {
 			case promYAMLLoader.IsSpecType(ctx, dataB):
 				slos, promErr := promYAMLLoader.LoadSpec(ctx, dataB)
 				if promErr == nil {
-					err := generatePrometheus(ctx, log.Noop, windowsRepo, false, false, false, v.extraLabels, *slos, io.Discard)
+					err := gen.GeneratePrometheus(ctx, *slos, io.Discard)
 					if err != nil {
 						validation.Errs = []error{fmt.Errorf("Could not generate Prometheus format rules: %w", err)}
 					}
@@ -150,7 +156,7 @@ func (v validateCommand) Run(ctx context.Context, config RootConfig) error {
 			case kubeYAMLLoader.IsSpecType(ctx, dataB):
 				sloGroup, k8sErr := kubeYAMLLoader.LoadSpec(ctx, dataB)
 				if k8sErr == nil {
-					err := generateKubernetes(ctx, log.Noop, windowsRepo, false, false, false, v.extraLabels, *sloGroup, io.Discard)
+					err := gen.GenerateKubernetes(ctx, *sloGroup, io.Discard)
 					if err != nil {
 						validation.Errs = []error{fmt.Errorf("could not generate Kubernetes format rules: %w", err)}
 					}
@@ -162,7 +168,7 @@ func (v validateCommand) Run(ctx context.Context, config RootConfig) error {
 			case openSLOYAMLLoader.IsSpecType(ctx, dataB):
 				slos, openSLOErr := openSLOYAMLLoader.LoadSpec(ctx, dataB)
 				if openSLOErr == nil {
-					err := generateOpenSLO(ctx, log.Noop, windowsRepo, false, false, false, v.extraLabels, *slos, io.Discard)
+					err := gen.GenerateOpenSLO(ctx, *slos, io.Discard)
 					if err != nil {
 						validation.Errs = []error{fmt.Errorf("Could not generate OpenSLO format rules: %w", err)}
 					}

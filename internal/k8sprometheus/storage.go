@@ -138,7 +138,7 @@ func promRulesToKubeRules(rules []rulefmt.Rule) []monitoringv1.Rule {
 			Record:      r.Record,
 			Alert:       r.Alert,
 			Expr:        intstr.FromString(r.Expr),
-			For:         forS,
+			For:         monitoringv1.Duration(forS),
 			Labels:      r.Labels,
 			Annotations: r.Annotations,
 		})

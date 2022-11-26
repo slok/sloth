@@ -27,6 +27,8 @@ sloth:
   optimizedRules: true  # Reduce prom load for calculating period window burnrates.
   debug:
     enabled: false
+  # Could be: default or json
+  logger: default
 
 commonPlugins:
   enabled: true

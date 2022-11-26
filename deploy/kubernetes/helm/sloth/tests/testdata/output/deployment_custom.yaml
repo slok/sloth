@@ -50,6 +50,7 @@ spec:
             - --extra-labels=k2=v2
             - --sli-plugins-path=/plugins
             - --disable-optimized-rules
+            - --logger=default
           ports:
             - containerPort: 8081
               name: metrics

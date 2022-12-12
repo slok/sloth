@@ -31,8 +31,8 @@ type SLIEvents struct {
 }
 
 type SLIDenominatorCorrectedEvents struct {
-	ErrorQuery   *string // `validate:"prom_expr,template_vars"` // TODO fix validation
-	SuccessQuery *string //`validate:"prom_expr,template_vars"`  // TODO fix validation
+	ErrorQuery   *string `validate:"omitempty,prom_expr,template_vars"`
+	SuccessQuery *string `validate:"omitempty,prom_expr,template_vars"`
 	TotalQuery   string  `validate:"required,prom_expr,template_vars"`
 }
 

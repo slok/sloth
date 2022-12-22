@@ -94,7 +94,7 @@ type SLI struct {
 	// +optional
 	Events *SLIEvents `json:"events,omitempty"`
 
-	// Events is the events SLI type.
+	// DenominatorCorrected is the denominator corrected events SLI type.
 	// +optional
 	DenominatorCorrected *SLIDenominatorCorrected `json:"denominator_corrected,omitempty"`
 
@@ -125,16 +125,20 @@ type SLIEvents struct {
 }
 
 // SLIDenominatorCorrected is an SLI that is calculated as the division of bad events and total events, or
-// 1 - (good / total) events giving a ratio SLI
+// 1 - (good / total) events giving a ratio SLI. This SLI is corrected based on the total number of events
+// for the last 30d, meaning that low-event hours will have less impact on burn-rate than high-event hours.
+// In other words, ratios with low denominators will have less impact.
 type SLIDenominatorCorrected struct {
 	// ErrorQuery is a Prometheus query that will get the number/count of events
 	// that we consider that are bad for the SLO (e.g "http 5xx", "latency > 250ms"...).
-	// Requires the usage of `{{.window}}` template variable.
+	// Requires the usage of `{{.window}}` template variable. ErrorQuery and
+	// SuccessQuery are mutually exclusive.
 	ErrorQuery *string `json:"errorQuery,omitempty"`
 
-	// ErrorQuery is a Prometheus query that will get the number/count of events
-	// that we consider that are bad for the SLO (e.g "http 5xx", "latency > 250ms"...).
-	// Requires the usage of `{{.window}}` template variable.
+	// SuccessQuery is a Prometheus query that will get the number/count of events
+	// that we consider that are good for the SLO (e.g "http not 5xx", "latency < 250ms"...).
+	// Requires the usage of `{{.window}}` template variable. ErrorQuery and
+	// SuccessQuery are mutually exclusive.
 	SuccessQuery *string `json:"successQuery,omitempty"`
 
 	// TotalQuery is a Prometheus query that will get the total number/count of events

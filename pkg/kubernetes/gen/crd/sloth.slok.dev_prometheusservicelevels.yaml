@@ -167,6 +167,34 @@ spec:
                       description: SLI is the indicator (service level indicator)
                         for this specific SLO.
                       properties:
+                        denominator_corrected:
+                          description: DenominatorCorrected is the denominator corrected
+                            events SLI type.
+                          properties:
+                            errorQuery:
+                              description: ErrorQuery is a Prometheus query that will
+                                get the number/count of events that we consider that
+                                are bad for the SLO (e.g "http 5xx", "latency > 250ms"...).
+                                Requires the usage of `{{.window}}` template variable.
+                                ErrorQuery and SuccessQuery are mutually exclusive.
+                              type: string
+                            successQuery:
+                              description: SuccessQuery is a Prometheus query that
+                                will get the number/count of events that we consider
+                                that are good for the SLO (e.g "http not 5xx", "latency
+                                < 250ms"...). Requires the usage of `{{.window}}`
+                                template variable. ErrorQuery and SuccessQuery are
+                                mutually exclusive.
+                              type: string
+                            totalQuery:
+                              description: TotalQuery is a Prometheus query that will
+                                get the total number/count of events for the SLO (e.g
+                                "all http requests"...). Requires the usage of `{{.window}}`
+                                template variable.
+                              type: string
+                          required:
+                          - totalQuery
+                          type: object
                         events:
                           description: Events is the events SLI type.
                           properties:

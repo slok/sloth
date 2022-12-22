@@ -363,18 +363,12 @@ func (m metadataRecordingRulesGenerator) GenerateMetadataRecordingRules(ctx cont
 	}
 
 	if slo.SLI.DenominatorCorrected != nil {
-		for _, window := range [7]time.Duration{
-			time.Minute * 5,
-			time.Minute * 30,
-			time.Hour,
-			time.Hour * 2,
-			time.Hour * 6,
-			time.Hour * 24,
-			time.Hour * 24 * 3,
-		} {
+		windows := getAlertGroupWindows(alerts)
+		windows = append(windows, slo.TimeWindow) // Add the total time window as a handy helper.
+		for _, window := range windows {
 			rule, err := createNumeratorCorrection(slo, labels, window)
 			if err != nil {
-				return nil, fmt.Errorf("Could not create numerator rule: %v", err)
+				return nil, fmt.Errorf("could not create numerator rule: %v", err)
 			}
 			rules = append(rules, *rule)
 		}

@@ -60,6 +60,11 @@ func TestPrometheusGenerate(t *testing.T) {
 			expOut:     expectLoader.mustLoadExp("./testdata/out-base-k8s.yaml.tpl"),
 		},
 
+		"Generate should generate the correct rules for all the corrected SLOs (Kubernetes).": {
+			genCmdArgs: "--input ./testdata/in-base-k8s-denom.yaml",
+			expOut:     expectLoader.mustLoadExp("./testdata/out-base-k8s-denom.yaml.tpl"),
+		},
+
 		"Generate without alerts should generate the correct recording rules for all the SLOs.": {
 			genCmdArgs: "--input ./testdata/in-base.yaml --disable-alerts",
 			expOut:     expectLoader.mustLoadExp("./testdata/out-base-no-alerts.yaml.tpl"),

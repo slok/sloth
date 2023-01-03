@@ -70,6 +70,8 @@ func factorySLIRecordGenerator(slo SLO, window time.Duration, alerts alert.MWMBA
 	// Raw based SLI.
 	case slo.SLI.Raw != nil:
 		return rawSLIRecordGenerator(slo, window, alerts)
+	case slo.SLI.DenominatorCorrected != nil:
+		return denominatorCorrectedSLIRecordGenerator(slo, window, alerts)
 	}
 
 	return nil, fmt.Errorf("invalid SLI type")
@@ -123,6 +125,64 @@ func eventsSLIRecordGenerator(slo SLO, window time.Duration, alerts alert.MWMBAl
 	var b bytes.Buffer
 	err = tpl.Execute(&b, map[string]string{
 		tplKeyWindow: strWindow,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("could not render SLI expression template: %w", err)
+	}
+
+	return &rulefmt.Rule{
+		Record: slo.GetSLIErrorMetric(window),
+		Expr:   b.String(),
+		Labels: mergeLabels(
+			slo.GetSLOIDPromLabels(),
+			map[string]string{
+				sloWindowLabelName: strWindow,
+			},
+			slo.Labels,
+		),
+	}, nil
+}
+
+func denominatorCorrectedSLIRecordGenerator(slo SLO, window time.Duration, alerts alert.MWMBAlertGroup) (*rulefmt.Rule, error) {
+	var sliExprTpl string
+
+	if slo.SLI.DenominatorCorrected.ErrorQuery != nil {
+		const sliExprTplFmt = `(
+slo:numerator_correction:ratio{{.window}}{{.filter}}
+* on()
+%s
+)
+/
+(%s)
+`
+		sliExprTpl = fmt.Sprintf(sliExprTplFmt, *slo.SLI.DenominatorCorrected.ErrorQuery, slo.SLI.DenominatorCorrected.TotalQuery)
+	} else if slo.SLI.DenominatorCorrected.SuccessQuery != nil {
+		const sliExprTplFmt = `slo:numerator_correction:ratio{{.window}}{{.filter}}
+* on() (1 -
+(
+%s
+)
+/
+(%s)
+)
+`
+		sliExprTpl = fmt.Sprintf(sliExprTplFmt, *slo.SLI.DenominatorCorrected.SuccessQuery, slo.SLI.DenominatorCorrected.TotalQuery)
+	} else {
+		return nil, fmt.Errorf("missing error or success query")
+	}
+
+	// Render with our templated data.
+	tpl, err := template.New("sliExpr").Option("missingkey=error").Parse(sliExprTpl)
+	if err != nil {
+		return nil, fmt.Errorf("could not create SLI expression template data: %w", err)
+	}
+
+	strWindow := timeDurationToPromStr(window)
+	var b bytes.Buffer
+	err = tpl.Execute(&b, map[string]string{
+		tplKeyWindow: strWindow,
+		"filter":     labelsToPromFilter(slo.GetSLOIDPromLabels()),
+		"windowKey":  sloWindowLabelName,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("could not render SLI expression template: %w", err)
@@ -302,7 +362,53 @@ func (m metadataRecordingRulesGenerator) GenerateMetadataRecordingRules(ctx cont
 		},
 	}
 
+	if slo.SLI.DenominatorCorrected != nil {
+		windows := getAlertGroupWindows(alerts)
+		windows = append(windows, slo.TimeWindow) // Add the total time window as a handy helper.
+		for _, window := range windows {
+			rule, err := createNumeratorCorrection(slo, labels, window)
+			if err != nil {
+				return nil, fmt.Errorf("could not create numerator rule: %v", err)
+			}
+			rules = append(rules, *rule)
+		}
+	}
+
 	return rules, nil
+}
+
+func createNumeratorCorrection(slo SLO, labels map[string]string, window time.Duration) (*rulefmt.Rule, error) {
+	windowString := timeDurationToPromStr(window)
+	metricSLONumeratorCorrection := fmt.Sprintf("slo:numerator_correction:ratio%s", windowString)
+	totalquery := slo.SLI.DenominatorCorrected.TotalQuery
+
+	tpl, err := template.New("sliExpr").Option("missingkey=error").Parse(totalquery)
+	if err != nil {
+		return nil, fmt.Errorf("could not create %s expression template data: %w", metricSLONumeratorCorrection, err)
+	}
+
+	var numeratorBuffer bytes.Buffer
+	err = tpl.Execute(&numeratorBuffer, map[string]string{
+		tplKeyWindow: windowString,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("could not create numerator for %s: %w", metricSLONumeratorCorrection, err)
+	}
+
+	denominatorWindow := timeDurationToPromStr(time.Hour * 24 * 30)
+	var denominatorBuffer bytes.Buffer
+	err = tpl.Execute(&denominatorBuffer, map[string]string{
+		tplKeyWindow: denominatorWindow,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("could not create denominator for %s: %w", metricSLONumeratorCorrection, err)
+	}
+
+	return &rulefmt.Rule{
+		Record: metricSLONumeratorCorrection,
+		Expr:   fmt.Sprintf(`(%s)/(%s)`, numeratorBuffer.String(), denominatorBuffer.String()),
+		Labels: labels,
+	}, nil
 }
 
 var burnRateRecordingExprTpl = template.Must(template.New("burnRateExpr").Option("missingkey=error").Parse(`{{ .SLIErrorMetric }}{{ .MetricFilter }}

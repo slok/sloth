@@ -86,10 +86,6 @@ spec:
           {{- end }}
           resources:
           {{- toYaml .Values.resources | nindent 12 }}
-          {{- with .Values.tolerations }}
-          tolerations:
-{{ toYaml . | trim | indent 12 }}
-          {{- end }}
         {{- if .Values.commonPlugins.enabled }}
         - name: git-sync-plugins
           image: {{ .Values.commonPlugins.image.repository }}:{{ .Values.commonPlugins.image.tag }}
@@ -125,5 +121,9 @@ spec:
             defaultMode: 420
             name: {{ include "sloth.fullname" . }}
       {{- end }}
+      {{- end }}
+      {{- if .Values.tolerations }}
+      tolerations:
+        {{- toYaml .Values.tolerations | nindent 8 }}
       {{- end }}
 

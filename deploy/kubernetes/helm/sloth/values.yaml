@@ -60,12 +60,11 @@ customSloConfig:
 #    spec:
 #    ... See https://sloth.dev/usage/slo-period-windows/
 
-# add deployment pod tolerations
-# tolerations:
-#   - key: kubernetes.azure.com/scalesetpriority
-#     operator: Equal
-#     value: spot
-#     effect: NoSchedule
+tolerations: []
+  # - key: "key"
+  #   operator: "Equal|Exists"
+  #   value: "value"
+  #   effect: "NoSchedule|PreferNoSchedule|NoExecute(1.6 only)"
 
 securityContext:
   pod: null

@@ -1,4 +1,3 @@
-
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -63,7 +62,7 @@ spec:
             {{- if .Values.sloth.debug.enabled }}
             - --debug
             {{- end}}
-          {{- if .Values.metrics.enabled }}
+          {{- if or (eq .Values.podMonitor.enabled true) (eq .Values.serviceMonitor.enabled true) }}
           ports:
             - containerPort: 8081
               name: metrics
@@ -126,4 +125,3 @@ spec:
             name: {{ include "sloth.fullname" . }}
       {{- end }}
       {{- end }}
-

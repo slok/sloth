@@ -113,6 +113,23 @@ spec:
       imagePullSecrets:
 {{ include "sloth.imagePullSecrets" . | trim | indent 8 }}
       {{- end }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with.Values.topologySpreadConstraints }}
+      topologySpreadConstraints:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+
       {{- if or .Values.commonPlugins.enabled .Values.customSloConfig.enabled }}
       volumes:
       {{- if .Values.commonPlugins.enabled }}

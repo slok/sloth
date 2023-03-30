@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Changed
+
+- Split image registry and repository in Helm chart
+
 ## [v0.11.0] - 2022-10-22
 
 ### Changed

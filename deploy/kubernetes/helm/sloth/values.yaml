@@ -1,7 +1,11 @@
+global:
+  imageRegistry: ""
+
 labels: {}
 
 image:
-  repository: ghcr.io/slok/sloth
+  registry: ghcr.io
+  repository: slok/sloth
   tag: v0.11.0
 
 # -- Container resources: requests and limits for CPU, Memory

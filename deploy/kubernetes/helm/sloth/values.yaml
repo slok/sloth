@@ -60,12 +60,25 @@ customSloConfig:
 #    spec:
 #    ... See https://sloth.dev/usage/slo-period-windows/
 
-# add deployment pod tolerations
+# Pod affinity
+# affinity:
+#   nodeAffinity:
+#     requiredDuringSchedulingIgnoredDuringExecution:
+#       nodeSelectorTerms:
+#       - matchExpressions:
+#         - key: kubernetes.io/os
+#           operator: In
+#           values:
+#           - linux
+affinity: {}
+
+# Pod tolerations
 # tolerations:
 #   - key: kubernetes.azure.com/scalesetpriority
 #     operator: Equal
 #     value: spot
 #     effect: NoSchedule
+tollerations: []
 
 securityContext:
   pod: null

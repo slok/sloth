@@ -85,11 +85,7 @@ spec:
             {{- toYaml . | nindent 12 }}
           {{- end }}
           resources:
-          {{- toYaml .Values.resources | nindent 12 }}
-          {{- with .Values.tolerations }}
-          tolerations:
-{{ toYaml . | trim | indent 12 }}
-          {{- end }}
+            {{- toYaml .Values.resources | nindent 12 }}
         {{- if .Values.commonPlugins.enabled }}
         - name: git-sync-plugins
           image: {{ .Values.commonPlugins.image.repository }}:{{ .Values.commonPlugins.image.tag }}
@@ -107,11 +103,11 @@ spec:
             {{- toYaml . | nindent 12 }}
           {{- end }}
           resources:
-          {{- toYaml .Values.commonPlugins.gitRepo.resources | nindent 12 }}
+            {{- toYaml .Values.commonPlugins.gitRepo.resources | nindent 12 }}
         {{- end }}
       {{- if .Values.imagePullSecrets }}
       imagePullSecrets:
-{{ include "sloth.imagePullSecrets" . | trim | indent 8 }}
+        {{- include "sloth.imagePullSecrets" . | trim | nindent 8 }}
       {{- end }}
       {{- if or .Values.commonPlugins.enabled .Values.customSloConfig.enabled }}
       volumes:
@@ -126,4 +122,11 @@ spec:
             name: {{ include "sloth.fullname" . }}
       {{- end }}
       {{- end }}
-
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | trim | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | trim | nindent 8 }}
+      {{- end }}

@@ -48,6 +48,22 @@ func TestPrometheusValidate(t *testing.T) {
 		"Discovery of all specs excluding bad and including a bad one should validate correctly because exclude has preference.": {
 			valCmdArgs: "--input ./testdata/validate --fs-exclude bad --fs-include .*-aa.*",
 		},
+
+		"Discovery of bad Prom specs with duplicates should validate with failures.": {
+			valCmdArgs: "--input ./testdata/validate/bad/duplicates/prom",
+		},
+
+		"Discovery of bad K8S specs with duplicates k8s validate with failures.": {
+			valCmdArgs: "--input ./testdata/validate/bad/duplicates/prom",
+		},
+
+		"Discovery of bad K8S specs with duplicates OpenSlo validate with failures.": {
+			valCmdArgs: "--input ./testdata/validate/bad/duplicates/openslo",
+		},
+
+		"Discovery of bad Prom multifile specs with duplicates validate with failures.": {
+			valCmdArgs: "--input ./testdata/validate/bad/duplicates/bad-prom-multi-duplicates.yaml",
+		},
 	}
 
 	for name, test := range tests {

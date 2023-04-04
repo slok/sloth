@@ -25,6 +25,7 @@ type validateCommand struct {
 	pluginsPaths         []string
 	sloPeriodWindowsPath string
 	sloPeriod            string
+	ignoreSloDuplicates  bool
 }
 
 // NewValidateCommand returns the validate command.
@@ -38,7 +39,7 @@ func NewValidateCommand(app *kingpin.Application) Command {
 	cmd.Flag("plugins-path", "The path to SLI and SLO plugins (can be repeated).").Short('p').StringsVar(&c.pluginsPaths)
 	cmd.Flag("slo-period-windows-path", "The directory path to custom SLO period windows catalog (replaces default ones).").StringVar(&c.sloPeriodWindowsPath)
 	cmd.Flag("default-slo-period", "The default SLO period windows to be used for the SLOs.").Default("30d").StringVar(&c.sloPeriod)
-
+	cmd.Flag("ignore-slo-duplicates", "Flag to ignore SLO duplicates in specs (service and name used as an SLO/SLI identifier).").Default("false").BoolVar(&c.ignoreSloDuplicates)
 	return c
 }
 
@@ -113,6 +114,7 @@ func (v validateCommand) Run(ctx context.Context, config RootConfig) error {
 	// For every file load the data and start the validation process:
 	validations := []*fileValidation{}
 	totalValidations := 0
+	sloIDs := make(map[string]string, 0)
 	for _, input := range sloPaths {
 		// Get SLO spec data.
 		slxData, err := os.ReadFile(input)
@@ -141,11 +143,21 @@ func (v validateCommand) Run(ctx context.Context, config RootConfig) error {
 			// Match the spec type to know how to validate.
 			switch {
 			case promYAMLLoader.IsSpecType(ctx, dataB):
-				slos, promErr := promYAMLLoader.LoadSpec(ctx, dataB)
+				sloGroup, promErr := promYAMLLoader.LoadSpec(ctx, dataB)
 				if promErr == nil {
-					err := gen.GeneratePrometheus(ctx, *slos, io.Discard)
+					if !v.ignoreSloDuplicates {
+						for _, slo := range sloGroup.SLOs {
+							if sloFile, exists := sloIDs[slo.ID]; !exists {
+								sloIDs[slo.ID] = validation.File
+							} else {
+								validation.Errs = append(validation.Errs, fmt.Errorf("SLO duplicated. SLO{service=%s, name=%s}, ID=%s already exists in a file: %s", slo.Service, slo.Name, slo.ID, sloFile))
+							}
+						}
+					}
+
+					err := gen.GeneratePrometheus(ctx, *sloGroup, io.Discard)
 					if err != nil {
-						validation.Errs = []error{fmt.Errorf("could not generate Prometheus format rules: %w", err)}
+						validation.Errs = append(validation.Errs, fmt.Errorf("Could not generate Prometheus format rules: %w", err))
 					}
 					continue
 				}
@@ -155,9 +167,19 @@ func (v validateCommand) Run(ctx context.Context, config RootConfig) error {
 			case kubeYAMLLoader.IsSpecType(ctx, dataB):
 				sloGroup, k8sErr := kubeYAMLLoader.LoadSpec(ctx, dataB)
 				if k8sErr == nil {
+					if !v.ignoreSloDuplicates {
+						for _, slo := range sloGroup.SLOs {
+							if sloFile, exists := sloIDs[slo.ID]; !exists {
+								sloIDs[slo.ID] = validation.File
+							} else {
+								validation.Errs = append(validation.Errs, fmt.Errorf("SLO duplicated. SLO{service=%s, name=%s}, ID=%s already exists in a file: %s", slo.Service, slo.Name, slo.ID, sloFile))
+							}
+						}
+					}
+
 					err := gen.GenerateKubernetes(ctx, *sloGroup, io.Discard)
 					if err != nil {
-						validation.Errs = []error{fmt.Errorf("could not generate Kubernetes format rules: %w", err)}
+						validation.Errs = append(validation.Errs, fmt.Errorf("could not generate Kubernetes format rules: %w", err))
 					}
 					continue
 				}
@@ -165,11 +187,21 @@ func (v validateCommand) Run(ctx context.Context, config RootConfig) error {
 				validation.Errs = []error{fmt.Errorf("tried loading Kubernetes prometheus SLOs spec, it couldn't: %w", k8sErr)}
 
 			case openSLOYAMLLoader.IsSpecType(ctx, dataB):
-				slos, openSLOErr := openSLOYAMLLoader.LoadSpec(ctx, dataB)
+				sloGroup, openSLOErr := openSLOYAMLLoader.LoadSpec(ctx, dataB)
 				if openSLOErr == nil {
-					err := gen.GenerateOpenSLO(ctx, *slos, io.Discard)
+					if !v.ignoreSloDuplicates {
+						for _, slo := range sloGroup.SLOs {
+							if sloFile, exists := sloIDs[slo.ID]; !exists {
+								sloIDs[slo.ID] = validation.File
+							} else {
+								validation.Errs = append(validation.Errs, fmt.Errorf("SLO duplicated. SLO{service=%s, name=%s}, ID=%s already exists in a file: %s", slo.Service, slo.Name, slo.ID, sloFile))
+							}
+						}
+					}
+
+					err := gen.GenerateOpenSLO(ctx, *sloGroup, io.Discard)
 					if err != nil {
-						validation.Errs = []error{fmt.Errorf("could not generate OpenSLO format rules: %w", err)}
+						validation.Errs = append(validation.Errs, fmt.Errorf("Could not generate OpenSLO format rules: %w", err))
 					}
 					continue
 				}

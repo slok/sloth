@@ -18,35 +18,79 @@ func TestPrometheusValidate(t *testing.T) {
 		valCmdArgs string
 		expErr     bool
 	}{
-		"Discovery of good specs should validate correctly.": {
-			valCmdArgs: "--input ./testdata/validate/good",
+		"01 Discovery of good specs should validate correctly.": {
+			valCmdArgs: "--input ./testdata/validate/good --ignore-slo-duplicates",
 		},
 
-		"Discovery of bad specs should validate with failures.": {
-			valCmdArgs: "--input ./testdata/validate/bad",
+		"02 Discovery of bad specs should validate with failures.": {
+			valCmdArgs: "--input ./testdata/validate/bad --ignore-slo-duplicates",
 			expErr:     true,
 		},
 
-		"Discovery of all specs should validate with failures.": {
+		"03 Discovery of all specs should validate with failures.": {
 			valCmdArgs: "--input ./testdata/validate",
 			expErr:     true,
 		},
 
-		"Discovery of all specs excluding bads should validate correctly.": {
-			valCmdArgs: "--input ./testdata/validate --fs-exclude bad",
+		"04 Discovery of all specs excluding bads should validate correctly.": {
+			valCmdArgs: "--input ./testdata/validate --fs-exclude bad --ignore-slo-duplicates",
 		},
 
-		"Discovery of all specs including only good should validate correctly.": {
-			valCmdArgs: "--input ./testdata/validate --fs-include good",
+		"05 Discovery of all specs including only good should validate correctly.": {
+			valCmdArgs: "--input ./testdata/validate --fs-include good --ignore-slo-duplicates",
 		},
 
-		"Discovery of none specs should fail.": {
+		"06 Discovery of none specs should fail.": {
 			valCmdArgs: "--input ./testdata/validate --fs-exclude .*",
 			expErr:     true,
 		},
 
-		"Discovery of all specs excluding bad and including a bad one should validate correctly because exclude has preference.": {
-			valCmdArgs: "--input ./testdata/validate --fs-exclude bad --fs-include .*-aa.*",
+		"07 Discovery of all specs excluding bad and including a bad one should validate correctly because exclude has preference.": {
+			valCmdArgs: "--input ./testdata/validate --fs-exclude bad --fs-include .*-aa.*  --ignore-slo-duplicates",
+		},
+
+		"DUP_01_A It fails when finds bad Prom specs with slo duplicates.": {
+			valCmdArgs: "--input ./testdata/validate_with_duplicates/prom",
+			expErr:     true,
+		},
+
+		"DUP_01_B It fails when finds bad Prom multifile spec with slo duplicates.": {
+			valCmdArgs: "--input ./testdata/validate_with_duplicates/bad-prom-multi-duplicates.yaml",
+			expErr:     true,
+		},
+
+		"DUP_02 It fails when finds bad K8S specs with slo duplicates.": {
+			valCmdArgs: "--input ./testdata/validate_with_duplicates/k8s",
+			expErr:     true,
+		},
+
+		"DUP_03 It fails when finds bad OpenSLO specs with slo duplicates.": {
+			valCmdArgs: "--input ./testdata/validate_with_duplicates/openslo",
+			expErr:     true,
+		},
+
+		"DUP_04_A It succeeds on Prom specs having slo duplicates if ignore-slo-duplicates specified.": {
+			valCmdArgs: "--input ./testdata/validate_with_duplicates/prom --ignore-slo-duplicates",
+		},
+
+		"DUP_04_B It succeeds on Prom multifile specs having slo duplicates if ignore-slo-duplicates specified.": {
+			valCmdArgs: "--input ./testdata/validate_with_duplicates/bad-prom-multi-duplicates.yaml --ignore-slo-duplicates",
+		},
+
+		"DUP_05 It succeeds on K8S specs having slo duplicates if ignore-slo-duplicates specified.": {
+			valCmdArgs: "--input ./testdata/validate_with_duplicates/k8s --ignore-slo-duplicates",
+		},
+
+		"DUP_06 It succeeds on OpenSLO specs having slo duplicates if ignore-slo-duplicates specified.": {
+			valCmdArgs: "--input ./testdata/validate_with_duplicates/openslo --ignore-slo-duplicates",
+		},
+
+		"DUP_07 It succeeds on a good Prom multifile spec without slo duplicates.": {
+			valCmdArgs: "--input ./testdata/validate/good/good-multi.yaml",
+		},
+
+		"DUP_08 It succeeds on a good K8S multifile spec without slo duplicates.": {
+			valCmdArgs: "--input ./testdata/validate/good/good-multi-k8s.yaml",
 		},
 
 		"Discovery of bad Prom specs with duplicates should validate with failures.": {

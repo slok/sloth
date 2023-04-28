@@ -1,0 +1,38 @@
+- name: slo-with-subquery
+  objective: 99
+  description: "some description here"
+  sli:
+    rules: 
+      name: "someRule"
+      expr: |
+        sum_over_time(
+          (
+            sum(count by (statefulset)(kube_statefulset_status_replicas_ready{namespace="prometheus-operator", statefulset=~"prometheus-prometheus-operator-prometheus.*"}>0))
+            /
+            max(prometheus_operator_spec_shards{namespace="prometheus-operator"}))[{{.window}}:]
+          )
+    events:
+      errorQuery: |
+        sum_over_time(
+          (
+            sum(count by (statefulset)(kube_statefulset_status_replicas_ready{namespace="prometheus-operator", statefulset=~"prometheus-prometheus-operator-prometheus.*"}>0))
+            /
+            max(prometheus_operator_spec_shards{namespace="prometheus-operator"}))[{{.window}}:]
+          )
+      totalQuery: |
+        sum_over_time(vector(1) [{{.window}}:])
+  alerting:
+    name: "sloWithSubquery"
+    annotations:
+      summary: 'somesummaryhere'
+      runbook_url: "some url here"
+    labels:
+      category: coverage
+    pageAlert:
+      labels:
+        severity: critical
+        service_owner: team
+    ticketAlert:
+      labels:
+        severity: warning
+        service_owner: team

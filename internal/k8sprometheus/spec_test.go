@@ -441,3 +441,117 @@ kind:               PrometheusServiceLevel
 		})
 	}
 }
+
+func TestPreEvaluationRuleParse(t *testing.T) {
+	testcases := map[string]struct {
+		specYaml string // Raw string containing YAML definition
+		plugins  map[string]prometheus.SLIPlugin
+		expModel *k8sprometheus.SLOGroup // Expected model created from parsed specYaml
+		expErr   bool                    // Whether there is an expected error
+	}{
+		"Spec with preEvaluationRule field": {
+			plugins: map[string]prometheus.SLIPlugin{
+				"test_plugin": {
+					ID: "test_plugin",
+					Func: func(ctx context.Context, meta map[string]string, labels map[string]string, options map[string]string) (string, error) {
+						return fmt.Sprintf(`plugin_raw_expr{service="%s",slo="%s",objective="%s",gk1="%s",k1="%s",k2="%s"}`,
+							meta["service"],
+							meta["slo"],
+							meta["objective"],
+							labels["gk1"],
+							options["k1"],
+							options["k2"]), nil
+					},
+				},
+			},
+			specYaml: `
+apiVersion: sloth.slok.dev/v1
+kind: PrometheusServiceLevel
+metadata:
+  name: k8s-test-svc
+  namespace: test-ns
+spec:
+  service: test-svc
+  slos:
+  - name: slo-with-subquery
+    objective: 99
+    sli:
+      preEvaluationRules: 
+      - name: "someRule"
+        expr: |
+          sum_over_time(
+          (
+            sum(count by (statefulset)(kube_statefulset_status_replicas_ready{namespace="prometheus-operator", statefulset=~"prometheus-prometheus-operator-prometheus.*"}>0))
+            /
+            max(prometheus_operator_spec_shards{namespace="prometheus-operator"}))[{{.window}}:]
+          )
+      events:
+        errorQuery: |
+          sum_over_time(
+          (
+            sum(count by (statefulset)(kube_statefulset_status_replicas_ready{namespace="prometheus-operator", statefulset=~"prometheus-prometheus-operator-prometheus.*"}>0))
+            /
+            max(prometheus_operator_spec_shards{namespace="prometheus-operator"}))[{{.window}}:]
+          )
+        totalQuery: |
+            sum_over_time(vector(1) [{{.window}}:])
+`,
+			expModel: &k8sprometheus.SLOGroup{
+				K8sMeta: k8sprometheus.K8sMeta{
+					Kind:       "PrometheusServiceLevel",
+					APIVersion: "sloth.slok.dev/v1",
+					UID:        "",
+					Name:       "k8s-test-svc",
+					Namespace:  "test-ns",
+				},
+				SLOGroup: prometheus.SLOGroup{SLOs: []prometheus.SLO{
+					{
+						ID:         "test-svc-slo-with-subquery",
+						Name:       "slo-with-subquery",
+						Service:    "test-svc",
+						TimeWindow: 30 * 24 * time.Hour,
+						Labels:     map[string]string{},
+						PreEvaluationRules: map[string]string{
+							"someRule": `
+sum_over_time(
+  (
+    sum(count by (statefulset)(kube_statefulset_status_replicas_ready{namespace="prometheus-operator", statefulset=~"prometheus-prometheus-operator-prometheus.*"}>0))
+    /
+    max(prometheus_operator_spec_shards{namespace="prometheus-operator"}))[{{.window}}:]
+  )`,
+						},
+						SLI: prometheus.SLI{
+							Events: &prometheus.SLIEvents{
+								ErrorQuery: `
+sum_over_time(
+(
+  sum(count by (statefulset)(kube_statefulset_status_replicas_ready{namespace="prometheus-operator", statefulset=~"prometheus-prometheus-operator-prometheus.*"}>0))
+  /
+  max(prometheus_operator_spec_shards{namespace="prometheus-operator"}))[{{.window}}:]
+)`,
+								TotalQuery: `sum_over_time(vector(1) [{{.window}}:])`,
+							},
+						},
+						Objective:       99,
+						PageAlertMeta:   prometheus.AlertMeta{Disable: false},
+						TicketAlertMeta: prometheus.AlertMeta{Disable: false},
+					},
+				}},
+			},
+		},
+	}
+	for name, test := range testcases {
+		t.Run(name, func(t *testing.T) {
+			assert := assert.New(t)
+
+			loader := k8sprometheus.NewYAMLSpecLoader(testMemPluginsRepo(test.plugins), 30*24*time.Hour)
+			gotModel, err := loader.LoadSpec(context.TODO(), []byte(test.specYaml))
+
+			if test.expErr {
+				assert.Error(err)
+			} else if assert.NoError(err) {
+				assert.Equal(test.expModel, gotModel)
+			}
+		})
+	}
+}

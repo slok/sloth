@@ -34,6 +34,11 @@ type PrometheusServiceLevelSpec struct {
 	// Service is the application of the SLOs.
 	Service string `json:"service"`
 
+	// RuleDependancy is a set of Prometheus RecordingRules that should
+	// be executed before the SLO queries are, allowing for SLO defs
+	// without subqueries
+	PreEvaluationRules map[string]string
+
 	// Labels are the Prometheus labels that will have all the recording
 	// and alerting rules generated for the service SLOs.
 	Labels map[string]string `json:"labels,omitempty"`

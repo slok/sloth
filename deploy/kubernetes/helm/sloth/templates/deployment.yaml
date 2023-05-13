@@ -27,6 +27,10 @@ spec:
       securityContext:
         {{- toYaml . | nindent 8 }}
       {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+{{ toYaml . | trim | indent 8 }}
+      {{- end }}
       containers:
         - name: sloth
           image: {{ .Values.image.repository }}:{{ .Values.image.tag }}
@@ -86,10 +90,6 @@ spec:
           {{- end }}
           resources:
           {{- toYaml .Values.resources | nindent 12 }}
-          {{- with .Values.tolerations }}
-          tolerations:
-{{ toYaml . | trim | indent 12 }}
-          {{- end }}
         {{- if .Values.commonPlugins.enabled }}
         - name: git-sync-plugins
           image: {{ .Values.commonPlugins.image.repository }}:{{ .Values.commonPlugins.image.tag }}

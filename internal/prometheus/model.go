@@ -227,7 +227,7 @@ func validateSLIEvents(sl validator.StructLevel) {
 	}
 }
 
-// validateOneSLIType validates only one SLI type is set and configured.
+// validateOneSLI validates only one SLI type is set and configured.
 func validateOneSLI(sl validator.StructLevel) {
 	sli, ok := sl.Current().Interface().(SLI)
 	if !ok {

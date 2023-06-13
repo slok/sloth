@@ -48,24 +48,31 @@ func (i IOWriterGroupedRulesYAMLRepo) StoreSLOs(ctx context.Context, slos []Stor
 
 	ruleGroups := ruleGroupsYAMLv2{}
 	for _, slo := range slos {
+		ruleGroupIntervalDuration, err := prommodel.ParseDuration(slo.SLO.RuleGroupInterval)
+		if err != nil {
+			return fmt.Errorf("could not parse rule_group interval duration %w", err)
+		}
 		if len(slo.Rules.SLIErrorRecRules) > 0 {
 			ruleGroups.Groups = append(ruleGroups.Groups, ruleGroupYAMLv2{
-				Name:  fmt.Sprintf("sloth-slo-sli-recordings-%s", slo.SLO.ID),
-				Rules: slo.Rules.SLIErrorRecRules,
+				Name:              fmt.Sprintf("sloth-slo-sli-recordings-%s", slo.SLO.ID),
+				RuleGroupInterval: ruleGroupIntervalDuration,
+				Rules:             slo.Rules.SLIErrorRecRules,
 			})
 		}
 
 		if len(slo.Rules.MetadataRecRules) > 0 {
 			ruleGroups.Groups = append(ruleGroups.Groups, ruleGroupYAMLv2{
-				Name:  fmt.Sprintf("sloth-slo-meta-recordings-%s", slo.SLO.ID),
-				Rules: slo.Rules.MetadataRecRules,
+				Name:              fmt.Sprintf("sloth-slo-meta-recordings-%s", slo.SLO.ID),
+				RuleGroupInterval: ruleGroupIntervalDuration,
+				Rules:             slo.Rules.MetadataRecRules,
 			})
 		}
 
 		if len(slo.Rules.AlertRules) > 0 {
 			ruleGroups.Groups = append(ruleGroups.Groups, ruleGroupYAMLv2{
-				Name:  fmt.Sprintf("sloth-slo-alerts-%s", slo.SLO.ID),
-				Rules: slo.Rules.AlertRules,
+				Name:              fmt.Sprintf("sloth-slo-alerts-%s", slo.SLO.ID),
+				RuleGroupInterval: ruleGroupIntervalDuration,
+				Rules:             slo.Rules.AlertRules,
 			})
 		}
 	}
@@ -112,7 +119,7 @@ type ruleGroupsYAMLv2 struct {
 }
 
 type ruleGroupYAMLv2 struct {
-	Name     string             `yaml:"name"`
-	Interval prommodel.Duration `yaml:"interval,omitempty"`
-	Rules    []rulefmt.Rule     `yaml:"rules"`
+	Name              string             `yaml:"name"`
+	RuleGroupInterval prommodel.Duration `yaml:"interval,omitempty"`
+	Rules             []rulefmt.Rule     `yaml:"rules"`
 }

@@ -89,6 +89,8 @@ type SLO struct {
 	// Alerting is the configuration with all the things related with the SLO
 	// alerts.
 	Alerting Alerting `yaml:"alerting"`
+	// RuleGroupInterval is an optional value for how often the Prometheus rule_group should be evaluated.
+	RuleGroupInterval string `yaml:"interval,omitempty"`
 }
 
 // SLI will tell what is good or bad for the SLO.

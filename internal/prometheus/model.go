@@ -39,16 +39,17 @@ type AlertMeta struct {
 
 // SLO represents a service level objective configuration.
 type SLO struct {
-	ID              string `validate:"required,name"`
-	Name            string `validate:"required,name"`
-	Description     string
-	Service         string            `validate:"required,name"`
-	SLI             SLI               `validate:"required"`
-	TimeWindow      time.Duration     `validate:"required"`
-	Objective       float64           `validate:"gt=0,lte=100"`
-	Labels          map[string]string `validate:"dive,keys,prom_label_key,endkeys,required,prom_label_value"`
-	PageAlertMeta   AlertMeta
-	TicketAlertMeta AlertMeta
+	ID                string `validate:"required,name"`
+	Name              string `validate:"required,name"`
+	Description       string
+	Service           string `validate:"required,name"`
+	RuleGroupInterval string
+	SLI               SLI               `validate:"required"`
+	TimeWindow        time.Duration     `validate:"required"`
+	Objective         float64           `validate:"gt=0,lte=100"`
+	Labels            map[string]string `validate:"dive,keys,prom_label_key,endkeys,required,prom_label_value"`
+	PageAlertMeta     AlertMeta
+	TicketAlertMeta   AlertMeta
 }
 
 type SLOGroup struct {

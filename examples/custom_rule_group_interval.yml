@@ -1,0 +1,30 @@
+# This example shows how you can adjust the Prometheus rule_group interval for expensive SLOs
+# https://prometheus.io/docs/prometheus/latest/configuration/recording_rules/#rule_group
+# The SLO SLI measures the rate of CPU seconds spent performing softirqs
+#
+# `sloth generate -i ./examples/custom_rule_group_interval.yml`
+#
+version: "prometheus/v1"
+service: "myapp"
+labels:
+  owner: "myteam"
+slos:
+  - name: "cpu-availability"
+    objective: 99.99
+    description: "Example, expensive SLO. Recording rules will run every 2 minutes."
+    interval: "2m"
+    sli:
+      events:
+        error_query: |
+          sum(
+            rate(node_cpu_seconds_total{mode="softirq"}[{{.window}}])
+          )
+        total_query: |
+          sum(
+            rate(node_cpu_seconds_total[{{.window}}])
+          )
+    alerting:
+      page_alert:
+        disable: true
+      ticket_alert:
+        disable: true

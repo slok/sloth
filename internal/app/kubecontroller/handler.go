@@ -37,11 +37,12 @@ type KubeStatusStorer interface {
 
 // HandlerConfig is the controller handler configuration.
 type HandlerConfig struct {
-	Generator        Generator
-	SpecLoader       SpecLoader
-	Repository       Repository
-	KubeStatusStorer KubeStatusStorer
-	ExtraLabels      map[string]string
+	Generator                 Generator
+	SpecLoader                SpecLoader
+	Repository                Repository
+	KubeStatusStorer          KubeStatusStorer
+	ExtraLabels               map[string]string
+	DisablePromExprValidation bool
 	// IgnoreHandleBefore makes the handles of objects with a success state and no spec change,
 	// be ignored if the last success is less than this setting.
 	// Be aware that this setting should be less than the controller resync interval.
@@ -83,13 +84,14 @@ func (c *HandlerConfig) defaults() error {
 }
 
 type handler struct {
-	specLoader         SpecLoader
-	generator          Generator
-	repository         Repository
-	kubeStatusStorer   KubeStatusStorer
-	extraLabels        map[string]string
-	ignoreHandleBefore time.Duration
-	logger             log.Logger
+	specLoader                SpecLoader
+	generator                 Generator
+	repository                Repository
+	kubeStatusStorer          KubeStatusStorer
+	extraLabels               map[string]string
+	disablePromExprValidation bool
+	ignoreHandleBefore        time.Duration
+	logger                    log.Logger
 }
 
 func NewHandler(config HandlerConfig) (controller.Handler, error) {
@@ -98,13 +100,14 @@ func NewHandler(config HandlerConfig) (controller.Handler, error) {
 		return nil, fmt.Errorf("invalid configuration: %w", err)
 	}
 	return &handler{
-		specLoader:         config.SpecLoader,
-		generator:          config.Generator,
-		repository:         config.Repository,
-		kubeStatusStorer:   config.KubeStatusStorer,
-		extraLabels:        config.ExtraLabels,
-		ignoreHandleBefore: config.IgnoreHandleBefore,
-		logger:             config.Logger,
+		specLoader:                config.SpecLoader,
+		generator:                 config.Generator,
+		repository:                config.Repository,
+		kubeStatusStorer:          config.KubeStatusStorer,
+		extraLabels:               config.ExtraLabels,
+		disablePromExprValidation: config.DisablePromExprValidation,
+		ignoreHandleBefore:        config.IgnoreHandleBefore,
+		logger:                    config.Logger,
 	}, nil
 }
 
@@ -151,8 +154,9 @@ func (h handler) handlePrometheusServiceLevelV1(ctx context.Context, psl *slothv
 			Mode:    info.ModeControllerGenKubernetes,
 			Spec:    fmt.Sprintf("%s/%s", slothv1.SchemeGroupVersion.Group, slothv1.SchemeGroupVersion.Version),
 		},
-		ExtraLabels: h.extraLabels,
-		SLOGroup:    model.SLOGroup,
+		ExtraLabels:               h.extraLabels,
+		SLOGroup:                  model.SLOGroup,
+		DisablePromExprValidation: h.disablePromExprValidation,
 	}
 	resp, err := h.generator.Generate(ctx, req)
 	if err != nil {

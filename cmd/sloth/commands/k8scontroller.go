@@ -52,23 +52,24 @@ const (
 )
 
 type kubeControllerCommand struct {
-	extraLabels           map[string]string
-	workers               int
-	kubeConfig            string
-	kubeContext           string
-	resyncInterval        time.Duration
-	namespace             string
-	labelSelector         string
-	kubeLocal             bool
-	runMode               string
-	metricsPath           string
-	hotReloadPath         string
-	hotReloadAddr         string
-	metricsListenAddr     string
-	sliPluginsPaths       []string
-	sloPeriodWindowsPath  string
-	sloPeriod             string
-	disableOptimizedRules bool
+	extraLabels               map[string]string
+	workers                   int
+	kubeConfig                string
+	kubeContext               string
+	resyncInterval            time.Duration
+	namespace                 string
+	labelSelector             string
+	kubeLocal                 bool
+	runMode                   string
+	metricsPath               string
+	hotReloadPath             string
+	hotReloadAddr             string
+	metricsListenAddr         string
+	sliPluginsPaths           []string
+	sloPeriodWindowsPath      string
+	sloPeriod                 string
+	disableOptimizedRules     bool
+	disablePromExprValidation bool
 }
 
 // NewKubeControllerCommand returns the Kubernetes controller command.
@@ -96,6 +97,7 @@ func NewKubeControllerCommand(app *kingpin.Application) Command {
 	cmd.Flag("slo-period-windows-path", "The directory path to custom SLO period windows catalog (replaces default ones).").StringVar(&c.sloPeriodWindowsPath)
 	cmd.Flag("default-slo-period", "The default SLO period windows to be used for the SLOs.").Default("30d").StringVar(&c.sloPeriod)
 	cmd.Flag("disable-optimized-rules", "If enabled it will disable optimized generated rules.").BoolVar(&c.disableOptimizedRules)
+	cmd.Flag("disable-promExpr-validation", "Disables promql expression validation").BoolVar(&c.disablePromExprValidation)
 
 	return c
 }
@@ -318,12 +320,13 @@ func (k kubeControllerCommand) Run(ctx context.Context, config RootConfig) error
 
 		// Create handler.
 		config := kubecontroller.HandlerConfig{
-			Generator:        generator,
-			SpecLoader:       k8sprometheus.NewCRSpecLoader(pluginRepo, sloPeriod),
-			Repository:       k8sprometheus.NewPrometheusOperatorCRDRepo(ksvc, logger),
-			KubeStatusStorer: ksvc,
-			ExtraLabels:      k.extraLabels,
-			Logger:           logger,
+			Generator:                 generator,
+			SpecLoader:                k8sprometheus.NewCRSpecLoader(pluginRepo, sloPeriod),
+			Repository:                k8sprometheus.NewPrometheusOperatorCRDRepo(ksvc, logger),
+			KubeStatusStorer:          ksvc,
+			ExtraLabels:               k.extraLabels,
+			DisablePromExprValidation: k.disablePromExprValidation,
+			Logger:                    logger,
 		}
 		handler, err := kubecontroller.NewHandler(config)
 		if err != nil {

@@ -25,6 +25,8 @@ sloth:
   extraLabels: {}       # Labels that will be added to all the generated SLO Rules.
   defaultSloPeriod: ""  # The slo period used by sloth (e.g. 30d).
   optimizedRules: true  # Reduce prom load for calculating period window burnrates.
+  disablepromExprValidation:
+    enabled: false
   debug:
     enabled: false
   # Could be: default or json

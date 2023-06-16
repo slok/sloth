@@ -62,6 +62,8 @@ spec:
             - --logger={{ .Values.sloth.logger }}
             {{- if .Values.sloth.debug.enabled }}
             - --debug
+            {{- if .Values.sloth.disablepromExprValidation.enabled }}
+            - --disable-promExpr-validation
             {{- end}}
           {{- if .Values.metrics.enabled }}
           ports:

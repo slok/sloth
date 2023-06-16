@@ -96,6 +96,8 @@ type Request struct {
 	Info info.Info
 	// ExtraLabels are the extra labels added to the SLOs on execution time.
 	ExtraLabels map[string]string
+	// disable prometheus promql support if needed
+	DisablePromExprValidation bool
 	// SLOGroup are the SLOs group that will be used to generate the SLO results and Prom rules.
 	SLOGroup prometheus.SLOGroup
 }
@@ -111,9 +113,11 @@ type Response struct {
 }
 
 func (s Service) Generate(ctx context.Context, r Request) (*Response, error) {
-	err := r.SLOGroup.Validate()
-	if err != nil {
-		return nil, fmt.Errorf("invalid SLO group: %w", err)
+	if r.DisablePromExprValidation == false {
+		err := r.SLOGroup.Validate()
+		if err != nil {
+			return nil, fmt.Errorf("invalid SLO group: %w", err)
+		}
 	}
 
 	// Generate Prom rules.

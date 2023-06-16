@@ -28,17 +28,18 @@ import (
 )
 
 type generateCommand struct {
-	slosInput             string
-	slosOut               string
-	slosExcludeRegex      string
-	slosIncludeRegex      string
-	disableRecordings     bool
-	disableAlerts         bool
-	disableOptimizedRules bool
-	extraLabels           map[string]string
-	sliPluginsPaths       []string
-	sloPeriodWindowsPath  string
-	sloPeriod             string
+	slosInput                 string
+	slosOut                   string
+	slosExcludeRegex          string
+	slosIncludeRegex          string
+	disableRecordings         bool
+	disableAlerts             bool
+	disableOptimizedRules     bool
+	disablePromExprValidation bool
+	extraLabels               map[string]string
+	sliPluginsPaths           []string
+	sloPeriodWindowsPath      string
+	sloPeriod                 string
 }
 
 // NewGenerateCommand returns the generate command.
@@ -57,6 +58,7 @@ func NewGenerateCommand(app *kingpin.Application) Command {
 	cmd.Flag("slo-period-windows-path", "The directory path to custom SLO period windows catalog (replaces default ones).").StringVar(&c.sloPeriodWindowsPath)
 	cmd.Flag("default-slo-period", "The default SLO period windows to be used for the SLOs.").Default("30d").StringVar(&c.sloPeriod)
 	cmd.Flag("disable-optimized-rules", "If enabled it will disable optimized generated rules.").BoolVar(&c.disableOptimizedRules)
+	cmd.Flag("disable-promExpr-validation", "Disables promql expression validation").BoolVar(&c.disablePromExprValidation)
 
 	return c
 }
@@ -239,12 +241,13 @@ func (g generateCommand) Run(ctx context.Context, config RootConfig) error {
 	}
 
 	gen := generator{
-		logger:                logger,
-		windowsRepo:           windowsRepo,
-		disableRecordings:     g.disableRecordings,
-		disableAlerts:         g.disableAlerts,
-		disableOptimizedRules: g.disableOptimizedRules,
-		extraLabels:           g.extraLabels,
+		logger:                    logger,
+		windowsRepo:               windowsRepo,
+		disableRecordings:         g.disableRecordings,
+		disableAlerts:             g.disableAlerts,
+		disablePromExprValidation: g.disablePromExprValidation,
+		disableOptimizedRules:     g.disableOptimizedRules,
+		extraLabels:               g.extraLabels,
 	}
 
 	for _, genTarget := range genTargets {
@@ -299,12 +302,13 @@ type generateTarget struct {
 }
 
 type generator struct {
-	logger                log.Logger
-	windowsRepo           alert.WindowsRepo
-	disableRecordings     bool
-	disableAlerts         bool
-	disableOptimizedRules bool
-	extraLabels           map[string]string
+	logger                    log.Logger
+	windowsRepo               alert.WindowsRepo
+	disableRecordings         bool
+	disableAlerts             bool
+	disablePromExprValidation bool
+	disableOptimizedRules     bool
+	extraLabels               map[string]string
 }
 
 // GeneratePrometheus generates the SLOs based on a raw regular Prometheus spec format input and outs a Prometheus raw yaml.
@@ -433,9 +437,10 @@ func (g generator) generateRules(ctx context.Context, info info.Info, slos prome
 	}
 
 	result, err := controller.Generate(ctx, generate.Request{
-		ExtraLabels: g.extraLabels,
-		Info:        info,
-		SLOGroup:    slos,
+		ExtraLabels:               g.extraLabels,
+		DisablePromExprValidation: g.disablePromExprValidation,
+		Info:                      info,
+		SLOGroup:                  slos,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("could not generate prometheus rules: %w", err)

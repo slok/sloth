@@ -12,7 +12,13 @@ slos:
   - name: "cpu-availability"
     objective: 99.99
     description: "Example, expensive SLO. Recording rules will run every 2 minutes."
-    interval: "2m"
+    # alternative way of specifying interval for all three sets of rules
+    # interval:
+    #   all: "5m"
+    interval: # all of these are different sets of rule groups sloth can make
+      slierror: "4m"
+      metadata: "2m"
+      alert: "2m"
     sli:
       events:
         error_query: |
@@ -24,7 +30,14 @@ slos:
             rate(node_cpu_seconds_total[{{.window}}])
           )
     alerting:
+      name: MyServiceHighErrorRate
+      labels:
+        category: "availability"
+      annotations:
+        summary: "High error rate on 'myservice' requests responses"
       page_alert:
-        disable: true
+          labels:
+            severity: pageteam
+            routing_key: myteam
       ticket_alert:
         disable: true

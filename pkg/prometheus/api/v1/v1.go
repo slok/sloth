@@ -54,6 +54,8 @@
 //	          disable: true
 package v1
 
+import "time"
+
 const Version = "prometheus/v1"
 
 //go:generate gomarkdoc -o ./README.md ./
@@ -89,8 +91,9 @@ type SLO struct {
 	// Alerting is the configuration with all the things related with the SLO
 	// alerts.
 	Alerting Alerting `yaml:"alerting"`
-	// RuleGroupInterval is an optional value for how often the Prometheus rule_group should be evaluated.
-	RuleGroupInterval string `yaml:"interval,omitempty"`
+	// Interval is the configuration for all things related to SLO rule_group intervals
+	// for specific rule groups and all rules.
+	Interval Interval `yaml:"interval,omitempty"`
 }
 
 // SLI will tell what is good or bad for the SLO.
@@ -148,6 +151,18 @@ type Alerting struct {
 	PageAlert Alert `yaml:"page_alert,omitempty"`
 	// TicketAlert alert refers to the warning alert (check multiwindow-multiburn alerts).
 	TicketAlert Alert `yaml:"ticket_alert,omitempty"`
+}
+
+type Interval struct {
+	// RuleGroupInterval is an optional value for how often the Prometheus rule_group should be evaluated.
+	// RuleGroupInterval string `yaml:"rulegroup_interval,omitempty"`
+	RuleGroupInterval time.Duration `yaml:"all,omitempty"`
+	// Otherwise, specify custom rule_group intervals for each set of recording rules.
+	// RuleGroupInterval will "fill-in" for any non-specified individual groups
+	// but individual group settings override RuleGroupInterval.
+	SLIErrorRulesInterval time.Duration `yaml:"slierror,omitempty"`
+	MetadataRulesInterval time.Duration `yaml:"metadata,omitempty"`
+	AlertRulesInterval    time.Duration `yaml:"alert,omitempty"`
 }
 
 // Alert configures specific SLO alert.

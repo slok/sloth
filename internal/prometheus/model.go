@@ -39,17 +39,20 @@ type AlertMeta struct {
 
 // SLO represents a service level objective configuration.
 type SLO struct {
-	ID                string `validate:"required,name"`
-	Name              string `validate:"required,name"`
-	Description       string
-	Service           string `validate:"required,name"`
-	RuleGroupInterval string
-	SLI               SLI               `validate:"required"`
-	TimeWindow        time.Duration     `validate:"required"`
-	Objective         float64           `validate:"gt=0,lte=100"`
-	Labels            map[string]string `validate:"dive,keys,prom_label_key,endkeys,required,prom_label_value"`
-	PageAlertMeta     AlertMeta
-	TicketAlertMeta   AlertMeta
+	ID                    string `validate:"required,name"`
+	Name                  string `validate:"required,name"`
+	Description           string
+	Service               string            `validate:"required,name"`
+	RuleGroupInterval     time.Duration     `validate:"time"`
+	SLIErrorRulesInterval time.Duration     `validate:"time"`
+	MetadataRulesInterval time.Duration     `validate:"time"`
+	AlertRulesInterval    time.Duration     `validate:"time"`
+	SLI                   SLI               `validate:"required"`
+	TimeWindow            time.Duration     `validate:"required"`
+	Objective             float64           `validate:"gt=0,lte=100"`
+	Labels                map[string]string `validate:"dive,keys,prom_label_key,endkeys,required,prom_label_value"`
+	PageAlertMeta         AlertMeta
+	TicketAlertMeta       AlertMeta
 }
 
 type SLOGroup struct {
@@ -87,6 +90,7 @@ var modelSpecValidate = func() *validator.Validate {
 	mustRegisterValidation(v, "name", validateName)
 	mustRegisterValidation(v, "required_if_enabled", validateRequiredEnabledAlertName)
 	mustRegisterValidation(v, "template_vars", validateTemplateVars)
+	mustRegisterValidation(v, "time", validateTime)
 	v.RegisterStructValidation(validateOneSLI, SLI{})
 	v.RegisterStructValidation(validateSLOGroup, SLOGroup{})
 	v.RegisterStructValidation(validateSLIEvents, SLIEvents{})
@@ -180,6 +184,18 @@ func validateName(fl validator.FieldLevel) bool {
 	}
 
 	return nameRegexp.MatchString(s)
+}
+
+// validateTime implements validator.CustomTypeFunc by validating
+// a time duration.
+func validateTime(fl validator.FieldLevel) bool {
+	s, ok := fl.Field().Interface().(time.Duration)
+	if !ok {
+		return false
+	}
+
+	_, err := time.ParseDuration(s.String())
+	return err == nil
 }
 
 func validateRequiredEnabledAlertName(fl validator.FieldLevel) bool {

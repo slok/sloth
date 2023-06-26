@@ -69,16 +69,19 @@ func (y YAMLSpecLoader) mapSpecToModel(ctx context.Context, spec prometheusv1.Sp
 	models := make([]SLO, 0, len(spec.SLOs))
 	for _, specSLO := range spec.SLOs {
 		slo := SLO{
-			ID:                fmt.Sprintf("%s-%s", spec.Service, specSLO.Name),
-			RuleGroupInterval: specSLO.RuleGroupInterval,
-			Name:              specSLO.Name,
-			Description:       specSLO.Description,
-			Service:           spec.Service,
-			TimeWindow:        y.windowPeriod,
-			Objective:         specSLO.Objective,
-			Labels:            mergeLabels(spec.Labels, specSLO.Labels),
-			PageAlertMeta:     AlertMeta{Disable: true},
-			TicketAlertMeta:   AlertMeta{Disable: true},
+			ID:                    fmt.Sprintf("%s-%s", spec.Service, specSLO.Name),
+			RuleGroupInterval:     specSLO.Interval.RuleGroupInterval,
+			SLIErrorRulesInterval: specSLO.Interval.SLIErrorRulesInterval,
+			MetadataRulesInterval: specSLO.Interval.MetadataRulesInterval,
+			AlertRulesInterval:    specSLO.Interval.AlertRulesInterval,
+			Name:                  specSLO.Name,
+			Description:           specSLO.Description,
+			Service:               spec.Service,
+			TimeWindow:            y.windowPeriod,
+			Objective:             specSLO.Objective,
+			Labels:                mergeLabels(spec.Labels, specSLO.Labels),
+			PageAlertMeta:         AlertMeta{Disable: true},
+			TicketAlertMeta:       AlertMeta{Disable: true},
 		}
 
 		// Set SLIs.

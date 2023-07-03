@@ -86,7 +86,7 @@ func (i IOWriterGroupedRulesYAMLRepo) StoreSLOs(ctx context.Context, slos []Stor
 				var ruleGroupIntervalDuration prommodel.Duration
 				var err error
 
-				// if we have a valid meta rule rule_group interval, use that firs
+				// if we have a valid meta rule rule_group interval, use that first and overwrite any generic ones
 				if slo.SLO.MetadataRulesInterval.String() != "0s" {
 					ruleGroupIntervalDuration, err = prommodel.ParseDuration(slo.SLO.MetadataRulesInterval.String())
 				} else {
@@ -115,7 +115,7 @@ func (i IOWriterGroupedRulesYAMLRepo) StoreSLOs(ctx context.Context, slos []Stor
 				var ruleGroupIntervalDuration prommodel.Duration
 				var err error
 
-				// if we have a valid meta rule rule_group interval, use that firs
+				// if we have a valid meta rule rule_group interval, use that first and overwrite any generic ones
 				if slo.SLO.AlertRulesInterval.String() != "0s" {
 					ruleGroupIntervalDuration, err = prommodel.ParseDuration(slo.SLO.AlertRulesInterval.String())
 				} else {

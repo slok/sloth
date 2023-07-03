@@ -50,94 +50,92 @@ func (i IOWriterGroupedRulesYAMLRepo) StoreSLOs(ctx context.Context, slos []Stor
 	for _, slo := range slos {
 		if len(slo.Rules.SLIErrorRecRules) > 0 {
 
-			// 0s is default empty string value for time.Duration
-			if slo.SLO.RuleGroupInterval.String() != "0s" || slo.SLO.SLIErrorRulesInterval.String() != "0s" {
-				var ruleGroupIntervalDuration prommodel.Duration
-				var err error
-
-				// if we have a valid meta rule rule_group interval, use that first and overwrite any generic ones
-				if slo.SLO.SLIErrorRulesInterval.String() != "0s" {
-					ruleGroupIntervalDuration, err = prommodel.ParseDuration(slo.SLO.SLIErrorRulesInterval.String())
-				} else {
-					ruleGroupIntervalDuration, err = prommodel.ParseDuration(slo.SLO.RuleGroupInterval.String())
-				}
-
-				if err != nil {
-					return fmt.Errorf("could not parse rule_group interval duration %w", err)
-				}
-
-				ruleGroups.Groups = append(ruleGroups.Groups, ruleGroupYAMLv2{
-					Name:              fmt.Sprintf("sloth-slo-sli-recordings-%s", slo.SLO.ID),
-					RuleGroupInterval: ruleGroupIntervalDuration,
-					Rules:             slo.Rules.SLIErrorRecRules,
-				})
-			} else {
-				ruleGroups.Groups = append(ruleGroups.Groups, ruleGroupYAMLv2{
-					Name:  fmt.Sprintf("sloth-slo-sli-recordings-%s", slo.SLO.ID),
-					Rules: slo.Rules.SLIErrorRecRules,
-				})
-
+			group := ruleGroupYAMLv2{
+				Name:  fmt.Sprintf("sloth-slo-sli-recordings-%s", slo.SLO.ID),
+				Rules: slo.Rules.SLIErrorRecRules,
 			}
+
+			var ruleGroupIntervalDuration prommodel.Duration
+			var err error
+
+			switch {
+			case slo.SLO.SLIErrorRulesInterval.String() != "0s":
+				ruleGroupIntervalDuration, err = prommodel.ParseDuration(slo.SLO.SLIErrorRulesInterval.String())
+				if err != nil {
+					return fmt.Errorf("could not parse rule_group interval duration for alerts %w", err)
+				} else {
+					group.RuleGroupInterval = ruleGroupIntervalDuration
+				}
+			case slo.SLO.RuleGroupInterval.String() != "0s":
+				ruleGroupIntervalDuration, err = prommodel.ParseDuration(slo.SLO.RuleGroupInterval.String())
+				if err != nil {
+					return fmt.Errorf("could not parse default ('all') rule_group interval duration %w", err)
+				} else {
+					group.RuleGroupInterval = ruleGroupIntervalDuration
+				}
+			}
+
+			ruleGroups.Groups = append(ruleGroups.Groups, group)
 		}
 
 		if len(slo.Rules.MetadataRecRules) > 0 {
-			// if either of these aren't empty we'll be adding a custom rule interval
-			if slo.SLO.RuleGroupInterval.String() != "0s" || slo.SLO.MetadataRulesInterval.String() != "0s" {
-				var ruleGroupIntervalDuration prommodel.Duration
-				var err error
 
-				// if we have a valid meta rule rule_group interval, use that first and overwrite any generic ones
-				if slo.SLO.MetadataRulesInterval.String() != "0s" {
-					ruleGroupIntervalDuration, err = prommodel.ParseDuration(slo.SLO.MetadataRulesInterval.String())
-				} else {
-					ruleGroupIntervalDuration, err = prommodel.ParseDuration(slo.SLO.RuleGroupInterval.String())
-				}
-
-				if err != nil {
-					return fmt.Errorf("could not parse rule_group interval duration %w", err)
-				}
-
-				ruleGroups.Groups = append(ruleGroups.Groups, ruleGroupYAMLv2{
-					Name:              fmt.Sprintf("sloth-slo-meta-recordings-%s", slo.SLO.ID),
-					RuleGroupInterval: ruleGroupIntervalDuration,
-					Rules:             slo.Rules.MetadataRecRules,
-				})
-			} else {
-				ruleGroups.Groups = append(ruleGroups.Groups, ruleGroupYAMLv2{
-					Name:  fmt.Sprintf("sloth-slo-meta-recordings-%s", slo.SLO.ID),
-					Rules: slo.Rules.MetadataRecRules,
-				})
+			group := ruleGroupYAMLv2{
+				Name:  fmt.Sprintf("sloth-slo-meta-recordings-%s", slo.SLO.ID),
+				Rules: slo.Rules.MetadataRecRules,
 			}
+
+			var ruleGroupIntervalDuration prommodel.Duration
+			var err error
+
+			switch {
+			case slo.SLO.MetadataRulesInterval.String() != "0s":
+				ruleGroupIntervalDuration, err = prommodel.ParseDuration(slo.SLO.MetadataRulesInterval.String())
+				if err != nil {
+					return fmt.Errorf("could not parse rule_group interval duration for alerts %w", err)
+				} else {
+					group.RuleGroupInterval = ruleGroupIntervalDuration
+				}
+			case slo.SLO.RuleGroupInterval.String() != "0s":
+				ruleGroupIntervalDuration, err = prommodel.ParseDuration(slo.SLO.RuleGroupInterval.String())
+				if err != nil {
+					return fmt.Errorf("could not parse default ('all') rule_group interval duration %w", err)
+				} else {
+					group.RuleGroupInterval = ruleGroupIntervalDuration
+				}
+			}
+
+			ruleGroups.Groups = append(ruleGroups.Groups, group)
 		}
 
 		if len(slo.Rules.AlertRules) > 0 {
-			if slo.SLO.RuleGroupInterval.String() != "0s" || slo.SLO.AlertRulesInterval.String() != "0s" {
-				var ruleGroupIntervalDuration prommodel.Duration
-				var err error
 
-				// if we have a valid meta rule rule_group interval, use that first and overwrite any generic ones
-				if slo.SLO.AlertRulesInterval.String() != "0s" {
-					ruleGroupIntervalDuration, err = prommodel.ParseDuration(slo.SLO.AlertRulesInterval.String())
-				} else {
-					ruleGroupIntervalDuration, err = prommodel.ParseDuration(slo.SLO.RuleGroupInterval.String())
-				}
-
-				if err != nil {
-					return fmt.Errorf("could not parse rule_group interval duration %w", err)
-				}
-
-				ruleGroups.Groups = append(ruleGroups.Groups, ruleGroupYAMLv2{
-					Name:              fmt.Sprintf("sloth-slo-alerts-%s", slo.SLO.ID),
-					RuleGroupInterval: ruleGroupIntervalDuration,
-					Rules:             slo.Rules.AlertRules,
-				})
-
-			} else {
-				ruleGroups.Groups = append(ruleGroups.Groups, ruleGroupYAMLv2{
-					Name:  fmt.Sprintf("sloth-slo-alerts-%s", slo.SLO.ID),
-					Rules: slo.Rules.AlertRules,
-				})
+			group := ruleGroupYAMLv2{
+				Name:  fmt.Sprintf("sloth-slo-alerts-%s", slo.SLO.ID),
+				Rules: slo.Rules.AlertRules,
 			}
+
+			var ruleGroupIntervalDuration prommodel.Duration
+			var err error
+
+			switch {
+			case slo.SLO.AlertRulesInterval.String() != "0s":
+				ruleGroupIntervalDuration, err = prommodel.ParseDuration(slo.SLO.AlertRulesInterval.String())
+				if err != nil {
+					return fmt.Errorf("could not parse rule_group interval duration for alerts %w", err)
+				} else {
+					group.RuleGroupInterval = ruleGroupIntervalDuration
+				}
+			case slo.SLO.RuleGroupInterval.String() != "0s":
+				ruleGroupIntervalDuration, err = prommodel.ParseDuration(slo.SLO.RuleGroupInterval.String())
+				if err != nil {
+					return fmt.Errorf("could not parse default ('all') rule_group interval duration %w", err)
+				} else {
+					group.RuleGroupInterval = ruleGroupIntervalDuration
+				}
+			}
+
+			ruleGroups.Groups = append(ruleGroups.Groups, group)
 		}
 	}
 

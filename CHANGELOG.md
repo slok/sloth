@@ -4,7 +4,7 @@
 
 ## [v0.12.0] - 2023-07-03
 
-- Custom rule_group intervalsgit  for all recording rule types or a global default.
+- Custom rule_group intervals for all recording rule types or a global default.
 
 ## [v0.11.0] - 2022-10-22
 

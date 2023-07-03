@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+## [v0.12.0] - 2023-07-03
+
+- Custom rule_group intervals, for all recording rule types or a global default.
+
 ## [v0.11.0] - 2022-10-22
 
 ### Changed
@@ -162,7 +166,8 @@
 - Support raw query based SLI.
 - Kubernetes (prometheus-operator) CRD generation support.
 
-[unreleased]: https://github.com/slok/sloth/compare/v0.11.0...HEAD
+[unreleased]: https://github.com/slok/sloth/compare/v0.12.0...HEAD
+[v0.12.0]: https://github.com/slok/sloth/compare/v0.11.0...v0.12.0
 [v0.11.0]: https://github.com/slok/sloth/compare/v0.10.0...v0.11.0
 [v0.10.0]: https://github.com/slok/sloth/compare/v0.9.0...v0.10.0
 [v0.9.0]: https://github.com/slok/sloth/compare/v0.8.0...v0.9.0

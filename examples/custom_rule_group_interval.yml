@@ -14,11 +14,10 @@ slos:
     description: "Example, expensive SLO. Recording rules will run every 2 minutes."
     # alternative way of specifying interval for all three sets of rules
     # interval:
-    #   all: "15m"
-    interval:
-      all: "6m"
+    #   all: "5m"
+    interval: # all of these are different sets of rule groups sloth can make
       slierror: "4m"
-      # metadata: "2m"
+      metadata: "2m"
       alert: "2m"
     sli:
       events:

@@ -1,0 +1,65 @@
+name: Pull request
+
+on: [push, pull_request]
+
+jobs:
+  check:
+    name: Check
+    runs-on: ubuntu-latest
+    # Execute the checks inside the container instead the VM.
+    container: golangci/golangci-lint:v1.50.0-alpine
+    steps:
+      - uses: actions/checkout@v3
+      - run: ./scripts/check/check.sh
+
+  unit-test:
+    name: Unit test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-go@v3
+        with:
+          go-version-file: go.mod
+      - run: make ci-test
+
+  integration-test-cli:
+    name: Integration test CLI
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-go@v3
+        with:
+          go-version-file: go.mod
+      - name: Execute tests
+        run: |
+          # Build binary.
+          echo "Building binary..."
+          make ci-build
+          sudo mv ./bin/sloth /usr/local/bin/
+
+          # Execute integration tests.
+          echo "Executing integration tests..."
+          make ci-integration-cli
+
+  tagged-release-binaries:
+    # Only on tags.
+    if: startsWith(github.ref, 'refs/tags/')
+    needs: [check, unit-test, integration-test-cli]
+    name: Tagged release binaries
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "VERSION=${GITHUB_REF#refs/*/}" >> ${GITHUB_ENV} # Sets VERSION env var.
+      - uses: actions/checkout@v3
+      - name: Build binaries
+        run: |
+          mkdir -p ./bin
+          chmod -R 0777 ./bin
+          make build-all
+      - name: Upload binaries
+        uses: xresloader/upload-to-github-release@v1.3.9
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          file: "bin/*"
+          tags: true
+          draft: true

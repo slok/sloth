@@ -1,0 +1,30 @@
+name: Push to main
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  tests:
+    uses: ./.github/workflows/tests.yaml
+
+  tagged-release-binaries:
+    # Only on tags.
+    if: startsWith(github.ref, 'refs/tags/')
+    needs: tests
+    name: Tagged release binaries
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "VERSION=${GITHUB_REF#refs/*/}" >> ${GITHUB_ENV} # Sets VERSION env var.
+      - uses: actions/checkout@v3
+      - name: Build binaries
+        run: |
+          mkdir -p ./bin
+          chmod -R 0777 ./bin
+          make build-all
+      - name: Upload binaries
+        uses: softprops/action-gh-release@de2c0eb89ae2a093876385947365aca7b0e5f844
+        with:
+          files: |
+            bin/*

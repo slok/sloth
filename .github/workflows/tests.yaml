@@ -1,0 +1,43 @@
+name: Tests
+
+on:
+  workflow_call:
+
+jobs:
+  check:
+    name: Check
+    runs-on: ubuntu-latest
+    # Execute the checks inside the container instead the VM.
+    container: golangci/golangci-lint:v1.50.0-alpine
+    steps:
+      - uses: actions/checkout@v3
+      - run: ./scripts/check/check.sh
+
+  unit-test:
+    name: Unit test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-go@v3
+        with:
+          go-version-file: go.mod
+      - run: make ci-test
+
+  integration-test-cli:
+    name: Integration test CLI
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-go@v3
+        with:
+          go-version-file: go.mod
+      - name: Execute tests
+        run: |
+          # Build binary.
+          echo "Building binary..."
+          make ci-build
+          sudo mv ./bin/sloth /usr/local/bin/
+
+          # Execute integration tests.
+          echo "Executing integration tests..."
+          make ci-integration-cli

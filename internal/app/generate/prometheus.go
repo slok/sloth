@@ -53,12 +53,12 @@ type AlertGenerator interface {
 
 // SLIRecordingRulesGenerator knows how to generate SLI recording rules.
 type SLIRecordingRulesGenerator interface {
-	GenerateSLIRecordingRules(ctx context.Context, slo prometheus.SLO, alerts alert.MWMBAlertGroup) ([]rulefmt.Rule, error)
+	GenerateSLIRecordingRules(ctx context.Context, slo prometheus.SLO, alerts alert.MWMBAlertGroup, extraFilterLabels map[string]string) ([]rulefmt.Rule, error)
 }
 
 // MetadataRecordingRulesGenerator knows how to generate metadata recording rules.
 type MetadataRecordingRulesGenerator interface {
-	GenerateMetadataRecordingRules(ctx context.Context, info info.Info, slo prometheus.SLO, alerts alert.MWMBAlertGroup) ([]rulefmt.Rule, error)
+	GenerateMetadataRecordingRules(ctx context.Context, info info.Info, slo prometheus.SLO, alerts alert.MWMBAlertGroup, extraFilterLabels map[string]string) ([]rulefmt.Rule, error)
 }
 
 // SLOAlertRulesGenerator knows hot to generate SLO alert rules.
@@ -96,6 +96,9 @@ type Request struct {
 	Info info.Info
 	// ExtraLabels are the extra labels added to the SLOs on execution time.
 	ExtraLabels map[string]string
+	// ExtraFilterLabels are the extra labels added to the SLOs on execution time and also will be added as filters to the generated recording rules.
+	// Can be used as templates in queries provided by the user.
+	ExtraFilterLabels map[string]string
 	// SLOGroup are the SLOs group that will be used to generate the SLO results and Prom rules.
 	SLOGroup prometheus.SLOGroup
 }
@@ -120,10 +123,10 @@ func (s Service) Generate(ctx context.Context, r Request) (*Response, error) {
 	results := make([]SLOResult, 0, len(r.SLOGroup.SLOs))
 	for _, slo := range r.SLOGroup.SLOs {
 		// Add extra labels.
-		slo.Labels = mergeLabels(slo.Labels, r.ExtraLabels)
+		slo.Labels = mergeLabels(slo.Labels, r.ExtraLabels, r.ExtraFilterLabels)
 
 		// Generate SLO result.
-		result, err := s.generateSLO(ctx, r.Info, slo)
+		result, err := s.generateSLO(ctx, r.Info, slo, r.ExtraFilterLabels)
 		if err != nil {
 			return nil, fmt.Errorf("could not generate %q slo: %w", slo.ID, err)
 		}
@@ -136,7 +139,7 @@ func (s Service) Generate(ctx context.Context, r Request) (*Response, error) {
 	}, nil
 }
 
-func (s Service) generateSLO(ctx context.Context, info info.Info, slo prometheus.SLO) (*SLOResult, error) {
+func (s Service) generateSLO(ctx context.Context, info info.Info, slo prometheus.SLO, extraFilterLabels map[string]string) (*SLOResult, error) {
 	logger := s.logger.WithCtxValues(ctx).WithValues(log.Kv{"slo": slo.ID})
 
 	// Generate the MWMB alerts.
@@ -152,14 +155,14 @@ func (s Service) generateSLO(ctx context.Context, info info.Info, slo prometheus
 	logger.Infof("Multiwindow-multiburn alerts generated")
 
 	// Generate SLI recording rules.
-	sliRecordingRules, err := s.sliRecordRuleGen.GenerateSLIRecordingRules(ctx, slo, *as)
+	sliRecordingRules, err := s.sliRecordRuleGen.GenerateSLIRecordingRules(ctx, slo, *as, extraFilterLabels)
 	if err != nil {
 		return nil, fmt.Errorf("could not generate Prometheus sli recording rules: %w", err)
 	}
 	logger.WithValues(log.Kv{"rules": len(sliRecordingRules)}).Infof("SLI recording rules generated")
 
 	// Generate Metadata recording rules.
-	metaRecordingRules, err := s.metaRecordRuleGen.GenerateMetadataRecordingRules(ctx, info, slo, *as)
+	metaRecordingRules, err := s.metaRecordRuleGen.GenerateMetadataRecordingRules(ctx, info, slo, *as, extraFilterLabels)
 	if err != nil {
 		return nil, fmt.Errorf("could not generate Prometheus metadata recording rules: %w", err)
 	}

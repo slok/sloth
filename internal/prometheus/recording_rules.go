@@ -15,7 +15,7 @@ import (
 )
 
 // sliRulesgenFunc knows how to generate an SLI recording rule for a specific time window.
-type sliRulesgenFunc func(slo SLO, window time.Duration, alerts alert.MWMBAlertGroup) (*rulefmt.Rule, error)
+type sliRulesgenFunc func(slo SLO, window time.Duration, alerts alert.MWMBAlertGroup, extraFilterLabels map[string]string) (*rulefmt.Rule, error)
 
 type sliRecordingRulesGenerator struct {
 	genFunc sliRulesgenFunc
@@ -31,16 +31,16 @@ var OptimizedSLIRecordingRulesGenerator = sliRecordingRulesGenerator{genFunc: op
 // Normally these rules are used by the SLO alerts.
 var SLIRecordingRulesGenerator = sliRecordingRulesGenerator{genFunc: factorySLIRecordGenerator}
 
-func optimizedFactorySLIRecordGenerator(slo SLO, window time.Duration, alerts alert.MWMBAlertGroup) (*rulefmt.Rule, error) {
+func optimizedFactorySLIRecordGenerator(slo SLO, window time.Duration, alerts alert.MWMBAlertGroup, extraFilterLabels map[string]string) (*rulefmt.Rule, error) {
 	// Optimize the rules that are for the total period time window.
 	if window == slo.TimeWindow {
-		return optimizedSLIRecordGenerator(slo, window, alerts.PageQuick.ShortWindow)
+		return optimizedSLIRecordGenerator(slo, window, alerts.PageQuick.ShortWindow, extraFilterLabels)
 	}
 
-	return factorySLIRecordGenerator(slo, window, alerts)
+	return factorySLIRecordGenerator(slo, window, alerts, extraFilterLabels)
 }
 
-func (s sliRecordingRulesGenerator) GenerateSLIRecordingRules(ctx context.Context, slo SLO, alerts alert.MWMBAlertGroup) ([]rulefmt.Rule, error) {
+func (s sliRecordingRulesGenerator) GenerateSLIRecordingRules(ctx context.Context, slo SLO, alerts alert.MWMBAlertGroup, extraFilterLabels map[string]string) ([]rulefmt.Rule, error) {
 	// Get the windows we need the recording rules.
 	windows := getAlertGroupWindows(alerts)
 	windows = append(windows, slo.TimeWindow) // Add the total time window as a handy helper.
@@ -48,7 +48,7 @@ func (s sliRecordingRulesGenerator) GenerateSLIRecordingRules(ctx context.Contex
 	// Generate the rules
 	rules := make([]rulefmt.Rule, 0, len(windows))
 	for _, window := range windows {
-		rule, err := s.genFunc(slo, window, alerts)
+		rule, err := s.genFunc(slo, window, alerts, extraFilterLabels)
 		if err != nil {
 			return nil, fmt.Errorf("could not create %q SLO rule for window %s: %w", slo.ID, window, err)
 		}
@@ -62,20 +62,20 @@ const (
 	tplKeyWindow = "window"
 )
 
-func factorySLIRecordGenerator(slo SLO, window time.Duration, alerts alert.MWMBAlertGroup) (*rulefmt.Rule, error) {
+func factorySLIRecordGenerator(slo SLO, window time.Duration, alerts alert.MWMBAlertGroup, extraFilterLabels map[string]string) (*rulefmt.Rule, error) {
 	switch {
 	// Event based SLI.
 	case slo.SLI.Events != nil:
-		return eventsSLIRecordGenerator(slo, window, alerts)
+		return eventsSLIRecordGenerator(slo, window, alerts, extraFilterLabels)
 	// Raw based SLI.
 	case slo.SLI.Raw != nil:
-		return rawSLIRecordGenerator(slo, window, alerts)
+		return rawSLIRecordGenerator(slo, window, alerts, extraFilterLabels)
 	}
 
 	return nil, fmt.Errorf("invalid SLI type")
 }
 
-func rawSLIRecordGenerator(slo SLO, window time.Duration, alerts alert.MWMBAlertGroup) (*rulefmt.Rule, error) {
+func rawSLIRecordGenerator(slo SLO, window time.Duration, alerts alert.MWMBAlertGroup, extraFilterLabels map[string]string) (*rulefmt.Rule, error) {
 	// Render with our templated data.
 	sliExprTpl := fmt.Sprintf(`(%s)`, slo.SLI.Raw.ErrorRatioQuery)
 	tpl, err := template.New("sliExpr").Option("missingkey=error").Parse(sliExprTpl)
@@ -85,9 +85,11 @@ func rawSLIRecordGenerator(slo SLO, window time.Duration, alerts alert.MWMBAlert
 
 	strWindow := timeDurationToPromStr(window)
 	var b bytes.Buffer
-	err = tpl.Execute(&b, map[string]string{
-		tplKeyWindow: strWindow,
-	})
+	err = tpl.Execute(&b, mergeLabels(extraFilterLabels,
+		map[string]string{
+			tplKeyWindow: strWindow,
+		}),
+	)
 	if err != nil {
 		return nil, fmt.Errorf("could not render SLI expression template: %w", err)
 	}
@@ -105,7 +107,7 @@ func rawSLIRecordGenerator(slo SLO, window time.Duration, alerts alert.MWMBAlert
 	}, nil
 }
 
-func eventsSLIRecordGenerator(slo SLO, window time.Duration, alerts alert.MWMBAlertGroup) (*rulefmt.Rule, error) {
+func eventsSLIRecordGenerator(slo SLO, window time.Duration, alerts alert.MWMBAlertGroup, extraFilterLabels map[string]string) (*rulefmt.Rule, error) {
 	const sliExprTplFmt = `(%s)
 /
 (%s)
@@ -121,9 +123,11 @@ func eventsSLIRecordGenerator(slo SLO, window time.Duration, alerts alert.MWMBAl
 
 	strWindow := timeDurationToPromStr(window)
 	var b bytes.Buffer
-	err = tpl.Execute(&b, map[string]string{
-		tplKeyWindow: strWindow,
-	})
+	err = tpl.Execute(&b, mergeLabels(extraFilterLabels,
+		map[string]string{
+			tplKeyWindow: strWindow,
+		}),
+	)
 	if err != nil {
 		return nil, fmt.Errorf("could not render SLI expression template: %w", err)
 	}
@@ -147,7 +151,7 @@ func eventsSLIRecordGenerator(slo SLO, window time.Duration, alerts alert.MWMBAl
 //
 // The way this optimization is made is using one SLI recording rule (the one with the shortest window to
 // reduce the downsampling, e.g 5m) and make an average over time on that rule for the window time range.
-func optimizedSLIRecordGenerator(slo SLO, window, shortWindow time.Duration) (*rulefmt.Rule, error) {
+func optimizedSLIRecordGenerator(slo SLO, window, shortWindow time.Duration, extraFilterLabels map[string]string) (*rulefmt.Rule, error) {
 	// Averages over ratios (average over average) is statistically incorrect, so we do
 	// aggregate all ratios on the time window and then divide with the aggregation of all the full ratios
 	// that is 1 (thats why we can use `count`), giving use a correct ratio of ratios:
@@ -163,7 +167,10 @@ count_over_time({{.metric}}{{.filter}}[{{.window}}])
 	}
 
 	shortWindowSLIRec := slo.GetSLIErrorMetric(shortWindow)
-	filter := labelsToPromFilter(slo.GetSLOIDPromLabels())
+	filter := labelsToPromFilter(mergeLabels(
+		slo.GetSLOIDPromLabels(),
+		extraFilterLabels,
+	))
 
 	// Render with our templated data.
 	tpl, err := template.New("sliExpr").Option("missingkey=error").Parse(sliExprTplFmt)
@@ -202,7 +209,7 @@ type metadataRecordingRulesGenerator bool
 // from an SLO.
 const MetadataRecordingRulesGenerator = metadataRecordingRulesGenerator(false)
 
-func (m metadataRecordingRulesGenerator) GenerateMetadataRecordingRules(ctx context.Context, info info.Info, slo SLO, alerts alert.MWMBAlertGroup) ([]rulefmt.Rule, error) {
+func (m metadataRecordingRulesGenerator) GenerateMetadataRecordingRules(ctx context.Context, info info.Info, slo SLO, alerts alert.MWMBAlertGroup, extraFilterLabels map[string]string) ([]rulefmt.Rule, error) {
 	labels := mergeLabels(slo.GetSLOIDPromLabels(), slo.Labels)
 
 	// Metatada Recordings.
@@ -218,7 +225,10 @@ func (m metadataRecordingRulesGenerator) GenerateMetadataRecordingRules(ctx cont
 
 	sloObjectiveRatio := slo.Objective / 100
 
-	sloFilter := labelsToPromFilter(slo.GetSLOIDPromLabels())
+	sloFilter := labelsToPromFilter(mergeLabels(
+		slo.GetSLOIDPromLabels(),
+		extraFilterLabels,
+	))
 
 	var currentBurnRateExpr bytes.Buffer
 	err := burnRateRecordingExprTpl.Execute(&currentBurnRateExpr, map[string]string{

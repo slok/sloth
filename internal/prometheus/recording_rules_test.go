@@ -36,7 +36,7 @@ func getAlertGroup() alert.MWMBAlertGroup {
 
 func TestGenerateSLIRecordingRules(t *testing.T) {
 	type generator interface {
-		GenerateSLIRecordingRules(ctx context.Context, slo prometheus.SLO, alerts alert.MWMBAlertGroup) ([]rulefmt.Rule, error)
+		GenerateSLIRecordingRules(ctx context.Context, slo prometheus.SLO, alerts alert.MWMBAlertGroup, extraFilterLabels map[string]string) ([]rulefmt.Rule, error)
 	}
 
 	tests := map[string]struct {
@@ -493,7 +493,7 @@ func TestGenerateSLIRecordingRules(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			assert := assert.New(t)
 
-			gotRules, err := test.generator().GenerateSLIRecordingRules(context.TODO(), test.slo, test.alertGroup)
+			gotRules, err := test.generator().GenerateSLIRecordingRules(context.TODO(), test.slo, test.alertGroup, map[string]string{})
 
 			if test.expErr {
 				assert.Error(err)
@@ -618,7 +618,7 @@ slo:error_budget:ratio{sloth_id="test", sloth_service="test-svc", sloth_slo="tes
 		t.Run(name, func(t *testing.T) {
 			assert := assert.New(t)
 
-			gotRules, err := prometheus.MetadataRecordingRulesGenerator.GenerateMetadataRecordingRules(context.TODO(), test.info, test.slo, test.alertGroup)
+			gotRules, err := prometheus.MetadataRecordingRulesGenerator.GenerateMetadataRecordingRules(context.TODO(), test.info, test.slo, test.alertGroup, map[string]string{})
 
 			if test.expErr {
 				assert.Error(err)

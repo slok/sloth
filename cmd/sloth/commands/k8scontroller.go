@@ -53,6 +53,7 @@ const (
 
 type kubeControllerCommand struct {
 	extraLabels           map[string]string
+	extraFilterLabels     map[string]string
 	workers               int
 	kubeConfig            string
 	kubeContext           string
@@ -73,7 +74,10 @@ type kubeControllerCommand struct {
 
 // NewKubeControllerCommand returns the Kubernetes controller command.
 func NewKubeControllerCommand(app *kingpin.Application) Command {
-	c := &kubeControllerCommand{extraLabels: map[string]string{}}
+	c := &kubeControllerCommand{
+		extraLabels:       map[string]string{},
+		extraFilterLabels: map[string]string{},
+	}
 	cmd := app.Command("kubernetes-controller", "Runs Sloth in Kubernetes controller/operator mode.")
 	cmd.Alias("controller")
 	cmd.Alias("k8s-controller")
@@ -92,6 +96,7 @@ func NewKubeControllerCommand(app *kingpin.Application) Command {
 	cmd.Flag("hot-reload-addr", "The listen address for hot-reloading components that allow it.").Default(":8082").StringVar(&c.hotReloadAddr)
 	cmd.Flag("hot-reload-path", "The webhook path for hot-reloading components that allow it.").Default("/-/reload").StringVar(&c.hotReloadPath)
 	cmd.Flag("extra-labels", "Extra labels that will be added to all the generated Prometheus rules ('key=value' form, can be repeated).").Short('l').StringMapVar(&c.extraLabels)
+	cmd.Flag("extra-filter-labels", "Extra labels that will be added to all the generated Prometheus rules, but also will be added as filters to the generated recording rules. Can be used as templates in queries provided by the user. ('key=value' form, can be repeated).").StringMapVar(&c.extraFilterLabels)
 	cmd.Flag("sli-plugins-path", "The path to SLI plugins (can be repeated), if not set it disable plugins support.").Short('p').StringsVar(&c.sliPluginsPaths)
 	cmd.Flag("slo-period-windows-path", "The directory path to custom SLO period windows catalog (replaces default ones).").StringVar(&c.sloPeriodWindowsPath)
 	cmd.Flag("default-slo-period", "The default SLO period windows to be used for the SLOs.").Default("30d").StringVar(&c.sloPeriod)
@@ -318,12 +323,13 @@ func (k kubeControllerCommand) Run(ctx context.Context, config RootConfig) error
 
 		// Create handler.
 		config := kubecontroller.HandlerConfig{
-			Generator:        generator,
-			SpecLoader:       k8sprometheus.NewCRSpecLoader(pluginRepo, sloPeriod),
-			Repository:       k8sprometheus.NewPrometheusOperatorCRDRepo(ksvc, logger),
-			KubeStatusStorer: ksvc,
-			ExtraLabels:      k.extraLabels,
-			Logger:           logger,
+			Generator:         generator,
+			SpecLoader:        k8sprometheus.NewCRSpecLoader(pluginRepo, sloPeriod),
+			Repository:        k8sprometheus.NewPrometheusOperatorCRDRepo(ksvc, logger),
+			KubeStatusStorer:  ksvc,
+			ExtraLabels:       k.extraLabels,
+			ExtraFilterLabels: k.extraFilterLabels,
+			Logger:            logger,
 		}
 		handler, err := kubecontroller.NewHandler(config)
 		if err != nil {

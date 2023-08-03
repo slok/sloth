@@ -24,6 +24,7 @@ type validateCommand struct {
 	slosExcludeRegex     string
 	slosIncludeRegex     string
 	extraLabels          map[string]string
+	extraFilterLabels    map[string]string
 	sliPluginsPaths      []string
 	sloPeriodWindowsPath string
 	sloPeriod            string
@@ -31,12 +32,16 @@ type validateCommand struct {
 
 // NewValidateCommand returns the validate command.
 func NewValidateCommand(app *kingpin.Application) Command {
-	c := &validateCommand{extraLabels: map[string]string{}}
+	c := &validateCommand{
+		extraLabels:       map[string]string{},
+		extraFilterLabels: map[string]string{},
+	}
 	cmd := app.Command("validate", "Validates the SLO manifests and generation of Prometheus SLOs.")
 	cmd.Flag("input", "SLO spec discovery path, will discover recursively all YAML files.").Short('i').Required().StringVar(&c.slosInput)
 	cmd.Flag("fs-exclude", "Filter regex to ignore matched discovered SLO file paths.").Short('e').StringVar(&c.slosExcludeRegex)
 	cmd.Flag("fs-include", "Filter regex to include matched discovered SLO file paths, everything else will be ignored. Exclude has preference.").Short('n').StringVar(&c.slosIncludeRegex)
 	cmd.Flag("extra-labels", "Extra labels that will be added to all the generated Prometheus rules ('key=value' form, can be repeated).").Short('l').StringMapVar(&c.extraLabels)
+	cmd.Flag("extra-filter-labels", "Extra labels that will be added to all the generated Prometheus rules, but also will be added as filters to the generated recording rules. Can be used as templates in queries provided by the user. ('key=value' form, can be repeated).").StringMapVar(&c.extraFilterLabels)
 	cmd.Flag("sli-plugins-path", "The path to SLI plugins (can be repeated), if not set it disable plugins support.").Short('p').StringsVar(&c.sliPluginsPaths)
 	cmd.Flag("slo-period-windows-path", "The directory path to custom SLO period windows catalog (replaces default ones).").StringVar(&c.sloPeriodWindowsPath)
 	cmd.Flag("default-slo-period", "The default SLO period windows to be used for the SLOs.").Default("30d").StringVar(&c.sloPeriod)
@@ -126,9 +131,10 @@ func (v validateCommand) Run(ctx context.Context, config RootConfig) error {
 		splittedSLOsData := splitYAML(slxData)
 
 		gen := generator{
-			logger:      log.Noop,
-			windowsRepo: windowsRepo,
-			extraLabels: v.extraLabels,
+			logger:            log.Noop,
+			windowsRepo:       windowsRepo,
+			extraLabels:       v.extraLabels,
+			extraFilterLabels: v.extraFilterLabels,
 		}
 
 		// Prepare file validation result and start validation result for every SLO in the file.

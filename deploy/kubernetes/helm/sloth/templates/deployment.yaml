@@ -47,6 +47,9 @@ spec:
             {{- range $key, $val := .Values.sloth.extraLabels }}
             - --extra-labels={{ $key }}={{ $val }}
             {{- end}}
+            {{- range $key, $val := .Values.sloth.extraFilterLabels }}
+            - --extra-filter-labels={{ $key }}={{ $val }}
+            {{- end}}
             {{- if .Values.commonPlugins.enabled }}
             - --sli-plugins-path=/plugins
             {{- end }}

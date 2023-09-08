@@ -13,7 +13,6 @@ import (
 	"github.com/traefik/yaegi/stdlib"
 
 	"github.com/slok/sloth/internal/log"
-	"github.com/slok/sloth/pkg/prometheus/plugin/v1"
 	pluginv1 "github.com/slok/sloth/pkg/prometheus/plugin/v1"
 )
 
@@ -58,7 +57,7 @@ func (f fileManager) ReadFile(_ context.Context, path string) ([]byte, error) {
 
 type SLIPlugin struct {
 	ID   string
-	Func plugin.SLIPlugin
+	Func pluginv1.SLIPlugin
 }
 
 type FileSLIPluginRepoConfig struct {

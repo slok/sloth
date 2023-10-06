@@ -23,7 +23,7 @@ slos:
             rate(http_request_duration_seconds_count{job="myapp"}[{{.window}}])
           )
     alerting:
-      page_alert:
+      pageAlert:
         disable: true
-      ticket_alert:
+      ticketAlert:
         disable: true

@@ -5,6 +5,15 @@ FROM golang:1.19.3-alpine as build-stage
 
 LABEL org.opencontainers.image.source https://github.com/slok/sloth
 
+RUN mkdir /root/.ssh && \
+    echo "$KNOWN_HOSTS_CONTENT" > "/root/.ssh/known_hosts" && \
+    echo "$GIT_SSH_KEY" > "/root/.ssh/id_rsa" && \
+    chmod 700 /root/.ssh/ && \
+    chmod 600 /root/.ssh/id_rsa && \
+    eval "$(ssh-agent -s)" && \
+    ssh-add /root/.ssh/id_rsa && \
+    git config --global url.git@github.com:.insteadOf https://github.com
+    
 RUN apk --no-cache add \
     g++ \
     git \

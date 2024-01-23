@@ -108,10 +108,6 @@ jobs:
           make ci-integration-k8s
 
   rolling-release-images:
-    # Only on main branch.
-    if: startsWith(github.ref, 'refs/heads/main')
-    env:
-      TAG_IMAGE_LATEST: "true"
     needs: [check, unit-test, integration-test-cli, integration-test-k8s, helm-chart-test]
     name: Release images
     runs-on: ubuntu-latest

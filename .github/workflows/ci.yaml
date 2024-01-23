@@ -110,7 +110,7 @@ jobs:
   rolling-release-images:
     needs: [check, unit-test, integration-test-cli, integration-test-k8s, helm-chart-test]
     name: Release images
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, small, al2023]
     steps:
       - name: Setup Credentials
         uses: Workiva/gha-setup-credentials@v1.0.26

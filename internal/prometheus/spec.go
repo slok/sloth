@@ -30,7 +30,7 @@ func NewYAMLSpecLoader(pluginsRepo SLIPluginRepo, windowPeriod time.Duration) YA
 	}
 }
 
-var specTypeV1Regex = regexp.MustCompile(`(?m)^version: +['"]?prometheus\/v1['"]? *$`)
+var specTypeV1Regex = regexp.MustCompile(`(?m)^version: +['"]?prometheus/v1['"]?\r?\n? *$`)
 
 func (y YAMLSpecLoader) IsSpecType(ctx context.Context, data []byte) bool {
 	return specTypeV1Regex.Match(data)

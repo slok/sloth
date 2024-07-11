@@ -32,6 +32,7 @@ type generateCommand struct {
 	slosOut               string
 	slosExcludeRegex      string
 	slosIncludeRegex      string
+	slosOutputFormat      string
 	disableRecordings     bool
 	disableAlerts         bool
 	disableOptimizedRules bool
@@ -47,6 +48,7 @@ func NewGenerateCommand(app *kingpin.Application) Command {
 	cmd := app.Command("generate", "Generates Prometheus SLOs.")
 	cmd.Flag("input", "SLO spec input file path or directory (if directory is used, slos will be discovered recursively and out must be a directory).").Short('i').StringVar(&c.slosInput)
 	cmd.Flag("out", "Generated rules output file path or directory. If `-` it will use stdout (if input is a directory this must be a directory).").Default("-").Short('o').StringVar(&c.slosOut)
+	cmd.Flag("out-flavor", "generated rules output format (prometheus, chronosphere)").Default("prometheus").Short('f').StringVar(&c.slosOutputFormat)
 	cmd.Flag("fs-exclude", "Filter regex to ignore matched discovered SLO file paths (used with directory based input/output).").Short('e').StringVar(&c.slosExcludeRegex)
 	cmd.Flag("fs-include", "Filter regex to include matched discovered SLO file paths, everything else will be ignored. Exclude has preference (used with directory based input/output).").Short('n').StringVar(&c.slosIncludeRegex)
 
@@ -247,6 +249,17 @@ func (g generateCommand) Run(ctx context.Context, config RootConfig) error {
 		extraLabels:           g.extraLabels,
 	}
 
+	// set variable flavor of type Flavor according to g.slosOutputFormat
+	var flavor prometheus.OutputFlavor
+	switch g.slosOutputFormat {
+	case "prometheus":
+		flavor = prometheus.PrometheusFlavor
+	case "chronosphere":
+		flavor = prometheus.ChronosphereFlavor
+	default:
+		return fmt.Errorf("invalid output format")
+	}
+
 	for _, genTarget := range genTargets {
 		dataB := []byte(genTarget.SLOData)
 
@@ -258,7 +271,7 @@ func (g generateCommand) Run(ctx context.Context, config RootConfig) error {
 				return fmt.Errorf("tried loading raw prometheus SLOs spec, it couldn't: %w", err)
 			}
 
-			err = gen.GeneratePrometheus(ctx, *slos, genTarget.Out)
+			err = gen.GeneratePrometheus(ctx, *slos, genTarget.Out, flavor)
 			if err != nil {
 				return fmt.Errorf("could not generate Prometheus format rules: %w", err)
 			}
@@ -280,7 +293,7 @@ func (g generateCommand) Run(ctx context.Context, config RootConfig) error {
 				return fmt.Errorf("tried loading OpenSLO SLOs spec, it couldn't: %w", err)
 			}
 
-			err = gen.GenerateOpenSLO(ctx, *slos, genTarget.Out)
+			err = gen.GenerateOpenSLO(ctx, *slos, genTarget.Out, flavor)
 			if err != nil {
 				return fmt.Errorf("could not generate OpenSLO format rules: %w", err)
 			}
@@ -307,8 +320,8 @@ type generator struct {
 	extraLabels           map[string]string
 }
 
-// GeneratePrometheus generates the SLOs based on a raw regular Prometheus spec format input and outs a Prometheus raw yaml.
-func (g generator) GeneratePrometheus(ctx context.Context, slos prometheus.SLOGroup, out io.Writer) error {
+// GeneratePrometheus generates the SLOs based on a raw regular Prometheus spec format input and outs a Prometheus or Chronosphere raw yaml.
+func (g generator) GeneratePrometheus(ctx context.Context, slos prometheus.SLOGroup, out io.Writer, flavor prometheus.OutputFlavor) error {
 	g.logger.Infof("Generating from Prometheus spec")
 	info := info.Info{
 		Version: info.Version,
@@ -330,7 +343,7 @@ func (g generator) GeneratePrometheus(ctx context.Context, slos prometheus.SLOGr
 		})
 	}
 
-	err = repo.StoreSLOs(ctx, storageSLOs)
+	err = repo.StoreSLOs(ctx, storageSLOs, flavor)
 	if err != nil {
 		return fmt.Errorf("could not store SLOS: %w", err)
 	}
@@ -370,7 +383,7 @@ func (g generator) GenerateKubernetes(ctx context.Context, sloGroup k8sprometheu
 }
 
 // generateOpenSLO generates the SLOs based on a OpenSLO spec format input and outs a Prometheus raw yaml.
-func (g generator) GenerateOpenSLO(ctx context.Context, slos prometheus.SLOGroup, out io.Writer) error {
+func (g generator) GenerateOpenSLO(ctx context.Context, slos prometheus.SLOGroup, out io.Writer, flavor prometheus.OutputFlavor) error {
 	g.logger.Infof("Generating from OpenSLO spec")
 	info := info.Info{
 		Version: info.Version,
@@ -392,7 +405,7 @@ func (g generator) GenerateOpenSLO(ctx context.Context, slos prometheus.SLOGroup
 		})
 	}
 
-	err = repo.StoreSLOs(ctx, storageSLOs)
+	err = repo.StoreSLOs(ctx, storageSLOs, flavor)
 	if err != nil {
 		return fmt.Errorf("could not store SLOS: %w", err)
 	}

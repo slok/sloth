@@ -271,9 +271,17 @@ func (g generateCommand) Run(ctx context.Context, config RootConfig) error {
 				return fmt.Errorf("tried loading raw prometheus SLOs spec, it couldn't: %w", err)
 			}
 
-			err = gen.GeneratePrometheus(ctx, *slos, genTarget.Out, flavor)
-			if err != nil {
-				return fmt.Errorf("could not generate Prometheus format rules: %w", err)
+			switch {
+			case flavor == prometheus.PrometheusFlavor:
+				err = gen.GeneratePrometheus(ctx, *slos, genTarget.Out)
+				if err != nil {
+					return fmt.Errorf("could not generate Prometheus format rules: %w", err)
+				}
+			case flavor == prometheus.ChronosphereFlavor:
+				err = gen.GenerateChronosphereFromPrometheus(ctx, *slos, genTarget.Out)
+				if err != nil {
+					return fmt.Errorf("could not generate Chronosphere format rules: %w", err)
+				}
 			}
 
 		case kubeYAMLLoader.IsSpecType(ctx, dataB):
@@ -293,11 +301,18 @@ func (g generateCommand) Run(ctx context.Context, config RootConfig) error {
 				return fmt.Errorf("tried loading OpenSLO SLOs spec, it couldn't: %w", err)
 			}
 
-			err = gen.GenerateOpenSLO(ctx, *slos, genTarget.Out, flavor)
-			if err != nil {
-				return fmt.Errorf("could not generate OpenSLO format rules: %w", err)
+			switch {
+			case flavor == prometheus.PrometheusFlavor:
+				err = gen.GeneratePrometheusFromOpenSLO(ctx, *slos, genTarget.Out)
+				if err != nil {
+					return fmt.Errorf("could not generate Prometheus format rules: %w", err)
+				}
+			case flavor == prometheus.ChronosphereFlavor:
+				err = gen.GenerateChronosphereFromOpenSLO(ctx, *slos, genTarget.Out)
+				if err != nil {
+					return fmt.Errorf("could not generate Chronosphere format rules: %w", err)
+				}
 			}
-
 		default:
 			return fmt.Errorf("invalid spec, could not load with any of the supported spec types")
 		}
@@ -320,8 +335,8 @@ type generator struct {
 	extraLabels           map[string]string
 }
 
-// GeneratePrometheus generates the SLOs based on a raw regular Prometheus spec format input and outs a Prometheus or Chronosphere raw yaml.
-func (g generator) GeneratePrometheus(ctx context.Context, slos prometheus.SLOGroup, out io.Writer, flavor prometheus.OutputFlavor) error {
+// GeneratePrometheus generates the SLOs based on a raw regular Prometheus spec format input and outs a Prometheus raw yaml.
+func (g generator) GeneratePrometheus(ctx context.Context, slos prometheus.SLOGroup, out io.Writer) error {
 	g.logger.Infof("Generating from Prometheus spec")
 	info := info.Info{
 		Version: info.Version,
@@ -343,13 +358,75 @@ func (g generator) GeneratePrometheus(ctx context.Context, slos prometheus.SLOGr
 		})
 	}
 
-	err = repo.StoreSLOs(ctx, storageSLOs, flavor)
+	err = repo.StoreSLOs(ctx, storageSLOs)
 	if err != nil {
 		return fmt.Errorf("could not store SLOS: %w", err)
 	}
 
 	return nil
 }
+
+func (g generator) GenerateChronosphereFromPrometheus(ctx context.Context, slos chronosphere.SLOGroup, out io.Writer) error {
+	g.logger.Infof("Generating chronosphere from Prometheus spec")
+	info := info.Info{
+		Version: info.Version,
+		Mode:    info.ModeCLIGenPrometheus,
+		Spec:    prometheusv1.Version,
+	}
+
+	result, err := g.generateRules(ctx, info, slos)
+	if err != nil {
+		return err
+	}
+
+	repo := chronosphere.NewIOWriterGroupedRulesYAMLRepo(out, g.logger)
+	storageSLOs := make([]chronosphere.StorageSLO, 0, len(result.PrometheusSLOs))
+	for _, s := range result.PrometheusSLOs {
+		storageSLOs = append(storageSLOs, prometheus.StorageSLO{
+			SLO:   s.SLO,
+			Rules: s.SLORules,
+		})
+	}
+
+	err = repo.StoreSLOs(ctx, storageSLOs)
+	if err != nil {
+		return fmt.Errorf("could not store SLOS: %w", err)
+	}
+
+	return nil
+}	
+
+// generateOpenSLO generates the SLOs based on a OpenSLO spec format input and outs a Prometheus raw yaml.
+func (g generator) GenerateChronosphereFromOpenSLO(ctx context.Context, slos prometheus.SLOGroup, out io.Writer) error {
+	g.logger.Infof("Generating from OpenSLO spec")
+	info := info.Info{
+		Version: info.Version,
+		Mode:    info.ModeCLIGenOpenSLO,
+		Spec:    openslov1alpha.APIVersion,
+	}
+
+	result, err := g.generateRules(ctx, info, slos)
+	if err != nil {
+		return err
+	}
+
+	repo := chronosphere.NewIOWriterGroupedRulesYAMLRepo(out, g.logger)
+	storageSLOs := make([]chronosphere.StorageSLO, 0, len(result.PrometheusSLOs))
+	for _, s := range result.PrometheusSLOs {
+		storageSLOs = append(storageSLOs, prometheus.StorageSLO{
+			SLO:   s.SLO,
+			Rules: s.SLORules,
+		})
+	}
+
+	err = repo.StoreSLOs(ctx, storageSLOs)
+	if err != nil {
+		return fmt.Errorf("could not store SLOS: %w", err)
+	}
+
+	return nil
+}
+
 
 // generateKubernetes generates the SLOs based on a Kuberentes spec format input and outs a Kubernetes prometheus operator CRD yaml.
 func (g generator) GenerateKubernetes(ctx context.Context, sloGroup k8sprometheus.SLOGroup, out io.Writer) error {
@@ -383,7 +460,7 @@ func (g generator) GenerateKubernetes(ctx context.Context, sloGroup k8sprometheu
 }
 
 // generateOpenSLO generates the SLOs based on a OpenSLO spec format input and outs a Prometheus raw yaml.
-func (g generator) GenerateOpenSLO(ctx context.Context, slos prometheus.SLOGroup, out io.Writer, flavor prometheus.OutputFlavor) error {
+func (g generator) GeneratePrometheusFromOpenSLO(ctx context.Context, slos prometheus.SLOGroup, out io.Writer) error {
 	g.logger.Infof("Generating from OpenSLO spec")
 	info := info.Info{
 		Version: info.Version,
@@ -405,7 +482,7 @@ func (g generator) GenerateOpenSLO(ctx context.Context, slos prometheus.SLOGroup
 		})
 	}
 
-	err = repo.StoreSLOs(ctx, storageSLOs, flavor)
+	err = repo.StoreSLOs(ctx, storageSLOs)
 	if err != nil {
 		return fmt.Errorf("could not store SLOS: %w", err)
 	}

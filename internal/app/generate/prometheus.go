@@ -193,10 +193,3 @@ func mergeLabels(ms ...map[string]string) map[string]string {
 
 	return res
 }
-
-type OutputFlavor int
-
-const (
-	PrometheusFlavor OutputFlavor = iota
-	ChronosphereFlavor
-)

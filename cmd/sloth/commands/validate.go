@@ -144,7 +144,7 @@ func (v validateCommand) Run(ctx context.Context, config RootConfig) error {
 			case promYAMLLoader.IsSpecType(ctx, dataB):
 				slos, promErr := promYAMLLoader.LoadSpec(ctx, dataB)
 				if promErr == nil {
-					err := gen.GeneratePrometheus(ctx, *slos, io.Discard, prometheus.PrometheusFlavor)
+					err := gen.GeneratePrometheus(ctx, *slos, io.Discard)
 					if err != nil {
 						validation.Errs = []error{fmt.Errorf("Could not generate Prometheus format rules: %w", err)}
 					}
@@ -168,7 +168,7 @@ func (v validateCommand) Run(ctx context.Context, config RootConfig) error {
 			case openSLOYAMLLoader.IsSpecType(ctx, dataB):
 				slos, openSLOErr := openSLOYAMLLoader.LoadSpec(ctx, dataB)
 				if openSLOErr == nil {
-					err := gen.GenerateOpenSLO(ctx, *slos, io.Discard, prometheus.PrometheusFlavor)
+					err := gen.GeneratePrometheusFromOpenSLO(ctx, *slos, io.Discard)
 					if err != nil {
 						validation.Errs = []error{fmt.Errorf("Could not generate OpenSLO format rules: %w", err)}
 					}

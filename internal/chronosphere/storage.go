@@ -174,12 +174,26 @@ func createChronosphereRecordingRules(slo StorageSLO, collectionSlug string) []c
 func createChronosphereMonitors(slo StorageSLO, collectionSlug string, logger log.Logger) []chronosphereMonitor {
 	monitors := []chronosphereMonitor{}
 	for _, rule := range slo.Rules.AlertRules {
-		severity, ok := rule.Labels["sloth_severity"]
+		severity, ok := rule.Labels["severity"]
 		if !ok {
 			logger.Warningf("alert rule %q doesn't have a severity label, skipping", rule.Alert)
 			continue
 		}
+		conditions := map[string]map[string][]chronosphereMonitorConditions{
+			severity: {
+				"conditions": {
+					chronosphereMonitorConditions{
+						Value:                0,
+						Sustain_secs:         60,
+						Resolve_sustain_secs: 60,
+						Op:                   chronosphereOperation(EXISTS).String(),
+					},
+				},
+			},
+		}
+
 		ruleId := fmt.Sprintf("sloth-slo-alerts-%s-%s", slo.SLO.ID, strings.Replace(rule.Alert, ":", "_", -1))
+
 		monitor := chronosphereMonitor{
 			Slug:                     ruleId,
 			Name:                     ruleId,
@@ -187,19 +201,10 @@ func createChronosphereMonitors(slo StorageSLO, collectionSlug string, logger lo
 			Collection:               collectionSlug,
 			Interval_secs:            60,
 			Labels:                   rule.Labels,
-			Notification_policy_slug: "slo-alerting-test", // TODO set routing
-			Series_conditions: struct {
-				Defaults map[string]chronosphereMonitorConditions
-			}{
-				Defaults: map[string]chronosphereMonitorConditions{
-					severity: {
-						Sustain_secs:         60,
-						Resolve_sustain_secs: 60,
-						Op:                   chronosphereOperation(EXISTS),
-					},
-				},
-			},
+			Notification_policy_slug: rule.Labels["routing_key"], // TODO set routing
+			Series_conditions:        map[string]map[string]map[string][]chronosphereMonitorConditions{"defaults": conditions},
 		}
+
 		monitors = append(monitors, monitor)
 	}
 	return monitors
@@ -295,10 +300,10 @@ func (c chronosphereOperation) String() string {
 }
 
 type chronosphereMonitorConditions struct {
-	Value                float64               `yaml:"value"`
-	Sustain_secs         int                   `yaml:"sustain_secs"`
-	Resolve_sustain_secs int                   `yaml:"resolve_sustain_secs"`
-	Op                   chronosphereOperation `yaml:"op"`
+	Value                float64 `yaml:"value,omitempty"`
+	Sustain_secs         int     `yaml:"sustain_secs"`
+	Resolve_sustain_secs int     `yaml:"resolve_sustain_secs"`
+	Op                   string  `yaml:"op"`
 }
 
 type chronosphereMonitorSeverity int
@@ -313,14 +318,12 @@ func (c chronosphereMonitorSeverity) String() string {
 }
 
 type chronosphereMonitor struct {
-	Slug                     string            `yaml:"slug"`
-	Name                     string            `yaml:"name"`
-	Query                    string            `yaml:"prometheus_query"`
-	Collection               string            `yaml:"collection_slug"`
-	Interval_secs            int               `yaml:"interval_secs"`
-	Labels                   map[string]string `yaml:"labels"`
-	Notification_policy_slug string            `yaml:"notification_policy_slug"`
-	Series_conditions        struct {
-		Defaults map[string]chronosphereMonitorConditions
-	} `yaml:"series_conditions"`
+	Slug                     string                                                           `yaml:"slug"`
+	Name                     string                                                           `yaml:"name"`
+	Query                    string                                                           `yaml:"prometheus_query"`
+	Collection               string                                                           `yaml:"collection_slug"`
+	Interval_secs            int                                                              `yaml:"interval_secs"`
+	Labels                   map[string]string                                                `yaml:"labels"`
+	Notification_policy_slug string                                                           `yaml:"notification_policy_slug"`
+	Series_conditions        map[string]map[string]map[string][]chronosphereMonitorConditions `yaml:"series_conditions"`
 }

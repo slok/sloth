@@ -101,6 +101,7 @@ func mapSpecToModel(ctx context.Context, defaultWindowPeriod time.Duration, plug
 			TimeWindow:      defaultWindowPeriod,
 			Objective:       specSLO.Objective,
 			Labels:          mergeLabels(spec.Labels, specSLO.Labels),
+			InfoLabels:      specSLO.InfoLabels,
 			PageAlertMeta:   prometheus.AlertMeta{Disable: true},
 			TicketAlertMeta: prometheus.AlertMeta{Disable: true},
 		}

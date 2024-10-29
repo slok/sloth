@@ -137,6 +137,8 @@ labels:
 slos:
   - name: "slo-test"
     objective: 99
+    infoLabels:
+      foo: bar
     sli:
       plugin:
         id: test_plugin
@@ -156,6 +158,7 @@ slos:
 					Service:    "test-svc",
 					TimeWindow: 30 * 24 * time.Hour,
 					Labels:     map[string]string{"gk1": "gv1"},
+					InfoLabels: map[string]string{"foo": "bar"},
 					SLI: prometheus.SLI{
 						Raw: &prometheus.SLIRaw{
 							ErrorRatioQuery: `plugin_raw_expr{service="test-svc",slo="slo-test",objective="99.000000",gk1="gv1",k1="v1",k2="true"}`,
@@ -178,6 +181,8 @@ labels:
 slos:
   - name: "slo-test"
     objective: 99
+    infoLabels:
+      foo: bar
     sli:
       raw:
         error_ratio_query: test_expr_ratio_2
@@ -194,6 +199,7 @@ slos:
 					Service:    "test-svc",
 					TimeWindow: 28 * 24 * time.Hour,
 					Labels:     map[string]string{"gk1": "gv1"},
+					InfoLabels: map[string]string{"foo": "bar"},
 					SLI: prometheus.SLI{
 						Raw: &prometheus.SLIRaw{
 							ErrorRatioQuery: `test_expr_ratio_2`,
@@ -217,6 +223,8 @@ slos:
   - name: "slo1"
     labels:
       category: test
+    infoLabels:
+      foo: bar
     objective: 99.99
     description: "This is a test."
     sli:
@@ -244,6 +252,8 @@ slos:
   - name: "slo2"
     labels:
       category: test2
+    infoLabels:
+      foo: bar
     objective: 99.9
     sli:
       raw:
@@ -272,6 +282,7 @@ slos:
 						"owner":    "myteam",
 						"category": "test",
 					},
+					InfoLabels: map[string]string{"foo": "bar"},
 					PageAlertMeta: prometheus.AlertMeta{
 						Disable: false,
 						Name:    "testAlert",
@@ -314,6 +325,7 @@ slos:
 						"owner":    "myteam",
 						"category": "test2",
 					},
+					InfoLabels:      map[string]string{"foo": "bar"},
 					PageAlertMeta:   prometheus.AlertMeta{Disable: true},
 					TicketAlertMeta: prometheus.AlertMeta{Disable: true},
 				},

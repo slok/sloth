@@ -13,7 +13,7 @@ func customValues() msi {
 		},
 
 		"image": msi{
-			"repository": "slok/sloth-test",
+			"repository": "linode-obs/sloth-test",
 			"tag":        "v1.42.42",
 		},
 

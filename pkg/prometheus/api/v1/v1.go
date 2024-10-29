@@ -86,6 +86,8 @@ type SLO struct {
 	// alerting rules for this specific SLO. These labels are merged with the
 	// previous level labels.
 	Labels map[string]string `yaml:"labels,omitempty"`
+	// Labels appended to `sloth_slo_info`
+	InfoLabels map[string]string `yaml:"infoLabels,omitempty"`
 	// SLI is the indicator (service level indicator) for this specific SLO.
 	SLI SLI `yaml:"sli"`
 	// Alerting is the configuration with all the things related with the SLO

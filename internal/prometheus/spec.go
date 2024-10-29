@@ -68,6 +68,7 @@ func (y YAMLSpecLoader) LoadSpec(ctx context.Context, data []byte) (*SLOGroup, e
 func (y YAMLSpecLoader) mapSpecToModel(ctx context.Context, spec prometheusv1.Spec) (*SLOGroup, error) {
 	models := make([]SLO, 0, len(spec.SLOs))
 	for _, specSLO := range spec.SLOs {
+
 		slo := SLO{
 			ID:                    fmt.Sprintf("%s-%s", spec.Service, specSLO.Name),
 			RuleGroupInterval:     specSLO.Interval.RuleGroupInterval,
@@ -82,6 +83,7 @@ func (y YAMLSpecLoader) mapSpecToModel(ctx context.Context, spec prometheusv1.Sp
 			Labels:                mergeLabels(spec.Labels, specSLO.Labels),
 			PageAlertMeta:         AlertMeta{Disable: true},
 			TicketAlertMeta:       AlertMeta{Disable: true},
+			InfoLabels:            specSLO.InfoLabels,
 		}
 
 		// Set SLIs.

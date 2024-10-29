@@ -53,6 +53,7 @@ const (
 
 type kubeControllerCommand struct {
 	extraLabels           map[string]string
+	infoLabels            map[string]string
 	workers               int
 	kubeConfig            string
 	kubeContext           string
@@ -73,7 +74,7 @@ type kubeControllerCommand struct {
 
 // NewKubeControllerCommand returns the Kubernetes controller command.
 func NewKubeControllerCommand(app *kingpin.Application) Command {
-	c := &kubeControllerCommand{extraLabels: map[string]string{}}
+	c := &kubeControllerCommand{extraLabels: map[string]string{}, infoLabels: map[string]string{}}
 	cmd := app.Command("kubernetes-controller", "Runs Sloth in Kubernetes controller/operator mode.")
 	cmd.Alias("controller")
 	cmd.Alias("k8s-controller")

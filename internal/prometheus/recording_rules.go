@@ -205,6 +205,15 @@ const MetadataRecordingRulesGenerator = metadataRecordingRulesGenerator(false)
 func (m metadataRecordingRulesGenerator) GenerateMetadataRecordingRules(ctx context.Context, info info.Info, slo SLO, alerts alert.MWMBAlertGroup) ([]rulefmt.Rule, error) {
 	labels := mergeLabels(slo.GetSLOIDPromLabels(), slo.Labels)
 
+	infoLabels := mergeLabels(labels, map[string]string{
+		sloVersionLabelName:   info.Version,
+		sloModeLabelName:      string(info.Mode),
+		sloSpecLabelName:      info.Spec,
+		sloObjectiveLabelName: strconv.FormatFloat(slo.Objective, 'f', -1, 64),
+	})
+
+	infoLabels = mergeLabels(infoLabels, slo.InfoLabels)
+
 	// Metatada Recordings.
 	const (
 		metricSLOObjectiveRatio                  = "slo:objective:ratio"
@@ -293,12 +302,7 @@ func (m metadataRecordingRulesGenerator) GenerateMetadataRecordingRules(ctx cont
 		{
 			Record: metricSLOInfo,
 			Expr:   `vector(1)`,
-			Labels: mergeLabels(labels, map[string]string{
-				sloVersionLabelName:   info.Version,
-				sloModeLabelName:      string(info.Mode),
-				sloSpecLabelName:      info.Spec,
-				sloObjectiveLabelName: strconv.FormatFloat(slo.Objective, 'f', -1, 64),
-			}),
+			Labels: infoLabels,
 		},
 	}
 

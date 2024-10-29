@@ -39,11 +39,12 @@ type generateCommand struct {
 	sliPluginsPaths       []string
 	sloPeriodWindowsPath  string
 	sloPeriod             string
+	infoLabels            map[string]string
 }
 
 // NewGenerateCommand returns the generate command.
 func NewGenerateCommand(app *kingpin.Application) Command {
-	c := &generateCommand{extraLabels: map[string]string{}}
+	c := &generateCommand{extraLabels: map[string]string{}, infoLabels: map[string]string{}}
 	cmd := app.Command("generate", "Generates Prometheus SLOs.")
 	cmd.Flag("input", "SLO spec input file path or directory (if directory is used, slos will be discovered recursively and out must be a directory).").Short('i').StringVar(&c.slosInput)
 	cmd.Flag("out", "Generated rules output file path or directory. If `-` it will use stdout (if input is a directory this must be a directory).").Default("-").Short('o').StringVar(&c.slosOut)

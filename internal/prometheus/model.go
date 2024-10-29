@@ -53,6 +53,7 @@ type SLO struct {
 	Labels                map[string]string `validate:"dive,keys,prom_label_key,endkeys,required,prom_label_value"`
 	PageAlertMeta         AlertMeta
 	TicketAlertMeta       AlertMeta
+	InfoLabels            map[string]string `validate:"dive,keys,prom_label_key,endkeys,required,prom_label_value"`
 }
 
 type SLOGroup struct {

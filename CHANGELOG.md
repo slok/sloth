@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+## [v0.13.0] - 2024-10-30
+
+- Custom labels for `sloth_slo_info{}` metric [#4](https://github.com/linode-obs/sloth/pull/4)
+
 ## [v0.12.0] - 2023-07-03
 
 - Custom rule_group intervals for all recording rule types or a global default.
@@ -166,7 +170,8 @@
 - Support raw query based SLI.
 - Kubernetes (prometheus-operator) CRD generation support.
 
-[unreleased]: https://github.com/slok/sloth/compare/v0.12.0...HEAD
+[unreleased]: https://github.com/linode-obs/sloth/compare/v0.13.0...HEAD
+[v0.13.0]: https://github.com/slok/sloth/compare/v0.12.0...v0.13.0
 [v0.12.0]: https://github.com/slok/sloth/compare/v0.11.0...v0.12.0
 [v0.11.0]: https://github.com/slok/sloth/compare/v0.10.0...v0.11.0
 [v0.10.0]: https://github.com/slok/sloth/compare/v0.9.0...v0.10.0

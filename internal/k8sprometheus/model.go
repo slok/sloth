@@ -15,6 +15,7 @@ type K8sMeta struct {
 	Namespace   string
 	Annotations map[string]string
 	Labels      map[string]string
+	InfoLabels  map[string]string
 }
 
 // SLOGroup is a Kubernetes SLO group. Is created based on a regular Prometheus

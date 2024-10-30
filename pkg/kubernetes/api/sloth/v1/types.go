@@ -68,6 +68,9 @@ type SLO struct {
 	// +optional
 	Labels map[string]string `json:"labels,omitempty"`
 
+	// Info labels added to the `sloth_slo_info` metric
+	InfoLabels map[string]string `json:"infoLabels,omitempty"`
+
 	// +kubebuilder:validation:Required
 	//
 	// SLI is the indicator (service level indicator) for this specific SLO.

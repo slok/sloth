@@ -1,8 +1,8 @@
 labels: {}
 
 image:
-  repository: ghcr.io/slok/sloth
-  tag: v0.11.0
+  repository: ghcr.io/linode-obs/sloth
+  tag: v0.13.0
 
 # -- Container resources: requests and limits for CPU, Memory
 resources:

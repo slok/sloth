@@ -65,6 +65,9 @@ slos:
     description: "Common SLO based on availability for HTTP request responses."
     labels:
       category: availability
+    # These labels only apply to the `sloth_slo_info{}` metric - they are `string: string` typed.
+    infoLabels:
+      foo: "bar"
     sli:
       events:
         error_query: sum(rate(http_request_duration_seconds_count{job="myservice",code=~"(5..|429)"}[{{.window}}]))

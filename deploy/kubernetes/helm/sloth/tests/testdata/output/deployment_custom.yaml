@@ -39,7 +39,7 @@ spec:
         runAsUser: 100
       containers:
         - name: sloth
-          image: slok/sloth-test:v1.42.42
+          image: linode-obs/sloth-test:v1.42.42
           args:
             - kubernetes-controller
             - --resync-interval=17m

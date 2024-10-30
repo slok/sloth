@@ -5,6 +5,7 @@
 ## [v0.13.0] - 2024-10-30
 
 - Custom labels for `sloth_slo_info{}` metric [#4](https://github.com/linode-obs/sloth/pull/4)
+- Bump Helm Chart version
 
 ## [v0.12.0] - 2023-07-03
 

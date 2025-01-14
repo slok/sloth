@@ -11,7 +11,7 @@ jobs:
     name: Generate the SLOs
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: download and setup generator binary
         run: |       
           wget https://github.com/slok/sloth/releases/download/v0.9.0/sloth-linux-amd64

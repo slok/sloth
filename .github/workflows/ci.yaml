@@ -7,21 +7,25 @@ jobs:
     name: Check
     runs-on: ubuntu-latest
     # Execute the checks inside the container instead the VM.
-    container: golangci/golangci-lint:v1.50.0-alpine
+    container: golangci/golangci-lint:v1.64.8-alpine
     steps:
-      - uses: actions/checkout@v3
-      - run: ./scripts/check/check.sh
+      - uses: actions/checkout@v4
+      - run: |
+          # We need this go flag because it started to error after golangci-lint is using Go 1.21.
+          # TODO(slok): Remove it on next (>1.54.1) golangci-lint upgrade to check if this problem has gone.
+          export GOFLAGS="-buildvcs=false"
+          ./scripts/check/check.sh
 
   unit-test:
-    name: Unit test
+    name: Unit testq
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-go@v3
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
         with:
           go-version-file: go.mod
       - run: make ci-test
-      - uses: codecov/codecov-action@v3.1.1
+      - uses: codecov/codecov-action@v5
         with:
           token: ${{ secrets.CODECOV_UPLOAD_TOKEN }}
           file: ./.test_coverage.txt
@@ -31,8 +35,8 @@ jobs:
     name: Helm chart test
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-go@v3
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
         with:
           go-version-file: go.mod
       - name: Execute tests
@@ -48,8 +52,8 @@ jobs:
     name: Integration test CLI
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-go@v3
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
         with:
           go-version-file: go.mod
       - name: Execute tests
@@ -68,20 +72,20 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        kubernetes: [1.21.14, 1.22.15, 1.23.12, 1.24.6, 1.25.2]
+        kubernetes: [1.29.14, 1.30.10, 1.31.6, 1.32.2]
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-go@v3
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
         with:
           go-version-file: go.mod
       - name: Execute tests
         env:
-          KIND_VERSION: v0.16.0
+          KIND_VERSION: v0.27.0
         run: |
           # Get dependencies.
           echo "Getting dependencies..."
           curl -Lo kind https://github.com/kubernetes-sigs/kind/releases/download/${KIND_VERSION}/kind-linux-amd64 && chmod +x kind && sudo mv kind /usr/local/bin/
-          curl -Lo kubectl https://storage.googleapis.com/kubernetes-release/release/v${{ matrix.kubernetes }}/bin/linux/amd64/kubectl && chmod +x kubectl && sudo mv kubectl /usr/local/bin/
+          curl -Lo kubectl http://cdn.dl.k8s.io/release/v${{ matrix.kubernetes }}/bin/linux/amd64/kubectl && chmod +x kubectl && sudo mv kubectl /usr/local/bin/
 
           # Start cluster.
           echo "Starting ${{ matrix.kubernetes }} Kubernetes cluster..."
@@ -109,11 +113,18 @@ jobs:
       TAG_IMAGE_LATEST: "true"
       PROD_IMAGE_NAME: ghcr.io/${GITHUB_REPOSITORY}
       VERSION: ${GITHUB_SHA}
-    needs: [check, unit-test, integration-test-cli, integration-test-k8s, helm-chart-test]
+    needs:
+      [
+        check,
+        unit-test,
+        integration-test-cli,
+        integration-test-k8s,
+        helm-chart-test,
+      ]
     name: Release images
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Docker login
         run: docker login ghcr.io -u ${{ github.actor }} -p "${{ secrets.GITHUB_TOKEN }}"
       - name: Build and publish docker images
@@ -124,12 +135,19 @@ jobs:
     if: startsWith(github.ref, 'refs/tags/')
     env:
       PROD_IMAGE_NAME: ghcr.io/${GITHUB_REPOSITORY}
-    needs: [check, unit-test, integration-test-cli, integration-test-k8s, helm-chart-test]
+    needs:
+      [
+        check,
+        unit-test,
+        integration-test-cli,
+        integration-test-k8s,
+        helm-chart-test,
+      ]
     name: Tagged release images
     runs-on: ubuntu-latest
     steps:
       - run: echo "VERSION=${GITHUB_REF#refs/*/}" >> ${GITHUB_ENV} # Sets VERSION env var.
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Docker login
         run: docker login ghcr.io -u ${{ github.actor }} -p "${{ secrets.GITHUB_TOKEN }}"
       - name: Build and publish docker images
@@ -138,19 +156,26 @@ jobs:
   tagged-release-binaries:
     # Only on tags.
     if: startsWith(github.ref, 'refs/tags/')
-    needs: [check, unit-test, integration-test-cli, integration-test-k8s, helm-chart-test]
+    needs:
+      [
+        check,
+        unit-test,
+        integration-test-cli,
+        integration-test-k8s,
+        helm-chart-test,
+      ]
     name: Tagged release binaries
     runs-on: ubuntu-latest
     steps:
       - run: echo "VERSION=${GITHUB_REF#refs/*/}" >> ${GITHUB_ENV} # Sets VERSION env var.
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Build binaries
         run: |
           mkdir -p ./bin
           chmod -R 0777 ./bin
           make build-all
       - name: Upload binaries
-        uses: xresloader/upload-to-github-release@v1.3.9
+        uses: xresloader/upload-to-github-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:

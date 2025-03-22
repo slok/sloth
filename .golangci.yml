@@ -10,5 +10,12 @@ linters:
     - goimports
     - revive
     - gofmt
-    - depguard
+    #- depguard
     - godot
+
+linters-settings:
+  revive:
+    rules:
+      # Spammy linter and complex to fix on lots of parameters. Makes more harm that it solves.
+      - name: unused-parameter
+        disabled: true

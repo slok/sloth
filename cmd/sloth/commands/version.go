@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"gopkg.in/alecthomas/kingpin.v2"
+	"github.com/alecthomas/kingpin/v2"
 
 	"github.com/slok/sloth/internal/info"
 )
@@ -21,6 +21,6 @@ func NewVersionCommand(app *kingpin.Application) Command {
 
 func (versionCommand) Name() string { return "version" }
 func (versionCommand) Run(ctx context.Context, config RootConfig) error {
-	fmt.Fprintf(config.Stdout, info.Version)
+	fmt.Fprint(config.Stdout, info.Version)
 	return nil
 }

@@ -2,6 +2,12 @@
 
 ## [Unreleased]
 
+### Changed
+
+- Update to Go 1.24.
+- Update to Kubernetes v1.32.
+- Update all other dependencies to latest versions.
+
 ## [v0.11.0] - 2022-10-22
 
 ### Changed

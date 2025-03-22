@@ -9,47 +9,49 @@ import "github.com/slok/sloth/pkg/kubernetes/api/sloth/v1"
 ## Index
 
 - [Variables](<#variables>)
-- [func Kind(kind string) schema.GroupKind](<#func-kind>)
-- [func Resource(resource string) schema.GroupResource](<#func-resource>)
-- [func VersionKind(kind string) schema.GroupVersionKind](<#func-versionkind>)
-- [type Alert](<#type-alert>)
-  - [func (in *Alert) DeepCopy() *Alert](<#func-alert-deepcopy>)
-  - [func (in *Alert) DeepCopyInto(out *Alert)](<#func-alert-deepcopyinto>)
-- [type Alerting](<#type-alerting>)
-  - [func (in *Alerting) DeepCopy() *Alerting](<#func-alerting-deepcopy>)
-  - [func (in *Alerting) DeepCopyInto(out *Alerting)](<#func-alerting-deepcopyinto>)
-- [type PrometheusServiceLevel](<#type-prometheusservicelevel>)
-  - [func (in *PrometheusServiceLevel) DeepCopy() *PrometheusServiceLevel](<#func-prometheusservicelevel-deepcopy>)
-  - [func (in *PrometheusServiceLevel) DeepCopyInto(out *PrometheusServiceLevel)](<#func-prometheusservicelevel-deepcopyinto>)
-  - [func (in *PrometheusServiceLevel) DeepCopyObject() runtime.Object](<#func-prometheusservicelevel-deepcopyobject>)
-- [type PrometheusServiceLevelList](<#type-prometheusservicelevellist>)
-  - [func (in *PrometheusServiceLevelList) DeepCopy() *PrometheusServiceLevelList](<#func-prometheusservicelevellist-deepcopy>)
-  - [func (in *PrometheusServiceLevelList) DeepCopyInto(out *PrometheusServiceLevelList)](<#func-prometheusservicelevellist-deepcopyinto>)
-  - [func (in *PrometheusServiceLevelList) DeepCopyObject() runtime.Object](<#func-prometheusservicelevellist-deepcopyobject>)
-- [type PrometheusServiceLevelSpec](<#type-prometheusservicelevelspec>)
-  - [func (in *PrometheusServiceLevelSpec) DeepCopy() *PrometheusServiceLevelSpec](<#func-prometheusservicelevelspec-deepcopy>)
-  - [func (in *PrometheusServiceLevelSpec) DeepCopyInto(out *PrometheusServiceLevelSpec)](<#func-prometheusservicelevelspec-deepcopyinto>)
-- [type PrometheusServiceLevelStatus](<#type-prometheusservicelevelstatus>)
-  - [func (in *PrometheusServiceLevelStatus) DeepCopy() *PrometheusServiceLevelStatus](<#func-prometheusservicelevelstatus-deepcopy>)
-  - [func (in *PrometheusServiceLevelStatus) DeepCopyInto(out *PrometheusServiceLevelStatus)](<#func-prometheusservicelevelstatus-deepcopyinto>)
-- [type SLI](<#type-sli>)
-  - [func (in *SLI) DeepCopy() *SLI](<#func-sli-deepcopy>)
-  - [func (in *SLI) DeepCopyInto(out *SLI)](<#func-sli-deepcopyinto>)
-- [type SLIEvents](<#type-slievents>)
-  - [func (in *SLIEvents) DeepCopy() *SLIEvents](<#func-slievents-deepcopy>)
-  - [func (in *SLIEvents) DeepCopyInto(out *SLIEvents)](<#func-slievents-deepcopyinto>)
-- [type SLIPlugin](<#type-sliplugin>)
-  - [func (in *SLIPlugin) DeepCopy() *SLIPlugin](<#func-sliplugin-deepcopy>)
-  - [func (in *SLIPlugin) DeepCopyInto(out *SLIPlugin)](<#func-sliplugin-deepcopyinto>)
-- [type SLIRaw](<#type-sliraw>)
-  - [func (in *SLIRaw) DeepCopy() *SLIRaw](<#func-sliraw-deepcopy>)
-  - [func (in *SLIRaw) DeepCopyInto(out *SLIRaw)](<#func-sliraw-deepcopyinto>)
-- [type SLO](<#type-slo>)
-  - [func (in *SLO) DeepCopy() *SLO](<#func-slo-deepcopy>)
-  - [func (in *SLO) DeepCopyInto(out *SLO)](<#func-slo-deepcopyinto>)
+- [func Kind\(kind string\) schema.GroupKind](<#Kind>)
+- [func Resource\(resource string\) schema.GroupResource](<#Resource>)
+- [func VersionKind\(kind string\) schema.GroupVersionKind](<#VersionKind>)
+- [type Alert](<#Alert>)
+  - [func \(in \*Alert\) DeepCopy\(\) \*Alert](<#Alert.DeepCopy>)
+  - [func \(in \*Alert\) DeepCopyInto\(out \*Alert\)](<#Alert.DeepCopyInto>)
+- [type Alerting](<#Alerting>)
+  - [func \(in \*Alerting\) DeepCopy\(\) \*Alerting](<#Alerting.DeepCopy>)
+  - [func \(in \*Alerting\) DeepCopyInto\(out \*Alerting\)](<#Alerting.DeepCopyInto>)
+- [type PrometheusServiceLevel](<#PrometheusServiceLevel>)
+  - [func \(in \*PrometheusServiceLevel\) DeepCopy\(\) \*PrometheusServiceLevel](<#PrometheusServiceLevel.DeepCopy>)
+  - [func \(in \*PrometheusServiceLevel\) DeepCopyInto\(out \*PrometheusServiceLevel\)](<#PrometheusServiceLevel.DeepCopyInto>)
+  - [func \(in \*PrometheusServiceLevel\) DeepCopyObject\(\) runtime.Object](<#PrometheusServiceLevel.DeepCopyObject>)
+- [type PrometheusServiceLevelList](<#PrometheusServiceLevelList>)
+  - [func \(in \*PrometheusServiceLevelList\) DeepCopy\(\) \*PrometheusServiceLevelList](<#PrometheusServiceLevelList.DeepCopy>)
+  - [func \(in \*PrometheusServiceLevelList\) DeepCopyInto\(out \*PrometheusServiceLevelList\)](<#PrometheusServiceLevelList.DeepCopyInto>)
+  - [func \(in \*PrometheusServiceLevelList\) DeepCopyObject\(\) runtime.Object](<#PrometheusServiceLevelList.DeepCopyObject>)
+- [type PrometheusServiceLevelSpec](<#PrometheusServiceLevelSpec>)
+  - [func \(in \*PrometheusServiceLevelSpec\) DeepCopy\(\) \*PrometheusServiceLevelSpec](<#PrometheusServiceLevelSpec.DeepCopy>)
+  - [func \(in \*PrometheusServiceLevelSpec\) DeepCopyInto\(out \*PrometheusServiceLevelSpec\)](<#PrometheusServiceLevelSpec.DeepCopyInto>)
+- [type PrometheusServiceLevelStatus](<#PrometheusServiceLevelStatus>)
+  - [func \(in \*PrometheusServiceLevelStatus\) DeepCopy\(\) \*PrometheusServiceLevelStatus](<#PrometheusServiceLevelStatus.DeepCopy>)
+  - [func \(in \*PrometheusServiceLevelStatus\) DeepCopyInto\(out \*PrometheusServiceLevelStatus\)](<#PrometheusServiceLevelStatus.DeepCopyInto>)
+- [type SLI](<#SLI>)
+  - [func \(in \*SLI\) DeepCopy\(\) \*SLI](<#SLI.DeepCopy>)
+  - [func \(in \*SLI\) DeepCopyInto\(out \*SLI\)](<#SLI.DeepCopyInto>)
+- [type SLIEvents](<#SLIEvents>)
+  - [func \(in \*SLIEvents\) DeepCopy\(\) \*SLIEvents](<#SLIEvents.DeepCopy>)
+  - [func \(in \*SLIEvents\) DeepCopyInto\(out \*SLIEvents\)](<#SLIEvents.DeepCopyInto>)
+- [type SLIPlugin](<#SLIPlugin>)
+  - [func \(in \*SLIPlugin\) DeepCopy\(\) \*SLIPlugin](<#SLIPlugin.DeepCopy>)
+  - [func \(in \*SLIPlugin\) DeepCopyInto\(out \*SLIPlugin\)](<#SLIPlugin.DeepCopyInto>)
+- [type SLIRaw](<#SLIRaw>)
+  - [func \(in \*SLIRaw\) DeepCopy\(\) \*SLIRaw](<#SLIRaw.DeepCopy>)
+  - [func \(in \*SLIRaw\) DeepCopyInto\(out \*SLIRaw\)](<#SLIRaw.DeepCopyInto>)
+- [type SLO](<#SLO>)
+  - [func \(in \*SLO\) DeepCopy\(\) \*SLO](<#SLO.DeepCopy>)
+  - [func \(in \*SLO\) DeepCopyInto\(out \*SLO\)](<#SLO.DeepCopyInto>)
 
 
 ## Variables
+
+<a name="SchemeBuilder"></a>
 
 ```go
 var (
@@ -60,13 +62,14 @@ var (
 )
 ```
 
-SchemeGroupVersion is group version used to register these objects.
+<a name="SchemeGroupVersion"></a>SchemeGroupVersion is group version used to register these objects.
 
 ```go
 var SchemeGroupVersion = schema.GroupVersion{Group: sloth.GroupName, Version: version}
 ```
 
-## func Kind
+<a name="Kind"></a>
+## func [Kind](<https://github.com/slok/sloth/blob/main/pkg/kubernetes/api/sloth/v1/register.go#L19>)
 
 ```go
 func Kind(kind string) schema.GroupKind
@@ -74,7 +77,8 @@ func Kind(kind string) schema.GroupKind
 
 Kind takes an unqualified kind and returns back a Group qualified GroupKind.
 
-## func Resource
+<a name="Resource"></a>
+## func [Resource](<https://github.com/slok/sloth/blob/main/pkg/kubernetes/api/sloth/v1/register.go#L29>)
 
 ```go
 func Resource(resource string) schema.GroupResource
@@ -82,7 +86,8 @@ func Resource(resource string) schema.GroupResource
 
 Resource takes an unqualified resource and returns a Group qualified GroupResource.
 
-## func VersionKind
+<a name="VersionKind"></a>
+## func [VersionKind](<https://github.com/slok/sloth/blob/main/pkg/kubernetes/api/sloth/v1/register.go#L24>)
 
 ```go
 func VersionKind(kind string) schema.GroupVersionKind
@@ -90,7 +95,8 @@ func VersionKind(kind string) schema.GroupVersionKind
 
 VersionKind takes an unqualified kind and returns back a Group qualified GroupVersionKind.
 
-## type Alert
+<a name="Alert"></a>
+## type [Alert](<https://github.com/slok/sloth/blob/main/pkg/kubernetes/api/sloth/v1/types.go#L156-L169>)
 
 Alert configures specific SLO alert.
 
@@ -111,7 +117,8 @@ type Alert struct {
 }
 ```
 
-### func \(\*Alert\) DeepCopy
+<a name="Alert.DeepCopy"></a>
+### func \(\*Alert\) [DeepCopy](<https://github.com/slok/sloth/blob/main/pkg/kubernetes/api/sloth/v1/zz_generated.deepcopy.go#L33>)
 
 ```go
 func (in *Alert) DeepCopy() *Alert
@@ -119,7 +126,8 @@ func (in *Alert) DeepCopy() *Alert
 
 DeepCopy is an autogenerated deepcopy function, copying the receiver, creating a new Alert.
 
-### func \(\*Alert\) DeepCopyInto
+<a name="Alert.DeepCopyInto"></a>
+### func \(\*Alert\) [DeepCopyInto](<https://github.com/slok/sloth/blob/main/pkg/kubernetes/api/sloth/v1/zz_generated.deepcopy.go#L13>)
 
 ```go
 func (in *Alert) DeepCopyInto(out *Alert)
@@ -127,7 +135,8 @@ func (in *Alert) DeepCopyInto(out *Alert)
 
 DeepCopyInto is an autogenerated deepcopy function, copying the receiver, writing into out. in must be non\-nil.
 
-## type Alerting
+<a name="Alerting"></a>
+## type [Alerting](<https://github.com/slok/sloth/blob/main/pkg/kubernetes/api/sloth/v1/types.go#L134-L153>)
 
 Alerting wraps all the configuration required by the SLO alerts.
 
@@ -154,7 +163,8 @@ type Alerting struct {
 }
 ```
 
-### func \(\*Alerting\) DeepCopy
+<a name="Alerting.DeepCopy"></a>
+### func \(\*Alerting\) [DeepCopy](<https://github.com/slok/sloth/blob/main/pkg/kubernetes/api/sloth/v1/zz_generated.deepcopy.go#L65>)
 
 ```go
 func (in *Alerting) DeepCopy() *Alerting
@@ -162,7 +172,8 @@ func (in *Alerting) DeepCopy() *Alerting
 
 DeepCopy is an autogenerated deepcopy function, copying the receiver, creating a new Alerting.
 
-### func \(\*Alerting\) DeepCopyInto
+<a name="Alerting.DeepCopyInto"></a>
+### func \(\*Alerting\) [DeepCopyInto](<https://github.com/slok/sloth/blob/main/pkg/kubernetes/api/sloth/v1/zz_generated.deepcopy.go#L43>)
 
 ```go
 func (in *Alerting) DeepCopyInto(out *Alerting)
@@ -170,7 +181,8 @@ func (in *Alerting) DeepCopyInto(out *Alerting)
 
 DeepCopyInto is an autogenerated deepcopy function, copying the receiver, writing into out. in must be non\-nil.
 
-## type PrometheusServiceLevel
+<a name="PrometheusServiceLevel"></a>
+## type [PrometheusServiceLevel](<https://github.com/slok/sloth/blob/main/pkg/kubernetes/api/sloth/v1/types.go#L22-L28>)
 
 \+genclient \+k8s:deepcopy\-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object \+kubebuilder:subresource:status \+kubebuilder:printcolumn:name="SERVICE",type="string",JSONPath=".spec.service" \+kubebuilder:printcolumn:name="DESIRED SLOs",type="integer",JSONPath=".status.processedSLOs" \+kubebuilder:printcolumn:name="READY SLOs",type="integer",JSONPath=".status.promOpRulesGeneratedSLOs" \+kubebuilder:printcolumn:name="GEN OK",type="boolean",JSONPath=".status.promOpRulesGenerated" \+kubebuilder:printcolumn:name="GEN AGE",type="date",JSONPath=".status.lastPromOpRulesSuccessfulGenerated" \+kubebuilder:printcolumn:name="AGE",type="date",JSONPath=".metadata.creationTimestamp" \+kubebuilder:resource:singular=prometheusservicelevel,path=prometheusservicelevels,shortName=psl;pslo,scope=Namespaced,categories=slo;slos;sli;slis
 
@@ -186,7 +198,8 @@ type PrometheusServiceLevel struct {
 }
 ```
 
-### func \(\*PrometheusServiceLevel\) DeepCopy
+<a name="PrometheusServiceLevel.DeepCopy"></a>
+### func \(\*PrometheusServiceLevel\) [DeepCopy](<https://github.com/slok/sloth/blob/main/pkg/kubernetes/api/sloth/v1/zz_generated.deepcopy.go#L85>)
 
 ```go
 func (in *PrometheusServiceLevel) DeepCopy() *PrometheusServiceLevel
@@ -194,7 +207,8 @@ func (in *PrometheusServiceLevel) DeepCopy() *PrometheusServiceLevel
 
 DeepCopy is an autogenerated deepcopy function, copying the receiver, creating a new PrometheusServiceLevel.
 
-### func \(\*PrometheusServiceLevel\) DeepCopyInto
+<a name="PrometheusServiceLevel.DeepCopyInto"></a>
+### func \(\*PrometheusServiceLevel\) [DeepCopyInto](<https://github.com/slok/sloth/blob/main/pkg/kubernetes/api/sloth/v1/zz_generated.deepcopy.go#L75>)
 
 ```go
 func (in *PrometheusServiceLevel) DeepCopyInto(out *PrometheusServiceLevel)
@@ -202,7 +216,8 @@ func (in *PrometheusServiceLevel) DeepCopyInto(out *PrometheusServiceLevel)
 
 DeepCopyInto is an autogenerated deepcopy function, copying the receiver, writing into out. in must be non\-nil.
 
-### func \(\*PrometheusServiceLevel\) DeepCopyObject
+<a name="PrometheusServiceLevel.DeepCopyObject"></a>
+### func \(\*PrometheusServiceLevel\) [DeepCopyObject](<https://github.com/slok/sloth/blob/main/pkg/kubernetes/api/sloth/v1/zz_generated.deepcopy.go#L95>)
 
 ```go
 func (in *PrometheusServiceLevel) DeepCopyObject() runtime.Object
@@ -210,7 +225,8 @@ func (in *PrometheusServiceLevel) DeepCopyObject() runtime.Object
 
 DeepCopyObject is an autogenerated deepcopy function, copying the receiver, creating a new runtime.Object.
 
-## type PrometheusServiceLevelList
+<a name="PrometheusServiceLevelList"></a>
+## type [PrometheusServiceLevelList](<https://github.com/slok/sloth/blob/main/pkg/kubernetes/api/sloth/v1/types.go#L190-L195>)
 
 \+k8s:deepcopy\-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
@@ -225,7 +241,8 @@ type PrometheusServiceLevelList struct {
 }
 ```
 
-### func \(\*PrometheusServiceLevelList\) DeepCopy
+<a name="PrometheusServiceLevelList.DeepCopy"></a>
+### func \(\*PrometheusServiceLevelList\) [DeepCopy](<https://github.com/slok/sloth/blob/main/pkg/kubernetes/api/sloth/v1/zz_generated.deepcopy.go#L118>)
 
 ```go
 func (in *PrometheusServiceLevelList) DeepCopy() *PrometheusServiceLevelList
@@ -233,7 +250,8 @@ func (in *PrometheusServiceLevelList) DeepCopy() *PrometheusServiceLevelList
 
 DeepCopy is an autogenerated deepcopy function, copying the receiver, creating a new PrometheusServiceLevelList.
 
-### func \(\*PrometheusServiceLevelList\) DeepCopyInto
+<a name="PrometheusServiceLevelList.DeepCopyInto"></a>
+### func \(\*PrometheusServiceLevelList\) [DeepCopyInto](<https://github.com/slok/sloth/blob/main/pkg/kubernetes/api/sloth/v1/zz_generated.deepcopy.go#L103>)
 
 ```go
 func (in *PrometheusServiceLevelList) DeepCopyInto(out *PrometheusServiceLevelList)
@@ -241,7 +259,8 @@ func (in *PrometheusServiceLevelList) DeepCopyInto(out *PrometheusServiceLevelLi
 
 DeepCopyInto is an autogenerated deepcopy function, copying the receiver, writing into out. in must be non\-nil.
 
-### func \(\*PrometheusServiceLevelList\) DeepCopyObject
+<a name="PrometheusServiceLevelList.DeepCopyObject"></a>
+### func \(\*PrometheusServiceLevelList\) [DeepCopyObject](<https://github.com/slok/sloth/blob/main/pkg/kubernetes/api/sloth/v1/zz_generated.deepcopy.go#L128>)
 
 ```go
 func (in *PrometheusServiceLevelList) DeepCopyObject() runtime.Object
@@ -249,7 +268,8 @@ func (in *PrometheusServiceLevelList) DeepCopyObject() runtime.Object
 
 DeepCopyObject is an autogenerated deepcopy function, copying the receiver, creating a new runtime.Object.
 
-## type PrometheusServiceLevelSpec
+<a name="PrometheusServiceLevelSpec"></a>
+## type [PrometheusServiceLevelSpec](<https://github.com/slok/sloth/blob/main/pkg/kubernetes/api/sloth/v1/types.go#L31-L45>)
 
 ServiceLevelSpec is the spec for a PrometheusServiceLevel.
 
@@ -271,7 +291,8 @@ type PrometheusServiceLevelSpec struct {
 }
 ```
 
-### func \(\*PrometheusServiceLevelSpec\) DeepCopy
+<a name="PrometheusServiceLevelSpec.DeepCopy"></a>
+### func \(\*PrometheusServiceLevelSpec\) [DeepCopy](<https://github.com/slok/sloth/blob/main/pkg/kubernetes/api/sloth/v1/zz_generated.deepcopy.go#L156>)
 
 ```go
 func (in *PrometheusServiceLevelSpec) DeepCopy() *PrometheusServiceLevelSpec
@@ -279,7 +300,8 @@ func (in *PrometheusServiceLevelSpec) DeepCopy() *PrometheusServiceLevelSpec
 
 DeepCopy is an autogenerated deepcopy function, copying the receiver, creating a new PrometheusServiceLevelSpec.
 
-### func \(\*PrometheusServiceLevelSpec\) DeepCopyInto
+<a name="PrometheusServiceLevelSpec.DeepCopyInto"></a>
+### func \(\*PrometheusServiceLevelSpec\) [DeepCopyInto](<https://github.com/slok/sloth/blob/main/pkg/kubernetes/api/sloth/v1/zz_generated.deepcopy.go#L136>)
 
 ```go
 func (in *PrometheusServiceLevelSpec) DeepCopyInto(out *PrometheusServiceLevelSpec)
@@ -287,7 +309,10 @@ func (in *PrometheusServiceLevelSpec) DeepCopyInto(out *PrometheusServiceLevelSp
 
 DeepCopyInto is an autogenerated deepcopy function, copying the receiver, writing into out. in must be non\-nil.
 
-## type PrometheusServiceLevelStatus
+<a name="PrometheusServiceLevelStatus"></a>
+## type [PrometheusServiceLevelStatus](<https://github.com/slok/sloth/blob/main/pkg/kubernetes/api/sloth/v1/types.go#L171-L185>)
+
+
 
 ```go
 type PrometheusServiceLevelStatus struct {
@@ -307,7 +332,8 @@ type PrometheusServiceLevelStatus struct {
 }
 ```
 
-### func \(\*PrometheusServiceLevelStatus\) DeepCopy
+<a name="PrometheusServiceLevelStatus.DeepCopy"></a>
+### func \(\*PrometheusServiceLevelStatus\) [DeepCopy](<https://github.com/slok/sloth/blob/main/pkg/kubernetes/api/sloth/v1/zz_generated.deepcopy.go#L176>)
 
 ```go
 func (in *PrometheusServiceLevelStatus) DeepCopy() *PrometheusServiceLevelStatus
@@ -315,7 +341,8 @@ func (in *PrometheusServiceLevelStatus) DeepCopy() *PrometheusServiceLevelStatus
 
 DeepCopy is an autogenerated deepcopy function, copying the receiver, creating a new PrometheusServiceLevelStatus.
 
-### func \(\*PrometheusServiceLevelStatus\) DeepCopyInto
+<a name="PrometheusServiceLevelStatus.DeepCopyInto"></a>
+### func \(\*PrometheusServiceLevelStatus\) [DeepCopyInto](<https://github.com/slok/sloth/blob/main/pkg/kubernetes/api/sloth/v1/zz_generated.deepcopy.go#L166>)
 
 ```go
 func (in *PrometheusServiceLevelStatus) DeepCopyInto(out *PrometheusServiceLevelStatus)
@@ -323,7 +350,8 @@ func (in *PrometheusServiceLevelStatus) DeepCopyInto(out *PrometheusServiceLevel
 
 DeepCopyInto is an autogenerated deepcopy function, copying the receiver, writing into out. in must be non\-nil.
 
-## type SLI
+<a name="SLI"></a>
+## type [SLI](<https://github.com/slok/sloth/blob/main/pkg/kubernetes/api/sloth/v1/types.go#L88-L100>)
 
 SLI will tell what is good or bad for the SLO. All SLIs will be get based on time windows, that's why Sloth needs the queries to use \`\{\{.window\}\}\` template variable.
 
@@ -345,7 +373,8 @@ type SLI struct {
 }
 ```
 
-### func \(\*SLI\) DeepCopy
+<a name="SLI.DeepCopy"></a>
+### func \(\*SLI\) [DeepCopy](<https://github.com/slok/sloth/blob/main/pkg/kubernetes/api/sloth/v1/zz_generated.deepcopy.go#L207>)
 
 ```go
 func (in *SLI) DeepCopy() *SLI
@@ -353,7 +382,8 @@ func (in *SLI) DeepCopy() *SLI
 
 DeepCopy is an autogenerated deepcopy function, copying the receiver, creating a new SLI.
 
-### func \(\*SLI\) DeepCopyInto
+<a name="SLI.DeepCopyInto"></a>
+### func \(\*SLI\) [DeepCopyInto](<https://github.com/slok/sloth/blob/main/pkg/kubernetes/api/sloth/v1/zz_generated.deepcopy.go#L186>)
 
 ```go
 func (in *SLI) DeepCopyInto(out *SLI)
@@ -361,7 +391,8 @@ func (in *SLI) DeepCopyInto(out *SLI)
 
 DeepCopyInto is an autogenerated deepcopy function, copying the receiver, writing into out. in must be non\-nil.
 
-## type SLIEvents
+<a name="SLIEvents"></a>
+## type [SLIEvents](<https://github.com/slok/sloth/blob/main/pkg/kubernetes/api/sloth/v1/types.go#L111-L121>)
 
 SLIEvents is an SLI that is calculated as the division of bad events and total events, giving a ratio SLI. Normally this is the most common ratio type.
 
@@ -379,7 +410,8 @@ type SLIEvents struct {
 }
 ```
 
-### func \(\*SLIEvents\) DeepCopy
+<a name="SLIEvents.DeepCopy"></a>
+### func \(\*SLIEvents\) [DeepCopy](<https://github.com/slok/sloth/blob/main/pkg/kubernetes/api/sloth/v1/zz_generated.deepcopy.go#L223>)
 
 ```go
 func (in *SLIEvents) DeepCopy() *SLIEvents
@@ -387,7 +419,8 @@ func (in *SLIEvents) DeepCopy() *SLIEvents
 
 DeepCopy is an autogenerated deepcopy function, copying the receiver, creating a new SLIEvents.
 
-### func \(\*SLIEvents\) DeepCopyInto
+<a name="SLIEvents.DeepCopyInto"></a>
+### func \(\*SLIEvents\) [DeepCopyInto](<https://github.com/slok/sloth/blob/main/pkg/kubernetes/api/sloth/v1/zz_generated.deepcopy.go#L217>)
 
 ```go
 func (in *SLIEvents) DeepCopyInto(out *SLIEvents)
@@ -395,7 +428,8 @@ func (in *SLIEvents) DeepCopyInto(out *SLIEvents)
 
 DeepCopyInto is an autogenerated deepcopy function, copying the receiver, writing into out. in must be non\-nil.
 
-## type SLIPlugin
+<a name="SLIPlugin"></a>
+## type [SLIPlugin](<https://github.com/slok/sloth/blob/main/pkg/kubernetes/api/sloth/v1/types.go#L124-L131>)
 
 SLIPlugin will use the SLI returned by the SLI plugin selected along with the options.
 
@@ -410,7 +444,8 @@ type SLIPlugin struct {
 }
 ```
 
-### func \(\*SLIPlugin\) DeepCopy
+<a name="SLIPlugin.DeepCopy"></a>
+### func \(\*SLIPlugin\) [DeepCopy](<https://github.com/slok/sloth/blob/main/pkg/kubernetes/api/sloth/v1/zz_generated.deepcopy.go#L246>)
 
 ```go
 func (in *SLIPlugin) DeepCopy() *SLIPlugin
@@ -418,7 +453,8 @@ func (in *SLIPlugin) DeepCopy() *SLIPlugin
 
 DeepCopy is an autogenerated deepcopy function, copying the receiver, creating a new SLIPlugin.
 
-### func \(\*SLIPlugin\) DeepCopyInto
+<a name="SLIPlugin.DeepCopyInto"></a>
+### func \(\*SLIPlugin\) [DeepCopyInto](<https://github.com/slok/sloth/blob/main/pkg/kubernetes/api/sloth/v1/zz_generated.deepcopy.go#L233>)
 
 ```go
 func (in *SLIPlugin) DeepCopyInto(out *SLIPlugin)
@@ -426,7 +462,8 @@ func (in *SLIPlugin) DeepCopyInto(out *SLIPlugin)
 
 DeepCopyInto is an autogenerated deepcopy function, copying the receiver, writing into out. in must be non\-nil.
 
-## type SLIRaw
+<a name="SLIRaw"></a>
+## type [SLIRaw](<https://github.com/slok/sloth/blob/main/pkg/kubernetes/api/sloth/v1/types.go#L104-L107>)
 
 SLIRaw is a error ratio SLI already calculated. Normally this will be used when the SLI is already calculated by other recording rule, system...
 
@@ -437,7 +474,8 @@ type SLIRaw struct {
 }
 ```
 
-### func \(\*SLIRaw\) DeepCopy
+<a name="SLIRaw.DeepCopy"></a>
+### func \(\*SLIRaw\) [DeepCopy](<https://github.com/slok/sloth/blob/main/pkg/kubernetes/api/sloth/v1/zz_generated.deepcopy.go#L262>)
 
 ```go
 func (in *SLIRaw) DeepCopy() *SLIRaw
@@ -445,7 +483,8 @@ func (in *SLIRaw) DeepCopy() *SLIRaw
 
 DeepCopy is an autogenerated deepcopy function, copying the receiver, creating a new SLIRaw.
 
-### func \(\*SLIRaw\) DeepCopyInto
+<a name="SLIRaw.DeepCopyInto"></a>
+### func \(\*SLIRaw\) [DeepCopyInto](<https://github.com/slok/sloth/blob/main/pkg/kubernetes/api/sloth/v1/zz_generated.deepcopy.go#L256>)
 
 ```go
 func (in *SLIRaw) DeepCopyInto(out *SLIRaw)
@@ -453,7 +492,8 @@ func (in *SLIRaw) DeepCopyInto(out *SLIRaw)
 
 DeepCopyInto is an autogenerated deepcopy function, copying the receiver, writing into out. in must be non\-nil.
 
-## type SLO
+<a name="SLO"></a>
+## type [SLO](<https://github.com/slok/sloth/blob/main/pkg/kubernetes/api/sloth/v1/types.go#L49-L81>)
 
 SLO is the configuration/declaration of the service level objective of a service.
 
@@ -493,7 +533,8 @@ type SLO struct {
 }
 ```
 
-### func \(\*SLO\) DeepCopy
+<a name="SLO.DeepCopy"></a>
+### func \(\*SLO\) [DeepCopy](<https://github.com/slok/sloth/blob/main/pkg/kubernetes/api/sloth/v1/zz_generated.deepcopy.go#L287>)
 
 ```go
 func (in *SLO) DeepCopy() *SLO
@@ -501,14 +542,13 @@ func (in *SLO) DeepCopy() *SLO
 
 DeepCopy is an autogenerated deepcopy function, copying the receiver, creating a new SLO.
 
-### func \(\*SLO\) DeepCopyInto
+<a name="SLO.DeepCopyInto"></a>
+### func \(\*SLO\) [DeepCopyInto](<https://github.com/slok/sloth/blob/main/pkg/kubernetes/api/sloth/v1/zz_generated.deepcopy.go#L272>)
 
 ```go
 func (in *SLO) DeepCopyInto(out *SLO)
 ```
 
 DeepCopyInto is an autogenerated deepcopy function, copying the receiver, writing into out. in must be non\-nil.
-
-
 
 Generated by [gomarkdoc](<https://github.com/princjef/gomarkdoc>)

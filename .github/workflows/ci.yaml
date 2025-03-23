@@ -17,7 +17,7 @@ jobs:
           ./scripts/check/check.sh
 
   unit-test:
-    name: Unit testq
+    name: Unit test
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -132,7 +132,7 @@ jobs:
 
   tagged-release-images:
     # Only on tags.
-    if: startsWith(github.ref, 'refs/tags/')
+    if: startsWith(github.ref, 'refs/tags/v')
     env:
       PROD_IMAGE_NAME: ghcr.io/${GITHUB_REPOSITORY}
     needs:

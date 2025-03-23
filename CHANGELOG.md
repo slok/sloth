@@ -8,6 +8,10 @@
 - Update to Kubernetes v1.32.
 - Update all other dependencies to latest versions.
 
+### Fixes
+
+- Allow spec files with CRLF.
+
 ## [v0.11.0] - 2022-10-22
 
 ### Changed

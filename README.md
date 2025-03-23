@@ -8,8 +8,14 @@
 [![Go Report Card](https://goreportcard.com/badge/github.com/slok/sloth)](https://goreportcard.com/report/github.com/slok/sloth)
 [![Apache 2 licensed](https://img.shields.io/badge/license-Apache2-blue.svg)](https://raw.githubusercontent.com/slok/sloth/master/LICENSE)
 [![GitHub release (latest SemVer)](https://img.shields.io/github/v/release/slok/sloth)](https://github.com/slok/sloth/releases/latest)
-![Kubernetes release](https://img.shields.io/badge/Kubernetes-v1.25-green?logo=Kubernetes&style=flat&color=326CE5&logoColor=white)
+![Kubernetes release](https://img.shields.io/badge/Kubernetes-v1.32-green?logo=Kubernetes&style=flat&color=326CE5&logoColor=white)
 [![OpenSLO](https://img.shields.io/badge/OpenSLO-v1alpha-green?color=4974EA&style=flat)](https://github.com/OpenSLO/OpenSLO#slo)
+
+## Project status
+
+Sloth is [still maintained](https://github.com/slok/sloth/issues/521#issuecomment-2745271807).
+
+After a period of inactivity, the project is now being updated. It will take some time to catch up, but we’ll get there. More updates coming in the next few weeks.
 
 ## Introduction
 

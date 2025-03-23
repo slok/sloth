@@ -2,8 +2,6 @@ module github.com/slok/sloth
 
 go 1.24
 
-toolchain go1.24.0
-
 require (
 	github.com/OpenSLO/oslo v0.12.0
 	github.com/alecthomas/kingpin/v2 v2.4.0

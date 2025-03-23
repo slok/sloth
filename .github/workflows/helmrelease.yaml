@@ -10,6 +10,8 @@ on:
 jobs:
   release:
     runs-on: ubuntu-latest
+    # Only on helm tags.
+    if: startsWith(github.ref, 'refs/tags/helm-')
     steps:
       - name: Checkout
         uses: actions/checkout@v4

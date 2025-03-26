@@ -6,6 +6,7 @@ import (
 	context "context"
 
 	slothv1 "github.com/slok/sloth/pkg/kubernetes/api/sloth/v1"
+	applyconfigurationslothv1 "github.com/slok/sloth/pkg/kubernetes/gen/applyconfiguration/sloth/v1"
 	scheme "github.com/slok/sloth/pkg/kubernetes/gen/clientset/versioned/scheme"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	types "k8s.io/apimachinery/pkg/types"
@@ -31,18 +32,21 @@ type PrometheusServiceLevelInterface interface {
 	List(ctx context.Context, opts metav1.ListOptions) (*slothv1.PrometheusServiceLevelList, error)
 	Watch(ctx context.Context, opts metav1.ListOptions) (watch.Interface, error)
 	Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts metav1.PatchOptions, subresources ...string) (result *slothv1.PrometheusServiceLevel, err error)
+	Apply(ctx context.Context, prometheusServiceLevel *applyconfigurationslothv1.PrometheusServiceLevelApplyConfiguration, opts metav1.ApplyOptions) (result *slothv1.PrometheusServiceLevel, err error)
+	// Add a +genclient:noStatus comment above the type to avoid generating ApplyStatus().
+	ApplyStatus(ctx context.Context, prometheusServiceLevel *applyconfigurationslothv1.PrometheusServiceLevelApplyConfiguration, opts metav1.ApplyOptions) (result *slothv1.PrometheusServiceLevel, err error)
 	PrometheusServiceLevelExpansion
 }
 
 // prometheusServiceLevels implements PrometheusServiceLevelInterface
 type prometheusServiceLevels struct {
-	*gentype.ClientWithList[*slothv1.PrometheusServiceLevel, *slothv1.PrometheusServiceLevelList]
+	*gentype.ClientWithListAndApply[*slothv1.PrometheusServiceLevel, *slothv1.PrometheusServiceLevelList, *applyconfigurationslothv1.PrometheusServiceLevelApplyConfiguration]
 }
 
 // newPrometheusServiceLevels returns a PrometheusServiceLevels
 func newPrometheusServiceLevels(c *SlothV1Client, namespace string) *prometheusServiceLevels {
 	return &prometheusServiceLevels{
-		gentype.NewClientWithList[*slothv1.PrometheusServiceLevel, *slothv1.PrometheusServiceLevelList](
+		gentype.NewClientWithListAndApply[*slothv1.PrometheusServiceLevel, *slothv1.PrometheusServiceLevelList, *applyconfigurationslothv1.PrometheusServiceLevelApplyConfiguration](
 			"prometheusservicelevels",
 			c.RESTClient(),
 			scheme.ParameterCodec,

@@ -12,7 +12,8 @@ rm -rf ./${GEN_DIRECTORY}
 docker run --rm -it -v ${PWD}:/app "${IMAGE_GEN}" \
 	--apis-in ./pkg/kubernetes/api \
 	--go-gen-out ./${GEN_DIRECTORY} \
-	--crd-gen-out ./${GEN_DIRECTORY}/crd
+	--crd-gen-out ./${GEN_DIRECTORY}/crd \
+	--apply-configurations
 
 echo "Copying crd to helm chart..."
 rm ./deploy/kubernetes/helm/sloth/crds/*

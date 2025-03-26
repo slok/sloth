@@ -95,13 +95,13 @@ spec:
           image: {{ .Values.commonPlugins.image.repository }}:{{ .Values.commonPlugins.image.tag }}
           args:
             - --repo={{.Values.commonPlugins.gitRepo.url}}
-            - --branch={{.Values.commonPlugins.gitRepo.branch}}
-            - --wait=30
+            - --ref={{.Values.commonPlugins.gitRepo.branch}}
+            - --period=30s
             - --webhook-url=http://localhost:8082/-/reload
           volumeMounts:
             - name: sloth-common-sli-plugins
               # Default path for git-sync.
-              mountPath: /tmp/git
+              mountPath: /git
           {{- with .Values.securityContext.container }}
           securityContext:
             {{- toYaml . | nindent 12 }}

@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+## Added
+
+- Add `ApplyConfig` utils for Kubernetes lib clients.
+
 ### Changed
 
 - Update to Go 1.24.

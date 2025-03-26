@@ -4,19 +4,20 @@ package fake
 
 import (
 	v1 "github.com/slok/sloth/pkg/kubernetes/api/sloth/v1"
-	slothv1 "github.com/slok/sloth/pkg/kubernetes/gen/clientset/versioned/typed/sloth/v1"
+	slothv1 "github.com/slok/sloth/pkg/kubernetes/gen/applyconfiguration/sloth/v1"
+	typedslothv1 "github.com/slok/sloth/pkg/kubernetes/gen/clientset/versioned/typed/sloth/v1"
 	gentype "k8s.io/client-go/gentype"
 )
 
 // fakePrometheusServiceLevels implements PrometheusServiceLevelInterface
 type fakePrometheusServiceLevels struct {
-	*gentype.FakeClientWithList[*v1.PrometheusServiceLevel, *v1.PrometheusServiceLevelList]
+	*gentype.FakeClientWithListAndApply[*v1.PrometheusServiceLevel, *v1.PrometheusServiceLevelList, *slothv1.PrometheusServiceLevelApplyConfiguration]
 	Fake *FakeSlothV1
 }
 
-func newFakePrometheusServiceLevels(fake *FakeSlothV1, namespace string) slothv1.PrometheusServiceLevelInterface {
+func newFakePrometheusServiceLevels(fake *FakeSlothV1, namespace string) typedslothv1.PrometheusServiceLevelInterface {
 	return &fakePrometheusServiceLevels{
-		gentype.NewFakeClientWithList[*v1.PrometheusServiceLevel, *v1.PrometheusServiceLevelList](
+		gentype.NewFakeClientWithListAndApply[*v1.PrometheusServiceLevel, *v1.PrometheusServiceLevelList, *slothv1.PrometheusServiceLevelApplyConfiguration](
 			fake.Fake,
 			namespace,
 			v1.SchemeGroupVersion.WithResource("prometheusservicelevels"),

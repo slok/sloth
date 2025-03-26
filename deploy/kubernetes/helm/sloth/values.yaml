@@ -33,8 +33,8 @@ sloth:
 commonPlugins:
   enabled: true
   image:
-    repository: k8s.gcr.io/git-sync/git-sync
-    tag: v3.6.1
+    repository: registry.k8s.io/git-sync/git-sync
+    tag: v4.4.0
   gitRepo:
     url: https://github.com/slok/sloth-common-sli-plugins
     branch: main

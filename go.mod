@@ -11,7 +11,7 @@ require (
 	github.com/prometheus-operator/prometheus-operator/pkg/client v0.81.0
 	github.com/prometheus/client_golang v1.21.1
 	github.com/prometheus/common v0.63.0
-	github.com/prometheus/prometheus v0.302.2-0.20250320225832-3d603d19575e
+	github.com/prometheus/prometheus v0.303.0-rc.0
 	github.com/sirupsen/logrus v1.9.3
 	github.com/slok/reload v0.2.0
 	github.com/spotahome/kooper/v2 v2.8.0

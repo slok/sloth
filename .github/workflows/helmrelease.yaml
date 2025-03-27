@@ -5,13 +5,11 @@ on:
     branches:
       - main
     paths:
-      - "deploy/kubernetes/helm/**"
+      - "deploy/kubernetes/helm/sloth/Chart.yaml"
 
 jobs:
   release:
     runs-on: ubuntu-latest
-    # Only on helm tags.
-    if: startsWith(github.ref, 'refs/tags/v')
     steps:
       - name: Checkout
         uses: actions/checkout@v4

@@ -32,7 +32,7 @@ spec:
       serviceAccountName: sloth
       containers:
         - name: sloth
-          image: ghcr.io/slok/sloth:v0.11.0
+          image: ghcr.io/slok/sloth:v0.12.0
           args:
             - kubernetes-controller
             - --sli-plugins-path=/plugins

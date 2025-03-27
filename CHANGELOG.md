@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [v0.12.0] - 2025-03-27
+
 ## Added
 
 - Add `ApplyConfig` utils for Kubernetes lib clients.
@@ -178,7 +180,8 @@
 - Support raw query based SLI.
 - Kubernetes (prometheus-operator) CRD generation support.
 
-[unreleased]: https://github.com/slok/sloth/compare/v0.11.0...HEAD
+[unreleased]: https://github.com/slok/sloth/compare/v0.12.0...HEAD
+[v0.12.0]: https://github.com/slok/sloth/compare/v0.11.0...v0.12.0
 [v0.11.0]: https://github.com/slok/sloth/compare/v0.10.0...v0.11.0
 [v0.10.0]: https://github.com/slok/sloth/compare/v0.9.0...v0.10.0
 [v0.9.0]: https://github.com/slok/sloth/compare/v0.8.0...v0.9.0

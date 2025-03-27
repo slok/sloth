@@ -16,6 +16,11 @@ func customValues() msi {
 			"repository": "slok/sloth-test",
 			"tag":        "v1.42.42",
 		},
+		
+		"extraEnv": msi{
+			"CUSTOM_ENV": "customValue",
+			"SECOND_ENV": "secondValue",
+		},
 
 		"sloth": msi{
 			"resyncInterval": "17m",
@@ -34,6 +39,10 @@ func customValues() msi {
 			"gitRepo": msi{
 				"url":    "https://github.com/slok/sloth-test-common-sli-plugins",
 				"branch": "main",
+			},
+			"extraEnv": msi{
+				"CUSTOM_PLUGIN_ENV": "customValue",
+				"SECOND_PLUGIN_ENV": "secondValue",
 			},
 		},
 

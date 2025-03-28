@@ -36,6 +36,7 @@ type generateCommand struct {
 	disableAlerts         bool
 	disableOptimizedRules bool
 	extraLabels           map[string]string
+	extraFilterLabels     map[string]string
 	sliPluginsPaths       []string
 	sloPeriodWindowsPath  string
 	sloPeriod             string
@@ -43,7 +44,10 @@ type generateCommand struct {
 
 // NewGenerateCommand returns the generate command.
 func NewGenerateCommand(app *kingpin.Application) Command {
-	c := &generateCommand{extraLabels: map[string]string{}}
+	c := &generateCommand{
+		extraLabels:       map[string]string{},
+		extraFilterLabels: map[string]string{},
+	}
 	cmd := app.Command("generate", "Generates Prometheus SLOs.")
 	cmd.Flag("input", "SLO spec input file path or directory (if directory is used, slos will be discovered recursively and out must be a directory).").Short('i').StringVar(&c.slosInput)
 	cmd.Flag("out", "Generated rules output file path or directory. If `-` it will use stdout (if input is a directory this must be a directory).").Default("-").Short('o').StringVar(&c.slosOut)
@@ -51,6 +55,7 @@ func NewGenerateCommand(app *kingpin.Application) Command {
 	cmd.Flag("fs-include", "Filter regex to include matched discovered SLO file paths, everything else will be ignored. Exclude has preference (used with directory based input/output).").Short('n').StringVar(&c.slosIncludeRegex)
 
 	cmd.Flag("extra-labels", "Extra labels that will be added to all the generated Prometheus rules ('key=value' form, can be repeated).").Short('l').StringMapVar(&c.extraLabels)
+	cmd.Flag("extra-filter-labels", "Extra labels that will be added to all the generated Prometheus rules, but also will be added as filters to the generated recording rules. Can be used as templates in queries provided by the user. ('key=value' form, can be repeated).").StringMapVar(&c.extraFilterLabels)
 	cmd.Flag("disable-recordings", "Disables recording rules generation.").BoolVar(&c.disableRecordings)
 	cmd.Flag("disable-alerts", "Disables alert rules generation.").BoolVar(&c.disableAlerts)
 	cmd.Flag("sli-plugins-path", "The path to SLI plugins (can be repeated), if not set it disable plugins support.").Short('p').StringsVar(&c.sliPluginsPaths)
@@ -245,6 +250,7 @@ func (g generateCommand) Run(ctx context.Context, config RootConfig) error {
 		disableAlerts:         g.disableAlerts,
 		disableOptimizedRules: g.disableOptimizedRules,
 		extraLabels:           g.extraLabels,
+		extraFilterLabels:     g.extraFilterLabels,
 	}
 
 	for _, genTarget := range genTargets {
@@ -305,6 +311,7 @@ type generator struct {
 	disableAlerts         bool
 	disableOptimizedRules bool
 	extraLabels           map[string]string
+	extraFilterLabels     map[string]string
 }
 
 // GeneratePrometheus generates the SLOs based on a raw regular Prometheus spec format input and outs a Prometheus raw yaml.
@@ -433,9 +440,10 @@ func (g generator) generateRules(ctx context.Context, info info.Info, slos prome
 	}
 
 	result, err := controller.Generate(ctx, generate.Request{
-		ExtraLabels: g.extraLabels,
-		Info:        info,
-		SLOGroup:    slos,
+		ExtraLabels:       g.extraLabels,
+		ExtraFilterLabels: g.extraFilterLabels,
+		Info:              info,
+		SLOGroup:          slos,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("could not generate prometheus rules: %w", err)

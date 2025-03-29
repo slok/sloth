@@ -115,7 +115,7 @@ func TestModelValidationSpec(t *testing.T) {
 				sg.SLOs[0].ID = ""
 				return sg
 			},
-			expErrMessage: "Key: 'SLOGroup.SLOs[0].ID' Error:Field validation for 'ID' failed on the 'required' tag",
+			expErrMessage: "Key: 'PromSLOGroup.SLOs[0].ID' Error:Field validation for 'ID' failed on the 'required' tag",
 		},
 	}
 

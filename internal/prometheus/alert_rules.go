@@ -8,11 +8,12 @@ import (
 
 	"github.com/prometheus/prometheus/model/rulefmt"
 
-	"github.com/slok/sloth/internal/alert"
+	"github.com/slok/sloth/pkg/common/conventions"
+	"github.com/slok/sloth/pkg/common/model"
 )
 
 // genFunc knows how to generate an SLI recording rule for a specific time window.
-type alertGenFunc func(slo SLO, sloAlert AlertMeta, quick, slow alert.MWMBAlert) (*rulefmt.Rule, error)
+type alertGenFunc func(slo SLO, sloAlert AlertMeta, quick, slow model.MWMBAlert) (*rulefmt.Rule, error)
 
 type sloAlertRulesGenerator struct {
 	alertGenFunc alertGenFunc
@@ -22,7 +23,7 @@ type sloAlertRulesGenerator struct {
 // from an SLO.
 var SLOAlertRulesGenerator = sloAlertRulesGenerator{alertGenFunc: defaultSLOAlertGenerator}
 
-func (s sloAlertRulesGenerator) GenerateSLOAlertRules(ctx context.Context, slo SLO, alerts alert.MWMBAlertGroup) ([]rulefmt.Rule, error) {
+func (s sloAlertRulesGenerator) GenerateSLOAlertRules(ctx context.Context, slo SLO, alerts model.MWMBAlertGroup) ([]rulefmt.Rule, error) {
 	rules := []rulefmt.Rule{}
 
 	// Generate Page alerts.
@@ -48,9 +49,9 @@ func (s sloAlertRulesGenerator) GenerateSLOAlertRules(ctx context.Context, slo S
 	return rules, nil
 }
 
-func defaultSLOAlertGenerator(slo SLO, sloAlert AlertMeta, quick, slow alert.MWMBAlert) (*rulefmt.Rule, error) {
+func defaultSLOAlertGenerator(slo SLO, sloAlert AlertMeta, quick, slow model.MWMBAlert) (*rulefmt.Rule, error) {
 	// Generate the filter labels based on the SLO ids.
-	metricFilter := labelsToPromFilter(slo.GetSLOIDPromLabels())
+	metricFilter := labelsToPromFilter(getSLOIDPromLabels(slo))
 
 	// Render the alert template.
 	tplData := struct {
@@ -68,15 +69,15 @@ func defaultSLOAlertGenerator(slo SLO, sloAlert AlertMeta, quick, slow alert.MWM
 	}{
 		MetricFilter:         metricFilter,
 		ErrorBudgetRatio:     quick.ErrorBudget / 100, // Any(quick or slow) should work because are the same.
-		QuickShortMetric:     slo.GetSLIErrorMetric(quick.ShortWindow),
+		QuickShortMetric:     getSLIErrorMetric(quick.ShortWindow),
 		QuickShortBurnFactor: quick.BurnRateFactor,
-		QuickLongMetric:      slo.GetSLIErrorMetric(quick.LongWindow),
+		QuickLongMetric:      getSLIErrorMetric(quick.LongWindow),
 		QuickLongBurnFactor:  quick.BurnRateFactor,
-		SlowShortMetric:      slo.GetSLIErrorMetric(slow.ShortWindow),
+		SlowShortMetric:      getSLIErrorMetric(slow.ShortWindow),
 		SlowShortBurnFactor:  slow.BurnRateFactor,
-		SlowQuickMetric:      slo.GetSLIErrorMetric(slow.LongWindow),
+		SlowQuickMetric:      getSLIErrorMetric(slow.LongWindow),
 		SlowQuickBurnFactor:  slow.BurnRateFactor,
-		WindowLabel:          sloWindowLabelName,
+		WindowLabel:          conventions.PromSLOWindowLabelName,
 	}
 	var expr bytes.Buffer
 	err := mwmbAlertTpl.Execute(&expr, tplData)
@@ -87,14 +88,14 @@ func defaultSLOAlertGenerator(slo SLO, sloAlert AlertMeta, quick, slow alert.MWM
 	// Add specific annotations.
 	severity := quick.Severity.String() // Any(quick or slow) should work because are the same.
 	extraAnnotations := map[string]string{
-		"title":   fmt.Sprintf("(%s) {{$labels.%s}} {{$labels.%s}} SLO error budget burn rate is too fast.", severity, sloServiceLabelName, sloNameLabelName),
-		"summary": fmt.Sprintf("{{$labels.%s}} {{$labels.%s}} SLO error budget burn rate is over expected.", sloServiceLabelName, sloNameLabelName),
+		"title":   fmt.Sprintf("(%s) {{$labels.%s}} {{$labels.%s}} SLO error budget burn rate is too fast.", severity, conventions.PromSLOServiceLabelName, conventions.PromSLONameLabelName),
+		"summary": fmt.Sprintf("{{$labels.%s}} {{$labels.%s}} SLO error budget burn rate is over expected.", conventions.PromSLOServiceLabelName, conventions.PromSLONameLabelName),
 	}
 
 	// Add specific labels. We don't add the labels from the rules because we will
 	// inherit on the alerts, this way we avoid warnings of overrided labels.
 	extraLabels := map[string]string{
-		sloSeverityLabelName: severity,
+		conventions.PromSLOSeverityLabelName: severity,
 	}
 
 	return &rulefmt.Rule{

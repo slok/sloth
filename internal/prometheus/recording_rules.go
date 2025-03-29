@@ -10,12 +10,12 @@ import (
 
 	"github.com/prometheus/prometheus/model/rulefmt"
 
-	"github.com/slok/sloth/internal/alert"
-	"github.com/slok/sloth/internal/info"
+	"github.com/slok/sloth/pkg/common/conventions"
+	"github.com/slok/sloth/pkg/common/model"
 )
 
 // sliRulesgenFunc knows how to generate an SLI recording rule for a specific time window.
-type sliRulesgenFunc func(slo SLO, window time.Duration, alerts alert.MWMBAlertGroup) (*rulefmt.Rule, error)
+type sliRulesgenFunc func(slo SLO, window time.Duration, alerts model.MWMBAlertGroup) (*rulefmt.Rule, error)
 
 type sliRecordingRulesGenerator struct {
 	genFunc sliRulesgenFunc
@@ -31,7 +31,7 @@ var OptimizedSLIRecordingRulesGenerator = sliRecordingRulesGenerator{genFunc: op
 // Normally these rules are used by the SLO alerts.
 var SLIRecordingRulesGenerator = sliRecordingRulesGenerator{genFunc: factorySLIRecordGenerator}
 
-func optimizedFactorySLIRecordGenerator(slo SLO, window time.Duration, alerts alert.MWMBAlertGroup) (*rulefmt.Rule, error) {
+func optimizedFactorySLIRecordGenerator(slo SLO, window time.Duration, alerts model.MWMBAlertGroup) (*rulefmt.Rule, error) {
 	// Optimize the rules that are for the total period time window.
 	if window == slo.TimeWindow {
 		return optimizedSLIRecordGenerator(slo, window, alerts.PageQuick.ShortWindow)
@@ -40,7 +40,7 @@ func optimizedFactorySLIRecordGenerator(slo SLO, window time.Duration, alerts al
 	return factorySLIRecordGenerator(slo, window, alerts)
 }
 
-func (s sliRecordingRulesGenerator) GenerateSLIRecordingRules(ctx context.Context, slo SLO, alerts alert.MWMBAlertGroup) ([]rulefmt.Rule, error) {
+func (s sliRecordingRulesGenerator) GenerateSLIRecordingRules(ctx context.Context, slo SLO, alerts model.MWMBAlertGroup) ([]rulefmt.Rule, error) {
 	// Get the windows we need the recording rules.
 	windows := getAlertGroupWindows(alerts)
 	windows = append(windows, slo.TimeWindow) // Add the total time window as a handy helper.
@@ -62,7 +62,7 @@ const (
 	tplKeyWindow = "window"
 )
 
-func factorySLIRecordGenerator(slo SLO, window time.Duration, alerts alert.MWMBAlertGroup) (*rulefmt.Rule, error) {
+func factorySLIRecordGenerator(slo SLO, window time.Duration, alerts model.MWMBAlertGroup) (*rulefmt.Rule, error) {
 	switch {
 	// Event based SLI.
 	case slo.SLI.Events != nil:
@@ -75,7 +75,7 @@ func factorySLIRecordGenerator(slo SLO, window time.Duration, alerts alert.MWMBA
 	return nil, fmt.Errorf("invalid SLI type")
 }
 
-func rawSLIRecordGenerator(slo SLO, window time.Duration, alerts alert.MWMBAlertGroup) (*rulefmt.Rule, error) {
+func rawSLIRecordGenerator(slo SLO, window time.Duration, alerts model.MWMBAlertGroup) (*rulefmt.Rule, error) {
 	// Render with our templated data.
 	sliExprTpl := fmt.Sprintf(`(%s)`, slo.SLI.Raw.ErrorRatioQuery)
 	tpl, err := template.New("sliExpr").Option("missingkey=error").Parse(sliExprTpl)
@@ -93,19 +93,19 @@ func rawSLIRecordGenerator(slo SLO, window time.Duration, alerts alert.MWMBAlert
 	}
 
 	return &rulefmt.Rule{
-		Record: slo.GetSLIErrorMetric(window),
+		Record: getSLIErrorMetric(window),
 		Expr:   b.String(),
 		Labels: mergeLabels(
-			slo.GetSLOIDPromLabels(),
+			getSLOIDPromLabels(slo),
 			map[string]string{
-				sloWindowLabelName: strWindow,
+				conventions.PromSLOWindowLabelName: strWindow,
 			},
 			slo.Labels,
 		),
 	}, nil
 }
 
-func eventsSLIRecordGenerator(slo SLO, window time.Duration, alerts alert.MWMBAlertGroup) (*rulefmt.Rule, error) {
+func eventsSLIRecordGenerator(slo SLO, window time.Duration, alerts model.MWMBAlertGroup) (*rulefmt.Rule, error) {
 	const sliExprTplFmt = `(%s)
 /
 (%s)
@@ -129,12 +129,12 @@ func eventsSLIRecordGenerator(slo SLO, window time.Duration, alerts alert.MWMBAl
 	}
 
 	return &rulefmt.Rule{
-		Record: slo.GetSLIErrorMetric(window),
+		Record: getSLIErrorMetric(window),
 		Expr:   b.String(),
 		Labels: mergeLabels(
-			slo.GetSLOIDPromLabels(),
+			getSLOIDPromLabels(slo),
 			map[string]string{
-				sloWindowLabelName: strWindow,
+				conventions.PromSLOWindowLabelName: strWindow,
 			},
 			slo.Labels,
 		),
@@ -162,8 +162,8 @@ count_over_time({{.metric}}{{.filter}}[{{.window}}])
 		return nil, fmt.Errorf("can't optimize using the same shortwindow as the window to optimize")
 	}
 
-	shortWindowSLIRec := slo.GetSLIErrorMetric(shortWindow)
-	filter := labelsToPromFilter(slo.GetSLOIDPromLabels())
+	shortWindowSLIRec := getSLIErrorMetric(shortWindow)
+	filter := labelsToPromFilter(getSLOIDPromLabels(slo))
 
 	// Render with our templated data.
 	tpl, err := template.New("sliExpr").Option("missingkey=error").Parse(sliExprTplFmt)
@@ -177,19 +177,19 @@ count_over_time({{.metric}}{{.filter}}[{{.window}}])
 		"metric":    shortWindowSLIRec,
 		"filter":    filter,
 		"window":    strWindow,
-		"windowKey": sloWindowLabelName,
+		"windowKey": conventions.PromSLOWindowLabelName,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("could not render SLI expression template: %w", err)
 	}
 
 	return &rulefmt.Rule{
-		Record: slo.GetSLIErrorMetric(window),
+		Record: getSLIErrorMetric(window),
 		Expr:   b.String(),
 		Labels: mergeLabels(
-			slo.GetSLOIDPromLabels(),
+			getSLOIDPromLabels(slo),
 			map[string]string{
-				sloWindowLabelName: strWindow,
+				conventions.PromSLOWindowLabelName: strWindow,
 			},
 			slo.Labels,
 		),
@@ -202,8 +202,8 @@ type metadataRecordingRulesGenerator bool
 // from an SLO.
 const MetadataRecordingRulesGenerator = metadataRecordingRulesGenerator(false)
 
-func (m metadataRecordingRulesGenerator) GenerateMetadataRecordingRules(ctx context.Context, info info.Info, slo SLO, alerts alert.MWMBAlertGroup) ([]rulefmt.Rule, error) {
-	labels := mergeLabels(slo.GetSLOIDPromLabels(), slo.Labels)
+func (m metadataRecordingRulesGenerator) GenerateMetadataRecordingRules(ctx context.Context, info model.Info, slo SLO, alerts model.MWMBAlertGroup) ([]rulefmt.Rule, error) {
+	labels := mergeLabels(getSLOIDPromLabels(slo), slo.Labels)
 
 	// Metatada Recordings.
 	const (
@@ -218,15 +218,15 @@ func (m metadataRecordingRulesGenerator) GenerateMetadataRecordingRules(ctx cont
 
 	sloObjectiveRatio := slo.Objective / 100
 
-	sloFilter := labelsToPromFilter(slo.GetSLOIDPromLabels())
+	sloFilter := labelsToPromFilter(getSLOIDPromLabels(slo))
 
 	var currentBurnRateExpr bytes.Buffer
 	err := burnRateRecordingExprTpl.Execute(&currentBurnRateExpr, map[string]string{
-		"SLIErrorMetric":         slo.GetSLIErrorMetric(alerts.PageQuick.ShortWindow),
+		"SLIErrorMetric":         getSLIErrorMetric(alerts.PageQuick.ShortWindow),
 		"MetricFilter":           sloFilter,
-		"SLOIDName":              sloIDLabelName,
-		"SLOLabelName":           sloNameLabelName,
-		"SLOServiceName":         sloServiceLabelName,
+		"SLOIDName":              conventions.PromSLOIDLabelName,
+		"SLOLabelName":           conventions.PromSLONameLabelName,
+		"SLOServiceName":         conventions.PromSLOServiceLabelName,
 		"ErrorBudgetRatioMetric": metricSLOErrorBudgetRatio,
 	})
 	if err != nil {
@@ -235,11 +235,11 @@ func (m metadataRecordingRulesGenerator) GenerateMetadataRecordingRules(ctx cont
 
 	var periodBurnRateExpr bytes.Buffer
 	err = burnRateRecordingExprTpl.Execute(&periodBurnRateExpr, map[string]string{
-		"SLIErrorMetric":         slo.GetSLIErrorMetric(slo.TimeWindow),
+		"SLIErrorMetric":         getSLIErrorMetric(slo.TimeWindow),
 		"MetricFilter":           sloFilter,
-		"SLOIDName":              sloIDLabelName,
-		"SLOLabelName":           sloNameLabelName,
-		"SLOServiceName":         sloServiceLabelName,
+		"SLOIDName":              conventions.PromSLOIDLabelName,
+		"SLOLabelName":           conventions.PromSLONameLabelName,
+		"SLOServiceName":         conventions.PromSLOServiceLabelName,
 		"ErrorBudgetRatioMetric": metricSLOErrorBudgetRatio,
 	})
 	if err != nil {
@@ -294,10 +294,10 @@ func (m metadataRecordingRulesGenerator) GenerateMetadataRecordingRules(ctx cont
 			Record: metricSLOInfo,
 			Expr:   `vector(1)`,
 			Labels: mergeLabels(labels, map[string]string{
-				sloVersionLabelName:   info.Version,
-				sloModeLabelName:      string(info.Mode),
-				sloSpecLabelName:      info.Spec,
-				sloObjectiveLabelName: strconv.FormatFloat(slo.Objective, 'f', -1, 64),
+				conventions.PromSLOVersionLabelName:   info.Version,
+				conventions.PromSLOModeLabelName:      string(info.Mode),
+				conventions.PromSLOSpecLabelName:      info.Spec,
+				conventions.PromSLOObjectiveLabelName: strconv.FormatFloat(slo.Objective, 'f', -1, 64),
 			}),
 		},
 	}

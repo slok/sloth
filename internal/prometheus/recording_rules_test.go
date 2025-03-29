@@ -8,26 +8,25 @@ import (
 	"github.com/prometheus/prometheus/model/rulefmt"
 	"github.com/stretchr/testify/assert"
 
-	"github.com/slok/sloth/internal/alert"
-	"github.com/slok/sloth/internal/info"
 	"github.com/slok/sloth/internal/prometheus"
+	"github.com/slok/sloth/pkg/common/model"
 )
 
-func getAlertGroup() alert.MWMBAlertGroup {
-	return alert.MWMBAlertGroup{
-		PageQuick: alert.MWMBAlert{
+func getAlertGroup() model.MWMBAlertGroup {
+	return model.MWMBAlertGroup{
+		PageQuick: model.MWMBAlert{
 			ShortWindow: 5 * time.Minute,
 			LongWindow:  1 * time.Hour,
 		},
-		PageSlow: alert.MWMBAlert{
+		PageSlow: model.MWMBAlert{
 			ShortWindow: 30 * time.Minute,
 			LongWindow:  6 * time.Hour,
 		},
-		TicketQuick: alert.MWMBAlert{
+		TicketQuick: model.MWMBAlert{
 			ShortWindow: 2 * time.Hour,
 			LongWindow:  1 * 24 * time.Hour,
 		},
-		TicketSlow: alert.MWMBAlert{
+		TicketSlow: model.MWMBAlert{
 			ShortWindow: 6 * time.Hour,
 			LongWindow:  3 * 24 * time.Hour,
 		},
@@ -36,13 +35,13 @@ func getAlertGroup() alert.MWMBAlertGroup {
 
 func TestGenerateSLIRecordingRules(t *testing.T) {
 	type generator interface {
-		GenerateSLIRecordingRules(ctx context.Context, slo prometheus.SLO, alerts alert.MWMBAlertGroup) ([]rulefmt.Rule, error)
+		GenerateSLIRecordingRules(ctx context.Context, slo prometheus.SLO, alerts model.MWMBAlertGroup) ([]rulefmt.Rule, error)
 	}
 
 	tests := map[string]struct {
 		generator  func() generator
 		slo        prometheus.SLO
-		alertGroup alert.MWMBAlertGroup
+		alertGroup model.MWMBAlertGroup
 		expRules   []rulefmt.Rule
 		expErr     bool
 	}{
@@ -434,11 +433,11 @@ func TestGenerateSLIRecordingRules(t *testing.T) {
 					"kind": "test",
 				},
 			},
-			alertGroup: alert.MWMBAlertGroup{
-				PageQuick:   alert.MWMBAlert{ShortWindow: 3 * time.Hour, LongWindow: 2 * time.Hour},
-				PageSlow:    alert.MWMBAlert{ShortWindow: 3 * time.Hour, LongWindow: 1 * time.Hour},
-				TicketQuick: alert.MWMBAlert{ShortWindow: 1 * time.Hour, LongWindow: 2 * time.Hour},
-				TicketSlow:  alert.MWMBAlert{ShortWindow: 2 * time.Hour, LongWindow: 1 * time.Hour},
+			alertGroup: model.MWMBAlertGroup{
+				PageQuick:   model.MWMBAlert{ShortWindow: 3 * time.Hour, LongWindow: 2 * time.Hour},
+				PageSlow:    model.MWMBAlert{ShortWindow: 3 * time.Hour, LongWindow: 1 * time.Hour},
+				TicketQuick: model.MWMBAlert{ShortWindow: 1 * time.Hour, LongWindow: 2 * time.Hour},
+				TicketSlow:  model.MWMBAlert{ShortWindow: 2 * time.Hour, LongWindow: 1 * time.Hour},
 			},
 			expRules: []rulefmt.Rule{
 				{
@@ -506,16 +505,16 @@ func TestGenerateSLIRecordingRules(t *testing.T) {
 
 func TestGenerateMetaRecordingRules(t *testing.T) {
 	tests := map[string]struct {
-		info       info.Info
+		info       model.Info
 		slo        prometheus.SLO
-		alertGroup alert.MWMBAlertGroup
+		alertGroup model.MWMBAlertGroup
 		expRules   []rulefmt.Rule
 		expErr     bool
 	}{
 		"Having and SLO an its mwmb alerts should create the metadata recording rules.": {
-			info: info.Info{
+			info: model.Info{
 				Version: "test-ver",
-				Mode:    info.ModeTest,
+				Mode:    model.ModeTest,
 				Spec:    "test/v1",
 			},
 			slo: prometheus.SLO{

@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+### Added
+
+- Sloth domain models can be imported in Go apps using `github.com/slok/sloth/pkg/common/model`.
+- Sloth conventions can be imported in Go apps using `github.com/slok/sloth/pkg/common/conventions`.
+
 ## [v0.12.0] - 2025-03-27
 
 ## Added

@@ -10,6 +10,7 @@ import (
 	"github.com/slok/sloth/internal/log"
 	"github.com/slok/sloth/internal/prometheus"
 	"github.com/slok/sloth/pkg/common/model"
+	utilsdata "github.com/slok/sloth/pkg/common/utils/data"
 )
 
 // ServiceConfig is the application service configuration.
@@ -120,7 +121,7 @@ func (s Service) Generate(ctx context.Context, r Request) (*Response, error) {
 	results := make([]SLOResult, 0, len(r.SLOGroup.SLOs))
 	for _, slo := range r.SLOGroup.SLOs {
 		// Add extra labels.
-		slo.Labels = mergeLabels(slo.Labels, r.ExtraLabels)
+		slo.Labels = utilsdata.MergeLabels(slo.Labels, r.ExtraLabels)
 
 		// Generate SLO result.
 		result, err := s.generateSLO(ctx, r.Info, slo)
@@ -181,15 +182,4 @@ func (s Service) generateSLO(ctx context.Context, info model.Info, slo prometheu
 			AlertRules:       alertRules,
 		},
 	}, nil
-}
-
-func mergeLabels(ms ...map[string]string) map[string]string {
-	res := map[string]string{}
-	for _, m := range ms {
-		for k, v := range m {
-			res[k] = v
-		}
-	}
-
-	return res
 }

@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"maps"
 	"sort"
 	"strconv"
 	"text/template"
@@ -14,6 +13,7 @@ import (
 
 	"github.com/slok/sloth/pkg/common/conventions"
 	"github.com/slok/sloth/pkg/common/model"
+	utilsdata "github.com/slok/sloth/pkg/common/utils/data"
 	promutils "github.com/slok/sloth/pkg/common/utils/prometheus"
 )
 
@@ -98,7 +98,7 @@ func rawSLIRecordGenerator(slo SLO, window time.Duration, alerts model.MWMBAlert
 	return &rulefmt.Rule{
 		Record: conventions.GetSLIErrorMetric(window),
 		Expr:   b.String(),
-		Labels: mergeLabels(
+		Labels: utilsdata.MergeLabels(
 			conventions.GetSLOIDPromLabels(slo),
 			map[string]string{
 				conventions.PromSLOWindowLabelName: strWindow,
@@ -134,7 +134,7 @@ func eventsSLIRecordGenerator(slo SLO, window time.Duration, alerts model.MWMBAl
 	return &rulefmt.Rule{
 		Record: conventions.GetSLIErrorMetric(window),
 		Expr:   b.String(),
-		Labels: mergeLabels(
+		Labels: utilsdata.MergeLabels(
 			conventions.GetSLOIDPromLabels(slo),
 			map[string]string{
 				conventions.PromSLOWindowLabelName: strWindow,
@@ -189,7 +189,7 @@ count_over_time({{.metric}}{{.filter}}[{{.window}}])
 	return &rulefmt.Rule{
 		Record: conventions.GetSLIErrorMetric(window),
 		Expr:   b.String(),
-		Labels: mergeLabels(
+		Labels: utilsdata.MergeLabels(
 			conventions.GetSLOIDPromLabels(slo),
 			map[string]string{
 				conventions.PromSLOWindowLabelName: strWindow,
@@ -206,7 +206,7 @@ type metadataRecordingRulesGenerator bool
 const MetadataRecordingRulesGenerator = metadataRecordingRulesGenerator(false)
 
 func (m metadataRecordingRulesGenerator) GenerateMetadataRecordingRules(ctx context.Context, info model.Info, slo SLO, alerts model.MWMBAlertGroup) ([]rulefmt.Rule, error) {
-	labels := mergeLabels(conventions.GetSLOIDPromLabels(slo), slo.Labels)
+	labels := utilsdata.MergeLabels(conventions.GetSLOIDPromLabels(slo), slo.Labels)
 
 	// Metatada Recordings.
 	const (
@@ -296,7 +296,7 @@ func (m metadataRecordingRulesGenerator) GenerateMetadataRecordingRules(ctx cont
 		{
 			Record: metricSLOInfo,
 			Expr:   `vector(1)`,
-			Labels: mergeLabels(labels, map[string]string{
+			Labels: utilsdata.MergeLabels(labels, map[string]string{
 				conventions.PromSLOVersionLabelName:   info.Version,
 				conventions.PromSLOModeLabelName:      string(info.Mode),
 				conventions.PromSLOSpecLabelName:      info.Spec,
@@ -334,12 +334,4 @@ func getAlertGroupWindows(alerts model.MWMBAlertGroup) []time.Duration {
 	sort.SliceStable(res, func(i, j int) bool { return res[i] < res[j] })
 
 	return res
-}
-
-func mergeLabels[M ~map[K]V, K comparable, V any](ms ...M) M {
-	m := make(M)
-	for _, m2 := range ms {
-		maps.Copy(m, m2)
-	}
-	return m
 }

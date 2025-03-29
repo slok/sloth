@@ -133,7 +133,7 @@ func (g generateCommand) Run(ctx context.Context, config RootConfig) error {
 	}
 
 	// Create Spec loaders.
-	promYAMLLoader := prometheus.NewYAMLSpecLoader(pluginRepo, sloPeriod)
+	promYAMLLoader := storageio.NewSlothPrometheusYAMLSpecLoader(pluginRepo, sloPeriod)
 	kubeYAMLLoader := k8sprometheus.NewYAMLSpecLoader(pluginRepo, sloPeriod)
 	openSLOYAMLLoader := openslo.NewYAMLSpecLoader(sloPeriod)
 

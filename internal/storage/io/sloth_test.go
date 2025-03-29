@@ -1,4 +1,4 @@
-package prometheus_test
+package io_test
 
 import (
 	"context"
@@ -10,6 +10,7 @@ import (
 
 	pluginsli "github.com/slok/sloth/internal/plugin/sli"
 	"github.com/slok/sloth/internal/prometheus"
+	"github.com/slok/sloth/internal/storage/io"
 )
 
 type testMemPluginsRepo map[string]pluginsli.SLIPlugin
@@ -326,7 +327,7 @@ slos:
 		t.Run(name, func(t *testing.T) {
 			assert := assert.New(t)
 
-			loader := prometheus.NewYAMLSpecLoader(testMemPluginsRepo(test.plugins), test.windowPeriod)
+			loader := io.NewSlothPrometheusYAMLSpecLoader(testMemPluginsRepo(test.plugins), test.windowPeriod)
 			gotModel, err := loader.LoadSpec(context.TODO(), []byte(test.specYaml))
 
 			if test.expErr {
@@ -383,7 +384,7 @@ func TestYAMLIsSpecType(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			assert := assert.New(t)
 
-			loader := prometheus.NewYAMLSpecLoader(testMemPluginsRepo(map[string]pluginsli.SLIPlugin{}), 0)
+			loader := io.NewSlothPrometheusYAMLSpecLoader(testMemPluginsRepo(map[string]pluginsli.SLIPlugin{}), 0)
 			got := loader.IsSpecType(context.TODO(), []byte(test.specYaml))
 
 			assert.Equal(test.exp, got)

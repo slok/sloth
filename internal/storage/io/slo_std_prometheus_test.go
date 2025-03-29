@@ -1,4 +1,4 @@
-package prometheus_test
+package io_test
 
 import (
 	"bytes"
@@ -9,32 +9,33 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/slok/sloth/internal/log"
-	"github.com/slok/sloth/internal/prometheus"
+	"github.com/slok/sloth/internal/storage/io"
+	"github.com/slok/sloth/pkg/common/model"
 )
 
-func TestIOWriterGroupedRulesYAMLRepoStore(t *testing.T) {
+func TestGroupedRulesYAMLRepoStore(t *testing.T) {
 	tests := map[string]struct {
-		slos    []prometheus.StorageSLO
+		slos    []io.StdPrometheusStorageSLO
 		expYAML string
 		expErr  bool
 	}{
 		"Having 0 SLO rules should fail.": {
-			slos:   []prometheus.StorageSLO{},
+			slos:   []io.StdPrometheusStorageSLO{},
 			expErr: true,
 		},
 
 		"Having 0 SLO rules generated should fail.": {
-			slos: []prometheus.StorageSLO{
+			slos: []io.StdPrometheusStorageSLO{
 				{},
 			},
 			expErr: true,
 		},
 
 		"Having a single SLI recording rule should render correctly.": {
-			slos: []prometheus.StorageSLO{
+			slos: []io.StdPrometheusStorageSLO{
 				{
-					SLO: prometheus.SLO{ID: "test1"},
-					Rules: prometheus.SLORules{
+					SLO: model.PromSLO{ID: "test1"},
+					Rules: model.PromSLORules{
 						SLIErrorRecRules: []rulefmt.Rule{
 							{
 								Record: "test:record",
@@ -60,10 +61,10 @@ groups:
 `,
 		},
 		"Having a single metadata recording rule should render correctly.": {
-			slos: []prometheus.StorageSLO{
+			slos: []io.StdPrometheusStorageSLO{
 				{
-					SLO: prometheus.SLO{ID: "test1"},
-					Rules: prometheus.SLORules{
+					SLO: model.PromSLO{ID: "test1"},
+					Rules: model.PromSLORules{
 						MetadataRecRules: []rulefmt.Rule{
 							{
 								Record: "test:record",
@@ -89,10 +90,10 @@ groups:
 `,
 		},
 		"Having a single SLO alert rule should render correctly.": {
-			slos: []prometheus.StorageSLO{
+			slos: []io.StdPrometheusStorageSLO{
 				{
-					SLO: prometheus.SLO{ID: "test1"},
-					Rules: prometheus.SLORules{
+					SLO: model.PromSLO{ID: "test1"},
+					Rules: model.PromSLORules{
 						AlertRules: []rulefmt.Rule{
 							{
 								Alert:       "testAlert",
@@ -122,10 +123,10 @@ groups:
 		},
 
 		"Having a multiple SLO alert and recording rules should render correctly.": {
-			slos: []prometheus.StorageSLO{
+			slos: []io.StdPrometheusStorageSLO{
 				{
-					SLO: prometheus.SLO{ID: "testa"},
-					Rules: prometheus.SLORules{
+					SLO: model.PromSLO{ID: "testa"},
+					Rules: model.PromSLORules{
 						SLIErrorRecRules: []rulefmt.Rule{
 							{
 								Record: "test:record-a1",
@@ -167,8 +168,8 @@ groups:
 					},
 				},
 				{
-					SLO: prometheus.SLO{ID: "testb"},
-					Rules: prometheus.SLORules{
+					SLO: model.PromSLO{ID: "testb"},
+					Rules: model.PromSLORules{
 						SLIErrorRecRules: []rulefmt.Rule{
 							{
 								Record: "test:record-b1",
@@ -263,7 +264,7 @@ groups:
 			assert := assert.New(t)
 
 			var gotYAML bytes.Buffer
-			repo := prometheus.NewIOWriterGroupedRulesYAMLRepo(&gotYAML, log.Noop)
+			repo := io.NewStdPrometheusGroupedRulesYAMLRepo(&gotYAML, log.Noop)
 			err := repo.StoreSLOs(context.TODO(), test.slos)
 
 			if test.expErr {

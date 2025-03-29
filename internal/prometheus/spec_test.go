@@ -8,12 +8,13 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
+	pluginsli "github.com/slok/sloth/internal/plugin/sli"
 	"github.com/slok/sloth/internal/prometheus"
 )
 
-type testMemPluginsRepo map[string]prometheus.SLIPlugin
+type testMemPluginsRepo map[string]pluginsli.SLIPlugin
 
-func (t testMemPluginsRepo) GetSLIPlugin(ctx context.Context, id string) (*prometheus.SLIPlugin, error) {
+func (t testMemPluginsRepo) GetSLIPlugin(ctx context.Context, id string) (*pluginsli.SLIPlugin, error) {
 	p, ok := t[id]
 	if !ok {
 		return nil, fmt.Errorf("unknown plugin")
@@ -24,7 +25,7 @@ func (t testMemPluginsRepo) GetSLIPlugin(ctx context.Context, id string) (*prome
 func TestYAMLoadSpec(t *testing.T) {
 	tests := map[string]struct {
 		specYaml     string
-		plugins      map[string]prometheus.SLIPlugin
+		plugins      map[string]pluginsli.SLIPlugin
 		windowPeriod time.Duration
 		expModel     *prometheus.SLOGroup
 		expErr       bool
@@ -87,7 +88,7 @@ slos:
 		},
 
 		"Spec with SLI plugin that returns an error should use the plugin correctly and fail.": {
-			plugins: map[string]prometheus.SLIPlugin{
+			plugins: map[string]pluginsli.SLIPlugin{
 				"test_plugin": {
 					ID: "test_plugin",
 					Func: func(ctx context.Context, meta map[string]string, labels map[string]string, options map[string]string) (string, error) {
@@ -115,7 +116,7 @@ slos:
 
 		"Spec with SLI plugin should use the plugin correctly.": {
 			windowPeriod: 30 * 24 * time.Hour,
-			plugins: map[string]prometheus.SLIPlugin{
+			plugins: map[string]pluginsli.SLIPlugin{
 				"test_plugin": {
 					ID: "test_plugin",
 					Func: func(ctx context.Context, meta map[string]string, labels map[string]string, options map[string]string) (string, error) {
@@ -382,7 +383,7 @@ func TestYAMLIsSpecType(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			assert := assert.New(t)
 
-			loader := prometheus.NewYAMLSpecLoader(testMemPluginsRepo(map[string]prometheus.SLIPlugin{}), 0)
+			loader := prometheus.NewYAMLSpecLoader(testMemPluginsRepo(map[string]pluginsli.SLIPlugin{}), 0)
 			got := loader.IsSpecType(context.TODO(), []byte(test.specYaml))
 
 			assert.Equal(test.exp, got)

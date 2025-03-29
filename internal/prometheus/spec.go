@@ -8,12 +8,13 @@ import (
 
 	"gopkg.in/yaml.v2"
 
+	pluginsli "github.com/slok/sloth/internal/plugin/sli"
 	prometheusv1 "github.com/slok/sloth/pkg/prometheus/api/v1"
 	prometheuspluginv1 "github.com/slok/sloth/pkg/prometheus/plugin/v1"
 )
 
 type SLIPluginRepo interface {
-	GetSLIPlugin(ctx context.Context, id string) (*SLIPlugin, error)
+	GetSLIPlugin(ctx context.Context, id string) (*pluginsli.SLIPlugin, error)
 }
 
 // YAMLSpecLoader knows how to load YAML specs and converts them to a model.

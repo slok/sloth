@@ -8,6 +8,7 @@ import (
 
 	"k8s.io/apimachinery/pkg/runtime"
 
+	pluginsli "github.com/slok/sloth/internal/plugin/sli"
 	"github.com/slok/sloth/internal/prometheus"
 	k8sprometheusv1 "github.com/slok/sloth/pkg/kubernetes/api/sloth/v1"
 	"github.com/slok/sloth/pkg/kubernetes/gen/clientset/versioned/scheme"
@@ -15,7 +16,7 @@ import (
 )
 
 type SLIPluginRepo interface {
-	GetSLIPlugin(ctx context.Context, id string) (*prometheus.SLIPlugin, error)
+	GetSLIPlugin(ctx context.Context, id string) (*pluginsli.SLIPlugin, error)
 }
 
 // YAMLSpecLoader knows how to load Kubernetes ServiceLevel YAML specs and converts them to a model.

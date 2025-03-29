@@ -1,4 +1,4 @@
-package openslo
+package io
 
 import (
 	"bytes"
@@ -15,27 +15,27 @@ import (
 	"github.com/slok/sloth/internal/prometheus"
 )
 
-type YAMLSpecLoader struct {
+type OpenSLOYAMLSpecLoader struct {
 	windowPeriod time.Duration
 }
 
-// YAMLSpecLoader knows how to load YAML specs and converts them to a model.
-func NewYAMLSpecLoader(windowPeriod time.Duration) YAMLSpecLoader {
-	return YAMLSpecLoader{
+// NewOpenSLOYAMLSpecLoader knows how to load OpenSLO YAML specs and converts them to a model.
+func NewOpenSLOYAMLSpecLoader(windowPeriod time.Duration) OpenSLOYAMLSpecLoader {
+	return OpenSLOYAMLSpecLoader{
 		windowPeriod: windowPeriod,
 	}
 }
 
 var (
-	specTypeV1AlphaRegexKind       = regexp.MustCompile(`(?m)^kind: +['"]?SLO['"]? *$`)
-	specTypeV1AlphaRegexAPIVersion = regexp.MustCompile(`(?m)^apiVersion: +['"]?openslo\/v1alpha['"]? *$`)
+	openSLOSpecV1AlphaTypeRegexKind       = regexp.MustCompile(`(?m)^kind: +['"]?SLO['"]? *$`)
+	openSLOSpecV1AlphaTypeRegexAPIVersion = regexp.MustCompile(`(?m)^apiVersion: +['"]?openslo\/v1alpha['"]? *$`)
 )
 
-func (y YAMLSpecLoader) IsSpecType(ctx context.Context, data []byte) bool {
-	return specTypeV1AlphaRegexKind.Match(data) && specTypeV1AlphaRegexAPIVersion.Match(data)
+func (l OpenSLOYAMLSpecLoader) IsSpecType(ctx context.Context, data []byte) bool {
+	return openSLOSpecV1AlphaTypeRegexKind.Match(data) && openSLOSpecV1AlphaTypeRegexAPIVersion.Match(data)
 }
 
-func (y YAMLSpecLoader) LoadSpec(ctx context.Context, data []byte) (*prometheus.SLOGroup, error) {
+func (l OpenSLOYAMLSpecLoader) LoadSpec(ctx context.Context, data []byte) (*prometheus.SLOGroup, error) {
 	if len(data) == 0 {
 		return nil, fmt.Errorf("spec is required")
 	}
@@ -57,12 +57,12 @@ func (y YAMLSpecLoader) LoadSpec(ctx context.Context, data []byte) (*prometheus.
 	}
 
 	// Validate time windows are correct.
-	err = y.validateTimeWindow(s)
+	err = l.validateTimeWindow(s)
 	if err != nil {
 		return nil, fmt.Errorf("invalid SLO time windows: %w", err)
 	}
 
-	m, err := y.mapSpecToModel(s)
+	m, err := l.mapSpecToModel(s)
 	if err != nil {
 		return nil, fmt.Errorf("could not map to model: %w", err)
 	}
@@ -70,8 +70,8 @@ func (y YAMLSpecLoader) LoadSpec(ctx context.Context, data []byte) (*prometheus.
 	return m, nil
 }
 
-func (y YAMLSpecLoader) mapSpecToModel(spec openslov1alpha.SLO) (*prometheus.SLOGroup, error) {
-	slos, err := y.getSLOs(spec)
+func (l OpenSLOYAMLSpecLoader) mapSpecToModel(spec openslov1alpha.SLO) (*prometheus.SLOGroup, error) {
+	slos, err := l.getSLOs(spec)
 	if err != nil {
 		return nil, fmt.Errorf("could not map SLOs correctly: %w", err)
 	}
@@ -81,7 +81,7 @@ func (y YAMLSpecLoader) mapSpecToModel(spec openslov1alpha.SLO) (*prometheus.SLO
 
 // validateTimeWindow will validate that Sloth only supports 30 day based time windows
 // we need this because time windows are a required by OpenSLO.
-func (YAMLSpecLoader) validateTimeWindow(spec openslov1alpha.SLO) error {
+func (OpenSLOYAMLSpecLoader) validateTimeWindow(spec openslov1alpha.SLO) error {
 	if len(spec.Spec.TimeWindows) == 0 {
 		return nil
 	}
@@ -98,7 +98,7 @@ func (YAMLSpecLoader) validateTimeWindow(spec openslov1alpha.SLO) error {
 	return nil
 }
 
-var errorRatioRawQueryTpl = template.Must(template.New("").Parse(`
+var openSLOErrorRatioRawQueryTpl = template.Must(template.New("").Parse(`
   1 - (
     (
       {{ .good }}
@@ -114,7 +114,7 @@ var errorRatioRawQueryTpl = template.Must(template.New("").Parse(`
 // however we will convert to a raw based sloth SLI because the ratio queries that we have differ from
 // Sloth. Sloth uses bad/total events, OpenSLO uses good/total events. We get the ratio using good events
 // and then rest to 1, to get a raw error ratio query.
-func (y YAMLSpecLoader) getSLI(spec openslov1alpha.SLOSpec, slo openslov1alpha.Objective) (*prometheus.SLI, error) {
+func (l OpenSLOYAMLSpecLoader) getSLI(spec openslov1alpha.SLOSpec, slo openslov1alpha.Objective) (*prometheus.SLI, error) {
 	if slo.RatioMetrics == nil {
 		return nil, fmt.Errorf("missing ratioMetrics")
 	}
@@ -140,7 +140,7 @@ func (y YAMLSpecLoader) getSLI(spec openslov1alpha.SLOSpec, slo openslov1alpha.O
 
 	// Map as good and total events as a raw query.
 	var b bytes.Buffer
-	err := errorRatioRawQueryTpl.Execute(&b, map[string]string{"good": good.Query, "total": total.Query})
+	err := openSLOErrorRatioRawQueryTpl.Execute(&b, map[string]string{"good": good.Query, "total": total.Query})
 	if err != nil {
 		return nil, fmt.Errorf("could not execute mapping SLI template: %w", err)
 	}
@@ -153,16 +153,16 @@ func (y YAMLSpecLoader) getSLI(spec openslov1alpha.SLOSpec, slo openslov1alpha.O
 // getSLOs will try getting all the objectives as individual SLOs, this way we can map
 // to what Sloth understands as an SLO, that OpenSLO understands as a list of objectives
 // for the same SLO.
-func (y YAMLSpecLoader) getSLOs(spec openslov1alpha.SLO) ([]prometheus.SLO, error) {
+func (l OpenSLOYAMLSpecLoader) getSLOs(spec openslov1alpha.SLO) ([]prometheus.SLO, error) {
 	res := []prometheus.SLO{}
 
 	for idx, slo := range spec.Spec.Objectives {
-		sli, err := y.getSLI(spec.Spec, slo)
+		sli, err := l.getSLI(spec.Spec, slo)
 		if err != nil {
 			return nil, fmt.Errorf("could not map SLI: %w", err)
 		}
 
-		timeWindow := y.windowPeriod
+		timeWindow := l.windowPeriod
 		if len(spec.Spec.TimeWindows) > 0 {
 			timeWindow = time.Duration(spec.Spec.TimeWindows[0].Count) * 24 * time.Hour
 		}

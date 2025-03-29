@@ -8,43 +8,43 @@ import (
 	"github.com/prometheus/prometheus/model/rulefmt"
 	"github.com/stretchr/testify/assert"
 
-	"github.com/slok/sloth/internal/alert"
 	"github.com/slok/sloth/internal/prometheus"
+	"github.com/slok/sloth/pkg/common/model"
 )
 
-func getSLOAlertGroup() alert.MWMBAlertGroup {
-	return alert.MWMBAlertGroup{
-		PageQuick: alert.MWMBAlert{
+func getSLOAlertGroup() model.MWMBAlertGroup {
+	return model.MWMBAlertGroup{
+		PageQuick: model.MWMBAlert{
 			ID:             "10",
 			ShortWindow:    11 * time.Minute,
 			LongWindow:     12 * time.Minute,
 			BurnRateFactor: 13,
 			ErrorBudget:    1,
-			Severity:       alert.PageAlertSeverity,
+			Severity:       model.PageAlertSeverity,
 		},
-		PageSlow: alert.MWMBAlert{
+		PageSlow: model.MWMBAlert{
 			ID:             "20",
 			ShortWindow:    21 * time.Minute,
 			LongWindow:     22 * time.Minute,
 			BurnRateFactor: 23,
 			ErrorBudget:    1,
-			Severity:       alert.PageAlertSeverity,
+			Severity:       model.PageAlertSeverity,
 		},
-		TicketQuick: alert.MWMBAlert{
+		TicketQuick: model.MWMBAlert{
 			ID:             "30",
 			ShortWindow:    31 * time.Minute,
 			LongWindow:     32 * time.Minute,
 			BurnRateFactor: 33,
 			ErrorBudget:    1,
-			Severity:       alert.TicketAlertSeverity,
+			Severity:       model.TicketAlertSeverity,
 		},
-		TicketSlow: alert.MWMBAlert{
+		TicketSlow: model.MWMBAlert{
 			ID:             "4",
 			ShortWindow:    41 * time.Minute,
 			LongWindow:     42 * time.Minute,
 			BurnRateFactor: 43,
 			ErrorBudget:    1,
-			Severity:       alert.TicketAlertSeverity,
+			Severity:       model.TicketAlertSeverity,
 		},
 	}
 }
@@ -52,7 +52,7 @@ func getSLOAlertGroup() alert.MWMBAlertGroup {
 func TestGenerateSLOAlertRules(t *testing.T) {
 	tests := map[string]struct {
 		slo        prometheus.SLO
-		alertGroup func() alert.MWMBAlertGroup
+		alertGroup func() model.MWMBAlertGroup
 		expRules   []rulefmt.Rule
 		expErr     bool
 	}{

@@ -11,8 +11,8 @@ import (
 
 	"github.com/slok/sloth/internal/alert"
 	"github.com/slok/sloth/internal/app/generate"
-	"github.com/slok/sloth/internal/info"
 	"github.com/slok/sloth/internal/prometheus"
+	"github.com/slok/sloth/pkg/common/model"
 )
 
 func TestIntegrationAppServiceGenerate(t *testing.T) {
@@ -32,9 +32,9 @@ func TestIntegrationAppServiceGenerate(t *testing.T) {
 					"extra_k1": "extra_v1",
 					"extra_k2": "extra_v2",
 				},
-				Info: info.Info{
+				Info: model.Info{
 					Version: "test-ver",
-					Mode:    info.ModeTest,
+					Mode:    model.ModeTest,
 					Spec:    "test-spec",
 				},
 				SLOGroup: prometheus.SLOGroup{SLOs: []prometheus.SLO{
@@ -96,39 +96,39 @@ func TestIntegrationAppServiceGenerate(t *testing.T) {
 								Annotations: map[string]string{"t_alert_annot": "t_label_an_1"},
 							},
 						},
-						Alerts: alert.MWMBAlertGroup{
-							PageQuick: alert.MWMBAlert{
+						Alerts: model.MWMBAlertGroup{
+							PageQuick: model.MWMBAlert{
 								ID:             "test-id-page-quick",
 								ShortWindow:    5 * time.Minute,
 								LongWindow:     1 * time.Hour,
 								BurnRateFactor: 14.4,
 								ErrorBudget:    0.09999999999999432,
-								Severity:       alert.PageAlertSeverity,
+								Severity:       model.PageAlertSeverity,
 							},
-							PageSlow: alert.MWMBAlert{
+							PageSlow: model.MWMBAlert{
 								ID:             "test-id-page-slow",
 								ShortWindow:    30 * time.Minute,
 								LongWindow:     6 * time.Hour,
 								BurnRateFactor: 6,
 								ErrorBudget:    0.09999999999999432,
-								Severity:       alert.PageAlertSeverity,
+								Severity:       model.PageAlertSeverity,
 							},
 
-							TicketQuick: alert.MWMBAlert{
+							TicketQuick: model.MWMBAlert{
 								ID:             "test-id-ticket-quick",
 								ShortWindow:    2 * time.Hour,
 								LongWindow:     1 * 24 * time.Hour,
 								BurnRateFactor: 3,
 								ErrorBudget:    0.09999999999999432,
-								Severity:       alert.TicketAlertSeverity,
+								Severity:       model.TicketAlertSeverity,
 							},
-							TicketSlow: alert.MWMBAlert{
+							TicketSlow: model.MWMBAlert{
 								ID:             "test-id-ticket-slow",
 								ShortWindow:    6 * time.Hour,
 								LongWindow:     3 * 24 * time.Hour,
 								BurnRateFactor: 1,
 								ErrorBudget:    0.09999999999999432,
-								Severity:       alert.TicketAlertSeverity,
+								Severity:       model.TicketAlertSeverity,
 							},
 						},
 						SLORules: prometheus.SLORules{

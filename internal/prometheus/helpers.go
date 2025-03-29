@@ -5,8 +5,7 @@ import (
 	"time"
 
 	prommodel "github.com/prometheus/common/model"
-
-	"github.com/slok/sloth/internal/alert"
+	"github.com/slok/sloth/pkg/common/model"
 )
 
 func mergeLabels(ms ...map[string]string) map[string]string {
@@ -35,7 +34,7 @@ func timeDurationToPromStr(t time.Duration) string {
 }
 
 // getAlertGroupWindows gets all the time windows from a multiwindow multiburn alert group.
-func getAlertGroupWindows(alerts alert.MWMBAlertGroup) []time.Duration {
+func getAlertGroupWindows(alerts model.MWMBAlertGroup) []time.Duration {
 	// Use a map to avoid duplicated windows.
 	windows := map[string]time.Duration{
 		alerts.PageQuick.ShortWindow.String():   alerts.PageQuick.ShortWindow,

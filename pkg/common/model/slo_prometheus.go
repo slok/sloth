@@ -12,7 +12,6 @@ import (
 	prommodel "github.com/prometheus/common/model"
 	"github.com/prometheus/prometheus/model/rulefmt"
 	promqlparser "github.com/prometheus/prometheus/promql/parser"
-	"github.com/slok/sloth/pkg/common/conventions"
 )
 
 // SLI represents an SLI with custom error and total expressions.
@@ -180,7 +179,9 @@ func validateRequiredEnabledAlertName(fl validator.FieldLevel) bool {
 	return alertMeta.Name != ""
 }
 
-var tplWindowRegex = regexp.MustCompile(fmt.Sprintf(`{{ *\.%s *}}`, conventions.PromQueryTPLKeyWindow))
+const PromQueryTPLKeyWindow = "window"
+
+var tplWindowRegex = regexp.MustCompile(fmt.Sprintf(`{{ *\.%s *}}`, PromQueryTPLKeyWindow))
 
 // validateTemplateVars implements validator.CustomTypeFunc by validating
 // an SLI template has all the required fields.

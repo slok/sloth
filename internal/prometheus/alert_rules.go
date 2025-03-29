@@ -10,6 +10,7 @@ import (
 
 	"github.com/slok/sloth/pkg/common/conventions"
 	"github.com/slok/sloth/pkg/common/model"
+	promutils "github.com/slok/sloth/pkg/common/utils/prometheus"
 )
 
 // genFunc knows how to generate an SLI recording rule for a specific time window.
@@ -51,7 +52,7 @@ func (s sloAlertRulesGenerator) GenerateSLOAlertRules(ctx context.Context, slo S
 
 func defaultSLOAlertGenerator(slo SLO, sloAlert AlertMeta, quick, slow model.MWMBAlert) (*rulefmt.Rule, error) {
 	// Generate the filter labels based on the SLO ids.
-	metricFilter := labelsToPromFilter(getSLOIDPromLabels(slo))
+	metricFilter := promutils.LabelsToPromFilter(conventions.GetSLOIDPromLabels(slo))
 
 	// Render the alert template.
 	tplData := struct {
@@ -69,13 +70,13 @@ func defaultSLOAlertGenerator(slo SLO, sloAlert AlertMeta, quick, slow model.MWM
 	}{
 		MetricFilter:         metricFilter,
 		ErrorBudgetRatio:     quick.ErrorBudget / 100, // Any(quick or slow) should work because are the same.
-		QuickShortMetric:     getSLIErrorMetric(quick.ShortWindow),
+		QuickShortMetric:     conventions.GetSLIErrorMetric(quick.ShortWindow),
 		QuickShortBurnFactor: quick.BurnRateFactor,
-		QuickLongMetric:      getSLIErrorMetric(quick.LongWindow),
+		QuickLongMetric:      conventions.GetSLIErrorMetric(quick.LongWindow),
 		QuickLongBurnFactor:  quick.BurnRateFactor,
-		SlowShortMetric:      getSLIErrorMetric(slow.ShortWindow),
+		SlowShortMetric:      conventions.GetSLIErrorMetric(slow.ShortWindow),
 		SlowShortBurnFactor:  slow.BurnRateFactor,
-		SlowQuickMetric:      getSLIErrorMetric(slow.LongWindow),
+		SlowQuickMetric:      conventions.GetSLIErrorMetric(slow.LongWindow),
 		SlowQuickBurnFactor:  slow.BurnRateFactor,
 		WindowLabel:          conventions.PromSLOWindowLabelName,
 	}

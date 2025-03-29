@@ -1,5 +1,7 @@
 package conventions
 
+import "github.com/slok/sloth/pkg/common/model"
+
 // Prometheus metrics conventions.
 const (
 	// Metrics.
@@ -15,6 +17,14 @@ const (
 	PromSLOModeLabelName      = "sloth_mode"
 	PromSLOSpecLabelName      = "sloth_spec"
 	PromSLOObjectiveLabelName = "sloth_objective"
-
-	PromQueryTPLKeyWindow = "window"
 )
+
+// GetSLOIDPromLabels returns the ID labels of an SLO, these can be used to identify
+// an SLO recorded metrics and alerts.
+func GetSLOIDPromLabels(s model.PromSLO) map[string]string {
+	return map[string]string{
+		PromSLOIDLabelName:      s.ID,
+		PromSLONameLabelName:    s.Name,
+		PromSLOServiceLabelName: s.Service,
+	}
+}

@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"maps"
+	"sort"
 	"strconv"
 	"text/template"
 	"time"
@@ -12,6 +14,7 @@ import (
 
 	"github.com/slok/sloth/pkg/common/conventions"
 	"github.com/slok/sloth/pkg/common/model"
+	promutils "github.com/slok/sloth/pkg/common/utils/prometheus"
 )
 
 // sliRulesgenFunc knows how to generate an SLI recording rule for a specific time window.
@@ -83,7 +86,7 @@ func rawSLIRecordGenerator(slo SLO, window time.Duration, alerts model.MWMBAlert
 		return nil, fmt.Errorf("could not create SLI expression template data: %w", err)
 	}
 
-	strWindow := timeDurationToPromStr(window)
+	strWindow := promutils.TimeDurationToPromStr(window)
 	var b bytes.Buffer
 	err = tpl.Execute(&b, map[string]string{
 		tplKeyWindow: strWindow,
@@ -93,10 +96,10 @@ func rawSLIRecordGenerator(slo SLO, window time.Duration, alerts model.MWMBAlert
 	}
 
 	return &rulefmt.Rule{
-		Record: getSLIErrorMetric(window),
+		Record: conventions.GetSLIErrorMetric(window),
 		Expr:   b.String(),
 		Labels: mergeLabels(
-			getSLOIDPromLabels(slo),
+			conventions.GetSLOIDPromLabels(slo),
 			map[string]string{
 				conventions.PromSLOWindowLabelName: strWindow,
 			},
@@ -119,7 +122,7 @@ func eventsSLIRecordGenerator(slo SLO, window time.Duration, alerts model.MWMBAl
 		return nil, fmt.Errorf("could not create SLI expression template data: %w", err)
 	}
 
-	strWindow := timeDurationToPromStr(window)
+	strWindow := promutils.TimeDurationToPromStr(window)
 	var b bytes.Buffer
 	err = tpl.Execute(&b, map[string]string{
 		tplKeyWindow: strWindow,
@@ -129,10 +132,10 @@ func eventsSLIRecordGenerator(slo SLO, window time.Duration, alerts model.MWMBAl
 	}
 
 	return &rulefmt.Rule{
-		Record: getSLIErrorMetric(window),
+		Record: conventions.GetSLIErrorMetric(window),
 		Expr:   b.String(),
 		Labels: mergeLabels(
-			getSLOIDPromLabels(slo),
+			conventions.GetSLOIDPromLabels(slo),
 			map[string]string{
 				conventions.PromSLOWindowLabelName: strWindow,
 			},
@@ -162,8 +165,8 @@ count_over_time({{.metric}}{{.filter}}[{{.window}}])
 		return nil, fmt.Errorf("can't optimize using the same shortwindow as the window to optimize")
 	}
 
-	shortWindowSLIRec := getSLIErrorMetric(shortWindow)
-	filter := labelsToPromFilter(getSLOIDPromLabels(slo))
+	shortWindowSLIRec := conventions.GetSLIErrorMetric(shortWindow)
+	filter := promutils.LabelsToPromFilter(conventions.GetSLOIDPromLabels(slo))
 
 	// Render with our templated data.
 	tpl, err := template.New("sliExpr").Option("missingkey=error").Parse(sliExprTplFmt)
@@ -171,7 +174,7 @@ count_over_time({{.metric}}{{.filter}}[{{.window}}])
 		return nil, fmt.Errorf("could not create SLI expression template data: %w", err)
 	}
 
-	strWindow := timeDurationToPromStr(window)
+	strWindow := promutils.TimeDurationToPromStr(window)
 	var b bytes.Buffer
 	err = tpl.Execute(&b, map[string]string{
 		"metric":    shortWindowSLIRec,
@@ -184,10 +187,10 @@ count_over_time({{.metric}}{{.filter}}[{{.window}}])
 	}
 
 	return &rulefmt.Rule{
-		Record: getSLIErrorMetric(window),
+		Record: conventions.GetSLIErrorMetric(window),
 		Expr:   b.String(),
 		Labels: mergeLabels(
-			getSLOIDPromLabels(slo),
+			conventions.GetSLOIDPromLabels(slo),
 			map[string]string{
 				conventions.PromSLOWindowLabelName: strWindow,
 			},
@@ -203,7 +206,7 @@ type metadataRecordingRulesGenerator bool
 const MetadataRecordingRulesGenerator = metadataRecordingRulesGenerator(false)
 
 func (m metadataRecordingRulesGenerator) GenerateMetadataRecordingRules(ctx context.Context, info model.Info, slo SLO, alerts model.MWMBAlertGroup) ([]rulefmt.Rule, error) {
-	labels := mergeLabels(getSLOIDPromLabels(slo), slo.Labels)
+	labels := mergeLabels(conventions.GetSLOIDPromLabels(slo), slo.Labels)
 
 	// Metatada Recordings.
 	const (
@@ -218,11 +221,11 @@ func (m metadataRecordingRulesGenerator) GenerateMetadataRecordingRules(ctx cont
 
 	sloObjectiveRatio := slo.Objective / 100
 
-	sloFilter := labelsToPromFilter(getSLOIDPromLabels(slo))
+	sloFilter := promutils.LabelsToPromFilter(conventions.GetSLOIDPromLabels(slo))
 
 	var currentBurnRateExpr bytes.Buffer
 	err := burnRateRecordingExprTpl.Execute(&currentBurnRateExpr, map[string]string{
-		"SLIErrorMetric":         getSLIErrorMetric(alerts.PageQuick.ShortWindow),
+		"SLIErrorMetric":         conventions.GetSLIErrorMetric(alerts.PageQuick.ShortWindow),
 		"MetricFilter":           sloFilter,
 		"SLOIDName":              conventions.PromSLOIDLabelName,
 		"SLOLabelName":           conventions.PromSLONameLabelName,
@@ -235,7 +238,7 @@ func (m metadataRecordingRulesGenerator) GenerateMetadataRecordingRules(ctx cont
 
 	var periodBurnRateExpr bytes.Buffer
 	err = burnRateRecordingExprTpl.Execute(&periodBurnRateExpr, map[string]string{
-		"SLIErrorMetric":         getSLIErrorMetric(slo.TimeWindow),
+		"SLIErrorMetric":         conventions.GetSLIErrorMetric(slo.TimeWindow),
 		"MetricFilter":           sloFilter,
 		"SLOIDName":              conventions.PromSLOIDLabelName,
 		"SLOLabelName":           conventions.PromSLONameLabelName,
@@ -309,3 +312,34 @@ var burnRateRecordingExprTpl = template.Must(template.New("burnRateExpr").Option
 / on({{ .SLOIDName }}, {{ .SLOLabelName }}, {{ .SLOServiceName }}) group_left
 {{ .ErrorBudgetRatioMetric }}{{ .MetricFilter }}
 `))
+
+// getAlertGroupWindows gets all the time windows from a multiwindow multiburn alert group.
+func getAlertGroupWindows(alerts model.MWMBAlertGroup) []time.Duration {
+	// Use a map to avoid duplicated windows.
+	windows := map[string]time.Duration{
+		alerts.PageQuick.ShortWindow.String():   alerts.PageQuick.ShortWindow,
+		alerts.PageQuick.LongWindow.String():    alerts.PageQuick.LongWindow,
+		alerts.PageSlow.ShortWindow.String():    alerts.PageSlow.ShortWindow,
+		alerts.PageSlow.LongWindow.String():     alerts.PageSlow.LongWindow,
+		alerts.TicketQuick.ShortWindow.String(): alerts.TicketQuick.ShortWindow,
+		alerts.TicketQuick.LongWindow.String():  alerts.TicketQuick.LongWindow,
+		alerts.TicketSlow.ShortWindow.String():  alerts.TicketSlow.ShortWindow,
+		alerts.TicketSlow.LongWindow.String():   alerts.TicketSlow.LongWindow,
+	}
+
+	res := make([]time.Duration, 0, len(windows))
+	for _, w := range windows {
+		res = append(res, w)
+	}
+	sort.SliceStable(res, func(i, j int) bool { return res[i] < res[j] })
+
+	return res
+}
+
+func mergeLabels[M ~map[K]V, K comparable, V any](ms ...M) M {
+	m := make(M)
+	for _, m2 := range ms {
+		maps.Copy(m, m2)
+	}
+	return m
+}

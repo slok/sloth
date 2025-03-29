@@ -23,7 +23,7 @@ func (t testMemPluginsRepo) GetSLIPlugin(ctx context.Context, id string) (*plugi
 	return &p, nil
 }
 
-func TestYAMLoadSpec(t *testing.T) {
+func TestSlothPrometheusYAMLSpecLoader(t *testing.T) {
 	tests := map[string]struct {
 		specYaml     string
 		plugins      map[string]pluginsli.SLIPlugin
@@ -339,7 +339,7 @@ slos:
 	}
 }
 
-func TestYAMLIsSpecType(t *testing.T) {
+func TestSlothPrometheusYAMLSpecLoaderIsSpecType(t *testing.T) {
 	tests := map[string]struct {
 		specYaml string
 		exp      bool

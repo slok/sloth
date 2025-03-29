@@ -15,7 +15,6 @@ import (
 	"github.com/slok/sloth/internal/alert"
 	"github.com/slok/sloth/internal/k8sprometheus"
 	"github.com/slok/sloth/internal/log"
-	"github.com/slok/sloth/internal/openslo"
 	storageio "github.com/slok/sloth/internal/storage/io"
 )
 
@@ -110,7 +109,7 @@ func (v validateCommand) Run(ctx context.Context, config RootConfig) error {
 	// Create Spec loaders.
 	promYAMLLoader := storageio.NewSlothPrometheusYAMLSpecLoader(pluginRepo, sloPeriod)
 	kubeYAMLLoader := k8sprometheus.NewYAMLSpecLoader(pluginRepo, sloPeriod)
-	openSLOYAMLLoader := openslo.NewYAMLSpecLoader(sloPeriod)
+	openSLOYAMLLoader := storageio.NewOpenSLOYAMLSpecLoader(sloPeriod)
 
 	// For every file load the data and start the validation process:
 	validations := []*fileValidation{}

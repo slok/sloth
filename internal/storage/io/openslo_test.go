@@ -1,4 +1,4 @@
-package openslo_test
+package io_test
 
 import (
 	"context"
@@ -7,11 +7,11 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/slok/sloth/internal/openslo"
 	"github.com/slok/sloth/internal/prometheus"
+	"github.com/slok/sloth/internal/storage/io"
 )
 
-func TestYAMLoadSpec(t *testing.T) {
+func TestOpenSLOYAMLSpecLoader(t *testing.T) {
 	tests := map[string]struct {
 		specYaml string
 		expModel *prometheus.SLOGroup
@@ -277,7 +277,7 @@ spec:
 		t.Run(name, func(t *testing.T) {
 			assert := assert.New(t)
 
-			loader := openslo.NewYAMLSpecLoader(30 * 24 * time.Hour)
+			loader := io.NewOpenSLOYAMLSpecLoader(30 * 24 * time.Hour)
 			gotModel, err := loader.LoadSpec(context.TODO(), []byte(test.specYaml))
 
 			if test.expErr {
@@ -289,7 +289,7 @@ spec:
 	}
 }
 
-func TestYAMLIsSpecType(t *testing.T) {
+func TestOpenSLOYAMLSpecLoaderIsSpecType(t *testing.T) {
 	tests := map[string]struct {
 		specYaml string
 		exp      bool
@@ -357,7 +357,7 @@ kind:              SLO
 		t.Run(name, func(t *testing.T) {
 			assert := assert.New(t)
 
-			loader := openslo.NewYAMLSpecLoader(30 * 24 * time.Hour)
+			loader := io.NewOpenSLOYAMLSpecLoader(30 * 24 * time.Hour)
 			got := loader.IsSpecType(context.TODO(), []byte(test.specYaml))
 
 			assert.Equal(test.exp, got)

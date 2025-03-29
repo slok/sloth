@@ -21,7 +21,6 @@ import (
 	"github.com/slok/sloth/internal/info"
 	"github.com/slok/sloth/internal/k8sprometheus"
 	"github.com/slok/sloth/internal/log"
-	"github.com/slok/sloth/internal/openslo"
 	"github.com/slok/sloth/internal/prometheus"
 	storageio "github.com/slok/sloth/internal/storage/io"
 	"github.com/slok/sloth/pkg/common/model"
@@ -135,7 +134,7 @@ func (g generateCommand) Run(ctx context.Context, config RootConfig) error {
 	// Create Spec loaders.
 	promYAMLLoader := storageio.NewSlothPrometheusYAMLSpecLoader(pluginRepo, sloPeriod)
 	kubeYAMLLoader := k8sprometheus.NewYAMLSpecLoader(pluginRepo, sloPeriod)
-	openSLOYAMLLoader := openslo.NewYAMLSpecLoader(sloPeriod)
+	openSLOYAMLLoader := storageio.NewOpenSLOYAMLSpecLoader(sloPeriod)
 
 	// Get SLO targets.
 	genTargets := []generateTarget{}

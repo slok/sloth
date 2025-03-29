@@ -33,10 +33,10 @@ func NewSlothPrometheusYAMLSpecLoader(pluginsRepo SLIPluginRepo, windowPeriod ti
 	}
 }
 
-var specTypeV1Regex = regexp.MustCompile(`(?m)^version: +['"]?prometheus/v1['"]?\r?\n? *$`)
+var slothPromSpecTypeV1Regex = regexp.MustCompile(`(?m)^version: +['"]?prometheus/v1['"]?\r?\n? *$`)
 
 func (l SlothPrometheusYAMLSpecLoader) IsSpecType(ctx context.Context, data []byte) bool {
-	return specTypeV1Regex.Match(data)
+	return slothPromSpecTypeV1Regex.Match(data)
 }
 
 func (l SlothPrometheusYAMLSpecLoader) LoadSpec(ctx context.Context, data []byte) (*model.PromSLOGroup, error) {

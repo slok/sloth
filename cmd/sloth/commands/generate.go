@@ -23,6 +23,7 @@ import (
 	"github.com/slok/sloth/internal/log"
 	"github.com/slok/sloth/internal/openslo"
 	"github.com/slok/sloth/internal/prometheus"
+	storageio "github.com/slok/sloth/internal/storage/io"
 	"github.com/slok/sloth/pkg/common/model"
 	kubernetesv1 "github.com/slok/sloth/pkg/kubernetes/api/sloth/v1"
 	prometheusv1 "github.com/slok/sloth/pkg/prometheus/api/v1"
@@ -322,10 +323,10 @@ func (g generator) GeneratePrometheus(ctx context.Context, slos prometheus.SLOGr
 		return err
 	}
 
-	repo := prometheus.NewIOWriterGroupedRulesYAMLRepo(out, g.logger)
-	storageSLOs := make([]prometheus.StorageSLO, 0, len(result.PrometheusSLOs))
+	repo := storageio.NewGroupedRulesYAMLRepo(out, g.logger)
+	storageSLOs := make([]storageio.StorageSLO, 0, len(result.PrometheusSLOs))
 	for _, s := range result.PrometheusSLOs {
-		storageSLOs = append(storageSLOs, prometheus.StorageSLO{
+		storageSLOs = append(storageSLOs, storageio.StorageSLO{
 			SLO:   s.SLO,
 			Rules: s.SLORules,
 		})
@@ -384,10 +385,10 @@ func (g generator) GenerateOpenSLO(ctx context.Context, slos prometheus.SLOGroup
 		return err
 	}
 
-	repo := prometheus.NewIOWriterGroupedRulesYAMLRepo(out, g.logger)
-	storageSLOs := make([]prometheus.StorageSLO, 0, len(result.PrometheusSLOs))
+	repo := storageio.NewGroupedRulesYAMLRepo(out, g.logger)
+	storageSLOs := make([]storageio.StorageSLO, 0, len(result.PrometheusSLOs))
 	for _, s := range result.PrometheusSLOs {
-		storageSLOs = append(storageSLOs, prometheus.StorageSLO{
+		storageSLOs = append(storageSLOs, storageio.StorageSLO{
 			SLO:   s.SLO,
 			Rules: s.SLORules,
 		})

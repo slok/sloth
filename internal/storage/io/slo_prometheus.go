@@ -1,4 +1,4 @@
-package prometheus
+package io
 
 import (
 	"context"
@@ -11,6 +11,7 @@ import (
 
 	"github.com/slok/sloth/internal/info"
 	"github.com/slok/sloth/internal/log"
+	"github.com/slok/sloth/pkg/common/model"
 )
 
 var (
@@ -19,29 +20,29 @@ var (
 	ErrNoSLORules = fmt.Errorf("0 SLO Prometheus rules generated")
 )
 
-func NewIOWriterGroupedRulesYAMLRepo(writer io.Writer, logger log.Logger) IOWriterGroupedRulesYAMLRepo {
-	return IOWriterGroupedRulesYAMLRepo{
+func NewGroupedRulesYAMLRepo(writer io.Writer, logger log.Logger) GroupedRulesYAMLRepo {
+	return GroupedRulesYAMLRepo{
 		writer: writer,
-		logger: logger.WithValues(log.Kv{"svc": "storage.IOWriter", "format": "yaml"}),
+		logger: logger.WithValues(log.Kv{"svc": "storageio.GroupedRulesYAMLRepo"}),
 	}
 }
 
-// IOWriterGroupedRulesYAMLRepo knows to store all the SLO rules (recordings and alerts)
+// GroupedRulesYAMLRepo knows to store all the SLO rules (recordings and alerts)
 // grouped in an IOWriter in YAML format, that is compatible with Prometheus.
-type IOWriterGroupedRulesYAMLRepo struct {
+type GroupedRulesYAMLRepo struct {
 	writer io.Writer
 	logger log.Logger
 }
 
 type StorageSLO struct {
-	SLO   SLO
-	Rules SLORules
+	SLO   model.PromSLO
+	Rules model.PromSLORules
 }
 
 // StoreSLOs will store the recording and alert prometheus rules, if grouped is false it will
 // split and store as 2 different groups the alerts and the recordings, if true
 // it will be save as a single group.
-func (i IOWriterGroupedRulesYAMLRepo) StoreSLOs(ctx context.Context, slos []StorageSLO) error {
+func (g GroupedRulesYAMLRepo) StoreSLOs(ctx context.Context, slos []StorageSLO) error {
 	if len(slos) == 0 {
 		return fmt.Errorf("slo rules required")
 	}
@@ -83,12 +84,12 @@ func (i IOWriterGroupedRulesYAMLRepo) StoreSLOs(ctx context.Context, slos []Stor
 	}
 
 	rulesYaml = writeTopDisclaimer(rulesYaml)
-	_, err = i.writer.Write(rulesYaml)
+	_, err = g.writer.Write(rulesYaml)
 	if err != nil {
 		return fmt.Errorf("could not write top disclaimer: %w", err)
 	}
 
-	logger := i.logger.WithCtxValues(ctx)
+	logger := g.logger.WithCtxValues(ctx)
 	logger.WithValues(log.Kv{"groups": len(ruleGroups.Groups)}).Infof("Prometheus rules written")
 
 	return nil

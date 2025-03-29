@@ -15,24 +15,24 @@ import (
 
 func TestGroupedRulesYAMLRepoStore(t *testing.T) {
 	tests := map[string]struct {
-		slos    []io.StorageSLO
+		slos    []io.StdPrometheusStorageSLO
 		expYAML string
 		expErr  bool
 	}{
 		"Having 0 SLO rules should fail.": {
-			slos:   []io.StorageSLO{},
+			slos:   []io.StdPrometheusStorageSLO{},
 			expErr: true,
 		},
 
 		"Having 0 SLO rules generated should fail.": {
-			slos: []io.StorageSLO{
+			slos: []io.StdPrometheusStorageSLO{
 				{},
 			},
 			expErr: true,
 		},
 
 		"Having a single SLI recording rule should render correctly.": {
-			slos: []io.StorageSLO{
+			slos: []io.StdPrometheusStorageSLO{
 				{
 					SLO: model.PromSLO{ID: "test1"},
 					Rules: model.PromSLORules{
@@ -61,7 +61,7 @@ groups:
 `,
 		},
 		"Having a single metadata recording rule should render correctly.": {
-			slos: []io.StorageSLO{
+			slos: []io.StdPrometheusStorageSLO{
 				{
 					SLO: model.PromSLO{ID: "test1"},
 					Rules: model.PromSLORules{
@@ -90,7 +90,7 @@ groups:
 `,
 		},
 		"Having a single SLO alert rule should render correctly.": {
-			slos: []io.StorageSLO{
+			slos: []io.StdPrometheusStorageSLO{
 				{
 					SLO: model.PromSLO{ID: "test1"},
 					Rules: model.PromSLORules{
@@ -123,7 +123,7 @@ groups:
 		},
 
 		"Having a multiple SLO alert and recording rules should render correctly.": {
-			slos: []io.StorageSLO{
+			slos: []io.StdPrometheusStorageSLO{
 				{
 					SLO: model.PromSLO{ID: "testa"},
 					Rules: model.PromSLORules{
@@ -264,7 +264,7 @@ groups:
 			assert := assert.New(t)
 
 			var gotYAML bytes.Buffer
-			repo := io.NewGroupedRulesYAMLRepo(&gotYAML, log.Noop)
+			repo := io.NewStdPrometheusGroupedRulesYAMLRepo(&gotYAML, log.Noop)
 			err := repo.StoreSLOs(context.TODO(), test.slos)
 
 			if test.expErr {

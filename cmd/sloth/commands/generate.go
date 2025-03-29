@@ -323,10 +323,10 @@ func (g generator) GeneratePrometheus(ctx context.Context, slos prometheus.SLOGr
 		return err
 	}
 
-	repo := storageio.NewGroupedRulesYAMLRepo(out, g.logger)
-	storageSLOs := make([]storageio.StorageSLO, 0, len(result.PrometheusSLOs))
+	repo := storageio.NewStdPrometheusGroupedRulesYAMLRepo(out, g.logger)
+	storageSLOs := make([]storageio.StdPrometheusStorageSLO, 0, len(result.PrometheusSLOs))
 	for _, s := range result.PrometheusSLOs {
-		storageSLOs = append(storageSLOs, storageio.StorageSLO{
+		storageSLOs = append(storageSLOs, storageio.StdPrometheusStorageSLO{
 			SLO:   s.SLO,
 			Rules: s.SLORules,
 		})
@@ -385,10 +385,10 @@ func (g generator) GenerateOpenSLO(ctx context.Context, slos prometheus.SLOGroup
 		return err
 	}
 
-	repo := storageio.NewGroupedRulesYAMLRepo(out, g.logger)
-	storageSLOs := make([]storageio.StorageSLO, 0, len(result.PrometheusSLOs))
+	repo := storageio.NewStdPrometheusGroupedRulesYAMLRepo(out, g.logger)
+	storageSLOs := make([]storageio.StdPrometheusStorageSLO, 0, len(result.PrometheusSLOs))
 	for _, s := range result.PrometheusSLOs {
-		storageSLOs = append(storageSLOs, storageio.StorageSLO{
+		storageSLOs = append(storageSLOs, storageio.StdPrometheusStorageSLO{
 			SLO:   s.SLO,
 			Rules: s.SLORules,
 		})

@@ -1,21 +1,18 @@
-package prometheus_test
+package sli_test
 
 import (
 	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
-	"github.com/slok/sloth/internal/prometheus"
-	"github.com/slok/sloth/internal/prometheus/prometheusmock"
+	"github.com/slok/sloth/internal/plugin/sli"
 )
 
 func TestSLIPluginLoader(t *testing.T) {
 	tests := map[string]struct {
 		pluginSrc   string
-		pluginID    string
 		meta        map[string]string
 		labels      map[string]string
 		options     map[string]string
@@ -113,26 +110,14 @@ func SLIPlugin(ctx context.Context, meta, labels, options map[string]string) (st
 			assert := assert.New(t)
 			require := require.New(t)
 
-			// Mock the plugin files.
-			mfm := &prometheusmock.FileManager{}
-			mfm.On("FindFiles", mock.Anything, "./", mock.Anything).Once().Return([]string{"testplugin/test.go"}, nil)
-			mfm.On("ReadFile", mock.Anything, "testplugin/test.go").Once().Return([]byte(test.pluginSrc), nil)
-
-			// Create repository and load plugins.
-			config := prometheus.FileSLIPluginRepoConfig{
-				FileManager: mfm,
-				Paths:       []string{"./"},
-			}
-			repo, err := prometheus.NewFileSLIPluginRepo(config)
-			if test.expErrLoad {
-				assert.Error(err)
-				return
-			}
-			assert.NoError(err)
-
 			// Get plugin.
-			plugin, err := repo.GetSLIPlugin(context.TODO(), test.expPluginID)
-			require.NoError(err)
+			plugin, err := sli.PluginLoader.LoadRawSLIPlugin(context.Background(), test.pluginSrc)
+			if test.expErrLoad {
+				require.Error(err)
+				return
+			} else {
+				assert.NoError(err)
+			}
 
 			// Check.
 			assert.Equal(test.expPluginID, plugin.ID)

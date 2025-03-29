@@ -1,4 +1,4 @@
-package prometheus
+package fs
 
 import (
 	"context"
@@ -9,20 +9,24 @@ import (
 	"regexp"
 	"sync"
 
-	"github.com/traefik/yaegi/interp"
-	"github.com/traefik/yaegi/stdlib"
-
 	"github.com/slok/sloth/internal/log"
-	pluginv1 "github.com/slok/sloth/pkg/prometheus/plugin/v1"
+	pluginsli "github.com/slok/sloth/internal/plugin/sli"
 )
 
+type SLIPluginLoader interface {
+	LoadRawSLIPlugin(ctx context.Context, src string) (*pluginsli.SLIPlugin, error)
+}
+
+//go:generate mockery --case underscore --output fsmock --outpkg fsmock --name SLIPluginLoader
+
 // FileManager knows how to manage files.
+// TODO(slok): Use fs.FS.
 type FileManager interface {
 	FindFiles(ctx context.Context, root string, matcher *regexp.Regexp) (paths []string, err error)
 	ReadFile(ctx context.Context, path string) (data []byte, err error)
 }
 
-//go:generate mockery --case underscore --output prometheusmock --outpkg prometheusmock --name FileManager
+//go:generate mockery --case underscore --output fsmock --outpkg fsmock --name FileManager
 
 type fileManager struct{}
 
@@ -55,20 +59,20 @@ func (f fileManager) ReadFile(_ context.Context, path string) ([]byte, error) {
 	return os.ReadFile(path)
 }
 
-type SLIPlugin struct {
-	ID   string
-	Func pluginv1.SLIPlugin
-}
-
 type FileSLIPluginRepoConfig struct {
-	FileManager FileManager
-	Paths       []string
-	Logger      log.Logger
+	FileManager  FileManager
+	Paths        []string
+	PluginLoader SLIPluginLoader
+	Logger       log.Logger
 }
 
 func (c *FileSLIPluginRepoConfig) defaults() error {
 	if c.FileManager == nil {
 		c.FileManager = fileManager{}
+	}
+
+	if c.PluginLoader == nil {
+		c.PluginLoader = pluginsli.PluginLoader
 	}
 
 	if c.Logger == nil {
@@ -87,7 +91,7 @@ func NewFileSLIPluginRepo(config FileSLIPluginRepoConfig) (*FileSLIPluginRepo, e
 
 	f := &FileSLIPluginRepo{
 		fileManager:  config.FileManager,
-		pluginLoader: sliPluginLoader{},
+		pluginLoader: config.PluginLoader,
 		paths:        config.Paths,
 		logger:       config.Logger,
 	}
@@ -115,10 +119,10 @@ func NewFileSLIPluginRepo(config FileSLIPluginRepoConfig) (*FileSLIPluginRepo, e
 // - Force keeping the plugins simple, small and without smart code.
 // - Force avoiding DRY in small plugins and embrace WET to have independent plugins.
 type FileSLIPluginRepo struct {
-	pluginLoader sliPluginLoader
+	pluginLoader SLIPluginLoader
 	fileManager  FileManager
 	paths        []string
-	plugins      map[string]SLIPlugin
+	plugins      map[string]pluginsli.SLIPlugin
 	mu           sync.RWMutex
 	logger       log.Logger
 }
@@ -140,7 +144,7 @@ func (f *FileSLIPluginRepo) Reload(ctx context.Context) error {
 	}
 
 	// Load the plugins.
-	plugins := map[string]SLIPlugin{}
+	plugins := map[string]pluginsli.SLIPlugin{}
 	for path := range paths {
 		pluginData, err := f.fileManager.ReadFile(ctx, path)
 		if err != nil {
@@ -173,14 +177,14 @@ func (f *FileSLIPluginRepo) Reload(ctx context.Context) error {
 	return nil
 }
 
-func (f *FileSLIPluginRepo) ListSLIPlugins(ctx context.Context) (map[string]SLIPlugin, error) {
+func (f *FileSLIPluginRepo) ListSLIPlugins(ctx context.Context) (map[string]pluginsli.SLIPlugin, error) {
 	f.mu.RLock()
 	defer f.mu.RUnlock()
 
 	return f.plugins, nil
 }
 
-func (f *FileSLIPluginRepo) GetSLIPlugin(ctx context.Context, id string) (*SLIPlugin, error) {
+func (f *FileSLIPluginRepo) GetSLIPlugin(ctx context.Context, id string) (*pluginsli.SLIPlugin, error) {
 	f.mu.RLock()
 	defer f.mu.RUnlock()
 
@@ -190,86 +194,4 @@ func (f *FileSLIPluginRepo) GetSLIPlugin(ctx context.Context, id string) (*SLIPl
 	}
 
 	return &p, nil
-}
-
-// sliPluginLoader knows how to load Go SLI plugins using Yaegi.
-type sliPluginLoader struct{}
-
-var packageRegexp = regexp.MustCompile(`(?m)^package +([^\s]+) *$`)
-
-// LoadRawSLIPlugin knows how to load plugins using Yaegi from source data not files,
-// thats why, this implementation will not support any import library except standard
-// library.
-//
-// The load process will search for:
-// - A function called `SLIPlugin` to obtain the plugin func.
-// - A constant called `SLIPluginID` to obtain the plugin ID.
-// - A constant called `SLIPluginVersion` to obtain the plugin version.
-func (s sliPluginLoader) LoadRawSLIPlugin(ctx context.Context, src string) (*SLIPlugin, error) {
-	// Load the plugin in a new interpreter.
-	// For each plugin we need to use an independent interpreter to avoid name collisions.
-	yaegiInterp, err := s.newYaeginInterpreter()
-	if err != nil {
-		return nil, fmt.Errorf("could not create a new Yaegi interpreter: %w", err)
-	}
-
-	_, err = yaegiInterp.EvalWithContext(ctx, src)
-	if err != nil {
-		return nil, fmt.Errorf("could not evaluate plugin source code: %w", err)
-	}
-
-	// Discover package name.
-	packageMatch := packageRegexp.FindStringSubmatch(src)
-	if len(packageMatch) != 2 {
-		return nil, fmt.Errorf("invalid plugin source code, could not get package name")
-	}
-	packageName := packageMatch[1]
-
-	// Get plugin version and check if is a known one.
-	pluginVerTmp, err := yaegiInterp.EvalWithContext(ctx, fmt.Sprintf("%s.SLIPluginVersion", packageName))
-	if err != nil {
-		return nil, fmt.Errorf("could not get plugin version: %w", err)
-	}
-
-	pluginVer, ok := pluginVerTmp.Interface().(pluginv1.SLIPluginVersion)
-	if !ok || (pluginVer != pluginv1.Version) {
-		return nil, fmt.Errorf("unsuported plugin version: %s", pluginVer)
-	}
-
-	// Get plugin ID.
-	pluginIDTmp, err := yaegiInterp.EvalWithContext(ctx, fmt.Sprintf("%s.SLIPluginID", packageName))
-	if err != nil {
-		return nil, fmt.Errorf("could not get plugin ID: %w", err)
-	}
-
-	pluginID, ok := pluginIDTmp.Interface().(pluginv1.SLIPluginID)
-	if !ok {
-		return nil, fmt.Errorf("invalid SLI plugin ID type")
-	}
-
-	// Get plugin logic.
-	pluginFuncTmp, err := yaegiInterp.EvalWithContext(ctx, fmt.Sprintf("%s.SLIPlugin", packageName))
-	if err != nil {
-		return nil, fmt.Errorf("could not get plugin: %w", err)
-	}
-
-	pluginFunc, ok := pluginFuncTmp.Interface().(pluginv1.SLIPlugin)
-	if !ok {
-		return nil, fmt.Errorf("invalid SLI plugin type")
-	}
-
-	return &SLIPlugin{
-		ID:   pluginID,
-		Func: pluginFunc,
-	}, nil
-}
-
-func (s sliPluginLoader) newYaeginInterpreter() (*interp.Interpreter, error) {
-	i := interp.New(interp.Options{})
-	err := i.Use(stdlib.Symbols)
-	if err != nil {
-		return nil, fmt.Errorf("could not use stdlib symbols: %w", err)
-	}
-
-	return i, nil
 }

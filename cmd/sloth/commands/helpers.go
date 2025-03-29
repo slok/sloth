@@ -10,7 +10,8 @@ import (
 	"strings"
 
 	"github.com/slok/sloth/internal/log"
-	"github.com/slok/sloth/internal/prometheus"
+	pluginsli "github.com/slok/sloth/internal/plugin/sli"
+	storagefs "github.com/slok/sloth/internal/storage/fs"
 )
 
 var (
@@ -38,12 +39,13 @@ func splitYAML(data []byte) []string {
 	return nonEmptyData
 }
 
-func createPluginLoader(ctx context.Context, logger log.Logger, paths []string) (*prometheus.FileSLIPluginRepo, error) {
-	config := prometheus.FileSLIPluginRepoConfig{
-		Paths:  paths,
-		Logger: logger,
+func createPluginLoader(ctx context.Context, logger log.Logger, paths []string) (*storagefs.FileSLIPluginRepo, error) {
+	config := storagefs.FileSLIPluginRepoConfig{
+		Paths:        paths,
+		PluginLoader: pluginsli.PluginLoader,
+		Logger:       logger,
 	}
-	sliPluginRepo, err := prometheus.NewFileSLIPluginRepo(config)
+	sliPluginRepo, err := storagefs.NewFileSLIPluginRepo(config)
 	if err != nil {
 		return nil, fmt.Errorf("could not create file SLI plugin repository: %w", err)
 	}

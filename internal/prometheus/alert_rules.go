@@ -10,6 +10,7 @@ import (
 
 	"github.com/slok/sloth/pkg/common/conventions"
 	"github.com/slok/sloth/pkg/common/model"
+	utilsdata "github.com/slok/sloth/pkg/common/utils/data"
 	promutils "github.com/slok/sloth/pkg/common/utils/prometheus"
 )
 
@@ -102,8 +103,8 @@ func defaultSLOAlertGenerator(slo SLO, sloAlert AlertMeta, quick, slow model.MWM
 	return &rulefmt.Rule{
 		Alert:       sloAlert.Name,
 		Expr:        expr.String(),
-		Annotations: mergeLabels(extraAnnotations, sloAlert.Annotations),
-		Labels:      mergeLabels(extraLabels, sloAlert.Labels),
+		Annotations: utilsdata.MergeLabels(extraAnnotations, sloAlert.Annotations),
+		Labels:      utilsdata.MergeLabels(extraLabels, sloAlert.Labels),
 	}, nil
 }
 

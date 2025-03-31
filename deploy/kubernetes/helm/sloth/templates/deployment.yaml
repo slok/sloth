@@ -33,7 +33,7 @@ spec:
       {{- end }}
       containers:
         - name: sloth
-          image: {{ .Values.image.repository }}:{{ .Values.image.tag }}
+          image: {{ coalesce .Values.global.imageRegistry .Values.image.registry }}/{{ .Values.image.repository }}:{{ .Values.image.tag }}
           args:
             - kubernetes-controller
             {{- if .Values.sloth.resyncInterval }}

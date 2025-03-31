@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Changed
+
+- Split image registry and repository in Helm chart
+
 ### Added
 
 - Sloth domain models can be imported in Go apps using `github.com/slok/sloth/pkg/common/model`.

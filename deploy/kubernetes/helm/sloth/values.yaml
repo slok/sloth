@@ -1,7 +1,11 @@
+global:
+  imageRegistry: "" # This field cannot be empty if image.registry is also empty.
+
 labels: {}
 
 image:
-  repository: ghcr.io/slok/sloth
+  registry: ghcr.io # This field cannot be empty if global.imageRegistry is also empty.
+  repository: slok/sloth
   tag: v0.12.0
 
 # -- Container resources: requests and limits for CPU, Memory

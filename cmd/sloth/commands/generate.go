@@ -133,7 +133,7 @@ func (g generateCommand) Run(ctx context.Context, config RootConfig) error {
 
 	// Create Spec loaders.
 	promYAMLLoader := storageio.NewSlothPrometheusYAMLSpecLoader(pluginRepo, sloPeriod)
-	kubeYAMLLoader := k8sprometheus.NewYAMLSpecLoader(pluginRepo, sloPeriod)
+	kubeYAMLLoader := storageio.NewK8sSlothPrometheusYAMLSpecLoader(pluginRepo, sloPeriod)
 	openSLOYAMLLoader := storageio.NewOpenSLOYAMLSpecLoader(sloPeriod)
 
 	// Get SLO targets.
@@ -340,7 +340,7 @@ func (g generator) GeneratePrometheus(ctx context.Context, slos prometheus.SLOGr
 }
 
 // generateKubernetes generates the SLOs based on a Kuberentes spec format input and outs a Kubernetes prometheus operator CRD yaml.
-func (g generator) GenerateKubernetes(ctx context.Context, sloGroup k8sprometheus.SLOGroup, out io.Writer) error {
+func (g generator) GenerateKubernetes(ctx context.Context, sloGroup model.PromSLOGroup, out io.Writer) error {
 	g.logger.Infof("Generating from Kubernetes Prometheus spec")
 
 	info := model.Info{
@@ -348,7 +348,7 @@ func (g generator) GenerateKubernetes(ctx context.Context, sloGroup k8sprometheu
 		Mode:    model.ModeCLIGenKubernetes,
 		Spec:    fmt.Sprintf("%s/%s", kubernetesv1.SchemeGroupVersion.Group, kubernetesv1.SchemeGroupVersion.Version),
 	}
-	result, err := g.generateRules(ctx, info, sloGroup.SLOGroup)
+	result, err := g.generateRules(ctx, info, sloGroup)
 	if err != nil {
 		return err
 	}
@@ -362,7 +362,17 @@ func (g generator) GenerateKubernetes(ctx context.Context, sloGroup k8sprometheu
 		})
 	}
 
-	err = repo.StoreSLOs(ctx, sloGroup.K8sMeta, storageSLOs)
+	kmeta := k8sprometheus.K8sMeta{
+		Kind:        "PrometheusServiceLevel",
+		APIVersion:  "sloth.slok.dev/v1",
+		UID:         string(sloGroup.OriginalSource.K8sSlothV1.UID),
+		Name:        sloGroup.OriginalSource.K8sSlothV1.Name,
+		Namespace:   sloGroup.OriginalSource.K8sSlothV1.Namespace,
+		Labels:      sloGroup.OriginalSource.K8sSlothV1.Labels,
+		Annotations: sloGroup.OriginalSource.K8sSlothV1.Annotations,
+	}
+
+	err = repo.StoreSLOs(ctx, kmeta, storageSLOs)
 	if err != nil {
 		return fmt.Errorf("could not store SLOS: %w", err)
 	}

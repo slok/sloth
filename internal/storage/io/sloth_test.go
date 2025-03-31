@@ -11,6 +11,8 @@ import (
 	pluginsli "github.com/slok/sloth/internal/plugin/sli"
 	"github.com/slok/sloth/internal/prometheus"
 	"github.com/slok/sloth/internal/storage/io"
+	"github.com/slok/sloth/pkg/common/model"
+	v1 "github.com/slok/sloth/pkg/prometheus/api/v1"
 )
 
 type testMemPluginsRepo map[string]pluginsli.SLIPlugin
@@ -167,7 +169,27 @@ slos:
 					PageAlertMeta:   prometheus.AlertMeta{Disable: true},
 					TicketAlertMeta: prometheus.AlertMeta{Disable: true},
 				},
-			}},
+			},
+				OriginalSource: model.PromSLOGroupSource{SlothV1: &v1.Spec{
+					Version: "prometheus/v1",
+					Service: "test-svc",
+					Labels:  map[string]string{"gk1": "gv1"},
+					SLOs: []v1.SLO{
+						{
+							Name:      "slo-test",
+							Objective: 99,
+							SLI: v1.SLI{Plugin: &v1.SLIPlugin{ID: "test_plugin", Options: map[string]string{
+								"k1": "v1",
+								"k2": "true",
+							}}},
+							Alerting: v1.Alerting{
+								PageAlert:   v1.Alert{Disable: true},
+								TicketAlert: v1.Alert{Disable: true},
+							},
+						},
+					},
+				}},
+			},
 		},
 
 		"Spec with different time window should use the specific time window.": {
@@ -205,7 +227,24 @@ slos:
 					PageAlertMeta:   prometheus.AlertMeta{Disable: true},
 					TicketAlertMeta: prometheus.AlertMeta{Disable: true},
 				},
-			}},
+			},
+				OriginalSource: model.PromSLOGroupSource{SlothV1: &v1.Spec{
+					Version: "prometheus/v1",
+					Service: "test-svc",
+					Labels:  map[string]string{"gk1": "gv1"},
+					SLOs: []v1.SLO{
+						{
+							Name:      "slo-test",
+							Objective: 99,
+							SLI:       v1.SLI{Raw: &v1.SLIRaw{ErrorRatioQuery: "test_expr_ratio_2"}},
+							Alerting: v1.Alerting{Name: "",
+								PageAlert:   v1.Alert{Disable: true},
+								TicketAlert: v1.Alert{Disable: true},
+							},
+						},
+					},
+				}},
+			},
 		},
 
 		"Correct spec should return the models correctly.": {
@@ -319,7 +358,53 @@ slos:
 					PageAlertMeta:   prometheus.AlertMeta{Disable: true},
 					TicketAlertMeta: prometheus.AlertMeta{Disable: true},
 				},
-			}},
+			},
+				OriginalSource: model.PromSLOGroupSource{SlothV1: &v1.Spec{
+					Version: "prometheus/v1",
+					Service: "test-svc",
+					Labels:  map[string]string{"owner": "myteam"},
+					SLOs: []v1.SLO{
+						{
+							Name:        "slo1",
+							Description: "This is a test.",
+							Objective:   99.99,
+							Labels: map[string]string{
+								"category": "test",
+							},
+							SLI: v1.SLI{
+								Events: &v1.SLIEvents{
+									ErrorQuery: `test_expr_error_1`,
+									TotalQuery: `test_expr_total_1`,
+								},
+							},
+							Alerting: v1.Alerting{Name: "testAlert",
+								Labels:      map[string]string{"tier": "1"},
+								Annotations: map[string]string{"runbook": "http://whatever.com"},
+								PageAlert: v1.Alert{
+									Labels:      map[string]string{"channel": "#a-myteam", "severity": "slack"},
+									Annotations: map[string]string{"message": "This is very important."},
+								},
+								TicketAlert: v1.Alert{
+									Labels:      map[string]string{"channel": "#a-not-so-important", "severity": "slack"},
+									Annotations: map[string]string{"message": "This is not very important."},
+								},
+							},
+						},
+						{
+							Name:      "slo2",
+							Objective: 99.9,
+							Labels: map[string]string{
+								"category": "test2",
+							},
+							SLI: v1.SLI{Raw: &v1.SLIRaw{ErrorRatioQuery: "test_expr_ratio_2"}},
+							Alerting: v1.Alerting{Name: "",
+								PageAlert:   v1.Alert{Disable: true},
+								TicketAlert: v1.Alert{Disable: true},
+							},
+						},
+					},
+				}},
+			},
 		},
 	}
 

@@ -19,6 +19,17 @@ import (
 	"github.com/slok/sloth/internal/prometheus"
 )
 
+// K8sMeta is the Kubernetes metadata simplified.
+type K8sMeta struct {
+	Kind        string `validate:"required"`
+	APIVersion  string `validate:"required"`
+	Name        string `validate:"required"`
+	UID         string
+	Namespace   string
+	Annotations map[string]string
+	Labels      map[string]string
+}
+
 var (
 	// ErrNoSLORules will be used when there are no rules to store. The upper layer
 	// could ignore or handle the error in cases where there wasn't an output.

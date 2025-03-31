@@ -17,8 +17,8 @@ func customValues() msi {
 		},
 
 		"image": msi{
-			"registry":   "",
-			"repository": "slok/sloth-test",
+			"registry":   "slok",
+			"repository": "sloth-test",
 			"tag":        "v1.42.42",
 		},
 

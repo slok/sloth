@@ -48,24 +48,24 @@ func (r StdPrometheusGroupedRulesYAMLRepo) StoreSLOs(ctx context.Context, slos [
 
 	ruleGroups := stdPromRuleGroupsYAMLv2{}
 	for _, slo := range slos {
-		if len(slo.Rules.SLIErrorRecRules) > 0 {
+		if len(slo.Rules.SLIErrorRecRules.Rules) > 0 {
 			ruleGroups.Groups = append(ruleGroups.Groups, stdPromRuleGroupYAMLv2{
 				Name:  fmt.Sprintf("sloth-slo-sli-recordings-%s", slo.SLO.ID),
-				Rules: slo.Rules.SLIErrorRecRules,
+				Rules: slo.Rules.SLIErrorRecRules.Rules,
 			})
 		}
 
-		if len(slo.Rules.MetadataRecRules) > 0 {
+		if len(slo.Rules.MetadataRecRules.Rules) > 0 {
 			ruleGroups.Groups = append(ruleGroups.Groups, stdPromRuleGroupYAMLv2{
 				Name:  fmt.Sprintf("sloth-slo-meta-recordings-%s", slo.SLO.ID),
-				Rules: slo.Rules.MetadataRecRules,
+				Rules: slo.Rules.MetadataRecRules.Rules,
 			})
 		}
 
-		if len(slo.Rules.AlertRules) > 0 {
+		if len(slo.Rules.AlertRules.Rules) > 0 {
 			ruleGroups.Groups = append(ruleGroups.Groups, stdPromRuleGroupYAMLv2{
 				Name:  fmt.Sprintf("sloth-slo-alerts-%s", slo.SLO.ID),
-				Rules: slo.Rules.AlertRules,
+				Rules: slo.Rules.AlertRules.Rules,
 			})
 		}
 	}

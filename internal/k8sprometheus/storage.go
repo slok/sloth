@@ -106,24 +106,24 @@ func mapModelToPrometheusOperator(ctx context.Context, kmeta K8sMeta, slos []Sto
 	}
 
 	for _, slo := range slos {
-		if len(slo.Rules.SLIErrorRecRules) > 0 {
+		if len(slo.Rules.SLIErrorRecRules.Rules) > 0 {
 			rule.Spec.Groups = append(rule.Spec.Groups, monitoringv1.RuleGroup{
 				Name:  fmt.Sprintf("sloth-slo-sli-recordings-%s", slo.SLO.ID),
-				Rules: promRulesToKubeRules(slo.Rules.SLIErrorRecRules),
+				Rules: promRulesToKubeRules(slo.Rules.SLIErrorRecRules.Rules),
 			})
 		}
 
-		if len(slo.Rules.MetadataRecRules) > 0 {
+		if len(slo.Rules.MetadataRecRules.Rules) > 0 {
 			rule.Spec.Groups = append(rule.Spec.Groups, monitoringv1.RuleGroup{
 				Name:  fmt.Sprintf("sloth-slo-meta-recordings-%s", slo.SLO.ID),
-				Rules: promRulesToKubeRules(slo.Rules.MetadataRecRules),
+				Rules: promRulesToKubeRules(slo.Rules.MetadataRecRules.Rules),
 			})
 		}
 
-		if len(slo.Rules.AlertRules) > 0 {
+		if len(slo.Rules.AlertRules.Rules) > 0 {
 			rule.Spec.Groups = append(rule.Spec.Groups, monitoringv1.RuleGroup{
 				Name:  fmt.Sprintf("sloth-slo-alerts-%s", slo.SLO.ID),
-				Rules: promRulesToKubeRules(slo.Rules.AlertRules),
+				Rules: promRulesToKubeRules(slo.Rules.AlertRules.Rules),
 			})
 		}
 	}

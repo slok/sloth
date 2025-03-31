@@ -8,11 +8,16 @@ func defaultValues() msi {
 
 func customValues() msi {
 	return msi{
+		"global": msi{
+			"imageRegistry": "",
+		},
+
 		"labels": msi{
 			"label-from": "test",
 		},
 
 		"image": msi{
+			"registry":   "",
 			"repository": "slok/sloth-test",
 			"tag":        "v1.42.42",
 		},

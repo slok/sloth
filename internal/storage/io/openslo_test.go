@@ -5,10 +5,13 @@ import (
 	"testing"
 	"time"
 
+	"github.com/OpenSLO/oslo/pkg/manifest"
+	"github.com/OpenSLO/oslo/pkg/manifest/v1alpha"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/slok/sloth/internal/prometheus"
 	"github.com/slok/sloth/internal/storage/io"
+	"github.com/slok/sloth/pkg/common/model"
 )
 
 func TestOpenSLOYAMLSpecLoader(t *testing.T) {
@@ -269,7 +272,54 @@ spec:
 					PageAlertMeta:   prometheus.AlertMeta{Disable: true},
 					TicketAlertMeta: prometheus.AlertMeta{Disable: true},
 				},
-			}},
+			},
+				OriginalSource: model.PromSLOGroupSource{OpenSLOV1Alpha: &v1alpha.SLO{
+					ObjectHeader: v1alpha.ObjectHeader{
+						ObjectHeader:   manifest.ObjectHeader{APIVersion: "openslo/v1alpha"},
+						Kind:           "SLO",
+						MetadataHolder: v1alpha.MetadataHolder{Metadata: v1alpha.Metadata{Name: "ratio", DisplayName: "Ratio"}}},
+					Spec: v1alpha.SLOSpec{
+						TimeWindows:     []v1alpha.TimeWindow{{Unit: "Day", Count: 28, IsRolling: true}},
+						BudgetingMethod: "Timeslices",
+						Description:     "A great description of a ratio based SLO",
+						Service:         "my-test-service",
+						Objectives: []v1alpha.Objective{
+							{
+								ObjectiveBase: v1alpha.ObjectiveBase{DisplayName: "painful"},
+								RatioMetrics: &v1alpha.RatioMetrics{
+									Good: v1alpha.MetricSourceSpec{
+										Source:    "prometheus",
+										QueryType: "promql",
+										Query:     `latency_west_c7{code="GOOD",instance="localhost:3000",job="prometheus",service="globacount"}`,
+									},
+									Total: v1alpha.MetricSourceSpec{
+										Source:    "prometheus",
+										QueryType: "promql",
+										Query:     `latency_west_c7{code="ALL",instance="localhost:3000",job="prometheus",service="globacount"}`,
+									},
+								},
+								BudgetTarget: &[]float64{0.98}[0],
+							},
+							{
+								ObjectiveBase: v1alpha.ObjectiveBase{DisplayName: "painful"},
+								RatioMetrics: &v1alpha.RatioMetrics{
+									Good: v1alpha.MetricSourceSpec{
+										Source:    "prometheus",
+										QueryType: "promql",
+										Query:     `latency_west_c7{code="GOOD",instance="localhost:3000",job="prometheus",service="globacount"}`,
+									},
+									Total: v1alpha.MetricSourceSpec{
+										Source:    "prometheus",
+										QueryType: "promql",
+										Query:     `latency_west_c7{code="ALL",instance="localhost:3000",job="prometheus",service="globacount"}`,
+									},
+								},
+								BudgetTarget: &[]float64{0.999}[0],
+							},
+						},
+					},
+				}},
+			},
 		},
 	}
 

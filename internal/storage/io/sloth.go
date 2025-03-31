@@ -139,5 +139,8 @@ func (l SlothPrometheusYAMLSpecLoader) mapSpecToModel(ctx context.Context, spec 
 		models = append(models, slo)
 	}
 
-	return &model.PromSLOGroup{SLOs: models}, nil
+	return &model.PromSLOGroup{
+		SLOs:           models,
+		OriginalSource: model.PromSLOGroupSource{SlothV1: &spec},
+	}, nil
 }

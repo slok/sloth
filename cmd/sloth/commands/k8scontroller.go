@@ -36,6 +36,7 @@ import (
 	"github.com/slok/sloth/internal/k8sprometheus"
 	"github.com/slok/sloth/internal/log"
 	"github.com/slok/sloth/internal/prometheus"
+	storageio "github.com/slok/sloth/internal/storage/io"
 	slothv1 "github.com/slok/sloth/pkg/kubernetes/api/sloth/v1"
 	slothclientset "github.com/slok/sloth/pkg/kubernetes/gen/clientset/versioned"
 )
@@ -319,7 +320,7 @@ func (k kubeControllerCommand) Run(ctx context.Context, config RootConfig) error
 		// Create handler.
 		config := kubecontroller.HandlerConfig{
 			Generator:        generator,
-			SpecLoader:       k8sprometheus.NewCRSpecLoader(pluginRepo, sloPeriod),
+			SpecLoader:       storageio.NewK8sSlothPrometheusCRSpecLoader(pluginRepo, sloPeriod),
 			Repository:       k8sprometheus.NewPrometheusOperatorCRDRepo(ksvc, logger),
 			KubeStatusStorer: ksvc,
 			ExtraLabels:      k.extraLabels,

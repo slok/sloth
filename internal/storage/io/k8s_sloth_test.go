@@ -1,4 +1,4 @@
-package k8sprometheus_test
+package io_test
 
 import (
 	"context"
@@ -7,27 +7,20 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	"github.com/slok/sloth/internal/k8sprometheus"
 	pluginsli "github.com/slok/sloth/internal/plugin/sli"
 	"github.com/slok/sloth/internal/prometheus"
+	"github.com/slok/sloth/internal/storage/io"
+	"github.com/slok/sloth/pkg/common/model"
+	kubeslothv1 "github.com/slok/sloth/pkg/kubernetes/api/sloth/v1"
 )
 
-type testMemPluginsRepo map[string]pluginsli.SLIPlugin
-
-func (t testMemPluginsRepo) GetSLIPlugin(ctx context.Context, id string) (*pluginsli.SLIPlugin, error) {
-	p, ok := t[id]
-	if !ok {
-		return nil, fmt.Errorf("unknown plugin")
-	}
-	return &p, nil
-}
-
-func TestYAMLoadSpec(t *testing.T) {
+func TestK8sSlothPrometheusYAMLSpecLoader(t *testing.T) {
 	tests := map[string]struct {
 		specYaml string
 		plugins  map[string]pluginsli.SLIPlugin
-		expModel *k8sprometheus.SLOGroup
+		expModel *model.PromSLOGroup
 		expErr   bool
 	}{
 		"Empty spec should fail.": {
@@ -154,29 +147,44 @@ spec:
         ticketAlert:
           disable: true
 `,
-			expModel: &k8sprometheus.SLOGroup{
-				K8sMeta: k8sprometheus.K8sMeta{
-					Kind:       "PrometheusServiceLevel",
-					APIVersion: "sloth.slok.dev/v1",
-					UID:        "",
-					Name:       "k8s-test-svc",
-					Namespace:  "test-ns",
+			expModel: &model.PromSLOGroup{SLOs: []prometheus.SLO{
+				{
+					ID:         "test-svc-slo-test",
+					Name:       "slo-test",
+					Service:    "test-svc",
+					TimeWindow: 30 * 24 * time.Hour,
+					Labels:     map[string]string{"gk1": "gv1"},
+					SLI: prometheus.SLI{
+						Raw: &prometheus.SLIRaw{
+							ErrorRatioQuery: `plugin_raw_expr{service="test-svc",slo="slo-test",objective="99.000000",gk1="gv1",k1="v1",k2="true"}`,
+						},
+					},
+					Objective:       99,
+					PageAlertMeta:   prometheus.AlertMeta{Disable: true},
+					TicketAlertMeta: prometheus.AlertMeta{Disable: true},
 				},
-				SLOGroup: prometheus.SLOGroup{SLOs: []prometheus.SLO{
-					{
-						ID:         "test-svc-slo-test",
-						Name:       "slo-test",
-						Service:    "test-svc",
-						TimeWindow: 30 * 24 * time.Hour,
-						Labels:     map[string]string{"gk1": "gv1"},
-						SLI: prometheus.SLI{
-							Raw: &prometheus.SLIRaw{
-								ErrorRatioQuery: `plugin_raw_expr{service="test-svc",slo="slo-test",objective="99.000000",gk1="gv1",k1="v1",k2="true"}`,
+			},
+				OriginalSource: model.PromSLOGroupSource{K8sSlothV1: &kubeslothv1.PrometheusServiceLevel{
+					TypeMeta: metav1.TypeMeta{Kind: "PrometheusServiceLevel", APIVersion: "sloth.slok.dev/v1"},
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "k8s-test-svc",
+						Namespace: "test-ns",
+					},
+					Spec: kubeslothv1.PrometheusServiceLevelSpec{
+						Service: "test-svc",
+						Labels:  map[string]string{"gk1": "gv1"},
+						SLOs: []kubeslothv1.SLO{
+							{Name: "slo-test", Description: "", Objective: 99,
+								SLI: kubeslothv1.SLI{Plugin: &kubeslothv1.SLIPlugin{ID: "test_plugin", Options: map[string]string{
+									"k1": "v1",
+									"k2": "true",
+								}}},
+								Alerting: kubeslothv1.Alerting{
+									PageAlert:   kubeslothv1.Alert{Disable: true},
+									TicketAlert: kubeslothv1.Alert{Disable: true},
+								},
 							},
 						},
-						Objective:       99,
-						PageAlertMeta:   prometheus.AlertMeta{Disable: true},
-						TicketAlertMeta: prometheus.AlertMeta{Disable: true},
 					},
 				}},
 			},
@@ -272,81 +280,111 @@ spec:
         ticketAlert:
           disable: true
 `,
-			expModel: &k8sprometheus.SLOGroup{
-				K8sMeta: k8sprometheus.K8sMeta{
-					Kind:        "PrometheusServiceLevel",
-					APIVersion:  "sloth.slok.dev/v1",
-					UID:         "",
-					Name:        "k8s-test-svc",
-					Namespace:   "test-ns",
-					Labels:      map[string]string{"lk1": "lv1", "lk2": "lv2"},
-					Annotations: map[string]string{"ak1": "av1", "ak2": "av2"},
-				},
-				SLOGroup: prometheus.SLOGroup{SLOs: []prometheus.SLO{
-					{
-						ID:          "test-svc-slo1",
-						Name:        "slo1",
-						Description: "This is a test.",
-						Service:     "test-svc",
-						TimeWindow:  30 * 24 * time.Hour,
-						SLI: prometheus.SLI{
-							Events: &prometheus.SLIEvents{
-								ErrorQuery: "test_expr_error_1",
-								TotalQuery: "test_expr_total_1",
-							},
+			expModel: &model.PromSLOGroup{SLOs: []prometheus.SLO{
+				{
+					ID:          "test-svc-slo1",
+					Name:        "slo1",
+					Description: "This is a test.",
+					Service:     "test-svc",
+					TimeWindow:  30 * 24 * time.Hour,
+					SLI: prometheus.SLI{
+						Events: &prometheus.SLIEvents{
+							ErrorQuery: "test_expr_error_1",
+							TotalQuery: "test_expr_total_1",
 						},
-						Objective: 99.99999,
+					},
+					Objective: 99.99999,
+					Labels: map[string]string{
+						"owner":    "myteam",
+						"category": "test",
+					},
+					PageAlertMeta: prometheus.AlertMeta{
+						Disable: false,
+						Name:    "testAlert",
 						Labels: map[string]string{
-							"owner":    "myteam",
-							"category": "test",
+							"tier":     "1",
+							"severity": "slack",
+							"channel":  "#a-myteam",
 						},
-						PageAlertMeta: prometheus.AlertMeta{
-							Disable: false,
-							Name:    "testAlert",
-							Labels: map[string]string{
-								"tier":     "1",
-								"severity": "slack",
-								"channel":  "#a-myteam",
-							},
-							Annotations: map[string]string{
-								"message": "This is very important.",
-								"runbook": "http://whatever.com",
-							},
+						Annotations: map[string]string{
+							"message": "This is very important.",
+							"runbook": "http://whatever.com",
 						},
-						TicketAlertMeta: prometheus.AlertMeta{
-							Disable: false,
-							Name:    "testAlert",
-							Labels: map[string]string{
-								"tier":     "1",
-								"severity": "slack",
-								"channel":  "#a-not-so-important",
+					},
+					TicketAlertMeta: prometheus.AlertMeta{
+						Disable: false,
+						Name:    "testAlert",
+						Labels: map[string]string{
+							"tier":     "1",
+							"severity": "slack",
+							"channel":  "#a-not-so-important",
+						},
+						Annotations: map[string]string{
+							"message": "This is not very important.",
+							"runbook": "http://whatever.com",
+						},
+					},
+				},
+				{
+					ID:         "test-svc-slo2",
+					Name:       "slo2",
+					Service:    "test-svc",
+					TimeWindow: 30 * 24 * time.Hour,
+					SLI: prometheus.SLI{
+						Raw: &prometheus.SLIRaw{
+							ErrorRatioQuery: "test_expr_ratio_2",
+						},
+					},
+					Objective: 99.9,
+					Labels: map[string]string{
+						"owner":    "myteam",
+						"category": "test2",
+					},
+					PageAlertMeta:   prometheus.AlertMeta{Disable: true},
+					TicketAlertMeta: prometheus.AlertMeta{Disable: true},
+				},
+			},
+				OriginalSource: model.PromSLOGroupSource{K8sSlothV1: &kubeslothv1.PrometheusServiceLevel{
+					TypeMeta: metav1.TypeMeta{Kind: "PrometheusServiceLevel", APIVersion: "sloth.slok.dev/v1"},
+					ObjectMeta: metav1.ObjectMeta{
+						Name:        "k8s-test-svc",
+						Namespace:   "test-ns",
+						Labels:      map[string]string{"lk1": "lv1", "lk2": "lv2"},
+						Annotations: map[string]string{"ak1": "av1", "ak2": "av2"},
+					},
+					Spec: kubeslothv1.PrometheusServiceLevelSpec{
+						Service: "test-svc",
+						Labels:  map[string]string{"owner": "myteam"},
+						SLOs: []kubeslothv1.SLO{
+							{Name: "slo1", Description: "This is a test.", Objective: 99.99999, Labels: map[string]string{"category": "test"},
+								SLI: kubeslothv1.SLI{Events: &kubeslothv1.SLIEvents{
+									ErrorQuery: "test_expr_error_1",
+									TotalQuery: "test_expr_total_1",
+								}},
+								Alerting: kubeslothv1.Alerting{
+									Name:        "testAlert",
+									Labels:      map[string]string{"tier": "1"},
+									Annotations: map[string]string{"runbook": "http://whatever.com"},
+									PageAlert: kubeslothv1.Alert{
+										Labels:      map[string]string{"channel": "#a-myteam", "severity": "slack"},
+										Annotations: map[string]string{"message": "This is very important."},
+									},
+									TicketAlert: kubeslothv1.Alert{
+										Labels:      map[string]string{"channel": "#a-not-so-important", "severity": "slack"},
+										Annotations: map[string]string{"message": "This is not very important."},
+									},
+								},
 							},
-							Annotations: map[string]string{
-								"message": "This is not very important.",
-								"runbook": "http://whatever.com",
+							{Name: "slo2", Objective: 99.9, Labels: map[string]string{"category": "test2"},
+								SLI: kubeslothv1.SLI{Raw: &kubeslothv1.SLIRaw{ErrorRatioQuery: "test_expr_ratio_2"}},
+								Alerting: kubeslothv1.Alerting{
+									PageAlert:   kubeslothv1.Alert{Disable: true},
+									TicketAlert: kubeslothv1.Alert{Disable: true},
+								},
 							},
 						},
 					},
-					{
-						ID:         "test-svc-slo2",
-						Name:       "slo2",
-						Service:    "test-svc",
-						TimeWindow: 30 * 24 * time.Hour,
-						SLI: prometheus.SLI{
-							Raw: &prometheus.SLIRaw{
-								ErrorRatioQuery: "test_expr_ratio_2",
-							},
-						},
-						Objective: 99.9,
-						Labels: map[string]string{
-							"owner":    "myteam",
-							"category": "test2",
-						},
-						PageAlertMeta:   prometheus.AlertMeta{Disable: true},
-						TicketAlertMeta: prometheus.AlertMeta{Disable: true},
-					},
-				},
-				},
+				}},
 			},
 		},
 	}
@@ -355,7 +393,7 @@ spec:
 		t.Run(name, func(t *testing.T) {
 			assert := assert.New(t)
 
-			loader := k8sprometheus.NewYAMLSpecLoader(testMemPluginsRepo(test.plugins), 30*24*time.Hour)
+			loader := io.NewK8sSlothPrometheusYAMLSpecLoader(testMemPluginsRepo(test.plugins), 30*24*time.Hour)
 			gotModel, err := loader.LoadSpec(context.TODO(), []byte(test.specYaml))
 
 			if test.expErr {
@@ -367,7 +405,7 @@ spec:
 	}
 }
 
-func TestYAMLIsSpecType(t *testing.T) {
+func TestK8sSlothPrometheusYAMLSpecLoadeIsSpecType(t *testing.T) {
 	tests := map[string]struct {
 		specYaml string
 		exp      bool
@@ -424,8 +462,8 @@ kind: 'PrometheusServiceLevel'
 
 		"An correct spec type should match (multiple spaces)": {
 			specYaml: `
-apiVersion:       sloth.slok.dev/v1           
-kind:               PrometheusServiceLevel      
+apiVersion:       sloth.slok.dev/v1
+kind:               PrometheusServiceLevel
 `,
 			exp: true,
 		},
@@ -435,7 +473,7 @@ kind:               PrometheusServiceLevel
 		t.Run(name, func(t *testing.T) {
 			assert := assert.New(t)
 
-			loader := k8sprometheus.NewYAMLSpecLoader(testMemPluginsRepo(map[string]pluginsli.SLIPlugin{}), 30*24*time.Hour)
+			loader := io.NewK8sSlothPrometheusYAMLSpecLoader(testMemPluginsRepo(map[string]pluginsli.SLIPlugin{}), 30*24*time.Hour)
 			got := loader.IsSpecType(context.TODO(), []byte(test.specYaml))
 
 			assert.Equal(test.exp, got)

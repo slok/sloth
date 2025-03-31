@@ -12,7 +12,7 @@ import (
 	openslov1alpha "github.com/OpenSLO/oslo/pkg/manifest/v1alpha"
 	"gopkg.in/yaml.v2"
 
-	"github.com/slok/sloth/internal/prometheus"
+	"github.com/slok/sloth/pkg/common/model"
 )
 
 type OpenSLOYAMLSpecLoader struct {
@@ -35,7 +35,7 @@ func (l OpenSLOYAMLSpecLoader) IsSpecType(ctx context.Context, data []byte) bool
 	return openSLOSpecV1AlphaTypeRegexKind.Match(data) && openSLOSpecV1AlphaTypeRegexAPIVersion.Match(data)
 }
 
-func (l OpenSLOYAMLSpecLoader) LoadSpec(ctx context.Context, data []byte) (*prometheus.SLOGroup, error) {
+func (l OpenSLOYAMLSpecLoader) LoadSpec(ctx context.Context, data []byte) (*model.PromSLOGroup, error) {
 	if len(data) == 0 {
 		return nil, fmt.Errorf("spec is required")
 	}
@@ -70,13 +70,16 @@ func (l OpenSLOYAMLSpecLoader) LoadSpec(ctx context.Context, data []byte) (*prom
 	return m, nil
 }
 
-func (l OpenSLOYAMLSpecLoader) mapSpecToModel(spec openslov1alpha.SLO) (*prometheus.SLOGroup, error) {
+func (l OpenSLOYAMLSpecLoader) mapSpecToModel(spec openslov1alpha.SLO) (*model.PromSLOGroup, error) {
 	slos, err := l.getSLOs(spec)
 	if err != nil {
 		return nil, fmt.Errorf("could not map SLOs correctly: %w", err)
 	}
 
-	return &prometheus.SLOGroup{SLOs: slos}, nil
+	return &model.PromSLOGroup{
+		SLOs:           slos,
+		OriginalSource: model.PromSLOGroupSource{OpenSLOV1Alpha: &spec},
+	}, nil
 }
 
 // validateTimeWindow will validate that Sloth only supports 30 day based time windows
@@ -114,7 +117,7 @@ var openSLOErrorRatioRawQueryTpl = template.Must(template.New("").Parse(`
 // however we will convert to a raw based sloth SLI because the ratio queries that we have differ from
 // Sloth. Sloth uses bad/total events, OpenSLO uses good/total events. We get the ratio using good events
 // and then rest to 1, to get a raw error ratio query.
-func (l OpenSLOYAMLSpecLoader) getSLI(spec openslov1alpha.SLOSpec, slo openslov1alpha.Objective) (*prometheus.SLI, error) {
+func (l OpenSLOYAMLSpecLoader) getSLI(spec openslov1alpha.SLOSpec, slo openslov1alpha.Objective) (*model.PromSLI, error) {
 	if slo.RatioMetrics == nil {
 		return nil, fmt.Errorf("missing ratioMetrics")
 	}
@@ -145,7 +148,7 @@ func (l OpenSLOYAMLSpecLoader) getSLI(spec openslov1alpha.SLOSpec, slo openslov1
 		return nil, fmt.Errorf("could not execute mapping SLI template: %w", err)
 	}
 
-	return &prometheus.SLI{Raw: &prometheus.SLIRaw{
+	return &model.PromSLI{Raw: &model.PromSLIRaw{
 		ErrorRatioQuery: b.String(),
 	}}, nil
 }
@@ -153,8 +156,8 @@ func (l OpenSLOYAMLSpecLoader) getSLI(spec openslov1alpha.SLOSpec, slo openslov1
 // getSLOs will try getting all the objectives as individual SLOs, this way we can map
 // to what Sloth understands as an SLO, that OpenSLO understands as a list of objectives
 // for the same SLO.
-func (l OpenSLOYAMLSpecLoader) getSLOs(spec openslov1alpha.SLO) ([]prometheus.SLO, error) {
-	res := []prometheus.SLO{}
+func (l OpenSLOYAMLSpecLoader) getSLOs(spec openslov1alpha.SLO) ([]model.PromSLO, error) {
+	res := []model.PromSLO{}
 
 	for idx, slo := range spec.Spec.Objectives {
 		sli, err := l.getSLI(spec.Spec, slo)
@@ -168,7 +171,7 @@ func (l OpenSLOYAMLSpecLoader) getSLOs(spec openslov1alpha.SLO) ([]prometheus.SL
 		}
 
 		// TODO(slok): Think about using `slo.Value` insted of idx (`slo.Value` is not mandatory).
-		res = append(res, prometheus.SLO{
+		res = append(res, model.PromSLO{
 			ID:              fmt.Sprintf("%s-%s-%d", spec.Spec.Service, spec.Metadata.Name, idx),
 			Name:            fmt.Sprintf("%s-%d", spec.Metadata.Name, idx),
 			Service:         spec.Spec.Service,
@@ -176,8 +179,8 @@ func (l OpenSLOYAMLSpecLoader) getSLOs(spec openslov1alpha.SLO) ([]prometheus.SL
 			TimeWindow:      timeWindow,
 			SLI:             *sli,
 			Objective:       *slo.BudgetTarget * 100, // OpenSLO uses ratios, we use percents.
-			PageAlertMeta:   prometheus.AlertMeta{Disable: true},
-			TicketAlertMeta: prometheus.AlertMeta{Disable: true},
+			PageAlertMeta:   model.PromAlertMeta{Disable: true},
+			TicketAlertMeta: model.PromAlertMeta{Disable: true},
 		})
 	}
 

@@ -8,10 +8,14 @@ import (
 	"text/template"
 	"time"
 
+	openslov1alpha "github.com/OpenSLO/oslo/pkg/manifest/v1alpha"
 	"github.com/go-playground/validator/v10"
 	prommodel "github.com/prometheus/common/model"
 	"github.com/prometheus/prometheus/model/rulefmt"
 	promqlparser "github.com/prometheus/prometheus/promql/parser"
+
+	k8sprometheusv1 "github.com/slok/sloth/pkg/kubernetes/api/sloth/v1"
+	prometheusv1 "github.com/slok/sloth/pkg/prometheus/api/v1"
 )
 
 // SLI represents an SLI with custom error and total expressions.
@@ -52,7 +56,16 @@ type PromSLO struct {
 }
 
 type PromSLOGroup struct {
-	SLOs []PromSLO `validate:"required,dive"`
+	SLOs           []PromSLO `validate:"required,dive"`
+	OriginalSource PromSLOGroupSource
+}
+
+// Used to store the original source of the SLO group in case we need to make low-level decision
+// based on where the SLOs came from.
+type PromSLOGroupSource struct {
+	K8sSlothV1     *k8sprometheusv1.PrometheusServiceLevel
+	SlothV1        *prometheusv1.Spec
+	OpenSLOV1Alpha *openslov1alpha.SLO
 }
 
 // Validate validates the SLO.

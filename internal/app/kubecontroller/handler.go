@@ -12,13 +12,14 @@ import (
 	"github.com/slok/sloth/internal/info"
 	"github.com/slok/sloth/internal/k8sprometheus"
 	"github.com/slok/sloth/internal/log"
+	"github.com/slok/sloth/pkg/common/model"
 	commonmodel "github.com/slok/sloth/pkg/common/model"
 	slothv1 "github.com/slok/sloth/pkg/kubernetes/api/sloth/v1"
 )
 
 // SpecLoader Knows how to load a Kubernetes Spec into an app model.
 type SpecLoader interface {
-	LoadSpec(ctx context.Context, spec *slothv1.PrometheusServiceLevel) (*k8sprometheus.SLOGroup, error)
+	LoadSpec(ctx context.Context, spec *slothv1.PrometheusServiceLevel) (*model.PromSLOGroup, error)
 }
 
 // Generator Knows how to generate SLO prometheus rules from app SLO model.
@@ -153,7 +154,7 @@ func (h handler) handlePrometheusServiceLevelV1(ctx context.Context, psl *slothv
 			Spec:    fmt.Sprintf("%s/%s", slothv1.SchemeGroupVersion.Group, slothv1.SchemeGroupVersion.Version),
 		},
 		ExtraLabels: h.extraLabels,
-		SLOGroup:    model.SLOGroup,
+		SLOGroup:    *model,
 	}
 	resp, err := h.generator.Generate(ctx, req)
 	if err != nil {
@@ -168,7 +169,18 @@ func (h handler) handlePrometheusServiceLevelV1(ctx context.Context, psl *slothv
 			Rules: s.SLORules,
 		})
 	}
-	err = h.repository.StoreSLOs(ctx, model.K8sMeta, storageSLOs)
+
+	kmeta := k8sprometheus.K8sMeta{
+		Kind:        "PrometheusServiceLevel",
+		APIVersion:  "sloth.slok.dev/v1",
+		UID:         string(model.OriginalSource.K8sSlothV1.UID),
+		Name:        model.OriginalSource.K8sSlothV1.Name,
+		Namespace:   model.OriginalSource.K8sSlothV1.Namespace,
+		Labels:      model.OriginalSource.K8sSlothV1.Labels,
+		Annotations: model.OriginalSource.K8sSlothV1.Annotations,
+	}
+
+	err = h.repository.StoreSLOs(ctx, kmeta, storageSLOs)
 	if err != nil {
 		return fmt.Errorf("could not store SLOs: %w", err)
 	}

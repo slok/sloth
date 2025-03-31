@@ -36,13 +36,13 @@ func TestGroupedRulesYAMLRepoStore(t *testing.T) {
 				{
 					SLO: model.PromSLO{ID: "test1"},
 					Rules: model.PromSLORules{
-						SLIErrorRecRules: []rulefmt.Rule{
+						SLIErrorRecRules: model.PromRuleGroup{Rules: []rulefmt.Rule{
 							{
 								Record: "test:record",
 								Expr:   "test-expr",
 								Labels: map[string]string{"test-label": "one"},
 							},
-						},
+						}},
 					},
 				},
 			},
@@ -65,13 +65,13 @@ groups:
 				{
 					SLO: model.PromSLO{ID: "test1"},
 					Rules: model.PromSLORules{
-						MetadataRecRules: []rulefmt.Rule{
+						MetadataRecRules: model.PromRuleGroup{Rules: []rulefmt.Rule{
 							{
 								Record: "test:record",
 								Expr:   "test-expr",
 								Labels: map[string]string{"test-label": "one"},
 							},
-						},
+						}},
 					},
 				},
 			},
@@ -94,14 +94,14 @@ groups:
 				{
 					SLO: model.PromSLO{ID: "test1"},
 					Rules: model.PromSLORules{
-						AlertRules: []rulefmt.Rule{
+						AlertRules: model.PromRuleGroup{Rules: []rulefmt.Rule{
 							{
 								Alert:       "testAlert",
 								Expr:        "test-expr",
 								Labels:      map[string]string{"test-label": "one"},
 								Annotations: map[string]string{"test-annot": "one"},
 							},
-						},
+						}},
 					},
 				},
 			},
@@ -127,7 +127,7 @@ groups:
 				{
 					SLO: model.PromSLO{ID: "testa"},
 					Rules: model.PromSLORules{
-						SLIErrorRecRules: []rulefmt.Rule{
+						SLIErrorRecRules: model.PromRuleGroup{Rules: []rulefmt.Rule{
 							{
 								Record: "test:record-a1",
 								Expr:   "test-expr-a1",
@@ -138,8 +138,8 @@ groups:
 								Expr:   "test-expr-a2",
 								Labels: map[string]string{"test-label": "a-2"},
 							},
-						},
-						MetadataRecRules: []rulefmt.Rule{
+						}},
+						MetadataRecRules: model.PromRuleGroup{Rules: []rulefmt.Rule{
 							{
 								Record: "test:record-a3",
 								Expr:   "test-expr-a3",
@@ -150,8 +150,8 @@ groups:
 								Expr:   "test-expr-a4",
 								Labels: map[string]string{"test-label": "a-4"},
 							},
-						},
-						AlertRules: []rulefmt.Rule{
+						}},
+						AlertRules: model.PromRuleGroup{Rules: []rulefmt.Rule{
 							{
 								Alert:       "testAlertA1",
 								Expr:        "test-expr-a1",
@@ -164,34 +164,34 @@ groups:
 								Labels:      map[string]string{"test-label": "a-2"},
 								Annotations: map[string]string{"test-annot": "a-2"},
 							},
-						},
+						}},
 					},
 				},
 				{
 					SLO: model.PromSLO{ID: "testb"},
 					Rules: model.PromSLORules{
-						SLIErrorRecRules: []rulefmt.Rule{
+						SLIErrorRecRules: model.PromRuleGroup{Rules: []rulefmt.Rule{
 							{
 								Record: "test:record-b1",
 								Expr:   "test-expr-b1",
 								Labels: map[string]string{"test-label": "b-1"},
 							},
-						},
-						MetadataRecRules: []rulefmt.Rule{
+						}},
+						MetadataRecRules: model.PromRuleGroup{Rules: []rulefmt.Rule{
 							{
 								Record: "test:record-b2",
 								Expr:   "test-expr-b2",
 								Labels: map[string]string{"test-label": "b-2"},
 							},
-						},
-						AlertRules: []rulefmt.Rule{
+						}},
+						AlertRules: model.PromRuleGroup{Rules: []rulefmt.Rule{
 							{
 								Alert:       "testAlertB1",
 								Expr:        "test-expr-b1",
 								Labels:      map[string]string{"test-label": "b-1"},
 								Annotations: map[string]string{"test-annot": "b-1"},
 							},
-						},
+						}},
 					},
 				},
 			},

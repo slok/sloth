@@ -11,7 +11,6 @@ import (
 
 	"github.com/slok/sloth/internal/alert"
 	"github.com/slok/sloth/internal/app/generate"
-	"github.com/slok/sloth/internal/prometheus"
 	"github.com/slok/sloth/pkg/common/model"
 )
 
@@ -37,13 +36,13 @@ func TestIntegrationAppServiceGenerate(t *testing.T) {
 					Mode:    model.ModeTest,
 					Spec:    "test-spec",
 				},
-				SLOGroup: prometheus.SLOGroup{SLOs: []prometheus.SLO{
+				SLOGroup: model.PromSLOGroup{SLOs: []model.PromSLO{
 					{
 						ID:      "test-id",
 						Name:    "test-name",
 						Service: "test-svc",
-						SLI: prometheus.SLI{
-							Events: &prometheus.SLIEvents{
+						SLI: model.PromSLI{
+							Events: &model.PromSLIEvents{
 								ErrorQuery: `rate(my_metric{error="true"}[{{.window}}])`,
 								TotalQuery: `rate(my_metric[{{.window}}])`,
 							},
@@ -51,29 +50,28 @@ func TestIntegrationAppServiceGenerate(t *testing.T) {
 						TimeWindow: 30 * 24 * time.Hour,
 						Objective:  99.9,
 						Labels:     map[string]string{"test_label": "label_1"},
-						PageAlertMeta: prometheus.AlertMeta{
+						PageAlertMeta: model.PromAlertMeta{
 							Name:        "p_alert_test_name",
 							Labels:      map[string]string{"p_alert_label": "p_label_al_1"},
 							Annotations: map[string]string{"p_alert_annot": "p_label_an_1"},
 						},
-						TicketAlertMeta: prometheus.AlertMeta{
+						TicketAlertMeta: model.PromAlertMeta{
 							Name:        "t_alert_test_name",
 							Labels:      map[string]string{"t_alert_label": "t_label_al_1"},
 							Annotations: map[string]string{"t_alert_annot": "t_label_an_1"},
 						},
 					},
-				},
-				},
+				}},
 			},
 			expResp: generate.Response{
 				PrometheusSLOs: []generate.SLOResult{
 					{
-						SLO: prometheus.SLO{
+						SLO: model.PromSLO{
 							ID:      "test-id",
 							Name:    "test-name",
 							Service: "test-svc",
-							SLI: prometheus.SLI{
-								Events: &prometheus.SLIEvents{
+							SLI: model.PromSLI{
+								Events: &model.PromSLIEvents{
 									ErrorQuery: `rate(my_metric{error="true"}[{{.window}}])`,
 									TotalQuery: `rate(my_metric[{{.window}}])`,
 								},
@@ -85,12 +83,12 @@ func TestIntegrationAppServiceGenerate(t *testing.T) {
 								"extra_k1":   "extra_v1",
 								"extra_k2":   "extra_v2",
 							},
-							PageAlertMeta: prometheus.AlertMeta{
+							PageAlertMeta: model.PromAlertMeta{
 								Name:        "p_alert_test_name",
 								Labels:      map[string]string{"p_alert_label": "p_label_al_1"},
 								Annotations: map[string]string{"p_alert_annot": "p_label_an_1"},
 							},
-							TicketAlertMeta: prometheus.AlertMeta{
+							TicketAlertMeta: model.PromAlertMeta{
 								Name:        "t_alert_test_name",
 								Labels:      map[string]string{"t_alert_label": "t_label_al_1"},
 								Annotations: map[string]string{"t_alert_annot": "t_label_an_1"},
@@ -131,8 +129,8 @@ func TestIntegrationAppServiceGenerate(t *testing.T) {
 								Severity:       model.TicketAlertSeverity,
 							},
 						},
-						SLORules: prometheus.SLORules{
-							SLIErrorRecRules: []rulefmt.Rule{
+						SLORules: model.PromSLORules{
+							SLIErrorRecRules: model.PromRuleGroup{Rules: []rulefmt.Rule{
 								{
 									Record: "slo:sli_error:ratio_rate5m",
 									Expr:   "(rate(my_metric{error=\"true\"}[5m]))\n/\n(rate(my_metric[5m]))\n",
@@ -237,8 +235,8 @@ func TestIntegrationAppServiceGenerate(t *testing.T) {
 										"sloth_window":  "30d",
 									},
 								},
-							},
-							MetadataRecRules: []rulefmt.Rule{
+							}},
+							MetadataRecRules: model.PromRuleGroup{Rules: []rulefmt.Rule{
 								// Metadata labels.
 								{
 									Record: "slo:objective:ratio",
@@ -334,8 +332,8 @@ slo:error_budget:ratio{sloth_id="test-id", sloth_service="test-svc", sloth_slo="
 										"sloth_objective": "99.9",
 									},
 								},
-							},
-							AlertRules: []rulefmt.Rule{
+							}},
+							AlertRules: model.PromRuleGroup{Rules: []rulefmt.Rule{
 
 								{
 									Alert: "p_alert_test_name",
@@ -385,7 +383,7 @@ or
 										"title":         "(ticket) {{$labels.sloth_service}} {{$labels.sloth_slo}} SLO error budget burn rate is too fast.",
 									},
 								},
-							},
+							}},
 						},
 					},
 				},

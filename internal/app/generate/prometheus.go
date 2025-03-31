@@ -98,13 +98,13 @@ type Request struct {
 	// ExtraLabels are the extra labels added to the SLOs on execution time.
 	ExtraLabels map[string]string
 	// SLOGroup are the SLOs group that will be used to generate the SLO results and Prom rules.
-	SLOGroup prometheus.SLOGroup
+	SLOGroup model.PromSLOGroup
 }
 
 type SLOResult struct {
-	SLO      prometheus.SLO
+	SLO      model.PromSLO
 	Alerts   model.MWMBAlertGroup
-	SLORules prometheus.SLORules
+	SLORules model.PromSLORules
 }
 
 type Response struct {
@@ -176,10 +176,10 @@ func (s Service) generateSLO(ctx context.Context, info model.Info, slo prometheu
 	return &SLOResult{
 		SLO:    slo,
 		Alerts: *as,
-		SLORules: prometheus.SLORules{
-			SLIErrorRecRules: sliRecordingRules,
-			MetadataRecRules: metaRecordingRules,
-			AlertRules:       alertRules,
+		SLORules: model.PromSLORules{
+			SLIErrorRecRules: model.PromRuleGroup{Rules: sliRecordingRules},
+			MetadataRecRules: model.PromRuleGroup{Rules: metaRecordingRules},
+			AlertRules:       model.PromRuleGroup{Rules: alertRules},
 		},
 	}, nil
 }

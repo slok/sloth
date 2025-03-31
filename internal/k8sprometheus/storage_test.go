@@ -18,6 +18,7 @@ import (
 	"github.com/slok/sloth/internal/k8sprometheus/k8sprometheusmock"
 	"github.com/slok/sloth/internal/log"
 	"github.com/slok/sloth/internal/prometheus"
+	"github.com/slok/sloth/pkg/common/model"
 )
 
 func TestIOWriterPrometheusOperatorYAMLRepo(t *testing.T) {
@@ -52,13 +53,13 @@ func TestIOWriterPrometheusOperatorYAMLRepo(t *testing.T) {
 				{
 					SLO: prometheus.SLO{ID: "test1"},
 					Rules: prometheus.SLORules{
-						SLIErrorRecRules: []rulefmt.Rule{
+						SLIErrorRecRules: model.PromRuleGroup{Rules: []rulefmt.Rule{
 							{
 								Record: "test:record",
 								Expr:   "test-expr",
 								Labels: map[string]string{"test-label": "one"},
 							},
-						},
+						}},
 					},
 				},
 			},
@@ -101,13 +102,13 @@ spec:
 				{
 					SLO: prometheus.SLO{ID: "test1"},
 					Rules: prometheus.SLORules{
-						MetadataRecRules: []rulefmt.Rule{
+						MetadataRecRules: model.PromRuleGroup{Rules: []rulefmt.Rule{
 							{
 								Record: "test:record",
 								Expr:   "test-expr",
 								Labels: map[string]string{"test-label": "one"},
 							},
-						},
+						}},
 					},
 				},
 			},
@@ -150,14 +151,14 @@ spec:
 				{
 					SLO: prometheus.SLO{ID: "test1"},
 					Rules: prometheus.SLORules{
-						AlertRules: []rulefmt.Rule{
+						AlertRules: model.PromRuleGroup{Rules: []rulefmt.Rule{
 							{
 								Alert:       "testAlert",
 								Expr:        "test-expr",
 								Labels:      map[string]string{"test-label": "one"},
 								Annotations: map[string]string{"test-annot": "one"},
 							},
-						},
+						}},
 					},
 				},
 			},
@@ -203,7 +204,7 @@ spec:
 				{
 					SLO: prometheus.SLO{ID: "testa"},
 					Rules: prometheus.SLORules{
-						SLIErrorRecRules: []rulefmt.Rule{
+						SLIErrorRecRules: model.PromRuleGroup{Rules: []rulefmt.Rule{
 							{
 								Record: "test:record-a1",
 								Expr:   "test-expr-a1",
@@ -214,8 +215,8 @@ spec:
 								Expr:   "test-expr-a2",
 								Labels: map[string]string{"test-label": "a-2"},
 							},
-						},
-						MetadataRecRules: []rulefmt.Rule{
+						}},
+						MetadataRecRules: model.PromRuleGroup{Rules: []rulefmt.Rule{
 							{
 								Record: "test:record-a3",
 								Expr:   "test-expr-a3",
@@ -226,8 +227,8 @@ spec:
 								Expr:   "test-expr-a4",
 								Labels: map[string]string{"test-label": "a-4"},
 							},
-						},
-						AlertRules: []rulefmt.Rule{
+						}},
+						AlertRules: model.PromRuleGroup{Rules: []rulefmt.Rule{
 							{
 								Alert:       "testAlertA1",
 								Expr:        "test-expr-a1",
@@ -240,34 +241,34 @@ spec:
 								Labels:      map[string]string{"test-label": "a-2"},
 								Annotations: map[string]string{"test-annot": "a-2"},
 							},
-						},
+						}},
 					},
 				},
 				{
 					SLO: prometheus.SLO{ID: "testb"},
 					Rules: prometheus.SLORules{
-						SLIErrorRecRules: []rulefmt.Rule{
+						SLIErrorRecRules: model.PromRuleGroup{Rules: []rulefmt.Rule{
 							{
 								Record: "test:record-b1",
 								Expr:   "test-expr-b1",
 								Labels: map[string]string{"test-label": "b-1"},
 							},
-						},
-						MetadataRecRules: []rulefmt.Rule{
+						}},
+						MetadataRecRules: model.PromRuleGroup{Rules: []rulefmt.Rule{
 							{
 								Record: "test:record-b2",
 								Expr:   "test-expr-b2",
 								Labels: map[string]string{"test-label": "b-2"},
 							},
-						},
-						AlertRules: []rulefmt.Rule{
+						}},
+						AlertRules: model.PromRuleGroup{Rules: []rulefmt.Rule{
 							{
 								Alert:       "testAlertB1",
 								Expr:        "test-expr-b1",
 								Labels:      map[string]string{"test-label": "b-1"},
 								Annotations: map[string]string{"test-annot": "b-1"},
 							},
-						},
+						}},
 					},
 				},
 			},
@@ -394,9 +395,9 @@ func TestPrometheusOperatorCRDRepo(t *testing.T) {
 				{
 					SLO: prometheus.SLO{ID: "testa"},
 					Rules: prometheus.SLORules{
-						SLIErrorRecRules: []rulefmt.Rule{
+						SLIErrorRecRules: model.PromRuleGroup{Rules: []rulefmt.Rule{
 							{Record: "test:record-a1"},
-						},
+						}},
 					},
 				},
 			},
@@ -420,7 +421,7 @@ func TestPrometheusOperatorCRDRepo(t *testing.T) {
 				{
 					SLO: prometheus.SLO{ID: "testa"},
 					Rules: prometheus.SLORules{
-						SLIErrorRecRules: []rulefmt.Rule{
+						SLIErrorRecRules: model.PromRuleGroup{Rules: []rulefmt.Rule{
 							{
 								Record: "test:record-a1",
 								Expr:   "test-expr-a1",
@@ -431,8 +432,8 @@ func TestPrometheusOperatorCRDRepo(t *testing.T) {
 								Expr:   "test-expr-a2",
 								Labels: map[string]string{"test-label": "a-2"},
 							},
-						},
-						MetadataRecRules: []rulefmt.Rule{
+						}},
+						MetadataRecRules: model.PromRuleGroup{Rules: []rulefmt.Rule{
 							{
 								Record: "test:record-a3",
 								Expr:   "test-expr-a3",
@@ -443,8 +444,8 @@ func TestPrometheusOperatorCRDRepo(t *testing.T) {
 								Expr:   "test-expr-a4",
 								Labels: map[string]string{"test-label": "a-4"},
 							},
-						},
-						AlertRules: []rulefmt.Rule{
+						}},
+						AlertRules: model.PromRuleGroup{Rules: []rulefmt.Rule{
 							{
 								Alert:       "testAlertA1",
 								Expr:        "test-expr-a1",
@@ -457,34 +458,34 @@ func TestPrometheusOperatorCRDRepo(t *testing.T) {
 								Labels:      map[string]string{"test-label": "a-2"},
 								Annotations: map[string]string{"test-annot": "a-2"},
 							},
-						},
+						}},
 					},
 				},
 				{
 					SLO: prometheus.SLO{ID: "testb"},
 					Rules: prometheus.SLORules{
-						SLIErrorRecRules: []rulefmt.Rule{
+						SLIErrorRecRules: model.PromRuleGroup{Rules: []rulefmt.Rule{
 							{
 								Record: "test:record-b1",
 								Expr:   "test-expr-b1",
 								Labels: map[string]string{"test-label": "b-1"},
 							},
-						},
-						MetadataRecRules: []rulefmt.Rule{
+						}},
+						MetadataRecRules: model.PromRuleGroup{Rules: []rulefmt.Rule{
 							{
 								Record: "test:record-b2",
 								Expr:   "test-expr-b2",
 								Labels: map[string]string{"test-label": "b-2"},
 							},
-						},
-						AlertRules: []rulefmt.Rule{
+						}},
+						AlertRules: model.PromRuleGroup{Rules: []rulefmt.Rule{
 							{
 								Alert:       "testAlertB1",
 								Expr:        "test-expr-b1",
 								Labels:      map[string]string{"test-label": "b-1"},
 								Annotations: map[string]string{"test-annot": "b-1"},
 							},
-						},
+						}},
 					},
 				},
 			},

@@ -5,7 +5,7 @@ go 1.24
 require (
 	github.com/OpenSLO/oslo v0.12.0
 	github.com/alecthomas/kingpin/v2 v2.4.0
-	github.com/go-playground/validator/v10 v10.25.0
+	github.com/go-playground/validator/v10 v10.26.0
 	github.com/oklog/run v1.1.0
 	github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring v0.81.0
 	github.com/prometheus-operator/prometheus-operator/pkg/client v0.81.0

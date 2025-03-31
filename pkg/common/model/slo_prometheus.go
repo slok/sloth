@@ -282,7 +282,12 @@ func validateSLOGroup(sl validator.StructLevel) {
 
 // PromSLORules are the prometheus rules required by an SLO.
 type PromSLORules struct {
-	SLIErrorRecRules []rulefmt.Rule
-	MetadataRecRules []rulefmt.Rule
-	AlertRules       []rulefmt.Rule
+	SLIErrorRecRules PromRuleGroup
+	MetadataRecRules PromRuleGroup
+	AlertRules       PromRuleGroup
+}
+
+// PromRuleGroup are regular prometheus group of rules.
+type PromRuleGroup struct {
+	Rules []rulefmt.Rule
 }

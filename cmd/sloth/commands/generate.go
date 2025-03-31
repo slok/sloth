@@ -13,16 +13,17 @@ import (
 	"time"
 
 	openslov1alpha "github.com/OpenSLO/oslo/pkg/manifest/v1alpha"
+	"github.com/alecthomas/kingpin/v2"
 	prometheusmodel "github.com/prometheus/common/model"
-	"gopkg.in/alecthomas/kingpin.v2"
 
 	"github.com/slok/sloth/internal/alert"
 	"github.com/slok/sloth/internal/app/generate"
 	"github.com/slok/sloth/internal/info"
 	"github.com/slok/sloth/internal/k8sprometheus"
 	"github.com/slok/sloth/internal/log"
-	"github.com/slok/sloth/internal/openslo"
 	"github.com/slok/sloth/internal/prometheus"
+	storageio "github.com/slok/sloth/internal/storage/io"
+	"github.com/slok/sloth/pkg/common/model"
 	kubernetesv1 "github.com/slok/sloth/pkg/kubernetes/api/sloth/v1"
 	prometheusv1 "github.com/slok/sloth/pkg/prometheus/api/v1"
 )
@@ -131,9 +132,9 @@ func (g generateCommand) Run(ctx context.Context, config RootConfig) error {
 	}
 
 	// Create Spec loaders.
-	promYAMLLoader := prometheus.NewYAMLSpecLoader(pluginRepo, sloPeriod)
+	promYAMLLoader := storageio.NewSlothPrometheusYAMLSpecLoader(pluginRepo, sloPeriod)
 	kubeYAMLLoader := k8sprometheus.NewYAMLSpecLoader(pluginRepo, sloPeriod)
-	openSLOYAMLLoader := openslo.NewYAMLSpecLoader(sloPeriod)
+	openSLOYAMLLoader := storageio.NewOpenSLOYAMLSpecLoader(sloPeriod)
 
 	// Get SLO targets.
 	genTargets := []generateTarget{}
@@ -310,9 +311,9 @@ type generator struct {
 // GeneratePrometheus generates the SLOs based on a raw regular Prometheus spec format input and outs a Prometheus raw yaml.
 func (g generator) GeneratePrometheus(ctx context.Context, slos prometheus.SLOGroup, out io.Writer) error {
 	g.logger.Infof("Generating from Prometheus spec")
-	info := info.Info{
+	info := model.Info{
 		Version: info.Version,
-		Mode:    info.ModeCLIGenPrometheus,
+		Mode:    model.ModeCLIGenPrometheus,
 		Spec:    prometheusv1.Version,
 	}
 
@@ -321,10 +322,10 @@ func (g generator) GeneratePrometheus(ctx context.Context, slos prometheus.SLOGr
 		return err
 	}
 
-	repo := prometheus.NewIOWriterGroupedRulesYAMLRepo(out, g.logger)
-	storageSLOs := make([]prometheus.StorageSLO, 0, len(result.PrometheusSLOs))
+	repo := storageio.NewStdPrometheusGroupedRulesYAMLRepo(out, g.logger)
+	storageSLOs := make([]storageio.StdPrometheusStorageSLO, 0, len(result.PrometheusSLOs))
 	for _, s := range result.PrometheusSLOs {
-		storageSLOs = append(storageSLOs, prometheus.StorageSLO{
+		storageSLOs = append(storageSLOs, storageio.StdPrometheusStorageSLO{
 			SLO:   s.SLO,
 			Rules: s.SLORules,
 		})
@@ -342,9 +343,9 @@ func (g generator) GeneratePrometheus(ctx context.Context, slos prometheus.SLOGr
 func (g generator) GenerateKubernetes(ctx context.Context, sloGroup k8sprometheus.SLOGroup, out io.Writer) error {
 	g.logger.Infof("Generating from Kubernetes Prometheus spec")
 
-	info := info.Info{
+	info := model.Info{
 		Version: info.Version,
-		Mode:    info.ModeCLIGenKubernetes,
+		Mode:    model.ModeCLIGenKubernetes,
 		Spec:    fmt.Sprintf("%s/%s", kubernetesv1.SchemeGroupVersion.Group, kubernetesv1.SchemeGroupVersion.Version),
 	}
 	result, err := g.generateRules(ctx, info, sloGroup.SLOGroup)
@@ -372,9 +373,9 @@ func (g generator) GenerateKubernetes(ctx context.Context, sloGroup k8sprometheu
 // generateOpenSLO generates the SLOs based on a OpenSLO spec format input and outs a Prometheus raw yaml.
 func (g generator) GenerateOpenSLO(ctx context.Context, slos prometheus.SLOGroup, out io.Writer) error {
 	g.logger.Infof("Generating from OpenSLO spec")
-	info := info.Info{
+	info := model.Info{
 		Version: info.Version,
-		Mode:    info.ModeCLIGenOpenSLO,
+		Mode:    model.ModeCLIGenOpenSLO,
 		Spec:    openslov1alpha.APIVersion,
 	}
 
@@ -383,10 +384,10 @@ func (g generator) GenerateOpenSLO(ctx context.Context, slos prometheus.SLOGroup
 		return err
 	}
 
-	repo := prometheus.NewIOWriterGroupedRulesYAMLRepo(out, g.logger)
-	storageSLOs := make([]prometheus.StorageSLO, 0, len(result.PrometheusSLOs))
+	repo := storageio.NewStdPrometheusGroupedRulesYAMLRepo(out, g.logger)
+	storageSLOs := make([]storageio.StdPrometheusStorageSLO, 0, len(result.PrometheusSLOs))
 	for _, s := range result.PrometheusSLOs {
-		storageSLOs = append(storageSLOs, prometheus.StorageSLO{
+		storageSLOs = append(storageSLOs, storageio.StdPrometheusStorageSLO{
 			SLO:   s.SLO,
 			Rules: s.SLORules,
 		})
@@ -401,7 +402,7 @@ func (g generator) GenerateOpenSLO(ctx context.Context, slos prometheus.SLOGroup
 }
 
 // generate is the main generator logic that all the spec types and storers share. Mainly has the logic of the generate app service.
-func (g generator) generateRules(ctx context.Context, info info.Info, slos prometheus.SLOGroup) (*generate.Response, error) {
+func (g generator) generateRules(ctx context.Context, info model.Info, slos prometheus.SLOGroup) (*generate.Response, error) {
 	// Disable recording rules if required.
 	var sliRuleGen generate.SLIRecordingRulesGenerator = generate.NoopSLIRecordingRulesGenerator
 	var metaRuleGen generate.MetadataRecordingRulesGenerator = generate.NoopMetadataRecordingRulesGenerator

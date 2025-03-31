@@ -6,7 +6,7 @@ labels: {}
 image:
   registry: ghcr.io
   repository: slok/sloth
-  tag: v0.11.0
+  tag: v0.12.0
 
 # -- Container resources: requests and limits for CPU, Memory
 resources:
@@ -37,8 +37,8 @@ sloth:
 commonPlugins:
   enabled: true
   image:
-    repository: k8s.gcr.io/git-sync/git-sync
-    tag: v3.6.1
+    repository: registry.k8s.io/git-sync/git-sync
+    tag: v4.4.0
   gitRepo:
     url: https://github.com/slok/sloth-common-sli-plugins
     branch: main

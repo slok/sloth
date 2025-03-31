@@ -13,7 +13,7 @@ type FakeSlothV1 struct {
 }
 
 func (c *FakeSlothV1) PrometheusServiceLevels(namespace string) v1.PrometheusServiceLevelInterface {
-	return &FakePrometheusServiceLevels{c, namespace}
+	return newFakePrometheusServiceLevels(c, namespace)
 }
 
 // RESTClient returns a RESTClient that is used to communicate

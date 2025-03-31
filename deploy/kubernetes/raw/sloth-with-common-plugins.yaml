@@ -6,7 +6,7 @@ metadata:
   name: sloth
   namespace: monitoring
   labels:
-    helm.sh/chart: sloth-0.6.4
+    helm.sh/chart: sloth-0.12.1
     app.kubernetes.io/managed-by: Helm
     app: sloth
     app.kubernetes.io/name: sloth
@@ -18,7 +18,7 @@ kind: ClusterRole
 metadata:
   name: sloth
   labels:
-    helm.sh/chart: sloth-0.6.4
+    helm.sh/chart: sloth-0.12.1
     app.kubernetes.io/managed-by: Helm
     app: sloth
     app.kubernetes.io/name: sloth
@@ -38,7 +38,7 @@ kind: ClusterRoleBinding
 metadata:
   name: sloth
   labels:
-    helm.sh/chart: sloth-0.6.4
+    helm.sh/chart: sloth-0.12.1
     app.kubernetes.io/managed-by: Helm
     app: sloth
     app.kubernetes.io/name: sloth
@@ -59,7 +59,7 @@ metadata:
   name: sloth
   namespace: monitoring
   labels:
-    helm.sh/chart: sloth-0.6.4
+    helm.sh/chart: sloth-0.12.1
     app.kubernetes.io/managed-by: Helm
     app: sloth
     app.kubernetes.io/name: sloth
@@ -74,7 +74,7 @@ spec:
   template:
     metadata:
       labels:
-        helm.sh/chart: sloth-0.6.4
+        helm.sh/chart: sloth-0.12.1
         app.kubernetes.io/managed-by: Helm
         app: sloth
         app.kubernetes.io/name: sloth
@@ -85,10 +85,11 @@ spec:
       serviceAccountName: sloth
       containers:
         - name: sloth
-          image: ghcr.io/slok/sloth:v0.11.0
+          image: ghcr.io/slok/sloth:v0.12.0
           args:
             - kubernetes-controller
             - --sli-plugins-path=/plugins
+            - --logger=default
           ports:
             - containerPort: 8081
               name: metrics
@@ -104,16 +105,16 @@ spec:
               cpu: 5m
               memory: 75Mi
         - name: git-sync-plugins
-          image: k8s.gcr.io/git-sync/git-sync:v3.6.1
+          image: registry.k8s.io/git-sync/git-sync:v4.4.0
           args:
             - --repo=https://github.com/slok/sloth-common-sli-plugins
-            - --branch=main
-            - --wait=30
+            - --ref=main
+            - --period=30s
             - --webhook-url=http://localhost:8082/-/reload
           volumeMounts:
             - name: sloth-common-sli-plugins
               # Default path for git-sync.
-              mountPath: /tmp/git
+              mountPath: /git
           resources:
             limits:
               cpu: 50m
@@ -132,7 +133,7 @@ metadata:
   name: sloth
   namespace: monitoring
   labels:
-    helm.sh/chart: sloth-0.6.4
+    helm.sh/chart: sloth-0.12.1
     app.kubernetes.io/managed-by: Helm
     app: sloth
     app.kubernetes.io/name: sloth

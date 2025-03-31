@@ -21,4 +21,4 @@ f_ver="-X ${version_path}=${VERSION:-dev}"
 
 # Build binary.
 echo "[*] Building binary at ${final_out} (GOOS=${GOOS:-}, GOARCH=${GOARCH:-}, GOARM=${GOARM:-}, VERSION=${VERSION:-}, EXTENSION=${EXTENSION:-})"
-CGO_ENABLED=0 go build -o ${final_out} --ldflags "${ldf_cmp} ${f_ver}"  ${src}
+CGO_ENABLED=0 go build -o ${final_out} --ldflags "${ldf_cmp} ${f_ver}" -buildvcs=false ${src}

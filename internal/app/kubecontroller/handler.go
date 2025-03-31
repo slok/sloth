@@ -12,6 +12,7 @@ import (
 	"github.com/slok/sloth/internal/info"
 	"github.com/slok/sloth/internal/k8sprometheus"
 	"github.com/slok/sloth/internal/log"
+	commonmodel "github.com/slok/sloth/pkg/common/model"
 	slothv1 "github.com/slok/sloth/pkg/kubernetes/api/sloth/v1"
 )
 
@@ -146,9 +147,9 @@ func (h handler) handlePrometheusServiceLevelV1(ctx context.Context, psl *slothv
 
 	// Generate rules.
 	req := generate.Request{
-		Info: info.Info{
+		Info: commonmodel.Info{
 			Version: info.Version,
-			Mode:    info.ModeControllerGenKubernetes,
+			Mode:    commonmodel.ModeControllerGenKubernetes,
 			Spec:    fmt.Sprintf("%s/%s", slothv1.SchemeGroupVersion.Group, slothv1.SchemeGroupVersion.Version),
 		},
 		ExtraLabels: h.extraLabels,

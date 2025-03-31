@@ -7,9 +7,10 @@ import (
 	"github.com/prometheus/prometheus/model/rulefmt"
 
 	"github.com/slok/sloth/internal/alert"
-	"github.com/slok/sloth/internal/info"
 	"github.com/slok/sloth/internal/log"
 	"github.com/slok/sloth/internal/prometheus"
+	"github.com/slok/sloth/pkg/common/model"
+	utilsdata "github.com/slok/sloth/pkg/common/utils/data"
 )
 
 // ServiceConfig is the application service configuration.
@@ -48,22 +49,22 @@ func (c *ServiceConfig) defaults() error {
 
 // AlertGenerator knows how to generate multiwindow multi-burn SLO alerts.
 type AlertGenerator interface {
-	GenerateMWMBAlerts(ctx context.Context, slo alert.SLO) (*alert.MWMBAlertGroup, error)
+	GenerateMWMBAlerts(ctx context.Context, slo alert.SLO) (*model.MWMBAlertGroup, error)
 }
 
 // SLIRecordingRulesGenerator knows how to generate SLI recording rules.
 type SLIRecordingRulesGenerator interface {
-	GenerateSLIRecordingRules(ctx context.Context, slo prometheus.SLO, alerts alert.MWMBAlertGroup) ([]rulefmt.Rule, error)
+	GenerateSLIRecordingRules(ctx context.Context, slo prometheus.SLO, alerts model.MWMBAlertGroup) ([]rulefmt.Rule, error)
 }
 
 // MetadataRecordingRulesGenerator knows how to generate metadata recording rules.
 type MetadataRecordingRulesGenerator interface {
-	GenerateMetadataRecordingRules(ctx context.Context, info info.Info, slo prometheus.SLO, alerts alert.MWMBAlertGroup) ([]rulefmt.Rule, error)
+	GenerateMetadataRecordingRules(ctx context.Context, info model.Info, slo prometheus.SLO, alerts model.MWMBAlertGroup) ([]rulefmt.Rule, error)
 }
 
 // SLOAlertRulesGenerator knows hot to generate SLO alert rules.
 type SLOAlertRulesGenerator interface {
-	GenerateSLOAlertRules(ctx context.Context, slo prometheus.SLO, alerts alert.MWMBAlertGroup) ([]rulefmt.Rule, error)
+	GenerateSLOAlertRules(ctx context.Context, slo prometheus.SLO, alerts model.MWMBAlertGroup) ([]rulefmt.Rule, error)
 }
 
 // Service is the application service for the generation of SLO for Prometheus.
@@ -93,7 +94,7 @@ func NewService(config ServiceConfig) (*Service, error) {
 
 type Request struct {
 	// Info about the application and execution, normally used as metadata.
-	Info info.Info
+	Info model.Info
 	// ExtraLabels are the extra labels added to the SLOs on execution time.
 	ExtraLabels map[string]string
 	// SLOGroup are the SLOs group that will be used to generate the SLO results and Prom rules.
@@ -102,7 +103,7 @@ type Request struct {
 
 type SLOResult struct {
 	SLO      prometheus.SLO
-	Alerts   alert.MWMBAlertGroup
+	Alerts   model.MWMBAlertGroup
 	SLORules prometheus.SLORules
 }
 
@@ -120,7 +121,7 @@ func (s Service) Generate(ctx context.Context, r Request) (*Response, error) {
 	results := make([]SLOResult, 0, len(r.SLOGroup.SLOs))
 	for _, slo := range r.SLOGroup.SLOs {
 		// Add extra labels.
-		slo.Labels = mergeLabels(slo.Labels, r.ExtraLabels)
+		slo.Labels = utilsdata.MergeLabels(slo.Labels, r.ExtraLabels)
 
 		// Generate SLO result.
 		result, err := s.generateSLO(ctx, r.Info, slo)
@@ -136,7 +137,7 @@ func (s Service) Generate(ctx context.Context, r Request) (*Response, error) {
 	}, nil
 }
 
-func (s Service) generateSLO(ctx context.Context, info info.Info, slo prometheus.SLO) (*SLOResult, error) {
+func (s Service) generateSLO(ctx context.Context, info model.Info, slo prometheus.SLO) (*SLOResult, error) {
 	logger := s.logger.WithCtxValues(ctx).WithValues(log.Kv{"slo": slo.ID})
 
 	// Generate the MWMB alerts.
@@ -181,15 +182,4 @@ func (s Service) generateSLO(ctx context.Context, info info.Info, slo prometheus
 			AlertRules:       alertRules,
 		},
 	}, nil
-}
-
-func mergeLabels(ms ...map[string]string) map[string]string {
-	res := map[string]string{}
-	for _, m := range ms {
-		for k, v := range m {
-			res[k] = v
-		}
-	}
-
-	return res
 }

@@ -12,6 +12,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/alecthomas/kingpin/v2"
 	"github.com/oklog/run"
 	monitoringv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
 	monitoringclientset "github.com/prometheus-operator/prometheus-operator/pkg/client/versioned"
@@ -21,7 +22,6 @@ import (
 	koopercontroller "github.com/spotahome/kooper/v2/controller"
 	kooperlog "github.com/spotahome/kooper/v2/log"
 	kooperprometheus "github.com/spotahome/kooper/v2/metrics/prometheus"
-	"gopkg.in/alecthomas/kingpin.v2"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/watch"

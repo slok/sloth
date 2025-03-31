@@ -11,13 +11,14 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/slok/sloth/internal/alert"
+	"github.com/slok/sloth/pkg/common/model"
 )
 
 func TestGenerateMWMBAlerts(t *testing.T) {
 	tests := map[string]struct {
 		windowsFS func() fs.FS
 		slo       alert.SLO
-		expAlerts *alert.MWMBAlertGroup
+		expAlerts *model.MWMBAlertGroup
 		expErr    bool
 	}{
 		"Generating alerts with not supported time windows should fail.": {
@@ -37,39 +38,39 @@ func TestGenerateMWMBAlerts(t *testing.T) {
 				TimeWindow: 30 * 24 * time.Hour,
 				Objective:  99.9,
 			},
-			expAlerts: &alert.MWMBAlertGroup{
-				PageQuick: alert.MWMBAlert{
+			expAlerts: &model.MWMBAlertGroup{
+				PageQuick: model.MWMBAlert{
 					ID:             "test-page-quick",
 					ShortWindow:    5 * time.Minute,
 					LongWindow:     1 * time.Hour,
 					BurnRateFactor: 14.4,
 					ErrorBudget:    0.09999999999999432,
-					Severity:       alert.PageAlertSeverity,
+					Severity:       model.PageAlertSeverity,
 				},
-				PageSlow: alert.MWMBAlert{
+				PageSlow: model.MWMBAlert{
 					ID:             "test-page-slow",
 					ShortWindow:    30 * time.Minute,
 					LongWindow:     6 * time.Hour,
 					BurnRateFactor: 6,
 					ErrorBudget:    0.09999999999999432,
-					Severity:       alert.PageAlertSeverity,
+					Severity:       model.PageAlertSeverity,
 				},
 
-				TicketQuick: alert.MWMBAlert{
+				TicketQuick: model.MWMBAlert{
 					ID:             "test-ticket-quick",
 					ShortWindow:    2 * time.Hour,
 					LongWindow:     1 * 24 * time.Hour,
 					BurnRateFactor: 3,
 					ErrorBudget:    0.09999999999999432,
-					Severity:       alert.TicketAlertSeverity,
+					Severity:       model.TicketAlertSeverity,
 				},
-				TicketSlow: alert.MWMBAlert{
+				TicketSlow: model.MWMBAlert{
 					ID:             "test-ticket-slow",
 					ShortWindow:    6 * time.Hour,
 					LongWindow:     3 * 24 * time.Hour,
 					BurnRateFactor: 1,
 					ErrorBudget:    0.09999999999999432,
-					Severity:       alert.TicketAlertSeverity,
+					Severity:       model.TicketAlertSeverity,
 				},
 			},
 		},
@@ -81,39 +82,39 @@ func TestGenerateMWMBAlerts(t *testing.T) {
 				TimeWindow: 28 * 24 * time.Hour,
 				Objective:  99.9,
 			},
-			expAlerts: &alert.MWMBAlertGroup{
-				PageQuick: alert.MWMBAlert{
+			expAlerts: &model.MWMBAlertGroup{
+				PageQuick: model.MWMBAlert{
 					ID:             "test-page-quick",
 					ShortWindow:    5 * time.Minute,
 					LongWindow:     1 * time.Hour,
 					BurnRateFactor: 13.44,
 					ErrorBudget:    0.09999999999999432,
-					Severity:       alert.PageAlertSeverity,
+					Severity:       model.PageAlertSeverity,
 				},
-				PageSlow: alert.MWMBAlert{
+				PageSlow: model.MWMBAlert{
 					ID:             "test-page-slow",
 					ShortWindow:    30 * time.Minute,
 					LongWindow:     6 * time.Hour,
 					BurnRateFactor: 5.6000000000000005,
 					ErrorBudget:    0.09999999999999432,
-					Severity:       alert.PageAlertSeverity,
+					Severity:       model.PageAlertSeverity,
 				},
 
-				TicketQuick: alert.MWMBAlert{
+				TicketQuick: model.MWMBAlert{
 					ID:             "test-ticket-quick",
 					ShortWindow:    2 * time.Hour,
 					LongWindow:     1 * 24 * time.Hour,
 					BurnRateFactor: 2.8000000000000003,
 					ErrorBudget:    0.09999999999999432,
-					Severity:       alert.TicketAlertSeverity,
+					Severity:       model.TicketAlertSeverity,
 				},
-				TicketSlow: alert.MWMBAlert{
+				TicketSlow: model.MWMBAlert{
 					ID:             "test-ticket-slow",
 					ShortWindow:    6 * time.Hour,
 					LongWindow:     3 * 24 * time.Hour,
 					BurnRateFactor: 0.9333333333333333,
 					ErrorBudget:    0.09999999999999432,
-					Severity:       alert.TicketAlertSeverity,
+					Severity:       model.TicketAlertSeverity,
 				},
 			},
 		},
@@ -174,39 +175,39 @@ spec:
 				Objective:  99.9,
 			},
 
-			expAlerts: &alert.MWMBAlertGroup{
-				PageQuick: alert.MWMBAlert{
+			expAlerts: &model.MWMBAlertGroup{
+				PageQuick: model.MWMBAlert{
 					ID:             "test-page-quick",
 					ShortWindow:    5 * time.Minute,
 					LongWindow:     1 * time.Hour,
 					BurnRateFactor: 13.44,
 					ErrorBudget:    0.09999999999999432,
-					Severity:       alert.PageAlertSeverity,
+					Severity:       model.PageAlertSeverity,
 				},
-				PageSlow: alert.MWMBAlert{
+				PageSlow: model.MWMBAlert{
 					ID:             "test-page-slow",
 					ShortWindow:    30 * time.Minute,
 					LongWindow:     6 * time.Hour,
 					BurnRateFactor: 3.5,
 					ErrorBudget:    0.09999999999999432,
-					Severity:       alert.PageAlertSeverity,
+					Severity:       model.PageAlertSeverity,
 				},
 
-				TicketQuick: alert.MWMBAlert{
+				TicketQuick: model.MWMBAlert{
 					ID:             "test-ticket-quick",
 					ShortWindow:    2 * time.Hour,
 					LongWindow:     1 * 24 * time.Hour,
 					BurnRateFactor: 1.4000000000000001,
 					ErrorBudget:    0.09999999999999432,
-					Severity:       alert.TicketAlertSeverity,
+					Severity:       model.TicketAlertSeverity,
 				},
-				TicketSlow: alert.MWMBAlert{
+				TicketSlow: model.MWMBAlert{
 					ID:             "test-ticket-slow",
 					ShortWindow:    6 * time.Hour,
 					LongWindow:     3 * 24 * time.Hour,
 					BurnRateFactor: 0.98,
 					ErrorBudget:    0.09999999999999432,
-					Severity:       alert.TicketAlertSeverity,
+					Severity:       model.TicketAlertSeverity,
 				},
 			},
 		},

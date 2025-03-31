@@ -5,14 +5,14 @@ on:
     branches:
       - main
     paths:
-      - "deploy/kubernetes/helm/**"
+      - "deploy/kubernetes/helm/sloth/Chart.yaml"
 
 jobs:
   release:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
@@ -22,12 +22,12 @@ jobs:
           git config user.email "$GITHUB_ACTOR@users.noreply.github.com"
 
       - name: Install Helm
-        uses: azure/setup-helm@v3.4
+        uses: azure/setup-helm@v4
         with:
-          version: v3.7.1
+          version: v3.17.0
 
       - name: Run chart-releaser
-        uses: helm/chart-releaser-action@v1.4.1
+        uses: helm/chart-releaser-action@v1
         with:
           charts_dir: deploy/kubernetes/helm
         env:

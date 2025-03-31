@@ -8,14 +8,16 @@ import (
 
 	"k8s.io/apimachinery/pkg/runtime"
 
+	pluginsli "github.com/slok/sloth/internal/plugin/sli"
 	"github.com/slok/sloth/internal/prometheus"
+	utilsdata "github.com/slok/sloth/pkg/common/utils/data"
 	k8sprometheusv1 "github.com/slok/sloth/pkg/kubernetes/api/sloth/v1"
 	"github.com/slok/sloth/pkg/kubernetes/gen/clientset/versioned/scheme"
 	prometheuspluginv1 "github.com/slok/sloth/pkg/prometheus/plugin/v1"
 )
 
 type SLIPluginRepo interface {
-	GetSLIPlugin(ctx context.Context, id string) (*prometheus.SLIPlugin, error)
+	GetSLIPlugin(ctx context.Context, id string) (*pluginsli.SLIPlugin, error)
 }
 
 // YAMLSpecLoader knows how to load Kubernetes ServiceLevel YAML specs and converts them to a model.
@@ -100,7 +102,7 @@ func mapSpecToModel(ctx context.Context, defaultWindowPeriod time.Duration, plug
 			Service:         spec.Service,
 			TimeWindow:      defaultWindowPeriod,
 			Objective:       specSLO.Objective,
-			Labels:          mergeLabels(spec.Labels, specSLO.Labels),
+			Labels:          utilsdata.MergeLabels(spec.Labels, specSLO.Labels),
 			PageAlertMeta:   prometheus.AlertMeta{Disable: true},
 			TicketAlertMeta: prometheus.AlertMeta{Disable: true},
 		}
@@ -145,16 +147,16 @@ func mapSpecToModel(ctx context.Context, defaultWindowPeriod time.Duration, plug
 		if !specSLO.Alerting.PageAlert.Disable {
 			slo.PageAlertMeta = prometheus.AlertMeta{
 				Name:        specSLO.Alerting.Name,
-				Labels:      mergeLabels(specSLO.Alerting.Labels, specSLO.Alerting.PageAlert.Labels),
-				Annotations: mergeLabels(specSLO.Alerting.Annotations, specSLO.Alerting.PageAlert.Annotations),
+				Labels:      utilsdata.MergeLabels(specSLO.Alerting.Labels, specSLO.Alerting.PageAlert.Labels),
+				Annotations: utilsdata.MergeLabels(specSLO.Alerting.Annotations, specSLO.Alerting.PageAlert.Annotations),
 			}
 		}
 
 		if !specSLO.Alerting.TicketAlert.Disable {
 			slo.TicketAlertMeta = prometheus.AlertMeta{
 				Name:        specSLO.Alerting.Name,
-				Labels:      mergeLabels(specSLO.Alerting.Labels, specSLO.Alerting.TicketAlert.Labels),
-				Annotations: mergeLabels(specSLO.Alerting.Annotations, specSLO.Alerting.TicketAlert.Annotations),
+				Labels:      utilsdata.MergeLabels(specSLO.Alerting.Labels, specSLO.Alerting.TicketAlert.Labels),
+				Annotations: utilsdata.MergeLabels(specSLO.Alerting.Annotations, specSLO.Alerting.TicketAlert.Annotations),
 			}
 		}
 

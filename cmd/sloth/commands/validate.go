@@ -9,14 +9,13 @@ import (
 	"regexp"
 	"time"
 
+	"github.com/alecthomas/kingpin/v2"
 	prometheusmodel "github.com/prometheus/common/model"
-	"gopkg.in/alecthomas/kingpin.v2"
 
 	"github.com/slok/sloth/internal/alert"
 	"github.com/slok/sloth/internal/k8sprometheus"
 	"github.com/slok/sloth/internal/log"
-	"github.com/slok/sloth/internal/openslo"
-	"github.com/slok/sloth/internal/prometheus"
+	storageio "github.com/slok/sloth/internal/storage/io"
 )
 
 type validateCommand struct {
@@ -108,9 +107,9 @@ func (v validateCommand) Run(ctx context.Context, config RootConfig) error {
 	}
 
 	// Create Spec loaders.
-	promYAMLLoader := prometheus.NewYAMLSpecLoader(pluginRepo, sloPeriod)
+	promYAMLLoader := storageio.NewSlothPrometheusYAMLSpecLoader(pluginRepo, sloPeriod)
 	kubeYAMLLoader := k8sprometheus.NewYAMLSpecLoader(pluginRepo, sloPeriod)
-	openSLOYAMLLoader := openslo.NewYAMLSpecLoader(sloPeriod)
+	openSLOYAMLLoader := storageio.NewOpenSLOYAMLSpecLoader(sloPeriod)
 
 	// For every file load the data and start the validation process:
 	validations := []*fileValidation{}

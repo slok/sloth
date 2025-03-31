@@ -3,8 +3,8 @@
 package versioned
 
 import (
-	"fmt"
-	"net/http"
+	fmt "fmt"
+	http "net/http"
 
 	slothv1 "github.com/slok/sloth/pkg/kubernetes/gen/clientset/versioned/typed/sloth/v1"
 	discovery "k8s.io/client-go/discovery"
@@ -17,8 +17,7 @@ type Interface interface {
 	SlothV1() slothv1.SlothV1Interface
 }
 
-// Clientset contains the clients for groups. Each group has exactly one
-// version included in a Clientset.
+// Clientset contains the clients for groups.
 type Clientset struct {
 	*discovery.DiscoveryClient
 	slothV1 *slothv1.SlothV1Client

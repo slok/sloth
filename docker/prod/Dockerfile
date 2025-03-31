@@ -1,7 +1,7 @@
 # Set also `ARCH` ARG here so we can use it on all the `FROM`s. 
 ARG ARCH
 
-FROM golang:1.19.3-alpine as build-stage
+FROM golang:1.24.1-alpine as build-stage
 
 LABEL org.opencontainers.image.source https://github.com/slok/sloth
 

@@ -27,6 +27,10 @@ spec:
       securityContext:
         {{- toYaml . | nindent 8 }}
       {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+{{ toYaml . | trim | indent 8 }}
+      {{- end }}
       containers:
         - name: sloth
           image: {{ coalesce .Values.global.imageRegistry .Values.image.registry }}/{{ .Values.image.repository }}:{{ .Values.image.tag }}
@@ -86,22 +90,18 @@ spec:
           {{- end }}
           resources:
           {{- toYaml .Values.resources | nindent 12 }}
-          {{- with .Values.tolerations }}
-          tolerations:
-{{ toYaml . | trim | indent 12 }}
-          {{- end }}
         {{- if .Values.commonPlugins.enabled }}
         - name: git-sync-plugins
           image: {{ .Values.commonPlugins.image.repository }}:{{ .Values.commonPlugins.image.tag }}
           args:
             - --repo={{.Values.commonPlugins.gitRepo.url}}
-            - --branch={{.Values.commonPlugins.gitRepo.branch}}
-            - --wait=30
+            - --ref={{.Values.commonPlugins.gitRepo.branch}}
+            - --period=30s
             - --webhook-url=http://localhost:8082/-/reload
           volumeMounts:
             - name: sloth-common-sli-plugins
               # Default path for git-sync.
-              mountPath: /tmp/git
+              mountPath: /git
           {{- with .Values.securityContext.container }}
           securityContext:
             {{- toYaml . | nindent 12 }}

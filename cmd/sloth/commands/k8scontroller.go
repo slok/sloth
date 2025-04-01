@@ -14,7 +14,6 @@ import (
 
 	"github.com/alecthomas/kingpin/v2"
 	"github.com/oklog/run"
-	monitoringv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
 	monitoringclientset "github.com/prometheus-operator/prometheus-operator/pkg/client/versioned"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	prometheusmodel "github.com/prometheus/common/model"
@@ -33,9 +32,9 @@ import (
 	"github.com/slok/sloth/internal/alert"
 	"github.com/slok/sloth/internal/app/generate"
 	"github.com/slok/sloth/internal/app/kubecontroller"
-	"github.com/slok/sloth/internal/k8sprometheus"
 	"github.com/slok/sloth/internal/log"
 	"github.com/slok/sloth/internal/prometheus"
+	"github.com/slok/sloth/internal/storage"
 	storageio "github.com/slok/sloth/internal/storage/io"
 	storagek8s "github.com/slok/sloth/internal/storage/k8s"
 	slothv1 "github.com/slok/sloth/pkg/kubernetes/api/sloth/v1"
@@ -139,14 +138,14 @@ func (k kubeControllerCommand) Run(ctx context.Context, config RootConfig) error
 	}
 
 	// Kubernetes services.
-	ksvc, err := k.newKubernetesService(ctx, config)
+	kuberepo, err := k.newKubernetesService(ctx, config)
 	if err != nil {
 		return fmt.Errorf("could not create Kubernetes service: %w", err)
 	}
 
 	// Check we can get Sloth CRs without problem before starting everything. This is a hard
 	// dependency, if we can't, we must fail.
-	_, err = ksvc.ListPrometheusServiceLevels(ctx, k.namespace, metav1.ListOptions{})
+	_, err = kuberepo.ListPrometheusServiceLevels(ctx, k.namespace, metav1.ListOptions{})
 	if err != nil {
 		return fmt.Errorf("check for PrometheusServiceLevel CRD failed: could not list: %w", err)
 	}
@@ -322,8 +321,8 @@ func (k kubeControllerCommand) Run(ctx context.Context, config RootConfig) error
 		config := kubecontroller.HandlerConfig{
 			Generator:        generator,
 			SpecLoader:       storageio.NewK8sSlothPrometheusCRSpecLoader(pluginRepo, sloPeriod),
-			Repository:       k8sprometheus.NewPrometheusOperatorCRDRepo(ksvc, logger),
-			KubeStatusStorer: ksvc,
+			Repository:       kuberepo,
+			KubeStatusStorer: kuberepo,
 			ExtraLabels:      k.extraLabels,
 			Logger:           logger,
 		}
@@ -338,7 +337,7 @@ func (k kubeControllerCommand) Run(ctx context.Context, config RootConfig) error
 			return fmt.Errorf("invalid label selector %q: %w", k.labelSelector, err)
 		}
 
-		ret := kubecontroller.NewPrometheusServiceLevelsRetriver(k.namespace, lSelector, ksvc)
+		ret := kubecontroller.NewPrometheusServiceLevelsRetriver(k.namespace, lSelector, kuberepo)
 
 		ctrl, err := koopercontroller.New(&koopercontroller.Config{
 			Handler:              handler,
@@ -374,8 +373,8 @@ func (k kubeControllerCommand) Run(ctx context.Context, config RootConfig) error
 type kubernetesService interface {
 	ListPrometheusServiceLevels(ctx context.Context, ns string, opts metav1.ListOptions) (*slothv1.PrometheusServiceLevelList, error)
 	WatchPrometheusServiceLevels(ctx context.Context, ns string, opts metav1.ListOptions) (watch.Interface, error)
-	EnsurePrometheusRule(ctx context.Context, pr *monitoringv1.PrometheusRule) error
 	EnsurePrometheusServiceLevelStatus(ctx context.Context, slo *slothv1.PrometheusServiceLevel, err error) error
+	StoreSLOs(ctx context.Context, kmeta storage.K8sMeta, slos []storage.SLORulesResult) error
 }
 
 func (k kubeControllerCommand) newKubernetesService(ctx context.Context, config RootConfig) (kubernetesService, error) {
@@ -403,16 +402,16 @@ func (k kubeControllerCommand) newKubernetesService(ctx context.Context, config 
 	}
 
 	// Create Kubernetes service.
-	ksvc := storagek8s.NewApiserverRepository(kubeSlothcli, kubeMonitoringCli, config.Logger)
+	kuberepo := storagek8s.NewApiserverRepository(kubeSlothcli, kubeMonitoringCli, config.Logger)
 
 	// Dry run mode.
 	if k.runMode == controllerModeDryRun {
 		config.Logger.Warningf("Kubernetes in dry run mode")
-		return storagek8s.NewDryRunApiserverRepository(ksvc, config.Logger), nil
+		return storagek8s.NewDryRunApiserverRepository(kuberepo, config.Logger), nil
 	}
 
 	// Default mode.
-	return ksvc, nil
+	return kuberepo, nil
 }
 
 // loadKubernetesConfig loads kubernetes configuration based on flags.

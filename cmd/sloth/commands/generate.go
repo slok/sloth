@@ -19,9 +19,9 @@ import (
 	"github.com/slok/sloth/internal/alert"
 	"github.com/slok/sloth/internal/app/generate"
 	"github.com/slok/sloth/internal/info"
-	"github.com/slok/sloth/internal/k8sprometheus"
 	"github.com/slok/sloth/internal/log"
 	"github.com/slok/sloth/internal/prometheus"
+	"github.com/slok/sloth/internal/storage"
 	storageio "github.com/slok/sloth/internal/storage/io"
 	"github.com/slok/sloth/pkg/common/model"
 	kubernetesv1 "github.com/slok/sloth/pkg/kubernetes/api/sloth/v1"
@@ -353,16 +353,16 @@ func (g generator) GenerateKubernetes(ctx context.Context, sloGroup model.PromSL
 		return err
 	}
 
-	repo := k8sprometheus.NewIOWriterPrometheusOperatorYAMLRepo(out, g.logger)
-	storageSLOs := make([]k8sprometheus.StorageSLO, 0, len(result.PrometheusSLOs))
+	repo := storageio.NewIOWriterPrometheusOperatorYAMLRepo(out, g.logger)
+	storageSLOs := make([]storage.SLORulesResult, 0, len(result.PrometheusSLOs))
 	for _, s := range result.PrometheusSLOs {
-		storageSLOs = append(storageSLOs, k8sprometheus.StorageSLO{
+		storageSLOs = append(storageSLOs, storage.SLORulesResult{
 			SLO:   s.SLO,
 			Rules: s.SLORules,
 		})
 	}
 
-	kmeta := k8sprometheus.K8sMeta{
+	kmeta := storage.K8sMeta{
 		Kind:        "PrometheusServiceLevel",
 		APIVersion:  "sloth.slok.dev/v1",
 		UID:         string(sloGroup.OriginalSource.K8sSlothV1.UID),

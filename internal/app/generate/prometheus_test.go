@@ -94,41 +94,6 @@ func TestIntegrationAppServiceGenerate(t *testing.T) {
 								Annotations: map[string]string{"t_alert_annot": "t_label_an_1"},
 							},
 						},
-						Alerts: model.MWMBAlertGroup{
-							PageQuick: model.MWMBAlert{
-								ID:             "test-id-page-quick",
-								ShortWindow:    5 * time.Minute,
-								LongWindow:     1 * time.Hour,
-								BurnRateFactor: 14.4,
-								ErrorBudget:    0.09999999999999432,
-								Severity:       model.PageAlertSeverity,
-							},
-							PageSlow: model.MWMBAlert{
-								ID:             "test-id-page-slow",
-								ShortWindow:    30 * time.Minute,
-								LongWindow:     6 * time.Hour,
-								BurnRateFactor: 6,
-								ErrorBudget:    0.09999999999999432,
-								Severity:       model.PageAlertSeverity,
-							},
-
-							TicketQuick: model.MWMBAlert{
-								ID:             "test-id-ticket-quick",
-								ShortWindow:    2 * time.Hour,
-								LongWindow:     1 * 24 * time.Hour,
-								BurnRateFactor: 3,
-								ErrorBudget:    0.09999999999999432,
-								Severity:       model.TicketAlertSeverity,
-							},
-							TicketSlow: model.MWMBAlert{
-								ID:             "test-id-ticket-slow",
-								ShortWindow:    6 * time.Hour,
-								LongWindow:     3 * 24 * time.Hour,
-								BurnRateFactor: 1,
-								ErrorBudget:    0.09999999999999432,
-								Severity:       model.TicketAlertSeverity,
-							},
-						},
 						SLORules: model.PromSLORules{
 							SLIErrorRecRules: model.PromRuleGroup{Rules: []rulefmt.Rule{
 								{

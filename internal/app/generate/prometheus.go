@@ -103,7 +103,6 @@ type Request struct {
 
 type SLOResult struct {
 	SLO      model.PromSLO
-	Alerts   model.MWMBAlertGroup
 	SLORules model.PromSLORules
 }
 
@@ -129,7 +128,7 @@ func (s Service) Generate(ctx context.Context, r Request) (*Response, error) {
 			return nil, fmt.Errorf("could not generate %q slo: %w", slo.ID, err)
 		}
 
-		results = append(results, *result)
+		results = append(results, SLOResult{SLO: slo, SLORules: *result})
 	}
 
 	return &Response{
@@ -137,7 +136,7 @@ func (s Service) Generate(ctx context.Context, r Request) (*Response, error) {
 	}, nil
 }
 
-func (s Service) generateSLO(ctx context.Context, info model.Info, slo prometheus.SLO) (*SLOResult, error) {
+func (s Service) generateSLO(ctx context.Context, info model.Info, slo prometheus.SLO) (*model.PromSLORules, error) {
 	logger := s.logger.WithCtxValues(ctx).WithValues(log.Kv{"slo": slo.ID})
 
 	// Generate the MWMB alerts.
@@ -150,36 +149,27 @@ func (s Service) generateSLO(ctx context.Context, info model.Info, slo prometheu
 	if err != nil {
 		return nil, fmt.Errorf("could not generate SLO alerts: %w", err)
 	}
-	logger.Infof("Multiwindow-multiburn alerts generated")
+	logger.Debugf("Multiwindow-multiburn alerts generated")
 
-	// Generate SLI recording rules.
-	sliRecordingRules, err := s.sliRecordRuleGen.GenerateSLIRecordingRules(ctx, slo, *as)
-	if err != nil {
-		return nil, fmt.Errorf("could not generate Prometheus sli recording rules: %w", err)
+	// Set default processors.
+	processors := []sloProcessor{
+		newProcessorForMetaRecordingRulesGenerator(logger, s.metaRecordRuleGen),
+		newProcessorForSLIRecordingRulesGenerator(logger, s.sliRecordRuleGen),
+		newProcessorForSLOAlertRulesGenerator(logger, s.alertRuleGen),
 	}
-	logger.WithValues(log.Kv{"rules": len(sliRecordingRules)}).Infof("SLI recording rules generated")
 
-	// Generate Metadata recording rules.
-	metaRecordingRules, err := s.metaRecordRuleGen.GenerateMetadataRecordingRules(ctx, info, slo, *as)
-	if err != nil {
-		return nil, fmt.Errorf("could not generate Prometheus metadata recording rules: %w", err)
-	}
-	logger.WithValues(log.Kv{"rules": len(metaRecordingRules)}).Infof("Metadata recording rules generated")
-
-	// Generate Alert rules.
-	alertRules, err := s.alertRuleGen.GenerateSLOAlertRules(ctx, slo, *as)
-	if err != nil {
-		return nil, fmt.Errorf("could not generate Prometheus alert rules: %w", err)
-	}
-	logger.WithValues(log.Kv{"rules": len(alertRules)}).Infof("SLO alert rules generated")
-
-	return &SLOResult{
-		SLO:    slo,
+	req := &sloProcessortRequest{
+		Info:   info,
 		Alerts: *as,
-		SLORules: model.PromSLORules{
-			SLIErrorRecRules: model.PromRuleGroup{Rules: sliRecordingRules},
-			MetadataRecRules: model.PromRuleGroup{Rules: metaRecordingRules},
-			AlertRules:       model.PromRuleGroup{Rules: alertRules},
-		},
-	}, nil
+		SLO:    slo,
+	}
+	res := &sloProcessortResult{}
+	for _, p := range processors {
+		err := p.ProcessSLO(ctx, req, res)
+		if err != nil {
+			return nil, fmt.Errorf("slo processor failed: %w", err)
+		}
+	}
+
+	return &res.SLORules, nil
 }

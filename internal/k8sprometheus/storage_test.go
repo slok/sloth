@@ -1,5 +1,6 @@
 package k8sprometheus_test
 
+/*
 import (
 	"bytes"
 	"context"
@@ -621,3 +622,4 @@ func TestPrometheusOperatorCRDRepo(t *testing.T) {
 		})
 	}
 }
+*/

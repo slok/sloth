@@ -37,6 +37,7 @@ import (
 	"github.com/slok/sloth/internal/log"
 	"github.com/slok/sloth/internal/prometheus"
 	storageio "github.com/slok/sloth/internal/storage/io"
+	storagek8s "github.com/slok/sloth/internal/storage/k8s"
 	slothv1 "github.com/slok/sloth/pkg/kubernetes/api/sloth/v1"
 	slothclientset "github.com/slok/sloth/pkg/kubernetes/gen/clientset/versioned"
 )
@@ -382,7 +383,7 @@ func (k kubeControllerCommand) newKubernetesService(ctx context.Context, config 
 
 	// Fake mode.
 	if k.runMode == controllerModeFake {
-		return k8sprometheus.NewKubernetesServiceFake(config.Logger), nil
+		return storagek8s.NewFakeApiserverRepository(config.Logger), nil
 	}
 
 	// Load Kubernetes clients.
@@ -402,12 +403,12 @@ func (k kubeControllerCommand) newKubernetesService(ctx context.Context, config 
 	}
 
 	// Create Kubernetes service.
-	ksvc := k8sprometheus.NewKubernetesService(kubeSlothcli, kubeMonitoringCli, config.Logger)
+	ksvc := storagek8s.NewApiserverRepository(kubeSlothcli, kubeMonitoringCli, config.Logger)
 
 	// Dry run mode.
 	if k.runMode == controllerModeDryRun {
 		config.Logger.Warningf("Kubernetes in dry run mode")
-		return k8sprometheus.NewKubernetesServiceDryRun(ksvc, config.Logger), nil
+		return storagek8s.NewDryRunApiserverRepository(ksvc, config.Logger), nil
 	}
 
 	// Default mode.

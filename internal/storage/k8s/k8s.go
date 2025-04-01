@@ -1,4 +1,4 @@
-package k8sprometheus
+package k8s
 
 import (
 	"context"
@@ -18,38 +18,38 @@ import (
 	slothclientsetfake "github.com/slok/sloth/pkg/kubernetes/gen/clientset/versioned/fake"
 )
 
-type KubernetesService struct {
+type ApiserverRepository struct {
 	slothCli      slothclientset.Interface
 	monitoringCli monitoringclientset.Interface
 	logger        log.Logger
 }
 
-// NewKubernetesService returns a new Kubernetes Service.
-func NewKubernetesService(slothCli slothclientset.Interface, monitoringCli monitoringclientset.Interface, logger log.Logger) KubernetesService {
-	return KubernetesService{
+// NewApiserverRepository returns a new Kubernetes Apiserver storage.
+func NewApiserverRepository(slothCli slothclientset.Interface, monitoringCli monitoringclientset.Interface, logger log.Logger) ApiserverRepository {
+	return ApiserverRepository{
 		slothCli:      slothCli,
 		monitoringCli: monitoringCli,
-		logger:        logger.WithValues(log.Kv{"service": "k8sprometheus.Service"}),
+		logger:        logger.WithValues(log.Kv{"service": "storage.k8s."}),
 	}
 }
 
-func (k KubernetesService) ListPrometheusServiceLevels(ctx context.Context, ns string, opts metav1.ListOptions) (*slothv1.PrometheusServiceLevelList, error) {
-	return k.slothCli.SlothV1().PrometheusServiceLevels(ns).List(ctx, opts)
+func (r ApiserverRepository) ListPrometheusServiceLevels(ctx context.Context, ns string, opts metav1.ListOptions) (*slothv1.PrometheusServiceLevelList, error) {
+	return r.slothCli.SlothV1().PrometheusServiceLevels(ns).List(ctx, opts)
 }
 
-func (k KubernetesService) WatchPrometheusServiceLevels(ctx context.Context, ns string, opts metav1.ListOptions) (watch.Interface, error) {
-	return k.slothCli.SlothV1().PrometheusServiceLevels(ns).Watch(ctx, opts)
+func (r ApiserverRepository) WatchPrometheusServiceLevels(ctx context.Context, ns string, opts metav1.ListOptions) (watch.Interface, error) {
+	return r.slothCli.SlothV1().PrometheusServiceLevels(ns).Watch(ctx, opts)
 }
 
-func (k KubernetesService) EnsurePrometheusRule(ctx context.Context, pr *monitoringv1.PrometheusRule) error {
-	logger := k.logger.WithCtxValues(ctx)
+func (r ApiserverRepository) EnsurePrometheusRule(ctx context.Context, pr *monitoringv1.PrometheusRule) error {
+	logger := r.logger.WithCtxValues(ctx)
 	pr = pr.DeepCopy()
-	stored, err := k.monitoringCli.MonitoringV1().PrometheusRules(pr.Namespace).Get(ctx, pr.Name, metav1.GetOptions{})
+	stored, err := r.monitoringCli.MonitoringV1().PrometheusRules(pr.Namespace).Get(ctx, pr.Name, metav1.GetOptions{})
 	if err != nil {
 		if !kubeerrors.IsNotFound(err) {
 			return err
 		}
-		_, err = k.monitoringCli.MonitoringV1().PrometheusRules(pr.Namespace).Create(ctx, pr, metav1.CreateOptions{})
+		_, err = r.monitoringCli.MonitoringV1().PrometheusRules(pr.Namespace).Create(ctx, pr, metav1.CreateOptions{})
 		if err != nil {
 			return err
 		}
@@ -60,7 +60,7 @@ func (k KubernetesService) EnsurePrometheusRule(ctx context.Context, pr *monitor
 
 	// Force overwrite.
 	pr.ObjectMeta.ResourceVersion = stored.ResourceVersion
-	_, err = k.monitoringCli.MonitoringV1().PrometheusRules(pr.Namespace).Update(ctx, pr, metav1.UpdateOptions{})
+	_, err = r.monitoringCli.MonitoringV1().PrometheusRules(pr.Namespace).Update(ctx, pr, metav1.UpdateOptions{})
 	if err != nil {
 		return err
 	}
@@ -73,7 +73,7 @@ func (k KubernetesService) EnsurePrometheusRule(ctx context.Context, pr *monitor
 // an status will trigger a watch update event on a controller.
 // In case of no error we will update "last correct Prometheus operation rules generated" TS so we can be in
 // a infinite loop of handling, the handler should break this loop somehow (e.g: if ok and last generated < 5m, ignore).
-func (k KubernetesService) EnsurePrometheusServiceLevelStatus(ctx context.Context, slo *slothv1.PrometheusServiceLevel, err error) error {
+func (r ApiserverRepository) EnsurePrometheusServiceLevelStatus(ctx context.Context, slo *slothv1.PrometheusServiceLevel, err error) error {
 	slo = slo.DeepCopy()
 
 	slo.Status.PromOpRulesGenerated = false
@@ -87,70 +87,70 @@ func (k KubernetesService) EnsurePrometheusServiceLevelStatus(ctx context.Contex
 		slo.Status.LastPromOpRulesSuccessfulGenerated = &metav1.Time{Time: time.Now().UTC()}
 	}
 
-	_, err = k.slothCli.SlothV1().PrometheusServiceLevels(slo.Namespace).UpdateStatus(ctx, slo, metav1.UpdateOptions{})
+	_, err = r.slothCli.SlothV1().PrometheusServiceLevels(slo.Namespace).UpdateStatus(ctx, slo, metav1.UpdateOptions{})
 	return err
 }
 
-type DryRunKubernetesService struct {
-	svc    KubernetesService
+type DryRunApiserverRepository struct {
+	svc    ApiserverRepository
 	logger log.Logger
 }
 
-// NewKubernetesServiceDryRun returns a new Kubernetes Service that will dry-run that will only do real ReadOnly operations.
-func NewKubernetesServiceDryRun(svc KubernetesService, logger log.Logger) DryRunKubernetesService {
-	return DryRunKubernetesService{
+// NewDryRunApiserverRepository returns a new Kubernetes Service that will dry-run that will only do real ReadOnly operations.
+func NewDryRunApiserverRepository(svc ApiserverRepository, logger log.Logger) DryRunApiserverRepository {
+	return DryRunApiserverRepository{
 		svc:    svc,
-		logger: logger.WithValues(log.Kv{"service": "k8sprometheus.DryRunService"}),
+		logger: logger.WithValues(log.Kv{"service": "storage.k8s.DryRunApiserverRepository"}),
 	}
 }
 
-func (d DryRunKubernetesService) ListPrometheusServiceLevels(ctx context.Context, ns string, opts metav1.ListOptions) (*slothv1.PrometheusServiceLevelList, error) {
-	return d.svc.ListPrometheusServiceLevels(ctx, ns, opts)
+func (r DryRunApiserverRepository) ListPrometheusServiceLevels(ctx context.Context, ns string, opts metav1.ListOptions) (*slothv1.PrometheusServiceLevelList, error) {
+	return r.svc.ListPrometheusServiceLevels(ctx, ns, opts)
 }
 
-func (d DryRunKubernetesService) WatchPrometheusServiceLevels(ctx context.Context, ns string, opts metav1.ListOptions) (watch.Interface, error) {
-	return d.svc.WatchPrometheusServiceLevels(ctx, ns, opts)
+func (r DryRunApiserverRepository) WatchPrometheusServiceLevels(ctx context.Context, ns string, opts metav1.ListOptions) (watch.Interface, error) {
+	return r.svc.WatchPrometheusServiceLevels(ctx, ns, opts)
 }
 
-func (d DryRunKubernetesService) EnsurePrometheusRule(ctx context.Context, pr *monitoringv1.PrometheusRule) error {
-	d.logger.Infof("Dry run EnsurePrometheusRule")
+func (r DryRunApiserverRepository) EnsurePrometheusRule(ctx context.Context, pr *monitoringv1.PrometheusRule) error {
+	r.logger.Infof("Dry run EnsurePrometheusRule")
 	return nil
 }
 
-func (d DryRunKubernetesService) EnsurePrometheusServiceLevelStatus(ctx context.Context, slo *slothv1.PrometheusServiceLevel, err error) error {
-	d.logger.Infof("Dry run EnsurePrometheusServiceLevelStatus")
+func (r DryRunApiserverRepository) EnsurePrometheusServiceLevelStatus(ctx context.Context, slo *slothv1.PrometheusServiceLevel, err error) error {
+	r.logger.Infof("Dry run EnsurePrometheusServiceLevelStatus")
 	return nil
 }
 
-type FakeKubernetesService struct {
-	ksvc KubernetesService
+type FakeApiserverRepository struct {
+	ksvc ApiserverRepository
 }
 
-// NewKubernetesServiceFake returns a new Kubernetes Service that will fake Kubernetes operations
+// NewFakeApiserverRepository returns a new Kubernetes Service that will fake Kubernetes operations
 // using fake clients.
-func NewKubernetesServiceFake(logger log.Logger) FakeKubernetesService {
-	return FakeKubernetesService{
-		ksvc: NewKubernetesService(
+func NewFakeApiserverRepository(logger log.Logger) FakeApiserverRepository {
+	return FakeApiserverRepository{
+		ksvc: NewApiserverRepository(
 			slothclientsetfake.NewSimpleClientset(prometheusServiceLevelFakes...),
 			monitoringclientsetfake.NewSimpleClientset(),
 			logger),
 	}
 }
 
-func (f FakeKubernetesService) ListPrometheusServiceLevels(ctx context.Context, ns string, opts metav1.ListOptions) (*slothv1.PrometheusServiceLevelList, error) {
-	return f.ksvc.ListPrometheusServiceLevels(ctx, ns, opts)
+func (r FakeApiserverRepository) ListPrometheusServiceLevels(ctx context.Context, ns string, opts metav1.ListOptions) (*slothv1.PrometheusServiceLevelList, error) {
+	return r.ksvc.ListPrometheusServiceLevels(ctx, ns, opts)
 }
 
-func (f FakeKubernetesService) WatchPrometheusServiceLevels(ctx context.Context, ns string, opts metav1.ListOptions) (watch.Interface, error) {
-	return f.ksvc.WatchPrometheusServiceLevels(ctx, ns, opts)
+func (r FakeApiserverRepository) WatchPrometheusServiceLevels(ctx context.Context, ns string, opts metav1.ListOptions) (watch.Interface, error) {
+	return r.ksvc.WatchPrometheusServiceLevels(ctx, ns, opts)
 }
 
-func (f FakeKubernetesService) EnsurePrometheusRule(ctx context.Context, pr *monitoringv1.PrometheusRule) error {
-	return f.ksvc.EnsurePrometheusRule(ctx, pr)
+func (r FakeApiserverRepository) EnsurePrometheusRule(ctx context.Context, pr *monitoringv1.PrometheusRule) error {
+	return r.ksvc.EnsurePrometheusRule(ctx, pr)
 }
 
-func (f FakeKubernetesService) EnsurePrometheusServiceLevelStatus(ctx context.Context, slo *slothv1.PrometheusServiceLevel, err error) error {
-	return f.ksvc.EnsurePrometheusServiceLevelStatus(ctx, slo, err)
+func (r FakeApiserverRepository) EnsurePrometheusServiceLevelStatus(ctx context.Context, slo *slothv1.PrometheusServiceLevel, err error) error {
+	return r.ksvc.EnsurePrometheusServiceLevelStatus(ctx, slo, err)
 }
 
 var prometheusServiceLevelFakes = []runtime.Object{

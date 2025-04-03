@@ -9,7 +9,6 @@ import (
 	"github.com/OpenSLO/oslo/pkg/manifest/v1alpha"
 	"github.com/stretchr/testify/assert"
 
-	"github.com/slok/sloth/internal/prometheus"
 	"github.com/slok/sloth/internal/storage/io"
 	"github.com/slok/sloth/pkg/common/model"
 )
@@ -17,7 +16,7 @@ import (
 func TestOpenSLOYAMLSpecLoader(t *testing.T) {
 	tests := map[string]struct {
 		specYaml string
-		expModel *prometheus.SLOGroup
+		expModel *model.PromSLOGroup
 		expErr   bool
 	}{
 		"Empty spec should fail.": {
@@ -221,15 +220,15 @@ spec:
     isRolling: true
     unit: Day
 `,
-			expModel: &prometheus.SLOGroup{SLOs: []prometheus.SLO{
+			expModel: &model.PromSLOGroup{SLOs: []model.PromSLO{
 				{
 					ID:          "my-test-service-ratio-0",
 					Name:        "ratio-0",
 					Service:     "my-test-service",
 					Description: "A great description of a ratio based SLO",
 					TimeWindow:  28 * 24 * time.Hour,
-					SLI: prometheus.SLI{
-						Raw: &prometheus.SLIRaw{
+					SLI: model.PromSLI{
+						Raw: &model.PromSLIRaw{
 							ErrorRatioQuery: `
   1 - (
     (
@@ -244,8 +243,8 @@ spec:
 						},
 					},
 					Objective:       98,
-					PageAlertMeta:   prometheus.AlertMeta{Disable: true},
-					TicketAlertMeta: prometheus.AlertMeta{Disable: true},
+					PageAlertMeta:   model.PromAlertMeta{Disable: true},
+					TicketAlertMeta: model.PromAlertMeta{Disable: true},
 				},
 				{
 					ID:          "my-test-service-ratio-1",
@@ -253,8 +252,8 @@ spec:
 					Service:     "my-test-service",
 					Description: "A great description of a ratio based SLO",
 					TimeWindow:  28 * 24 * time.Hour,
-					SLI: prometheus.SLI{
-						Raw: &prometheus.SLIRaw{
+					SLI: model.PromSLI{
+						Raw: &model.PromSLIRaw{
 							ErrorRatioQuery: `
   1 - (
     (
@@ -269,8 +268,8 @@ spec:
 						},
 					},
 					Objective:       99.9,
-					PageAlertMeta:   prometheus.AlertMeta{Disable: true},
-					TicketAlertMeta: prometheus.AlertMeta{Disable: true},
+					PageAlertMeta:   model.PromAlertMeta{Disable: true},
+					TicketAlertMeta: model.PromAlertMeta{Disable: true},
 				},
 			},
 				OriginalSource: model.PromSLOGroupSource{OpenSLOV1Alpha: &v1alpha.SLO{

@@ -1,18 +1,21 @@
-package prometheus_test
+package plugin_test
 
 import (
-	"context"
+	"encoding/json"
 	"testing"
 	"time"
 
 	"github.com/prometheus/prometheus/model/rulefmt"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
-	"github.com/slok/sloth/internal/prometheus"
+	plugin "github.com/slok/sloth/internal/plugin/slo/core/sli_rules_v1"
 	"github.com/slok/sloth/pkg/common/model"
+	pluginslov1 "github.com/slok/sloth/pkg/prometheus/plugin/slo/v1"
+	pluginslov1testing "github.com/slok/sloth/pkg/prometheus/plugin/slo/v1/testing"
 )
 
-func getAlertGroup() model.MWMBAlertGroup {
+func baseAlertGroup() model.MWMBAlertGroup {
 	return model.MWMBAlertGroup{
 		PageQuick: model.MWMBAlert{
 			ShortWindow: 5 * time.Minute,
@@ -33,27 +36,41 @@ func getAlertGroup() model.MWMBAlertGroup {
 	}
 }
 
-func TestGenerateSLIRecordingRules(t *testing.T) {
-	type generator interface {
-		GenerateSLIRecordingRules(ctx context.Context, slo prometheus.SLO, alerts model.MWMBAlertGroup) ([]rulefmt.Rule, error)
+func baseSLO() model.PromSLO {
+	return model.PromSLO{
+		ID:         "test",
+		Name:       "test-name",
+		Service:    "test-svc",
+		TimeWindow: 30 * 24 * time.Hour,
+		SLI: model.PromSLI{
+			Events: &model.PromSLIEvents{
+				ErrorQuery: `rate(my_metric[{{.window}}]{error="true"})`,
+				TotalQuery: `rate(my_metric[{{.window}}])`,
+			},
+		},
+		Labels: map[string]string{
+			"kind": "test",
+		},
 	}
+}
 
+func TestGenerateSLIRecordingRules(t *testing.T) {
 	tests := map[string]struct {
-		generator  func() generator
-		slo        prometheus.SLO
+		optimized  bool
+		slo        model.PromSLO
 		alertGroup model.MWMBAlertGroup
 		expRules   []rulefmt.Rule
 		expErr     bool
 	}{
 		"Having and SLO with invalid expression should fail.": {
-			generator: func() generator { return prometheus.OptimizedSLIRecordingRulesGenerator },
-			slo: prometheus.SLO{
+			optimized: true,
+			slo: model.PromSLO{
 				ID:         "test",
 				Name:       "test-name",
 				Service:    "test-svc",
 				TimeWindow: 30 * 24 * time.Hour,
-				SLI: prometheus.SLI{
-					Events: &prometheus.SLIEvents{
+				SLI: model.PromSLI{
+					Events: &model.PromSLIEvents{
 						ErrorQuery: `rate(my_metric[{{}.window}}]{error="true"})`,
 						TotalQuery: `rate(my_metric[{{.window}}])`,
 					},
@@ -62,19 +79,19 @@ func TestGenerateSLIRecordingRules(t *testing.T) {
 					"kind": "test",
 				},
 			},
-			alertGroup: getAlertGroup(),
+			alertGroup: baseAlertGroup(),
 			expErr:     true,
 		},
 
 		"Having and wrong variable in the expression should fail.": {
-			generator: func() generator { return prometheus.OptimizedSLIRecordingRulesGenerator },
-			slo: prometheus.SLO{
+			optimized: true,
+			slo: model.PromSLO{
 				ID:         "test",
 				Name:       "test-name",
 				Service:    "test-svc",
 				TimeWindow: 30 * 24 * time.Hour,
-				SLI: prometheus.SLI{
-					Events: &prometheus.SLIEvents{
+				SLI: model.PromSLI{
+					Events: &model.PromSLIEvents{
 						ErrorQuery: `rate(my_metric[{{.Window}}]{error="true"})`,
 						TotalQuery: `rate(my_metric[{{.window}}])`,
 					},
@@ -83,28 +100,14 @@ func TestGenerateSLIRecordingRules(t *testing.T) {
 					"kind": "test",
 				},
 			},
-			alertGroup: getAlertGroup(),
+			alertGroup: baseAlertGroup(),
 			expErr:     true,
 		},
 
 		"Having an SLO with SLI(events) and its mwmb alerts should create the recording rules.": {
-			generator: func() generator { return prometheus.OptimizedSLIRecordingRulesGenerator },
-			slo: prometheus.SLO{
-				ID:         "test",
-				Name:       "test-name",
-				Service:    "test-svc",
-				TimeWindow: 30 * 24 * time.Hour,
-				SLI: prometheus.SLI{
-					Events: &prometheus.SLIEvents{
-						ErrorQuery: `rate(my_metric[{{.window}}]{error="true"})`,
-						TotalQuery: `rate(my_metric[{{.window}}])`,
-					},
-				},
-				Labels: map[string]string{
-					"kind": "test",
-				},
-			},
-			alertGroup: getAlertGroup(),
+			optimized:  true,
+			slo:        baseSLO(),
+			alertGroup: baseAlertGroup(),
 			expRules: []rulefmt.Rule{
 				{
 					Record: "slo:sli_error:ratio_rate5m",
@@ -198,14 +201,14 @@ func TestGenerateSLIRecordingRules(t *testing.T) {
 		},
 
 		"Having an SLO with SLI(events) and its mwmb alerts should create the recording rules (Non optimized).": {
-			generator: func() generator { return prometheus.SLIRecordingRulesGenerator },
-			slo: prometheus.SLO{
+			optimized: false,
+			slo: model.PromSLO{
 				ID:         "test",
 				Name:       "test-name",
 				Service:    "test-svc",
 				TimeWindow: 30 * 24 * time.Hour,
-				SLI: prometheus.SLI{
-					Events: &prometheus.SLIEvents{
+				SLI: model.PromSLI{
+					Events: &model.PromSLIEvents{
 						ErrorQuery: `rate(my_metric[{{.window}}]{error="true"})`,
 						TotalQuery: `rate(my_metric[{{.window}}])`,
 					},
@@ -214,7 +217,7 @@ func TestGenerateSLIRecordingRules(t *testing.T) {
 					"kind": "test",
 				},
 			},
-			alertGroup: getAlertGroup(),
+			alertGroup: baseAlertGroup(),
 			expRules: []rulefmt.Rule{
 				{
 					Record: "slo:sli_error:ratio_rate5m",
@@ -308,14 +311,14 @@ func TestGenerateSLIRecordingRules(t *testing.T) {
 		},
 
 		"Having an SLO with SLI (raw) and its mwmb alerts should create the recording rules.": {
-			generator: func() generator { return prometheus.OptimizedSLIRecordingRulesGenerator },
-			slo: prometheus.SLO{
+			optimized: true,
+			slo: model.PromSLO{
 				ID:         "test",
 				Name:       "test-name",
 				Service:    "test-svc",
 				TimeWindow: 30 * 24 * time.Hour,
-				SLI: prometheus.SLI{
-					Raw: &prometheus.SLIRaw{
+				SLI: model.PromSLI{
+					Raw: &model.PromSLIRaw{
 						ErrorRatioQuery: `rate(my_metric[{{.window}}])`,
 					},
 				},
@@ -323,7 +326,7 @@ func TestGenerateSLIRecordingRules(t *testing.T) {
 					"kind": "test",
 				},
 			},
-			alertGroup: getAlertGroup(),
+			alertGroup: baseAlertGroup(),
 			expRules: []rulefmt.Rule{
 				{
 					Record: "slo:sli_error:ratio_rate5m",
@@ -417,14 +420,14 @@ func TestGenerateSLIRecordingRules(t *testing.T) {
 		},
 
 		"An SLO alert with duplicated time windows should appear once and sorted.": {
-			generator: func() generator { return prometheus.OptimizedSLIRecordingRulesGenerator },
-			slo: prometheus.SLO{
+			optimized: true,
+			slo: model.PromSLO{
 				ID:         "test",
 				Name:       "test-name",
 				Service:    "test-svc",
 				TimeWindow: 30 * 24 * time.Hour,
-				SLI: prometheus.SLI{
-					Events: &prometheus.SLIEvents{
+				SLI: model.PromSLI{
+					Events: &model.PromSLIEvents{
 						ErrorQuery: `rate(my_metric[{{.window}}]{error="true"})`,
 						TotalQuery: `rate(my_metric[{{.window}}])`,
 					},
@@ -491,139 +494,67 @@ func TestGenerateSLIRecordingRules(t *testing.T) {
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
 			assert := assert.New(t)
+			require := require.New(t)
 
-			gotRules, err := test.generator().GenerateSLIRecordingRules(context.TODO(), test.slo, test.alertGroup)
+			// Load plugin
+			config, _ := json.Marshal(map[string]any{"optimized": test.optimized})
+			plugin, err := pluginslov1testing.NewTestPlugin(t.Context(), pluginslov1testing.TestPluginConfig{PluginConfiguration: config})
+			require.NoError(err)
 
+			// Execute plugin.
+			req := pluginslov1.Request{
+				SLO:            test.slo,
+				MWMBAlertGroup: test.alertGroup,
+			}
+			res := pluginslov1.Result{}
+			err = plugin.ProcessSLO(t.Context(), &req, &res)
+
+			// Check result.
 			if test.expErr {
 				assert.Error(err)
 			} else if assert.NoError(err) {
-				assert.Equal(test.expRules, gotRules)
+				assert.Equal(test.expRules, res.SLORules.SLIErrorRecRules.Rules)
 			}
 		})
 	}
 }
 
-func TestGenerateMetaRecordingRules(t *testing.T) {
-	tests := map[string]struct {
-		info       model.Info
-		slo        prometheus.SLO
-		alertGroup model.MWMBAlertGroup
-		expRules   []rulefmt.Rule
-		expErr     bool
-	}{
-		"Having and SLO an its mwmb alerts should create the metadata recording rules.": {
-			info: model.Info{
-				Version: "test-ver",
-				Mode:    model.ModeTest,
-				Spec:    "test/v1",
-			},
-			slo: prometheus.SLO{
-				ID:         "test",
-				Name:       "test-name",
-				Service:    "test-svc",
-				Objective:  99.9,
-				TimeWindow: 30 * 24 * time.Hour,
-				Labels: map[string]string{
-					"kind": "test",
-				},
-			},
-			alertGroup: getAlertGroup(),
-			expRules: []rulefmt.Rule{
-				{
-					Record: "slo:objective:ratio",
-					Expr:   "vector(0.9990000000000001)",
-					Labels: map[string]string{
-						"kind":          "test",
-						"sloth_service": "test-svc",
-						"sloth_slo":     "test-name",
-						"sloth_id":      "test",
-					},
-				},
-				{
-					Record: "slo:error_budget:ratio",
-					Expr:   "vector(1-0.9990000000000001)",
-					Labels: map[string]string{
-						"kind":          "test",
-						"sloth_service": "test-svc",
-						"sloth_slo":     "test-name",
-						"sloth_id":      "test",
-					},
-				},
-				{
-					Record: "slo:time_period:days",
-					Expr:   "vector(30)",
-					Labels: map[string]string{
-						"kind":          "test",
-						"sloth_service": "test-svc",
-						"sloth_slo":     "test-name",
-						"sloth_id":      "test",
-					},
-				},
-				{
-					Record: "slo:current_burn_rate:ratio",
-					Expr: `slo:sli_error:ratio_rate5m{sloth_id="test", sloth_service="test-svc", sloth_slo="test-name"}
-/ on(sloth_id, sloth_slo, sloth_service) group_left
-slo:error_budget:ratio{sloth_id="test", sloth_service="test-svc", sloth_slo="test-name"}
-`,
-					Labels: map[string]string{
-						"kind":          "test",
-						"sloth_service": "test-svc",
-						"sloth_slo":     "test-name",
-						"sloth_id":      "test",
-					},
-				},
-				{
-					Record: "slo:period_burn_rate:ratio",
-					Expr: `slo:sli_error:ratio_rate30d{sloth_id="test", sloth_service="test-svc", sloth_slo="test-name"}
-/ on(sloth_id, sloth_slo, sloth_service) group_left
-slo:error_budget:ratio{sloth_id="test", sloth_service="test-svc", sloth_slo="test-name"}
-`,
-					Labels: map[string]string{
-						"kind":          "test",
-						"sloth_service": "test-svc",
-						"sloth_slo":     "test-name",
-						"sloth_id":      "test",
-					},
-				},
-				{
-					Record: "slo:period_error_budget_remaining:ratio",
-					Expr:   `1 - slo:period_burn_rate:ratio{sloth_id="test", sloth_service="test-svc", sloth_slo="test-name"}`,
-					Labels: map[string]string{
-						"kind":          "test",
-						"sloth_service": "test-svc",
-						"sloth_slo":     "test-name",
-						"sloth_id":      "test",
-					},
-				},
-				{
-					Record: "sloth_slo_info",
-					Expr:   `vector(1)`,
-					Labels: map[string]string{
-						"kind":            "test",
-						"sloth_service":   "test-svc",
-						"sloth_slo":       "test-name",
-						"sloth_id":        "test",
-						"sloth_version":   "test-ver",
-						"sloth_mode":      "test",
-						"sloth_spec":      "test/v1",
-						"sloth_objective": "99.9",
-					},
-				},
-			},
-		},
+func BenchmarkPluginYaegi(b *testing.B) {
+	config, _ := json.Marshal(map[string]any{"optimized": true})
+	plugin, err := pluginslov1testing.NewTestPlugin(b.Context(), pluginslov1testing.TestPluginConfig{
+		PluginConfiguration: config,
+	})
+	if err != nil {
+		b.Fatal(err)
 	}
 
-	for name, test := range tests {
-		t.Run(name, func(t *testing.T) {
-			assert := assert.New(t)
+	req := &pluginslov1.Request{
+		SLO:            baseSLO(),
+		MWMBAlertGroup: baseAlertGroup(),
+	}
+	for b.Loop() {
+		err = plugin.ProcessSLO(b.Context(), req, &pluginslov1.Result{})
+		if err != nil {
+			b.Fatal(err)
+		}
+	}
+}
 
-			gotRules, err := prometheus.MetadataRecordingRulesGenerator.GenerateMetadataRecordingRules(context.TODO(), test.info, test.slo, test.alertGroup)
+func BenchmarkPluginGo(b *testing.B) {
+	config, _ := json.Marshal(map[string]any{"optimized": true})
+	plugin, err := plugin.NewPlugin(config, pluginslov1.AppUtils{})
+	if err != nil {
+		b.Fatal(err)
+	}
 
-			if test.expErr {
-				assert.Error(err)
-			} else if assert.NoError(err) {
-				assert.Equal(test.expRules, gotRules)
-			}
-		})
+	req := &pluginslov1.Request{
+		SLO:            baseSLO(),
+		MWMBAlertGroup: baseAlertGroup(),
+	}
+	for b.Loop() {
+		err = plugin.ProcessSLO(b.Context(), req, &pluginslov1.Result{})
+		if err != nil {
+			b.Fatal(err)
+		}
 	}
 }

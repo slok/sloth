@@ -9,7 +9,6 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	pluginsli "github.com/slok/sloth/internal/plugin/sli"
-	"github.com/slok/sloth/internal/prometheus"
 	"github.com/slok/sloth/internal/storage/io"
 	"github.com/slok/sloth/pkg/common/model"
 	v1 "github.com/slok/sloth/pkg/prometheus/api/v1"
@@ -30,7 +29,7 @@ func TestSlothPrometheusYAMLSpecLoader(t *testing.T) {
 		specYaml     string
 		plugins      map[string]pluginsli.SLIPlugin
 		windowPeriod time.Duration
-		expModel     *prometheus.SLOGroup
+		expModel     *model.PromSLOGroup
 		expErr       bool
 	}{
 		"Empty spec should fail.": {
@@ -153,21 +152,21 @@ slos:
       ticket_alert:
         disable: true
 `,
-			expModel: &prometheus.SLOGroup{SLOs: []prometheus.SLO{
+			expModel: &model.PromSLOGroup{SLOs: []model.PromSLO{
 				{
 					ID:         "test-svc-slo-test",
 					Name:       "slo-test",
 					Service:    "test-svc",
 					TimeWindow: 30 * 24 * time.Hour,
 					Labels:     map[string]string{"gk1": "gv1"},
-					SLI: prometheus.SLI{
-						Raw: &prometheus.SLIRaw{
+					SLI: model.PromSLI{
+						Raw: &model.PromSLIRaw{
 							ErrorRatioQuery: `plugin_raw_expr{service="test-svc",slo="slo-test",objective="99.000000",gk1="gv1",k1="v1",k2="true"}`,
 						},
 					},
 					Objective:       99,
-					PageAlertMeta:   prometheus.AlertMeta{Disable: true},
-					TicketAlertMeta: prometheus.AlertMeta{Disable: true},
+					PageAlertMeta:   model.PromAlertMeta{Disable: true},
+					TicketAlertMeta: model.PromAlertMeta{Disable: true},
 				},
 			},
 				OriginalSource: model.PromSLOGroupSource{SlothV1: &v1.Spec{
@@ -211,21 +210,21 @@ slos:
       ticket_alert:
         disable: true
 `,
-			expModel: &prometheus.SLOGroup{SLOs: []prometheus.SLO{
+			expModel: &model.PromSLOGroup{SLOs: []model.PromSLO{
 				{
 					ID:         "test-svc-slo-test",
 					Name:       "slo-test",
 					Service:    "test-svc",
 					TimeWindow: 28 * 24 * time.Hour,
 					Labels:     map[string]string{"gk1": "gv1"},
-					SLI: prometheus.SLI{
-						Raw: &prometheus.SLIRaw{
+					SLI: model.PromSLI{
+						Raw: &model.PromSLIRaw{
 							ErrorRatioQuery: `test_expr_ratio_2`,
 						},
 					},
 					Objective:       99,
-					PageAlertMeta:   prometheus.AlertMeta{Disable: true},
-					TicketAlertMeta: prometheus.AlertMeta{Disable: true},
+					PageAlertMeta:   model.PromAlertMeta{Disable: true},
+					TicketAlertMeta: model.PromAlertMeta{Disable: true},
 				},
 			},
 				OriginalSource: model.PromSLOGroupSource{SlothV1: &v1.Spec{
@@ -295,15 +294,15 @@ slos:
       ticket_alert:
         disable: true
 `,
-			expModel: &prometheus.SLOGroup{SLOs: []prometheus.SLO{
+			expModel: &model.PromSLOGroup{SLOs: []model.PromSLO{
 				{
 					ID:          "test-svc-slo1",
 					Name:        "slo1",
 					Service:     "test-svc",
 					Description: "This is a test.",
 					TimeWindow:  30 * 24 * time.Hour,
-					SLI: prometheus.SLI{
-						Events: &prometheus.SLIEvents{
+					SLI: model.PromSLI{
+						Events: &model.PromSLIEvents{
 							ErrorQuery: "test_expr_error_1",
 							TotalQuery: "test_expr_total_1",
 						},
@@ -313,7 +312,7 @@ slos:
 						"owner":    "myteam",
 						"category": "test",
 					},
-					PageAlertMeta: prometheus.AlertMeta{
+					PageAlertMeta: model.PromAlertMeta{
 						Disable: false,
 						Name:    "testAlert",
 						Labels: map[string]string{
@@ -326,7 +325,7 @@ slos:
 							"runbook": "http://whatever.com",
 						},
 					},
-					TicketAlertMeta: prometheus.AlertMeta{
+					TicketAlertMeta: model.PromAlertMeta{
 						Disable: false,
 						Name:    "testAlert",
 						Labels: map[string]string{
@@ -345,8 +344,8 @@ slos:
 					Name:       "slo2",
 					Service:    "test-svc",
 					TimeWindow: 30 * 24 * time.Hour,
-					SLI: prometheus.SLI{
-						Raw: &prometheus.SLIRaw{
+					SLI: model.PromSLI{
+						Raw: &model.PromSLIRaw{
 							ErrorRatioQuery: "test_expr_ratio_2",
 						},
 					},
@@ -355,8 +354,8 @@ slos:
 						"owner":    "myteam",
 						"category": "test2",
 					},
-					PageAlertMeta:   prometheus.AlertMeta{Disable: true},
-					TicketAlertMeta: prometheus.AlertMeta{Disable: true},
+					PageAlertMeta:   model.PromAlertMeta{Disable: true},
+					TicketAlertMeta: model.PromAlertMeta{Disable: true},
 				},
 			},
 				OriginalSource: model.PromSLOGroupSource{SlothV1: &v1.Spec{

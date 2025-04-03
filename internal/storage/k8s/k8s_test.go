@@ -15,7 +15,6 @@ import (
 	"k8s.io/apimachinery/pkg/util/intstr"
 
 	"github.com/slok/sloth/internal/log"
-	"github.com/slok/sloth/internal/prometheus"
 	"github.com/slok/sloth/internal/storage"
 	storagek8s "github.com/slok/sloth/internal/storage/k8s"
 	"github.com/slok/sloth/pkg/common/model"
@@ -55,8 +54,8 @@ func TestApiserverRepositoryStoreSLOs(t *testing.T) {
 			},
 			slos: []storage.SLORulesResult{
 				{
-					SLO: prometheus.SLO{ID: "testa"},
-					Rules: prometheus.SLORules{
+					SLO: model.PromSLO{ID: "testa"},
+					Rules: model.PromSLORules{
 						SLIErrorRecRules: model.PromRuleGroup{Rules: []rulefmt.Rule{
 							{
 								Record: "test:record-a1",
@@ -98,8 +97,8 @@ func TestApiserverRepositoryStoreSLOs(t *testing.T) {
 					},
 				},
 				{
-					SLO: prometheus.SLO{ID: "testb"},
-					Rules: prometheus.SLORules{
+					SLO: model.PromSLO{ID: "testb"},
+					Rules: model.PromSLORules{
 						SLIErrorRecRules: model.PromRuleGroup{Rules: []rulefmt.Rule{
 							{
 								Record: "test:record-b1",

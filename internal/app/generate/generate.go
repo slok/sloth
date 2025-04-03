@@ -4,22 +4,28 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/prometheus/prometheus/model/rulefmt"
-
 	"github.com/slok/sloth/internal/alert"
 	"github.com/slok/sloth/internal/log"
-	"github.com/slok/sloth/internal/prometheus"
+	plugincorealertrulesv1 "github.com/slok/sloth/internal/plugin/slo/core/alert_rules_v1"
+	plugincoremetadatarulesv1 "github.com/slok/sloth/internal/plugin/slo/core/metadata_rules_v1"
+	plugincorenoopsv1 "github.com/slok/sloth/internal/plugin/slo/core/noop_v1"
+	plugincoreslirulesv1 "github.com/slok/sloth/internal/plugin/slo/core/sli_rules_v1"
 	"github.com/slok/sloth/pkg/common/model"
 	utilsdata "github.com/slok/sloth/pkg/common/utils/data"
 )
 
+// Default plugins.
+var (
+	NoopPlugin, _ = NewSLOProcessorFromSLOPluginV1(plugincorenoopsv1.NewPlugin, log.Noop, nil)
+)
+
 // ServiceConfig is the application service configuration.
 type ServiceConfig struct {
-	AlertGenerator              AlertGenerator
-	SLIRecordingRulesGenerator  SLIRecordingRulesGenerator
-	MetaRecordingRulesGenerator MetadataRecordingRulesGenerator
-	SLOAlertRulesGenerator      SLOAlertRulesGenerator
-	Logger                      log.Logger
+	AlertGenerator            AlertGenerator
+	SLIRulesGenSLOPlugin      SLOProcessor
+	AlertRulesGenSLOPlugin    SLOProcessor
+	MetadataRulesGenSLOPlugin SLOProcessor
+	Logger                    log.Logger
 }
 
 func (c *ServiceConfig) defaults() error {
@@ -27,22 +33,45 @@ func (c *ServiceConfig) defaults() error {
 		return fmt.Errorf("alert generator is required")
 	}
 
-	if c.SLIRecordingRulesGenerator == nil {
-		c.SLIRecordingRulesGenerator = prometheus.OptimizedSLIRecordingRulesGenerator
-	}
-
-	if c.MetaRecordingRulesGenerator == nil {
-		c.MetaRecordingRulesGenerator = prometheus.MetadataRecordingRulesGenerator
-	}
-
-	if c.SLOAlertRulesGenerator == nil {
-		c.SLOAlertRulesGenerator = prometheus.SLOAlertRulesGenerator
-	}
-
 	if c.Logger == nil {
 		c.Logger = log.Noop
 	}
 	c.Logger = c.Logger.WithValues(log.Kv{"svc": "generate.prometheus.Service"})
+
+	// Default plugins.
+	if c.SLIRulesGenSLOPlugin == nil {
+		plugin, err := NewSLOProcessorFromSLOPluginV1(
+			plugincoreslirulesv1.NewPlugin,
+			c.Logger.WithValues(log.Kv{"plugin": plugincoreslirulesv1.PluginID}),
+			plugincoreslirulesv1.PluginConfig{Optimized: true},
+		)
+		if err != nil {
+			return fmt.Errorf("could not create SLI rules plugin: %w", err)
+		}
+		c.SLIRulesGenSLOPlugin = plugin
+	}
+	if c.AlertRulesGenSLOPlugin == nil {
+		plugin, err := NewSLOProcessorFromSLOPluginV1(
+			plugincorealertrulesv1.NewPlugin,
+			c.Logger.WithValues(log.Kv{"plugin": plugincorealertrulesv1.PluginID}),
+			nil,
+		)
+		if err != nil {
+			return fmt.Errorf("could not create alert rules plugin: %w", err)
+		}
+		c.AlertRulesGenSLOPlugin = plugin
+	}
+	if c.MetadataRulesGenSLOPlugin == nil {
+		plugin, err := NewSLOProcessorFromSLOPluginV1(
+			plugincoremetadatarulesv1.NewPlugin,
+			c.Logger.WithValues(log.Kv{"plugin": plugincoremetadatarulesv1.PluginID}),
+			nil,
+		)
+		if err != nil {
+			return fmt.Errorf("could not create metadata rules plugin: %w", err)
+		}
+		c.MetadataRulesGenSLOPlugin = plugin
+	}
 
 	return nil
 }
@@ -52,28 +81,11 @@ type AlertGenerator interface {
 	GenerateMWMBAlerts(ctx context.Context, slo alert.SLO) (*model.MWMBAlertGroup, error)
 }
 
-// SLIRecordingRulesGenerator knows how to generate SLI recording rules.
-type SLIRecordingRulesGenerator interface {
-	GenerateSLIRecordingRules(ctx context.Context, slo prometheus.SLO, alerts model.MWMBAlertGroup) ([]rulefmt.Rule, error)
-}
-
-// MetadataRecordingRulesGenerator knows how to generate metadata recording rules.
-type MetadataRecordingRulesGenerator interface {
-	GenerateMetadataRecordingRules(ctx context.Context, info model.Info, slo prometheus.SLO, alerts model.MWMBAlertGroup) ([]rulefmt.Rule, error)
-}
-
-// SLOAlertRulesGenerator knows hot to generate SLO alert rules.
-type SLOAlertRulesGenerator interface {
-	GenerateSLOAlertRules(ctx context.Context, slo prometheus.SLO, alerts model.MWMBAlertGroup) ([]rulefmt.Rule, error)
-}
-
 // Service is the application service for the generation of SLO for Prometheus.
 type Service struct {
-	alertGen          AlertGenerator
-	sliRecordRuleGen  SLIRecordingRulesGenerator
-	metaRecordRuleGen MetadataRecordingRulesGenerator
-	alertRuleGen      SLOAlertRulesGenerator
-	logger            log.Logger
+	alertGen       AlertGenerator
+	defaultPlugins []SLOProcessor
+	logger         log.Logger
 }
 
 // NewService returns a new Prometheus application service.
@@ -84,11 +96,13 @@ func NewService(config ServiceConfig) (*Service, error) {
 	}
 
 	return &Service{
-		alertGen:          config.AlertGenerator,
-		sliRecordRuleGen:  config.SLIRecordingRulesGenerator,
-		metaRecordRuleGen: config.MetaRecordingRulesGenerator,
-		alertRuleGen:      config.SLOAlertRulesGenerator,
-		logger:            config.Logger,
+		alertGen: config.AlertGenerator,
+		defaultPlugins: []SLOProcessor{
+			config.SLIRulesGenSLOPlugin,
+			config.AlertRulesGenSLOPlugin,
+			config.MetadataRulesGenSLOPlugin,
+		},
+		logger: config.Logger,
 	}, nil
 }
 
@@ -136,7 +150,7 @@ func (s Service) Generate(ctx context.Context, r Request) (*Response, error) {
 	}, nil
 }
 
-func (s Service) generateSLO(ctx context.Context, info model.Info, slo prometheus.SLO) (*model.PromSLORules, error) {
+func (s Service) generateSLO(ctx context.Context, info model.Info, slo model.PromSLO) (*model.PromSLORules, error) {
 	logger := s.logger.WithCtxValues(ctx).WithValues(log.Kv{"slo": slo.ID})
 
 	// Generate the MWMB alerts.
@@ -151,20 +165,15 @@ func (s Service) generateSLO(ctx context.Context, info model.Info, slo prometheu
 	}
 	logger.Debugf("Multiwindow-multiburn alerts generated")
 
-	// Set default processors.
-	processors := []sloProcessor{
-		newProcessorForMetaRecordingRulesGenerator(logger, s.metaRecordRuleGen),
-		newProcessorForSLIRecordingRulesGenerator(logger, s.sliRecordRuleGen),
-		newProcessorForSLOAlertRulesGenerator(logger, s.alertRuleGen),
+	// Generate plugins.
+	sloProcessors := s.defaultPlugins
+	req := &SLOProcessorRequest{
+		Info:           info,
+		MWMBAlertGroup: *as,
+		SLO:            slo,
 	}
-
-	req := &sloProcessortRequest{
-		Info:   info,
-		Alerts: *as,
-		SLO:    slo,
-	}
-	res := &sloProcessortResult{}
-	for _, p := range processors {
+	res := &SLOProcessorResult{}
+	for _, p := range sloProcessors {
 		err := p.ProcessSLO(ctx, req, res)
 		if err != nil {
 			return nil, fmt.Errorf("slo processor failed: %w", err)

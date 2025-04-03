@@ -33,7 +33,9 @@ import (
 	"github.com/slok/sloth/internal/app/generate"
 	"github.com/slok/sloth/internal/app/kubecontroller"
 	"github.com/slok/sloth/internal/log"
-	"github.com/slok/sloth/internal/prometheus"
+	plugincorealertrulesv1 "github.com/slok/sloth/internal/plugin/slo/core/alert_rules_v1"
+	plugincoremetadatarulesv1 "github.com/slok/sloth/internal/plugin/slo/core/metadata_rules_v1"
+	plugincoreslirulesv1 "github.com/slok/sloth/internal/plugin/slo/core/sli_rules_v1"
 	"github.com/slok/sloth/internal/storage"
 	storageio "github.com/slok/sloth/internal/storage/io"
 	storagek8s "github.com/slok/sloth/internal/storage/k8s"
@@ -299,26 +301,47 @@ func (k kubeControllerCommand) Run(ctx context.Context, config RootConfig) error
 		ctx, cancel := context.WithCancel(ctx)
 		defer cancel()
 
-		// Disable optimized rules.
-		sliRuleGen := prometheus.OptimizedSLIRecordingRulesGenerator
-		if k.disableOptimizedRules {
-			sliRuleGen = prometheus.SLIRecordingRulesGenerator
+		sliRuleGen, err := generate.NewSLOProcessorFromSLOPluginV1(
+			plugincoreslirulesv1.NewPlugin,
+			logger.WithValues(log.Kv{"plugin": plugincoreslirulesv1.PluginID}),
+			plugincoreslirulesv1.PluginConfig{Optimized: !k.disableOptimizedRules},
+		)
+		if err != nil {
+			return fmt.Errorf("could not create SLI rules plugin: %w", err)
+		}
+
+		metaRuleGen, err := generate.NewSLOProcessorFromSLOPluginV1(
+			plugincoremetadatarulesv1.NewPlugin,
+			logger.WithValues(log.Kv{"plugin": plugincoremetadatarulesv1.PluginID}),
+			nil,
+		)
+		if err != nil {
+			return fmt.Errorf("could not create metadata rules plugin: %w", err)
+		}
+
+		alertRuleGen, err := generate.NewSLOProcessorFromSLOPluginV1(
+			plugincorealertrulesv1.NewPlugin,
+			logger.WithValues(log.Kv{"plugin": plugincorealertrulesv1.PluginID}),
+			nil,
+		)
+		if err != nil {
+			return fmt.Errorf("could not create alert rules plugin: %w", err)
 		}
 
 		// Create the generate app service (the one that the CLIs use).
 		generator, err := generate.NewService(generate.ServiceConfig{
-			AlertGenerator:              alert.NewGenerator(windowsRepo),
-			SLIRecordingRulesGenerator:  sliRuleGen,
-			MetaRecordingRulesGenerator: prometheus.MetadataRecordingRulesGenerator,
-			SLOAlertRulesGenerator:      prometheus.SLOAlertRulesGenerator,
-			Logger:                      generatorLogger{Logger: logger},
+			AlertGenerator:            alert.NewGenerator(windowsRepo),
+			SLIRulesGenSLOPlugin:      sliRuleGen,
+			MetadataRulesGenSLOPlugin: metaRuleGen,
+			AlertRulesGenSLOPlugin:    alertRuleGen,
+			Logger:                    generatorLogger{Logger: logger},
 		})
 		if err != nil {
 			return fmt.Errorf("could not create Prometheus rules generator: %w", err)
 		}
 
 		// Create handler.
-		config := kubecontroller.HandlerConfig{
+		controllerConfig := kubecontroller.HandlerConfig{
 			Generator:        generator,
 			SpecLoader:       storageio.NewK8sSlothPrometheusCRSpecLoader(pluginRepo, sloPeriod),
 			Repository:       kuberepo,
@@ -326,7 +349,7 @@ func (k kubeControllerCommand) Run(ctx context.Context, config RootConfig) error
 			ExtraLabels:      k.extraLabels,
 			Logger:           logger,
 		}
-		handler, err := kubecontroller.NewHandler(config)
+		handler, err := kubecontroller.NewHandler(controllerConfig)
 		if err != nil {
 			return fmt.Errorf("could not create controller handler: %w", err)
 		}

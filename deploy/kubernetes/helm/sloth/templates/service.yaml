@@ -1,0 +1,22 @@
+{{- if .Values.service.enabled }}
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: {{ include "sloth.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "sloth.labels" . | nindent 4 }}    
+  {{- if .Values.service.annotations }}
+  annotations:
+    {{- toYaml .Values.service.annotations | nindent 4 }}
+  {{- end }}
+spec:
+  type: {{ .Values.service.type }}
+  ports:
+    - name: metrics
+      port: {{ .Values.service.httpPort }}
+      protocol: TCP
+  selector:
+    {{- include "sloth.selectorLabels" . | nindent 4 }}
+{{- end }}

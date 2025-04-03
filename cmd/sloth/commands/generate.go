@@ -20,7 +20,9 @@ import (
 	"github.com/slok/sloth/internal/app/generate"
 	"github.com/slok/sloth/internal/info"
 	"github.com/slok/sloth/internal/log"
-	"github.com/slok/sloth/internal/prometheus"
+	plugincorealertrulesv1 "github.com/slok/sloth/internal/plugin/slo/core/alert_rules_v1"
+	plugincoremetadatarulesv1 "github.com/slok/sloth/internal/plugin/slo/core/metadata_rules_v1"
+	plugincoreslirulesv1 "github.com/slok/sloth/internal/plugin/slo/core/sli_rules_v1"
 	"github.com/slok/sloth/internal/storage"
 	storageio "github.com/slok/sloth/internal/storage/io"
 	"github.com/slok/sloth/pkg/common/model"
@@ -309,7 +311,7 @@ type generator struct {
 }
 
 // GeneratePrometheus generates the SLOs based on a raw regular Prometheus spec format input and outs a Prometheus raw yaml.
-func (g generator) GeneratePrometheus(ctx context.Context, slos prometheus.SLOGroup, out io.Writer) error {
+func (g generator) GeneratePrometheus(ctx context.Context, slos model.PromSLOGroup, out io.Writer) error {
 	g.logger.Infof("Generating from Prometheus spec")
 	info := model.Info{
 		Version: info.Version,
@@ -381,7 +383,7 @@ func (g generator) GenerateKubernetes(ctx context.Context, sloGroup model.PromSL
 }
 
 // generateOpenSLO generates the SLOs based on a OpenSLO spec format input and outs a Prometheus raw yaml.
-func (g generator) GenerateOpenSLO(ctx context.Context, slos prometheus.SLOGroup, out io.Writer) error {
+func (g generator) GenerateOpenSLO(ctx context.Context, slos model.PromSLOGroup, out io.Writer) error {
 	g.logger.Infof("Generating from OpenSLO spec")
 	info := model.Info{
 		Version: info.Version,
@@ -412,32 +414,53 @@ func (g generator) GenerateOpenSLO(ctx context.Context, slos prometheus.SLOGroup
 }
 
 // generate is the main generator logic that all the spec types and storers share. Mainly has the logic of the generate app service.
-func (g generator) generateRules(ctx context.Context, info model.Info, slos prometheus.SLOGroup) (*generate.Response, error) {
+func (g generator) generateRules(ctx context.Context, info model.Info, slos model.PromSLOGroup) (*generate.Response, error) {
 	// Disable recording rules if required.
-	var sliRuleGen generate.SLIRecordingRulesGenerator = generate.NoopSLIRecordingRulesGenerator
-	var metaRuleGen generate.MetadataRecordingRulesGenerator = generate.NoopMetadataRecordingRulesGenerator
+	var sliRuleGen generate.SLOProcessor = generate.NoopPlugin
+	var metaRuleGen generate.SLOProcessor = generate.NoopPlugin
 	if !g.disableRecordings {
-		// Disable optimized rules if required.
-		sliRuleGen = prometheus.OptimizedSLIRecordingRulesGenerator
-		if g.disableOptimizedRules {
-			sliRuleGen = prometheus.SLIRecordingRulesGenerator
+		sliPlugin, err := generate.NewSLOProcessorFromSLOPluginV1(
+			plugincoreslirulesv1.NewPlugin,
+			g.logger.WithValues(log.Kv{"plugin": plugincoreslirulesv1.PluginID}),
+			plugincoreslirulesv1.PluginConfig{Optimized: !g.disableOptimizedRules},
+		)
+		if err != nil {
+			return nil, fmt.Errorf("could not create SLI rules plugin: %w", err)
 		}
-		metaRuleGen = prometheus.MetadataRecordingRulesGenerator
+		sliRuleGen = sliPlugin
+
+		metadataPlugin, err := generate.NewSLOProcessorFromSLOPluginV1(
+			plugincoremetadatarulesv1.NewPlugin,
+			g.logger.WithValues(log.Kv{"plugin": plugincoremetadatarulesv1.PluginID}),
+			nil,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("could not create metadata rules plugin: %w", err)
+		}
+		metaRuleGen = metadataPlugin
 	}
 
 	// Disable alert rules if required.
-	var alertRuleGen generate.SLOAlertRulesGenerator = generate.NoopSLOAlertRulesGenerator
+	var alertRuleGen generate.SLOProcessor = generate.NoopPlugin
 	if !g.disableAlerts {
-		alertRuleGen = prometheus.SLOAlertRulesGenerator
+		plugin, err := generate.NewSLOProcessorFromSLOPluginV1(
+			plugincorealertrulesv1.NewPlugin,
+			g.logger.WithValues(log.Kv{"plugin": plugincorealertrulesv1.PluginID}),
+			nil,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("could not create alert rules plugin: %w", err)
+		}
+		alertRuleGen = plugin
 	}
 
 	// Generate.
 	controller, err := generate.NewService(generate.ServiceConfig{
-		AlertGenerator:              alert.NewGenerator(g.windowsRepo),
-		SLIRecordingRulesGenerator:  sliRuleGen,
-		MetaRecordingRulesGenerator: metaRuleGen,
-		SLOAlertRulesGenerator:      alertRuleGen,
-		Logger:                      g.logger,
+		AlertGenerator:            alert.NewGenerator(g.windowsRepo),
+		SLIRulesGenSLOPlugin:      sliRuleGen,
+		MetadataRulesGenSLOPlugin: metaRuleGen,
+		AlertRulesGenSLOPlugin:    alertRuleGen,
+		Logger:                    g.logger,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("could not create application service: %w", err)

@@ -9,7 +9,6 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/slok/sloth/internal/log"
-	"github.com/slok/sloth/internal/prometheus"
 	"github.com/slok/sloth/internal/storage"
 	"github.com/slok/sloth/internal/storage/io"
 	"github.com/slok/sloth/pkg/common/model"
@@ -45,8 +44,8 @@ func TestIOWriterPrometheusOperatorYAMLRepo(t *testing.T) {
 			},
 			slos: []storage.SLORulesResult{
 				{
-					SLO: prometheus.SLO{ID: "test1"},
-					Rules: prometheus.SLORules{
+					SLO: model.PromSLO{ID: "test1"},
+					Rules: model.PromSLORules{
 						SLIErrorRecRules: model.PromRuleGroup{Rules: []rulefmt.Rule{
 							{
 								Record: "test:record",
@@ -94,8 +93,8 @@ spec:
 			},
 			slos: []storage.SLORulesResult{
 				{
-					SLO: prometheus.SLO{ID: "test1"},
-					Rules: prometheus.SLORules{
+					SLO: model.PromSLO{ID: "test1"},
+					Rules: model.PromSLORules{
 						MetadataRecRules: model.PromRuleGroup{Rules: []rulefmt.Rule{
 							{
 								Record: "test:record",
@@ -143,8 +142,8 @@ spec:
 			},
 			slos: []storage.SLORulesResult{
 				{
-					SLO: prometheus.SLO{ID: "test1"},
-					Rules: prometheus.SLORules{
+					SLO: model.PromSLO{ID: "test1"},
+					Rules: model.PromSLORules{
 						AlertRules: model.PromRuleGroup{Rules: []rulefmt.Rule{
 							{
 								Alert:       "testAlert",
@@ -196,8 +195,8 @@ spec:
 			slos: []storage.SLORulesResult{
 
 				{
-					SLO: prometheus.SLO{ID: "testa"},
-					Rules: prometheus.SLORules{
+					SLO: model.PromSLO{ID: "testa"},
+					Rules: model.PromSLORules{
 						SLIErrorRecRules: model.PromRuleGroup{Rules: []rulefmt.Rule{
 							{
 								Record: "test:record-a1",
@@ -239,8 +238,8 @@ spec:
 					},
 				},
 				{
-					SLO: prometheus.SLO{ID: "testb"},
-					Rules: prometheus.SLORules{
+					SLO: model.PromSLO{ID: "testb"},
+					Rules: model.PromSLORules{
 						SLIErrorRecRules: model.PromRuleGroup{Rules: []rulefmt.Rule{
 							{
 								Record: "test:record-b1",

@@ -8,7 +8,6 @@ import (
 
 	"k8s.io/apimachinery/pkg/runtime"
 
-	"github.com/slok/sloth/internal/prometheus"
 	"github.com/slok/sloth/pkg/common/model"
 	utilsdata "github.com/slok/sloth/pkg/common/utils/data"
 	k8sprometheusv1 "github.com/slok/sloth/pkg/kubernetes/api/sloth/v1"
@@ -87,10 +86,10 @@ func (l K8sSlothPrometheusYAMLSpecLoader) LoadSpec(ctx context.Context, data []b
 }
 
 func mapSpecToModel(ctx context.Context, defaultWindowPeriod time.Duration, pluginsRepo SLIPluginRepo, kspec *k8sprometheusv1.PrometheusServiceLevel) (*model.PromSLOGroup, error) {
-	slos := make([]prometheus.SLO, 0, len(kspec.Spec.SLOs))
+	slos := make([]model.PromSLO, 0, len(kspec.Spec.SLOs))
 	spec := kspec.Spec
 	for _, specSLO := range kspec.Spec.SLOs {
-		slo := prometheus.SLO{
+		slo := model.PromSLO{
 			ID:              fmt.Sprintf("%s-%s", spec.Service, specSLO.Name),
 			Name:            specSLO.Name,
 			Description:     specSLO.Description,
@@ -98,20 +97,20 @@ func mapSpecToModel(ctx context.Context, defaultWindowPeriod time.Duration, plug
 			TimeWindow:      defaultWindowPeriod,
 			Objective:       specSLO.Objective,
 			Labels:          utilsdata.MergeLabels(spec.Labels, specSLO.Labels),
-			PageAlertMeta:   prometheus.AlertMeta{Disable: true},
-			TicketAlertMeta: prometheus.AlertMeta{Disable: true},
+			PageAlertMeta:   model.PromAlertMeta{Disable: true},
+			TicketAlertMeta: model.PromAlertMeta{Disable: true},
 		}
 
 		// Set SLIs.
 		if specSLO.SLI.Events != nil {
-			slo.SLI.Events = &prometheus.SLIEvents{
+			slo.SLI.Events = &model.PromSLIEvents{
 				ErrorQuery: specSLO.SLI.Events.ErrorQuery,
 				TotalQuery: specSLO.SLI.Events.TotalQuery,
 			}
 		}
 
 		if specSLO.SLI.Raw != nil {
-			slo.SLI.Raw = &prometheus.SLIRaw{
+			slo.SLI.Raw = &model.PromSLIRaw{
 				ErrorRatioQuery: specSLO.SLI.Raw.ErrorRatioQuery,
 			}
 		}
@@ -133,14 +132,14 @@ func mapSpecToModel(ctx context.Context, defaultWindowPeriod time.Duration, plug
 				return nil, fmt.Errorf("plugin %q execution error: %w", specSLO.SLI.Plugin.ID, err)
 			}
 
-			slo.SLI.Raw = &prometheus.SLIRaw{
+			slo.SLI.Raw = &model.PromSLIRaw{
 				ErrorRatioQuery: rawQuery,
 			}
 		}
 
 		// Set alerts.
 		if !specSLO.Alerting.PageAlert.Disable {
-			slo.PageAlertMeta = prometheus.AlertMeta{
+			slo.PageAlertMeta = model.PromAlertMeta{
 				Name:        specSLO.Alerting.Name,
 				Labels:      utilsdata.MergeLabels(specSLO.Alerting.Labels, specSLO.Alerting.PageAlert.Labels),
 				Annotations: utilsdata.MergeLabels(specSLO.Alerting.Annotations, specSLO.Alerting.PageAlert.Annotations),
@@ -148,7 +147,7 @@ func mapSpecToModel(ctx context.Context, defaultWindowPeriod time.Duration, plug
 		}
 
 		if !specSLO.Alerting.TicketAlert.Disable {
-			slo.TicketAlertMeta = prometheus.AlertMeta{
+			slo.TicketAlertMeta = model.PromAlertMeta{
 				Name:        specSLO.Alerting.Name,
 				Labels:      utilsdata.MergeLabels(specSLO.Alerting.Labels, specSLO.Alerting.TicketAlert.Labels),
 				Annotations: utilsdata.MergeLabels(specSLO.Alerting.Annotations, specSLO.Alerting.TicketAlert.Annotations),

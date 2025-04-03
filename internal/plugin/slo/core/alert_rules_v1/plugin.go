@@ -1,8 +1,9 @@
-package prometheus
+package plugin
 
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"text/template"
 
@@ -12,25 +13,37 @@ import (
 	"github.com/slok/sloth/pkg/common/model"
 	utilsdata "github.com/slok/sloth/pkg/common/utils/data"
 	promutils "github.com/slok/sloth/pkg/common/utils/prometheus"
+	pluginslov1 "github.com/slok/sloth/pkg/prometheus/plugin/slo/v1"
 )
 
-// genFunc knows how to generate an SLI recording rule for a specific time window.
-type alertGenFunc func(slo SLO, sloAlert AlertMeta, quick, slow model.MWMBAlert) (*rulefmt.Rule, error)
+const (
+	PluginVersion = "prometheus/slo/v1"
+	PluginID      = "sloth.dev/core/alert_rules/v1"
+)
 
-type sloAlertRulesGenerator struct {
-	alertGenFunc alertGenFunc
+func NewPlugin(_ json.RawMessage, _ pluginslov1.AppUtils) (pluginslov1.Plugin, error) {
+	return plugin{}, nil
 }
 
-// SLOAlertRulesGenerator knows how to generate the SLO prometheus alert rules
-// from an SLO.
-var SLOAlertRulesGenerator = sloAlertRulesGenerator{alertGenFunc: defaultSLOAlertGenerator}
+type plugin struct{}
 
-func (s sloAlertRulesGenerator) GenerateSLOAlertRules(ctx context.Context, slo SLO, alerts model.MWMBAlertGroup) ([]rulefmt.Rule, error) {
+func (p plugin) ProcessSLO(ctx context.Context, request *pluginslov1.Request, result *pluginslov1.Result) error {
+	rules, err := p.generateSLOAlertRules(ctx, request.SLO, request.MWMBAlertGroup)
+	if err != nil {
+		return err
+	}
+
+	result.SLORules.AlertRules.Rules = rules
+
+	return nil
+}
+
+func (p plugin) generateSLOAlertRules(ctx context.Context, slo model.PromSLO, alerts model.MWMBAlertGroup) ([]rulefmt.Rule, error) {
 	rules := []rulefmt.Rule{}
 
 	// Generate Page alerts.
 	if !slo.PageAlertMeta.Disable {
-		rule, err := s.alertGenFunc(slo, slo.PageAlertMeta, alerts.PageQuick, alerts.PageSlow)
+		rule, err := defaultSLOAlertGenerator(slo, slo.PageAlertMeta, alerts.PageQuick, alerts.PageSlow)
 		if err != nil {
 			return nil, fmt.Errorf("could not create page alert: %w", err)
 		}
@@ -40,7 +53,7 @@ func (s sloAlertRulesGenerator) GenerateSLOAlertRules(ctx context.Context, slo S
 
 	// Generate Ticket alerts.
 	if !slo.TicketAlertMeta.Disable {
-		rule, err := s.alertGenFunc(slo, slo.TicketAlertMeta, alerts.TicketQuick, alerts.TicketSlow)
+		rule, err := defaultSLOAlertGenerator(slo, slo.TicketAlertMeta, alerts.TicketQuick, alerts.TicketSlow)
 		if err != nil {
 			return nil, fmt.Errorf("could not create ticket alert: %w", err)
 		}
@@ -51,7 +64,7 @@ func (s sloAlertRulesGenerator) GenerateSLOAlertRules(ctx context.Context, slo S
 	return rules, nil
 }
 
-func defaultSLOAlertGenerator(slo SLO, sloAlert AlertMeta, quick, slow model.MWMBAlert) (*rulefmt.Rule, error) {
+func defaultSLOAlertGenerator(slo model.PromSLO, sloAlert model.PromAlertMeta, quick, slow model.MWMBAlert) (*rulefmt.Rule, error) {
 	// Generate the filter labels based on the SLO ids.
 	metricFilter := promutils.LabelsToPromFilter(conventions.GetSLOIDPromLabels(slo))
 

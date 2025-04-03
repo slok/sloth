@@ -1,18 +1,20 @@
-package prometheus_test
+package plugin_test
 
 import (
-	"context"
 	"testing"
 	"time"
 
 	"github.com/prometheus/prometheus/model/rulefmt"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
-	"github.com/slok/sloth/internal/prometheus"
+	plugin "github.com/slok/sloth/internal/plugin/slo/core/alert_rules_v1"
 	"github.com/slok/sloth/pkg/common/model"
+	pluginslov1 "github.com/slok/sloth/pkg/prometheus/plugin/slo/v1"
+	pluginslov1testing "github.com/slok/sloth/pkg/prometheus/plugin/slo/v1/testing"
 )
 
-func getSLOAlertGroup() model.MWMBAlertGroup {
+func baseSLOAlertGroup() model.MWMBAlertGroup {
 	return model.MWMBAlertGroup{
 		PageQuick: model.MWMBAlert{
 			ID:             "10",
@@ -49,30 +51,34 @@ func getSLOAlertGroup() model.MWMBAlertGroup {
 	}
 }
 
-func TestGenerateSLOAlertRules(t *testing.T) {
+func baseSLO() model.PromSLO {
+	return model.PromSLO{
+		ID:      "test-svc-test",
+		Name:    "test",
+		Service: "test-svc",
+		PageAlertMeta: model.PromAlertMeta{
+			Name:        "something1",
+			Labels:      map[string]string{"custom-label": "test1"},
+			Annotations: map[string]string{"custom-annot": "test1"},
+		},
+		TicketAlertMeta: model.PromAlertMeta{
+			Name:        "something2",
+			Labels:      map[string]string{"custom-label": "test2"},
+			Annotations: map[string]string{"custom-annot": "test2"},
+		},
+	}
+}
+
+func TestPlugin(t *testing.T) {
 	tests := map[string]struct {
-		slo        prometheus.SLO
+		slo        model.PromSLO
 		alertGroup func() model.MWMBAlertGroup
 		expRules   []rulefmt.Rule
 		expErr     bool
 	}{
 		"Having and SLO an its page and ticket alerts should create the recording rules.": {
-			slo: prometheus.SLO{
-				ID:      "test-svc-test",
-				Name:    "test",
-				Service: "test-svc",
-				PageAlertMeta: prometheus.AlertMeta{
-					Name:        "something1",
-					Labels:      map[string]string{"custom-label": "test1"},
-					Annotations: map[string]string{"custom-annot": "test1"},
-				},
-				TicketAlertMeta: prometheus.AlertMeta{
-					Name:        "something2",
-					Labels:      map[string]string{"custom-label": "test2"},
-					Annotations: map[string]string{"custom-annot": "test2"},
-				},
-			},
-			alertGroup: getSLOAlertGroup,
+			slo:        baseSLO(),
+			alertGroup: baseSLOAlertGroup,
 			expRules: []rulefmt.Rule{
 				{
 					Alert: "something1",
@@ -126,20 +132,20 @@ or
 		},
 
 		"Having and SLO an page and disabled ticket alerts should only create only page alert rules.": {
-			slo: prometheus.SLO{
+			slo: model.PromSLO{
 				ID:      "test-svc-test",
 				Name:    "test",
 				Service: "test-svc",
-				PageAlertMeta: prometheus.AlertMeta{
+				PageAlertMeta: model.PromAlertMeta{
 					Name:        "something1",
 					Labels:      map[string]string{"custom-label": "test1"},
 					Annotations: map[string]string{"custom-annot": "test1"},
 				},
-				TicketAlertMeta: prometheus.AlertMeta{
+				TicketAlertMeta: model.PromAlertMeta{
 					Disable: true,
 				},
 			},
-			alertGroup: getSLOAlertGroup,
+			alertGroup: baseSLOAlertGroup,
 			expRules: []rulefmt.Rule{
 				{
 					Alert: "something1",
@@ -168,20 +174,20 @@ or
 			},
 		},
 		"Having and SLO an ticker and page alerts disabled should only create ticket alert rules.": {
-			slo: prometheus.SLO{
+			slo: model.PromSLO{
 				ID:      "test-svc-test",
 				Name:    "test",
 				Service: "test-svc",
-				PageAlertMeta: prometheus.AlertMeta{
+				PageAlertMeta: model.PromAlertMeta{
 					Disable: true,
 				},
-				TicketAlertMeta: prometheus.AlertMeta{
+				TicketAlertMeta: model.PromAlertMeta{
 					Name:        "something2",
 					Labels:      map[string]string{"custom-label": "test2"},
 					Annotations: map[string]string{"custom-annot": "test2"},
 				},
 			},
-			alertGroup: getSLOAlertGroup,
+			alertGroup: baseSLOAlertGroup,
 			expRules: []rulefmt.Rule{
 				{
 					Alert: "something2",
@@ -214,14 +220,62 @@ or
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
 			assert := assert.New(t)
+			require := require.New(t)
 
-			gotRules, err := prometheus.SLOAlertRulesGenerator.GenerateSLOAlertRules(context.TODO(), test.slo, test.alertGroup())
+			// Load plugin
+			plugin, err := pluginslov1testing.NewTestPlugin(t.Context(), pluginslov1testing.TestPluginConfig{})
+			require.NoError(err)
 
+			// Execute plugin.
+			req := pluginslov1.Request{
+				SLO:            test.slo,
+				MWMBAlertGroup: test.alertGroup(),
+			}
+			res := pluginslov1.Result{}
+			err = plugin.ProcessSLO(t.Context(), &req, &res)
+
+			// Check result.
 			if test.expErr {
 				assert.Error(err)
 			} else if assert.NoError(err) {
-				assert.Equal(test.expRules, gotRules)
+				assert.Equal(test.expRules, res.SLORules.AlertRules.Rules)
 			}
 		})
+	}
+}
+
+func BenchmarkPluginYaegi(b *testing.B) {
+	plugin, err := pluginslov1testing.NewTestPlugin(b.Context(), pluginslov1testing.TestPluginConfig{})
+	if err != nil {
+		b.Fatal(err)
+	}
+
+	req := &pluginslov1.Request{
+		SLO:            baseSLO(),
+		MWMBAlertGroup: baseSLOAlertGroup(),
+	}
+	for b.Loop() {
+		err = plugin.ProcessSLO(b.Context(), req, &pluginslov1.Result{})
+		if err != nil {
+			b.Fatal(err)
+		}
+	}
+}
+
+func BenchmarkPluginGo(b *testing.B) {
+	plugin, err := plugin.NewPlugin(nil, pluginslov1.AppUtils{})
+	if err != nil {
+		b.Fatal(err)
+	}
+
+	req := &pluginslov1.Request{
+		SLO:            baseSLO(),
+		MWMBAlertGroup: baseSLOAlertGroup(),
+	}
+	for b.Loop() {
+		err = plugin.ProcessSLO(b.Context(), req, &pluginslov1.Result{})
+		if err != nil {
+			b.Fatal(err)
+		}
 	}
 }

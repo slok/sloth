@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"testing"
+	"time"
 
 	"github.com/prometheus/prometheus/model/rulefmt"
 	"github.com/stretchr/testify/assert"
@@ -95,13 +96,15 @@ spec:
 				{
 					SLO: model.PromSLO{ID: "test1"},
 					Rules: model.PromSLORules{
-						MetadataRecRules: model.PromRuleGroup{Rules: []rulefmt.Rule{
-							{
-								Record: "test:record",
-								Expr:   "test-expr",
-								Labels: map[string]string{"test-label": "one"},
-							},
-						}},
+						MetadataRecRules: model.PromRuleGroup{
+							Interval: 42 * time.Minute,
+							Rules: []rulefmt.Rule{
+								{
+									Record: "test:record",
+									Expr:   "test-expr",
+									Labels: map[string]string{"test-label": "one"},
+								},
+							}},
 					},
 				},
 			},
@@ -124,7 +127,8 @@ metadata:
   namespace: test-ns
 spec:
   groups:
-  - name: sloth-slo-meta-recordings-test1
+  - interval: 42m
+    name: sloth-slo-meta-recordings-test1
     rules:
     - expr: test-expr
       labels:

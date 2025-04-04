@@ -3,6 +3,7 @@ package modelmap
 import (
 	"context"
 	"fmt"
+	"time"
 
 	monitoringv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
 	"github.com/prometheus/prometheus/model/rulefmt"
@@ -11,6 +12,7 @@ import (
 
 	"github.com/slok/sloth/internal/storage"
 	commonerrors "github.com/slok/sloth/pkg/common/errors"
+	promutils "github.com/slok/sloth/pkg/common/utils/prometheus"
 )
 
 func MapModelToPrometheusOperator(ctx context.Context, kmeta storage.K8sMeta, slos []storage.SLORulesResult) (*monitoringv1.PrometheusRule, error) {
@@ -43,22 +45,25 @@ func MapModelToPrometheusOperator(ctx context.Context, kmeta storage.K8sMeta, sl
 	for _, slo := range slos {
 		if len(slo.Rules.SLIErrorRecRules.Rules) > 0 {
 			rule.Spec.Groups = append(rule.Spec.Groups, monitoringv1.RuleGroup{
-				Name:  fmt.Sprintf("sloth-slo-sli-recordings-%s", slo.SLO.ID),
-				Rules: promRulesToKubeRules(slo.Rules.SLIErrorRecRules.Rules),
+				Interval: timeDurationToPromOpDuration(slo.Rules.SLIErrorRecRules.Interval),
+				Name:     fmt.Sprintf("sloth-slo-sli-recordings-%s", slo.SLO.ID),
+				Rules:    promRulesToKubeRules(slo.Rules.SLIErrorRecRules.Rules),
 			})
 		}
 
 		if len(slo.Rules.MetadataRecRules.Rules) > 0 {
 			rule.Spec.Groups = append(rule.Spec.Groups, monitoringv1.RuleGroup{
-				Name:  fmt.Sprintf("sloth-slo-meta-recordings-%s", slo.SLO.ID),
-				Rules: promRulesToKubeRules(slo.Rules.MetadataRecRules.Rules),
+				Interval: timeDurationToPromOpDuration(slo.Rules.MetadataRecRules.Interval),
+				Name:     fmt.Sprintf("sloth-slo-meta-recordings-%s", slo.SLO.ID),
+				Rules:    promRulesToKubeRules(slo.Rules.MetadataRecRules.Rules),
 			})
 		}
 
 		if len(slo.Rules.AlertRules.Rules) > 0 {
 			rule.Spec.Groups = append(rule.Spec.Groups, monitoringv1.RuleGroup{
-				Name:  fmt.Sprintf("sloth-slo-alerts-%s", slo.SLO.ID),
-				Rules: promRulesToKubeRules(slo.Rules.AlertRules.Rules),
+				Interval: timeDurationToPromOpDuration(slo.Rules.AlertRules.Interval),
+				Name:     fmt.Sprintf("sloth-slo-alerts-%s", slo.SLO.ID),
+				Rules:    promRulesToKubeRules(slo.Rules.AlertRules.Rules),
 			})
 		}
 	}
@@ -96,4 +101,13 @@ func promRulesToKubeRules(rules []rulefmt.Rule) []monitoringv1.Rule {
 		})
 	}
 	return res
+}
+
+func timeDurationToPromOpDuration(t time.Duration) *monitoringv1.Duration {
+	if t == 0 {
+		return nil
+	}
+
+	r := monitoringv1.Duration(promutils.TimeDurationToPromStr(t))
+	return &r
 }

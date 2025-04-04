@@ -70,7 +70,6 @@ func (r ApiserverRepository) StoreSLOs(ctx context.Context, kmeta storage.K8sMet
 	if err != nil {
 		return fmt.Errorf("could not map model to Prometheus operator CR: %w", err)
 	}
-	fmt.Println(rule)
 
 	// Add object reference.
 	rule.ObjectMeta.OwnerReferences = append(rule.ObjectMeta.OwnerReferences, metav1.OwnerReference{

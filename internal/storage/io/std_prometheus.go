@@ -50,22 +50,25 @@ func (r StdPrometheusGroupedRulesYAMLRepo) StoreSLOs(ctx context.Context, slos [
 	for _, slo := range slos {
 		if len(slo.Rules.SLIErrorRecRules.Rules) > 0 {
 			ruleGroups.Groups = append(ruleGroups.Groups, stdPromRuleGroupYAMLv2{
-				Name:  fmt.Sprintf("sloth-slo-sli-recordings-%s", slo.SLO.ID),
-				Rules: slo.Rules.SLIErrorRecRules.Rules,
+				Interval: prommodel.Duration(slo.Rules.SLIErrorRecRules.Interval),
+				Name:     fmt.Sprintf("sloth-slo-sli-recordings-%s", slo.SLO.ID),
+				Rules:    slo.Rules.SLIErrorRecRules.Rules,
 			})
 		}
 
 		if len(slo.Rules.MetadataRecRules.Rules) > 0 {
 			ruleGroups.Groups = append(ruleGroups.Groups, stdPromRuleGroupYAMLv2{
-				Name:  fmt.Sprintf("sloth-slo-meta-recordings-%s", slo.SLO.ID),
-				Rules: slo.Rules.MetadataRecRules.Rules,
+				Interval: prommodel.Duration(slo.Rules.MetadataRecRules.Interval),
+				Name:     fmt.Sprintf("sloth-slo-meta-recordings-%s", slo.SLO.ID),
+				Rules:    slo.Rules.MetadataRecRules.Rules,
 			})
 		}
 
 		if len(slo.Rules.AlertRules.Rules) > 0 {
 			ruleGroups.Groups = append(ruleGroups.Groups, stdPromRuleGroupYAMLv2{
-				Name:  fmt.Sprintf("sloth-slo-alerts-%s", slo.SLO.ID),
-				Rules: slo.Rules.AlertRules.Rules,
+				Interval: prommodel.Duration(slo.Rules.AlertRules.Interval),
+				Name:     fmt.Sprintf("sloth-slo-alerts-%s", slo.SLO.ID),
+				Rules:    slo.Rules.AlertRules.Rules,
 			})
 		}
 	}

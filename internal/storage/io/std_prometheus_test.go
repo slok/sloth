@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"testing"
+	"time"
 
 	"github.com/prometheus/prometheus/model/rulefmt"
 	"github.com/stretchr/testify/assert"
@@ -94,14 +95,16 @@ groups:
 				{
 					SLO: model.PromSLO{ID: "test1"},
 					Rules: model.PromSLORules{
-						AlertRules: model.PromRuleGroup{Rules: []rulefmt.Rule{
-							{
-								Alert:       "testAlert",
-								Expr:        "test-expr",
-								Labels:      map[string]string{"test-label": "one"},
-								Annotations: map[string]string{"test-annot": "one"},
-							},
-						}},
+						AlertRules: model.PromRuleGroup{
+							Interval: 42 * time.Minute,
+							Rules: []rulefmt.Rule{
+								{
+									Alert:       "testAlert",
+									Expr:        "test-expr",
+									Labels:      map[string]string{"test-label": "one"},
+									Annotations: map[string]string{"test-annot": "one"},
+								},
+							}},
 					},
 				},
 			},
@@ -112,6 +115,7 @@ groups:
 
 groups:
 - name: sloth-slo-alerts-test1
+  interval: 42m
   rules:
   - alert: testAlert
     expr: test-expr

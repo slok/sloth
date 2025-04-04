@@ -289,5 +289,6 @@ type PromSLORules struct {
 
 // PromRuleGroup are regular prometheus group of rules.
 type PromRuleGroup struct {
-	Rules []rulefmt.Rule
+	Interval time.Duration
+	Rules    []rulefmt.Rule
 }

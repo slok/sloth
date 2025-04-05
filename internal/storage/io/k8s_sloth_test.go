@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	pluginsli "github.com/slok/sloth/internal/plugin/sli"
+	pluginenginesli "github.com/slok/sloth/internal/pluginengine/sli"
 	"github.com/slok/sloth/internal/storage/io"
 	"github.com/slok/sloth/pkg/common/model"
 	kubeslothv1 "github.com/slok/sloth/pkg/kubernetes/api/sloth/v1"
@@ -18,7 +18,7 @@ import (
 func TestK8sSlothPrometheusYAMLSpecLoader(t *testing.T) {
 	tests := map[string]struct {
 		specYaml string
-		plugins  map[string]pluginsli.SLIPlugin
+		plugins  map[string]pluginenginesli.SLIPlugin
 		expModel *model.PromSLOGroup
 		expErr   bool
 	}{
@@ -107,7 +107,7 @@ spec:
 		},
 
 		"Spec with SLI plugin should use the plugin correctly.": {
-			plugins: map[string]pluginsli.SLIPlugin{
+			plugins: map[string]pluginenginesli.SLIPlugin{
 				"test_plugin": {
 					ID: "test_plugin",
 					Func: func(ctx context.Context, meta map[string]string, labels map[string]string, options map[string]string) (string, error) {
@@ -190,7 +190,7 @@ spec:
 		},
 
 		"An spec with SLI plugin that returns an error should use the plugin correctly and fail.": {
-			plugins: map[string]pluginsli.SLIPlugin{
+			plugins: map[string]pluginenginesli.SLIPlugin{
 				"test_plugin": {
 					ID: "test_plugin",
 					Func: func(ctx context.Context, meta map[string]string, labels map[string]string, options map[string]string) (string, error) {
@@ -472,7 +472,7 @@ kind:               PrometheusServiceLevel
 		t.Run(name, func(t *testing.T) {
 			assert := assert.New(t)
 
-			loader := io.NewK8sSlothPrometheusYAMLSpecLoader(testMemPluginsRepo(map[string]pluginsli.SLIPlugin{}), 30*24*time.Hour)
+			loader := io.NewK8sSlothPrometheusYAMLSpecLoader(testMemPluginsRepo(map[string]pluginenginesli.SLIPlugin{}), 30*24*time.Hour)
 			got := loader.IsSpecType(context.TODO(), []byte(test.specYaml))
 
 			assert.Equal(test.exp, got)

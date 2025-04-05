@@ -10,13 +10,13 @@ import (
 	"github.com/traefik/yaegi/stdlib"
 	"github.com/traefik/yaegi/stdlib/unsafe"
 
-	"github.com/slok/sloth/internal/plugin/slo/custom"
+	"github.com/slok/sloth/internal/pluginengine/slo/custom"
 	pluginslov1 "github.com/slok/sloth/pkg/prometheus/plugin/slo/v1"
 )
 
 type Plugin struct {
-	ID            string
-	PluginFactory pluginslov1.PluginFactory
+	ID              string
+	PluginV1Factory pluginslov1.PluginFactory
 }
 
 // PluginLoader knows how to load Go SLO plugins using Yaegi.
@@ -88,8 +88,8 @@ func (p pluginLoader) LoadRawPlugin(ctx context.Context, src string) (*Plugin, e
 	}
 
 	return &Plugin{
-		ID:            pluginID,
-		PluginFactory: plugin,
+		ID:              pluginID,
+		PluginV1Factory: plugin,
 	}, nil
 }
 

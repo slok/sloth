@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/slok/sloth/internal/plugin/sli"
+	"github.com/slok/sloth/internal/pluginengine/sli"
 )
 
 func TestSLIPluginLoader(t *testing.T) {

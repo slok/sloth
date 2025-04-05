@@ -53,6 +53,16 @@ type PromSLO struct {
 	Labels          map[string]string `validate:"dive,keys,prom_label_key,endkeys,required,prom_label_value"`
 	PageAlertMeta   PromAlertMeta
 	TicketAlertMeta PromAlertMeta
+	Plugins         SLOPlugins
+}
+
+type SLOPlugins struct {
+	Plugins []PromSLOPluginMetadata
+}
+
+type PromSLOPluginMetadata struct {
+	ID     string
+	Config any
 }
 
 type PromSLOGroup struct {

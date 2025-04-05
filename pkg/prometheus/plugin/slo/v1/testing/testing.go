@@ -7,7 +7,7 @@ import (
 	"os"
 
 	"github.com/slok/sloth/internal/log"
-	pluginslo "github.com/slok/sloth/internal/plugin/slo"
+	pluginengineslo "github.com/slok/sloth/internal/pluginengine/slo"
 	pluginslov1 "github.com/slok/sloth/pkg/prometheus/plugin/slo/v1"
 )
 
@@ -45,12 +45,12 @@ func NewTestPlugin(ctx context.Context, config TestPluginConfig) (pluginslov1.Pl
 	if err != nil {
 		return nil, fmt.Errorf("could not read plugin source code: %w", err)
 	}
-	plugin, err := pluginslo.PluginLoader.LoadRawPlugin(ctx, string(pluginSource))
+	plugin, err := pluginengineslo.PluginLoader.LoadRawPlugin(ctx, string(pluginSource))
 	if err != nil {
 		return nil, fmt.Errorf("could not load plugin source code: %w", err)
 	}
 
-	return plugin.PluginFactory(config.PluginConfiguration, pluginslov1.AppUtils{
+	return plugin.PluginV1Factory(config.PluginConfiguration, pluginslov1.AppUtils{
 		Logger: log.Noop,
 	})
 }

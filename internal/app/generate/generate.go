@@ -10,6 +10,8 @@ import (
 	plugincoremetadatarulesv1 "github.com/slok/sloth/internal/plugin/slo/core/metadata_rules_v1"
 	plugincorenoopsv1 "github.com/slok/sloth/internal/plugin/slo/core/noop_v1"
 	plugincoreslirulesv1 "github.com/slok/sloth/internal/plugin/slo/core/sli_rules_v1"
+	pluginengineslo "github.com/slok/sloth/internal/pluginengine/slo"
+	commonerrors "github.com/slok/sloth/pkg/common/errors"
 	"github.com/slok/sloth/pkg/common/model"
 	utilsdata "github.com/slok/sloth/pkg/common/utils/data"
 )
@@ -19,18 +21,35 @@ var (
 	NoopPlugin, _ = NewSLOProcessorFromSLOPluginV1(plugincorenoopsv1.NewPlugin, log.Noop, nil)
 )
 
+type noopSLOPluginGetter bool
+
+func (noopSLOPluginGetter) GetSLOPlugin(ctx context.Context, id string) (*pluginengineslo.Plugin, error) {
+	return nil, commonerrors.ErrNotFound
+}
+
+type SLOPluginGetter interface {
+	GetSLOPlugin(ctx context.Context, id string) (*pluginengineslo.Plugin, error)
+}
+
+//go:generate mockery --case underscore --output generatemock --outpkg generatemock --name SLOPluginGetter
+
 // ServiceConfig is the application service configuration.
 type ServiceConfig struct {
 	AlertGenerator            AlertGenerator
 	SLIRulesGenSLOPlugin      SLOProcessor
 	AlertRulesGenSLOPlugin    SLOProcessor
 	MetadataRulesGenSLOPlugin SLOProcessor
+	SLOPluginGetter           SLOPluginGetter
 	Logger                    log.Logger
 }
 
 func (c *ServiceConfig) defaults() error {
 	if c.AlertGenerator == nil {
 		return fmt.Errorf("alert generator is required")
+	}
+
+	if c.SLOPluginGetter == nil {
+		c.SLOPluginGetter = noopSLOPluginGetter(false)
 	}
 
 	if c.Logger == nil {
@@ -83,9 +102,10 @@ type AlertGenerator interface {
 
 // Service is the application service for the generation of SLO for Prometheus.
 type Service struct {
-	alertGen       AlertGenerator
-	defaultPlugins []SLOProcessor
-	logger         log.Logger
+	alertGen        AlertGenerator
+	sloPluginGetter SLOPluginGetter
+	defaultPlugins  []SLOProcessor
+	logger          log.Logger
 }
 
 // NewService returns a new Prometheus application service.
@@ -96,7 +116,8 @@ func NewService(config ServiceConfig) (*Service, error) {
 	}
 
 	return &Service{
-		alertGen: config.AlertGenerator,
+		alertGen:        config.AlertGenerator,
+		sloPluginGetter: config.SLOPluginGetter,
 		defaultPlugins: []SLOProcessor{
 			config.SLIRulesGenSLOPlugin,
 			config.AlertRulesGenSLOPlugin,
@@ -165,8 +186,25 @@ func (s Service) generateSLO(ctx context.Context, info model.Info, slo model.Pro
 	}
 	logger.Debugf("Multiwindow-multiburn alerts generated")
 
-	// Generate plugins.
+	// Generate plugins. Add default plugins and then the ones of each of the SLO.
 	sloProcessors := s.defaultPlugins
+	for _, p := range slo.Plugins.Plugins {
+		pf, err := s.sloPluginGetter.GetSLOPlugin(ctx, p.ID)
+		if err != nil {
+			return nil, fmt.Errorf("could not get SLO plugin %q: %w", p.ID, err)
+		}
+		var processor SLOProcessor
+		switch {
+		case pf.PluginV1Factory != nil:
+			processor, err = NewSLOProcessorFromSLOPluginV1(pf.PluginV1Factory, logger.WithValues(log.Kv{"plugin": pf.ID}), p.Config)
+			if err != nil {
+				return nil, fmt.Errorf("could create SLO plugin %q: %w", p.ID, err)
+			}
+		}
+
+		sloProcessors = append(sloProcessors, processor)
+	}
+
 	req := &SLOProcessorRequest{
 		Info:           info,
 		MWMBAlertGroup: *as,

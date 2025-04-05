@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
-	pluginsli "github.com/slok/sloth/internal/plugin/sli"
+	pluginenginesli "github.com/slok/sloth/internal/pluginengine/sli"
 	"github.com/slok/sloth/internal/storage/fs"
 	"github.com/slok/sloth/internal/storage/fs/fsmock"
 )
@@ -15,14 +15,14 @@ import (
 func TestSLIPluginRepoListSLIPlugins(t *testing.T) {
 	tests := map[string]struct {
 		mock       func(mfm *fsmock.FileManager, mpl *fsmock.SLIPluginLoader)
-		expPlugins map[string]pluginsli.SLIPlugin
+		expPlugins map[string]pluginenginesli.SLIPlugin
 		expErr     bool
 	}{
 		"Having no files, should return empty list of plugins.": {
 			mock: func(mfm *fsmock.FileManager, mpl *fsmock.SLIPluginLoader) {
 				mfm.On("FindFiles", mock.Anything, "./", mock.Anything).Once().Return([]string{}, nil)
 			},
-			expPlugins: map[string]pluginsli.SLIPlugin{},
+			expPlugins: map[string]pluginenginesli.SLIPlugin{},
 		},
 
 		"Having multiple files, should return multiple plugins.": {
@@ -39,12 +39,12 @@ func TestSLIPluginRepoListSLIPlugins(t *testing.T) {
 				mfm.On("ReadFile", mock.Anything, "./test2/test_plugin_3.go").Once().Return([]byte(`test3`), nil)
 				mfm.On("ReadFile", mock.Anything, "./test3/test4/test_plugin_4.go").Once().Return([]byte(`test4`), nil)
 
-				mpl.On("LoadRawSLIPlugin", mock.Anything, "test1").Once().Return(&pluginsli.SLIPlugin{ID: "test1"}, nil)
-				mpl.On("LoadRawSLIPlugin", mock.Anything, "test2").Once().Return(&pluginsli.SLIPlugin{ID: "test2"}, nil)
-				mpl.On("LoadRawSLIPlugin", mock.Anything, "test3").Once().Return(&pluginsli.SLIPlugin{ID: "test3"}, nil)
-				mpl.On("LoadRawSLIPlugin", mock.Anything, "test4").Once().Return(&pluginsli.SLIPlugin{ID: "test4"}, nil)
+				mpl.On("LoadRawSLIPlugin", mock.Anything, "test1").Once().Return(&pluginenginesli.SLIPlugin{ID: "test1"}, nil)
+				mpl.On("LoadRawSLIPlugin", mock.Anything, "test2").Once().Return(&pluginenginesli.SLIPlugin{ID: "test2"}, nil)
+				mpl.On("LoadRawSLIPlugin", mock.Anything, "test3").Once().Return(&pluginenginesli.SLIPlugin{ID: "test3"}, nil)
+				mpl.On("LoadRawSLIPlugin", mock.Anything, "test4").Once().Return(&pluginenginesli.SLIPlugin{ID: "test4"}, nil)
 			},
-			expPlugins: map[string]pluginsli.SLIPlugin{
+			expPlugins: map[string]pluginenginesli.SLIPlugin{
 				"test1": {ID: "test1"},
 				"test2": {ID: "test2"},
 				"test3": {ID: "test3"},
@@ -85,7 +85,7 @@ func TestSLIPluginRepoGetSLIPlugin(t *testing.T) {
 	tests := map[string]struct {
 		pluginID  string
 		mock      func(mfm *fsmock.FileManager, mpl *fsmock.SLIPluginLoader)
-		expPlugin pluginsli.SLIPlugin
+		expPlugin pluginenginesli.SLIPlugin
 		expErr    bool
 	}{
 		"Having a missing plugin, should fail.": {
@@ -99,8 +99,8 @@ func TestSLIPluginRepoGetSLIPlugin(t *testing.T) {
 				mfm.On("ReadFile", mock.Anything, "./test_plugin_1.go").Once().Return([]byte(`test1`), nil)
 				mfm.On("ReadFile", mock.Anything, "./test_plugin_2.go").Once().Return([]byte(`test2`), nil)
 
-				mpl.On("LoadRawSLIPlugin", mock.Anything, "test1").Once().Return(&pluginsli.SLIPlugin{ID: "test1"}, nil)
-				mpl.On("LoadRawSLIPlugin", mock.Anything, "test2").Once().Return(&pluginsli.SLIPlugin{ID: "test2"}, nil)
+				mpl.On("LoadRawSLIPlugin", mock.Anything, "test1").Once().Return(&pluginenginesli.SLIPlugin{ID: "test1"}, nil)
+				mpl.On("LoadRawSLIPlugin", mock.Anything, "test2").Once().Return(&pluginenginesli.SLIPlugin{ID: "test2"}, nil)
 			},
 			expErr: true,
 		},
@@ -116,10 +116,10 @@ func TestSLIPluginRepoGetSLIPlugin(t *testing.T) {
 				mfm.On("ReadFile", mock.Anything, "./test_plugin_1.go").Once().Return([]byte(`test1`), nil)
 				mfm.On("ReadFile", mock.Anything, "./test_plugin_2.go").Once().Return([]byte(`test2`), nil)
 
-				mpl.On("LoadRawSLIPlugin", mock.Anything, "test1").Once().Return(&pluginsli.SLIPlugin{ID: "test1"}, nil)
-				mpl.On("LoadRawSLIPlugin", mock.Anything, "test2").Once().Return(&pluginsli.SLIPlugin{ID: "test2"}, nil)
+				mpl.On("LoadRawSLIPlugin", mock.Anything, "test1").Once().Return(&pluginenginesli.SLIPlugin{ID: "test1"}, nil)
+				mpl.On("LoadRawSLIPlugin", mock.Anything, "test2").Once().Return(&pluginenginesli.SLIPlugin{ID: "test2"}, nil)
 			},
-			expPlugin: pluginsli.SLIPlugin{ID: "test2"},
+			expPlugin: pluginenginesli.SLIPlugin{ID: "test2"},
 		},
 	}
 

@@ -10,11 +10,11 @@ import (
 	"sync"
 
 	"github.com/slok/sloth/internal/log"
-	pluginsli "github.com/slok/sloth/internal/plugin/sli"
+	pluginenginesli "github.com/slok/sloth/internal/pluginengine/sli"
 )
 
 type SLIPluginLoader interface {
-	LoadRawSLIPlugin(ctx context.Context, src string) (*pluginsli.SLIPlugin, error)
+	LoadRawSLIPlugin(ctx context.Context, src string) (*pluginenginesli.SLIPlugin, error)
 }
 
 //go:generate mockery --case underscore --output fsmock --outpkg fsmock --name SLIPluginLoader
@@ -72,7 +72,7 @@ func (c *FileSLIPluginRepoConfig) defaults() error {
 	}
 
 	if c.PluginLoader == nil {
-		c.PluginLoader = pluginsli.PluginLoader
+		c.PluginLoader = pluginenginesli.PluginLoader
 	}
 
 	if c.Logger == nil {
@@ -122,7 +122,7 @@ type FileSLIPluginRepo struct {
 	pluginLoader SLIPluginLoader
 	fileManager  FileManager
 	paths        []string
-	plugins      map[string]pluginsli.SLIPlugin
+	plugins      map[string]pluginenginesli.SLIPlugin
 	mu           sync.RWMutex
 	logger       log.Logger
 }
@@ -144,7 +144,7 @@ func (f *FileSLIPluginRepo) Reload(ctx context.Context) error {
 	}
 
 	// Load the plugins.
-	plugins := map[string]pluginsli.SLIPlugin{}
+	plugins := map[string]pluginenginesli.SLIPlugin{}
 	for path := range paths {
 		pluginData, err := f.fileManager.ReadFile(ctx, path)
 		if err != nil {
@@ -177,14 +177,14 @@ func (f *FileSLIPluginRepo) Reload(ctx context.Context) error {
 	return nil
 }
 
-func (f *FileSLIPluginRepo) ListSLIPlugins(ctx context.Context) (map[string]pluginsli.SLIPlugin, error) {
+func (f *FileSLIPluginRepo) ListSLIPlugins(ctx context.Context) (map[string]pluginenginesli.SLIPlugin, error) {
 	f.mu.RLock()
 	defer f.mu.RUnlock()
 
 	return f.plugins, nil
 }
 
-func (f *FileSLIPluginRepo) GetSLIPlugin(ctx context.Context, id string) (*pluginsli.SLIPlugin, error) {
+func (f *FileSLIPluginRepo) GetSLIPlugin(ctx context.Context, id string) (*pluginenginesli.SLIPlugin, error) {
 	f.mu.RLock()
 	defer f.mu.RUnlock()
 

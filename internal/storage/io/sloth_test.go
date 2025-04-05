@@ -8,15 +8,15 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	pluginsli "github.com/slok/sloth/internal/plugin/sli"
+	pluginenginesli "github.com/slok/sloth/internal/pluginengine/sli"
 	"github.com/slok/sloth/internal/storage/io"
 	"github.com/slok/sloth/pkg/common/model"
 	v1 "github.com/slok/sloth/pkg/prometheus/api/v1"
 )
 
-type testMemPluginsRepo map[string]pluginsli.SLIPlugin
+type testMemPluginsRepo map[string]pluginenginesli.SLIPlugin
 
-func (t testMemPluginsRepo) GetSLIPlugin(ctx context.Context, id string) (*pluginsli.SLIPlugin, error) {
+func (t testMemPluginsRepo) GetSLIPlugin(ctx context.Context, id string) (*pluginenginesli.SLIPlugin, error) {
 	p, ok := t[id]
 	if !ok {
 		return nil, fmt.Errorf("unknown plugin")
@@ -27,7 +27,7 @@ func (t testMemPluginsRepo) GetSLIPlugin(ctx context.Context, id string) (*plugi
 func TestSlothPrometheusYAMLSpecLoader(t *testing.T) {
 	tests := map[string]struct {
 		specYaml     string
-		plugins      map[string]pluginsli.SLIPlugin
+		plugins      map[string]pluginenginesli.SLIPlugin
 		windowPeriod time.Duration
 		expModel     *model.PromSLOGroup
 		expErr       bool
@@ -90,7 +90,7 @@ slos:
 		},
 
 		"Spec with SLI plugin that returns an error should use the plugin correctly and fail.": {
-			plugins: map[string]pluginsli.SLIPlugin{
+			plugins: map[string]pluginenginesli.SLIPlugin{
 				"test_plugin": {
 					ID: "test_plugin",
 					Func: func(ctx context.Context, meta map[string]string, labels map[string]string, options map[string]string) (string, error) {
@@ -118,7 +118,7 @@ slos:
 
 		"Spec with SLI plugin should use the plugin correctly.": {
 			windowPeriod: 30 * 24 * time.Hour,
-			plugins: map[string]pluginsli.SLIPlugin{
+			plugins: map[string]pluginenginesli.SLIPlugin{
 				"test_plugin": {
 					ID: "test_plugin",
 					Func: func(ctx context.Context, meta map[string]string, labels map[string]string, options map[string]string) (string, error) {
@@ -468,7 +468,7 @@ func TestSlothPrometheusYAMLSpecLoaderIsSpecType(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			assert := assert.New(t)
 
-			loader := io.NewSlothPrometheusYAMLSpecLoader(testMemPluginsRepo(map[string]pluginsli.SLIPlugin{}), 0)
+			loader := io.NewSlothPrometheusYAMLSpecLoader(testMemPluginsRepo(map[string]pluginenginesli.SLIPlugin{}), 0)
 			got := loader.IsSpecType(context.TODO(), []byte(test.specYaml))
 
 			assert.Equal(test.exp, got)

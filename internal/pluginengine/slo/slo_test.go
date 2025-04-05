@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/slok/sloth/internal/log"
-	pluginslo "github.com/slok/sloth/internal/plugin/slo"
+	pluginengineslo "github.com/slok/sloth/internal/pluginengine/slo"
 	"github.com/slok/sloth/pkg/common/model"
 	pluginslov1 "github.com/slok/sloth/pkg/prometheus/plugin/slo/v1"
 )
@@ -16,18 +16,18 @@ import (
 func TestPlugin(t *testing.T) {
 	tests := map[string]struct {
 		pluginSrc  string
-		execPlugin func(t *testing.T, p pluginslo.Plugin)
+		execPlugin func(t *testing.T, p pluginengineslo.Plugin)
 		expErr     bool
 	}{
 		"Empty plugin should fail.": {
 			pluginSrc:  "",
-			execPlugin: func(t *testing.T, p pluginslo.Plugin) {},
+			execPlugin: func(t *testing.T, p pluginengineslo.Plugin) {},
 			expErr:     true,
 		},
 
 		"An invalid plugin syntax should fail": {
 			pluginSrc:  `package test{`,
-			execPlugin: func(t *testing.T, p pluginslo.Plugin) {},
+			execPlugin: func(t *testing.T, p pluginengineslo.Plugin) {},
 			expErr:     true,
 		},
 
@@ -55,7 +55,7 @@ func (noopPlugin) ProcessSLO(ctx context.Context, request *pluginslov1.Request, 
 	return nil
 }	
 `,
-			execPlugin: func(t *testing.T, p pluginslo.Plugin) {},
+			execPlugin: func(t *testing.T, p pluginengineslo.Plugin) {},
 			expErr:     true,
 		},
 
@@ -83,7 +83,7 @@ func (noopPlugin) ProcessSLO(ctx context.Context, request *pluginslov1.Request, 
 	return nil
 }	
 `,
-			execPlugin: func(t *testing.T, p pluginslo.Plugin) {},
+			execPlugin: func(t *testing.T, p pluginengineslo.Plugin) {},
 			expErr:     true,
 		},
 
@@ -111,7 +111,7 @@ func (noopPlugin) ProcessSLO(ctx context.Context, request *pluginslov1.Request, 
 	return nil
 }	
 `,
-			execPlugin: func(t *testing.T, p pluginslo.Plugin) {},
+			execPlugin: func(t *testing.T, p pluginengineslo.Plugin) {},
 			expErr:     true,
 		},
 
@@ -146,8 +146,8 @@ func (test) ProcessSLO(ctx context.Context, request *pluginslov1.Request, result
 	return nil
 }
 `,
-			execPlugin: func(t *testing.T, p pluginslo.Plugin) {
-				plugin, err := p.PluginFactory(nil, pluginslov1.AppUtils{Logger: log.Noop})
+			execPlugin: func(t *testing.T, p pluginengineslo.Plugin) {
+				plugin, err := p.PluginV1Factory(nil, pluginslov1.AppUtils{Logger: log.Noop})
 				require.NoError(t, err)
 				gotResp := &pluginslov1.Result{}
 				err = plugin.ProcessSLO(t.Context(), &pluginslov1.Request{}, gotResp)
@@ -165,7 +165,7 @@ func (test) ProcessSLO(ctx context.Context, request *pluginslov1.Request, result
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
 			assert := assert.New(t)
-			plugin, err := pluginslo.PluginLoader.LoadRawPlugin(t.Context(), test.pluginSrc)
+			plugin, err := pluginengineslo.PluginLoader.LoadRawPlugin(t.Context(), test.pluginSrc)
 			if test.expErr {
 				assert.Error(err)
 			} else if assert.NoError(err) {

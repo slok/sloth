@@ -5,12 +5,15 @@ import (
 	"context"
 	"fmt"
 	"io/fs"
+	"os"
 	"path/filepath"
 	"regexp"
 	"strings"
 
 	"github.com/slok/sloth/internal/log"
-	pluginsli "github.com/slok/sloth/internal/plugin/sli"
+	"github.com/slok/sloth/internal/plugin"
+	pluginenginesli "github.com/slok/sloth/internal/pluginengine/sli"
+	pluginengineslo "github.com/slok/sloth/internal/pluginengine/slo"
 	storagefs "github.com/slok/sloth/internal/storage/fs"
 )
 
@@ -39,15 +42,31 @@ func splitYAML(data []byte) []string {
 	return nonEmptyData
 }
 
-func createPluginLoader(ctx context.Context, logger log.Logger, paths []string) (*storagefs.FileSLIPluginRepo, error) {
+func createSLIPluginLoader(ctx context.Context, logger log.Logger, paths []string) (*storagefs.FileSLIPluginRepo, error) {
 	config := storagefs.FileSLIPluginRepoConfig{
 		Paths:        paths,
-		PluginLoader: pluginsli.PluginLoader,
+		PluginLoader: pluginenginesli.PluginLoader,
 		Logger:       logger,
 	}
 	sliPluginRepo, err := storagefs.NewFileSLIPluginRepo(config)
 	if err != nil {
 		return nil, fmt.Errorf("could not create file SLI plugin repository: %w", err)
+	}
+
+	return sliPluginRepo, nil
+}
+
+func createSLOPluginLoader(ctx context.Context, logger log.Logger, paths []string) (*storagefs.FileSLOPluginRepo, error) {
+	fss := []fs.FS{
+		plugin.EmbeddedDefaultSLOPlugins,
+	}
+	for _, p := range paths {
+		fss = append(fss, os.DirFS(p))
+	}
+
+	sliPluginRepo, err := storagefs.NewFileSLOPluginRepo(logger, pluginengineslo.PluginLoader, fss...)
+	if err != nil {
+		return nil, fmt.Errorf("could not create file SLO plugin repository: %w", err)
 	}
 
 	return sliPluginRepo, nil

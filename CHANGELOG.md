@@ -11,6 +11,7 @@
 - Sloth domain models can be imported in Go apps using `github.com/slok/sloth/pkg/common/model`.
 - Sloth conventions can be imported in Go apps using `github.com/slok/sloth/pkg/common/conventions`.
 - A new SLO rule generation plugin system has been added to be able to change/extend the SLO rule generation process.
+- SLO plugins can be loaded from FS directories recursively using `--slo-plugins-path` in the commands.
 
 ## [v0.12.0] - 2025-03-27
 

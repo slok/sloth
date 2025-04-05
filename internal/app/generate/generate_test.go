@@ -2,30 +2,61 @@ package generate_test
 
 import (
 	"context"
+	"encoding/json"
 	"testing"
 	"time"
 
 	"github.com/prometheus/prometheus/model/rulefmt"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
 	"github.com/slok/sloth/internal/alert"
 	"github.com/slok/sloth/internal/app/generate"
+	"github.com/slok/sloth/internal/app/generate/generatemock"
+	pluginengineslo "github.com/slok/sloth/internal/pluginengine/slo"
 	"github.com/slok/sloth/pkg/common/model"
+	pluginslov1 "github.com/slok/sloth/pkg/prometheus/plugin/slo/v1"
 )
+
+type testPluginAlertInterval struct {
+	interval time.Duration
+}
+
+func (p testPluginAlertInterval) ProcessSLO(ctx context.Context, request *pluginslov1.Request, result *pluginslov1.Result) error {
+	result.SLORules.AlertRules.Interval = p.interval
+	return nil
+}
 
 func TestIntegrationAppServiceGenerate(t *testing.T) {
 	tests := map[string]struct {
+		mocks   func(mspg *generatemock.SLOPluginGetter)
 		req     generate.Request
 		expResp generate.Response
 		expErr  bool
 	}{
 		"If no SLOs are requested it should error.": {
+			mocks:  func(mspg *generatemock.SLOPluginGetter) {},
 			req:    generate.Request{},
 			expErr: true,
 		},
 
 		"Having SLOs it should generate Prometheus recording and alert rules.": {
+			mocks: func(mspg *generatemock.SLOPluginGetter) {
+				mspg.On("GetSLOPlugin", mock.Anything, "test-plugin1").Once().Return(&pluginengineslo.Plugin{
+					ID: "test-plugin1",
+					PluginV1Factory: func(config json.RawMessage, appUtils pluginslov1.AppUtils) (pluginslov1.Plugin, error) {
+						return testPluginAlertInterval{interval: 42 * time.Minute}, nil
+					},
+				}, nil)
+
+				mspg.On("GetSLOPlugin", mock.Anything, "test-plugin2").Once().Return(&pluginengineslo.Plugin{
+					ID: "test-plugin2",
+					PluginV1Factory: func(config json.RawMessage, appUtils pluginslov1.AppUtils) (pluginslov1.Plugin, error) {
+						return testPluginAlertInterval{interval: 99 * time.Minute}, nil
+					},
+				}, nil)
+			},
 			req: generate.Request{
 				ExtraLabels: map[string]string{
 					"extra_k1": "extra_v1",
@@ -60,6 +91,12 @@ func TestIntegrationAppServiceGenerate(t *testing.T) {
 							Labels:      map[string]string{"t_alert_label": "t_label_al_1"},
 							Annotations: map[string]string{"t_alert_annot": "t_label_an_1"},
 						},
+						Plugins: model.SLOPlugins{
+							Plugins: []model.PromSLOPluginMetadata{
+								{ID: "test-plugin1", Config: map[string]any{"arg1": "val1"}},
+								{ID: "test-plugin2", Config: map[string]any{"arg2": "val2"}},
+							},
+						},
 					},
 				}},
 			},
@@ -92,6 +129,12 @@ func TestIntegrationAppServiceGenerate(t *testing.T) {
 								Name:        "t_alert_test_name",
 								Labels:      map[string]string{"t_alert_label": "t_label_al_1"},
 								Annotations: map[string]string{"t_alert_annot": "t_label_an_1"},
+							},
+							Plugins: model.SLOPlugins{
+								Plugins: []model.PromSLOPluginMetadata{
+									{ID: "test-plugin1", Config: map[string]any{"arg1": "val1"}},
+									{ID: "test-plugin2", Config: map[string]any{"arg2": "val2"}},
+								},
 							},
 						},
 						SLORules: model.PromSLORules{
@@ -298,11 +341,12 @@ slo:error_budget:ratio{sloth_id="test-id", sloth_service="test-svc", sloth_slo="
 									},
 								},
 							}},
-							AlertRules: model.PromRuleGroup{Rules: []rulefmt.Rule{
-
-								{
-									Alert: "p_alert_test_name",
-									Expr: `(
+							AlertRules: model.PromRuleGroup{
+								Interval: 99 * time.Minute, // From the SLO plugins.
+								Rules: []rulefmt.Rule{
+									{
+										Alert: "p_alert_test_name",
+										Expr: `(
     max(slo:sli_error:ratio_rate5m{sloth_id="test-id", sloth_service="test-svc", sloth_slo="test-name"} > (14.4 * 0.0009999999999999432)) without (sloth_window)
     and
     max(slo:sli_error:ratio_rate1h{sloth_id="test-id", sloth_service="test-svc", sloth_slo="test-name"} > (14.4 * 0.0009999999999999432)) without (sloth_window)
@@ -314,19 +358,19 @@ or
     max(slo:sli_error:ratio_rate6h{sloth_id="test-id", sloth_service="test-svc", sloth_slo="test-name"} > (6 * 0.0009999999999999432)) without (sloth_window)
 )
 `,
-									Labels: map[string]string{
-										"p_alert_label":  "p_label_al_1",
-										"sloth_severity": "page",
+										Labels: map[string]string{
+											"p_alert_label":  "p_label_al_1",
+											"sloth_severity": "page",
+										},
+										Annotations: map[string]string{
+											"p_alert_annot": "p_label_an_1",
+											"summary":       "{{$labels.sloth_service}} {{$labels.sloth_slo}} SLO error budget burn rate is over expected.",
+											"title":         "(page) {{$labels.sloth_service}} {{$labels.sloth_slo}} SLO error budget burn rate is too fast.",
+										},
 									},
-									Annotations: map[string]string{
-										"p_alert_annot": "p_label_an_1",
-										"summary":       "{{$labels.sloth_service}} {{$labels.sloth_slo}} SLO error budget burn rate is over expected.",
-										"title":         "(page) {{$labels.sloth_service}} {{$labels.sloth_slo}} SLO error budget burn rate is too fast.",
-									},
-								},
-								{
-									Alert: "t_alert_test_name",
-									Expr: `(
+									{
+										Alert: "t_alert_test_name",
+										Expr: `(
     max(slo:sli_error:ratio_rate2h{sloth_id="test-id", sloth_service="test-svc", sloth_slo="test-name"} > (3 * 0.0009999999999999432)) without (sloth_window)
     and
     max(slo:sli_error:ratio_rate1d{sloth_id="test-id", sloth_service="test-svc", sloth_slo="test-name"} > (3 * 0.0009999999999999432)) without (sloth_window)
@@ -338,17 +382,17 @@ or
     max(slo:sli_error:ratio_rate3d{sloth_id="test-id", sloth_service="test-svc", sloth_slo="test-name"} > (1 * 0.0009999999999999432)) without (sloth_window)
 )
 `,
-									Labels: map[string]string{
-										"t_alert_label":  "t_label_al_1",
-										"sloth_severity": "ticket",
+										Labels: map[string]string{
+											"t_alert_label":  "t_label_al_1",
+											"sloth_severity": "ticket",
+										},
+										Annotations: map[string]string{
+											"t_alert_annot": "t_label_an_1",
+											"summary":       "{{$labels.sloth_service}} {{$labels.sloth_slo}} SLO error budget burn rate is over expected.",
+											"title":         "(ticket) {{$labels.sloth_service}} {{$labels.sloth_slo}} SLO error budget burn rate is too fast.",
+										},
 									},
-									Annotations: map[string]string{
-										"t_alert_annot": "t_label_an_1",
-										"summary":       "{{$labels.sloth_service}} {{$labels.sloth_slo}} SLO error budget burn rate is over expected.",
-										"title":         "(ticket) {{$labels.sloth_service}} {{$labels.sloth_slo}} SLO error budget burn rate is too fast.",
-									},
-								},
-							}},
+								}},
 						},
 					},
 				},
@@ -361,11 +405,15 @@ or
 			assert := assert.New(t)
 			require := require.New(t)
 
+			mspg := generatemock.NewSLOPluginGetter(t)
+			test.mocks(mspg)
+
 			windowsRepo, err := alert.NewFSWindowsRepo(alert.FSWindowsRepoConfig{})
 			require.NoError(err)
 
 			svc, err := generate.NewService(generate.ServiceConfig{
-				AlertGenerator: alert.NewGenerator(windowsRepo),
+				AlertGenerator:  alert.NewGenerator(windowsRepo),
+				SLOPluginGetter: mspg,
 			})
 			require.NoError(err)
 

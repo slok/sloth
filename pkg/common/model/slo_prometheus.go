@@ -61,8 +61,9 @@ type SLOPlugins struct {
 }
 
 type PromSLOPluginMetadata struct {
-	ID     string
-	Config any
+	ID       string
+	Config   any
+	Priority int
 }
 
 type PromSLOGroup struct {

@@ -1,8 +1,10 @@
 package generate
 
 import (
+	"cmp"
 	"context"
 	"fmt"
+	"slices"
 
 	"github.com/slok/sloth/internal/alert"
 	"github.com/slok/sloth/internal/log"
@@ -186,9 +188,17 @@ func (s Service) generateSLO(ctx context.Context, info model.Info, slo model.Pro
 	}
 	logger.Debugf("Multiwindow-multiburn alerts generated")
 
-	// Generate plugins. Add default plugins and then the ones of each of the SLO.
-	sloProcessors := s.defaultPlugins
-	for _, p := range slo.Plugins.Plugins {
+	// Get SLO plugins based on the priority, default plugins are `0` priority
+	// so, we split the plugins in two slices, pre default (<0) and post default (>=0).
+	// That way we create the final processor list: pre-default + default + post-default.
+	preDefault := []SLOProcessor{}
+	postDefault := []SLOProcessor{}
+	sloPluginMetadata := append([]model.PromSLOPluginMetadata{}, slo.Plugins.Plugins...)
+	slices.SortStableFunc(sloPluginMetadata, func(a, b model.PromSLOPluginMetadata) int {
+		return cmp.Compare(a.Priority, b.Priority)
+	})
+
+	for _, p := range sloPluginMetadata {
 		pf, err := s.sloPluginGetter.GetSLOPlugin(ctx, p.ID)
 		if err != nil {
 			return nil, fmt.Errorf("could not get SLO plugin %q: %w", p.ID, err)
@@ -202,8 +212,16 @@ func (s Service) generateSLO(ctx context.Context, info model.Info, slo model.Pro
 			}
 		}
 
-		sloProcessors = append(sloProcessors, processor)
+		if p.Priority < 0 {
+			preDefault = append(preDefault, processor)
+		} else {
+			postDefault = append(postDefault, processor)
+		}
 	}
+
+	// Prepare processors.
+	sloProcessors := append(preDefault, s.defaultPlugins...)
+	sloProcessors = append(sloProcessors, postDefault...)
 
 	req := &SLOProcessorRequest{
 		Info:           info,

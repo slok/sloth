@@ -13,9 +13,9 @@
 
 ## Project status
 
-Sloth is [still maintained](https://github.com/slok/sloth/issues/521#issuecomment-2745271807).
+Sloth is actively maintained and in continuous development.
 
-After a period of inactivity, the project is now being updated. It will take some time to catch up, but we’ll get there. More updates coming in the next few weeks.
+We’re currently working on internal improvements to make Sloth even more extensible and adaptable to real-world use cases. While Sloth already supports custom SLI plugins, upcoming changes will bring more flexibility to how SLOs are generated, making it easier to adapt Sloth to your custom needs. Stay tuned for updates!
 
 ## Introduction
 

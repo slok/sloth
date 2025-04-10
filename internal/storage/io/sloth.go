@@ -6,7 +6,7 @@ import (
 	"regexp"
 	"time"
 
-	"gopkg.in/yaml.v2"
+	"k8s.io/apimachinery/pkg/util/yaml"
 
 	pluginenginesli "github.com/slok/sloth/internal/pluginengine/sli"
 	"github.com/slok/sloth/pkg/common/model"
@@ -70,7 +70,27 @@ func (l SlothPrometheusYAMLSpecLoader) LoadSpec(ctx context.Context, data []byte
 
 func (l SlothPrometheusYAMLSpecLoader) mapSpecToModel(ctx context.Context, spec prometheusv1.Spec) (*model.PromSLOGroup, error) {
 	models := make([]model.PromSLO, 0, len(spec.SLOs))
+
+	// Get group plugins if any.
+	var groupSLOPlugins []model.PromSLOPluginMetadata
+	for _, plugin := range spec.SLOPlugins.Chain {
+		groupSLOPlugins = append(groupSLOPlugins, model.PromSLOPluginMetadata{
+			ID:       plugin.ID,
+			Config:   plugin.Config,
+			Priority: plugin.Priority,
+		})
+	}
+
 	for _, specSLO := range spec.SLOs {
+		plugins := append([]model.PromSLOPluginMetadata{}, groupSLOPlugins...) // Add group plugins if any.
+		for _, plugin := range specSLO.Plugins.Chain {
+			plugins = append(plugins, model.PromSLOPluginMetadata{
+				ID:       plugin.ID,
+				Config:   plugin.Config,
+				Priority: plugin.Priority,
+			})
+		}
+
 		slo := model.PromSLO{
 			ID:              fmt.Sprintf("%s-%s", spec.Service, specSLO.Name),
 			Name:            specSLO.Name,
@@ -81,6 +101,7 @@ func (l SlothPrometheusYAMLSpecLoader) mapSpecToModel(ctx context.Context, spec 
 			Labels:          utilsdata.MergeLabels(spec.Labels, specSLO.Labels),
 			PageAlertMeta:   model.PromAlertMeta{Disable: true},
 			TicketAlertMeta: model.PromAlertMeta{Disable: true},
+			Plugins:         model.SLOPlugins{Plugins: plugins},
 		}
 
 		// Set SLIs.

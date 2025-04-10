@@ -1,0 +1,33 @@
+version: "prometheus/v1"
+service: "svc01"
+labels:
+  owner: myteam
+  tier: "2"
+slo_plugins:
+  chain:
+    - id: "integration-tests/plugin1"
+      priority: 9999999
+      config: {labels: {"k1": "v1", "k2": "v2"}}
+    - id: "integration-tests/plugin1"
+      priority: -999999
+      config: {labels: {"k3": "v3"}} # These should be replaced because is before defaults
+slos:
+  - name: "slo1"
+    objective: 99.9
+    description: "This is SLO 01."
+    sli:
+      events:
+        error_query: sum(rate(http_request_duration_seconds_count{job="myservice",code=~"(5..|429)"}[{{.window}}]))
+        total_query: sum(rate(http_request_duration_seconds_count{job="myservice"}[{{.window}}]))
+    plugins:
+      chain:
+        - id: "integration-tests/plugin1"
+          config: {labels: {"k4": "v4"}}
+        - id: "integration-tests/plugin1"
+          priority: 1000
+          config: {labels: {"k2": "v0", "k5": "v5"}} # k2 should be replaced by a (9999999 priority) plugin.
+    alerting:
+      page_alert:
+        disable: true
+      ticket_alert:
+        disable: true

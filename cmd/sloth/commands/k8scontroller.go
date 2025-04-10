@@ -36,6 +36,7 @@ import (
 	plugincorealertrulesv1 "github.com/slok/sloth/internal/plugin/slo/core/alert_rules_v1"
 	plugincoremetadatarulesv1 "github.com/slok/sloth/internal/plugin/slo/core/metadata_rules_v1"
 	plugincoreslirulesv1 "github.com/slok/sloth/internal/plugin/slo/core/sli_rules_v1"
+	plugincorevalidatev1 "github.com/slok/sloth/internal/plugin/slo/core/validate_v1"
 	"github.com/slok/sloth/internal/storage"
 	storageio "github.com/slok/sloth/internal/storage/io"
 	storagek8s "github.com/slok/sloth/internal/storage/k8s"
@@ -339,12 +340,22 @@ func (k kubeControllerCommand) Run(ctx context.Context, config RootConfig) error
 			return fmt.Errorf("could not create alert rules plugin: %w", err)
 		}
 
+		validatePlugin, err := generate.NewSLOProcessorFromSLOPluginV1(
+			plugincorevalidatev1.NewPlugin,
+			logger.WithValues(log.Kv{"plugin": plugincorevalidatev1.PluginID}),
+			nil,
+		)
+		if err != nil {
+			return fmt.Errorf("could not create SLO validate plugin: %w", err)
+		}
+
 		// Create the generate app service (the one that the CLIs use).
 		generator, err := generate.NewService(generate.ServiceConfig{
 			AlertGenerator:            alert.NewGenerator(windowsRepo),
 			SLIRulesGenSLOPlugin:      sliRuleGen,
 			MetadataRulesGenSLOPlugin: metaRuleGen,
 			AlertRulesGenSLOPlugin:    alertRuleGen,
+			ValidateSLOPlugin:         validatePlugin,
 			SLOPluginGetter:           pluginSLORepo,
 			Logger:                    generatorLogger{Logger: logger},
 		})

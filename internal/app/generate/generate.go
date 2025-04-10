@@ -10,8 +10,9 @@ import (
 	"github.com/slok/sloth/internal/log"
 	plugincorealertrulesv1 "github.com/slok/sloth/internal/plugin/slo/core/alert_rules_v1"
 	plugincoremetadatarulesv1 "github.com/slok/sloth/internal/plugin/slo/core/metadata_rules_v1"
-	plugincorenoopsv1 "github.com/slok/sloth/internal/plugin/slo/core/noop_v1"
+	plugincorenoopv1 "github.com/slok/sloth/internal/plugin/slo/core/noop_v1"
 	plugincoreslirulesv1 "github.com/slok/sloth/internal/plugin/slo/core/sli_rules_v1"
+	plugincorevalidatev1 "github.com/slok/sloth/internal/plugin/slo/core/validate_v1"
 	pluginengineslo "github.com/slok/sloth/internal/pluginengine/slo"
 	commonerrors "github.com/slok/sloth/pkg/common/errors"
 	"github.com/slok/sloth/pkg/common/model"
@@ -20,7 +21,7 @@ import (
 
 // Default plugins.
 var (
-	NoopPlugin, _ = NewSLOProcessorFromSLOPluginV1(plugincorenoopsv1.NewPlugin, log.Noop, nil)
+	NoopPlugin, _ = NewSLOProcessorFromSLOPluginV1(plugincorenoopv1.NewPlugin, log.Noop, nil)
 )
 
 type noopSLOPluginGetter bool
@@ -41,6 +42,7 @@ type ServiceConfig struct {
 	SLIRulesGenSLOPlugin      SLOProcessor
 	AlertRulesGenSLOPlugin    SLOProcessor
 	MetadataRulesGenSLOPlugin SLOProcessor
+	ValidateSLOPlugin         SLOProcessor
 	SLOPluginGetter           SLOPluginGetter
 	Logger                    log.Logger
 }
@@ -94,6 +96,18 @@ func (c *ServiceConfig) defaults() error {
 		c.MetadataRulesGenSLOPlugin = plugin
 	}
 
+	if c.ValidateSLOPlugin == nil {
+		plugin, err := NewSLOProcessorFromSLOPluginV1(
+			plugincorevalidatev1.NewPlugin,
+			c.Logger.WithValues(log.Kv{"plugin": plugincorevalidatev1.PluginID}),
+			nil,
+		)
+		if err != nil {
+			return fmt.Errorf("could not create SLO validate plugin: %w", err)
+		}
+		c.ValidateSLOPlugin = plugin
+	}
+
 	return nil
 }
 
@@ -121,6 +135,7 @@ func NewService(config ServiceConfig) (*Service, error) {
 		alertGen:        config.AlertGenerator,
 		sloPluginGetter: config.SLOPluginGetter,
 		defaultPlugins: []SLOProcessor{
+			config.ValidateSLOPlugin,
 			config.SLIRulesGenSLOPlugin,
 			config.AlertRulesGenSLOPlugin,
 			config.MetadataRulesGenSLOPlugin,
@@ -148,7 +163,7 @@ type Response struct {
 }
 
 func (s Service) Generate(ctx context.Context, r Request) (*Response, error) {
-	err := r.SLOGroup.Validate()
+	err := s.validateSLOGroup(r.SLOGroup)
 	if err != nil {
 		return nil, fmt.Errorf("invalid SLO group: %w", err)
 	}
@@ -237,4 +252,22 @@ func (s Service) generateSLO(ctx context.Context, info model.Info, slo model.Pro
 	}
 
 	return &res.SLORules, nil
+}
+
+func (s Service) validateSLOGroup(sloGroup model.PromSLOGroup) error {
+	if len(sloGroup.SLOs) == 0 {
+		return fmt.Errorf("at least one SLO is required")
+	}
+
+	// Check SLO IDs not repeated.
+	sloIDs := map[string]struct{}{}
+	for _, slo := range sloGroup.SLOs {
+		_, ok := sloIDs[slo.ID]
+		if ok {
+			return fmt.Errorf("SLO ID %q is repeated", slo.ID)
+		}
+		sloIDs[slo.ID] = struct{}{}
+	}
+
+	return nil
 }

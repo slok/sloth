@@ -5,7 +5,8 @@
 ### Changed
 
 - Split image registry and repository in Helm chart
-- Internally Sloth (not k8s) prometheusServiceLevel uses k8s `k8s.io/apimachinery/pkg/util/yaml` lib for unmarshaling YAML instead of `gopkg.in/yaml.v2`.
+- (BREAKING) Internally Sloth (not k8s) prometheusServiceLevel uses k8s `k8s.io/apimachinery/pkg/util/yaml` lib for unmarshaling YAML instead of `gopkg.in/yaml.v2`.
+- Core SLO validation and SLO rules generation migrated to SLO plugins.
 
 ### Added
 

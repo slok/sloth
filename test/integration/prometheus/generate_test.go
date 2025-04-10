@@ -75,9 +75,14 @@ func TestPrometheusGenerate(t *testing.T) {
 			expOut:     expectLoader.mustLoadExp("./testdata/out-base-extra-labels.yaml.tpl"),
 		},
 
-		"Generate with plugins should generate the correct rules for all the SLOs.": {
-			genCmdArgs: "--input ./testdata/in-plugin.yaml",
-			expOut:     expectLoader.mustLoadExp("./testdata/out-plugin.yaml.tpl"),
+		"Generate with SLI plugins should generate the correct rules for all the SLOs.": {
+			genCmdArgs: "--input ./testdata/in-sli-plugin.yaml",
+			expOut:     expectLoader.mustLoadExp("./testdata/out-sli-plugin.yaml.tpl"),
+		},
+
+		"Generate with SLO plugins should generate the correct rules for all the SLOs.": {
+			genCmdArgs: "--input ./testdata/in-slo-plugin.yaml",
+			expOut:     expectLoader.mustLoadExp("./testdata/out-slo-plugin.yaml.tpl"),
 		},
 
 		"Generate using multifile YAML in single file should generate the correct rules for all the SLOs.": {

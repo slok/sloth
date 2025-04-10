@@ -5,6 +5,7 @@
 ### Changed
 
 - Split image registry and repository in Helm chart
+- Internally Sloth (not k8s) prometheusServiceLevel uses k8s `k8s.io/apimachinery/pkg/util/yaml` lib for unmarshaling YAML instead of `gopkg.in/yaml.v2`.
 
 ### Added
 
@@ -13,6 +14,7 @@
 - A new SLO rule generation plugin system has been added to be able to change/extend the SLO rule generation process.
 - SLO plugins can be loaded from FS directories recursively using `--slo-plugins-path` in the commands.
 - SLO plugins have a priority value to be able to order in the execution chain.
+- Sloth regular (non-k8s) `prometheus/v1` API support for SLO plugins at SLO group level and per SLO level.
 
 ## [v0.12.0] - 2025-03-27
 

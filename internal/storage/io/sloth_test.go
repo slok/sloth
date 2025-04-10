@@ -2,6 +2,7 @@ package io_test
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"testing"
 	"time"
@@ -159,6 +160,7 @@ slos:
 					Service:    "test-svc",
 					TimeWindow: 30 * 24 * time.Hour,
 					Labels:     map[string]string{"gk1": "gv1"},
+					Plugins:    model.SLOPlugins{Plugins: []model.PromSLOPluginMetadata{}},
 					SLI: model.PromSLI{
 						Raw: &model.PromSLIRaw{
 							ErrorRatioQuery: `plugin_raw_expr{service="test-svc",slo="slo-test",objective="99.000000",gk1="gv1",k1="v1",k2="true"}`,
@@ -217,6 +219,7 @@ slos:
 					Service:    "test-svc",
 					TimeWindow: 28 * 24 * time.Hour,
 					Labels:     map[string]string{"gk1": "gv1"},
+					Plugins:    model.SLOPlugins{Plugins: []model.PromSLOPluginMetadata{}},
 					SLI: model.PromSLI{
 						Raw: &model.PromSLIRaw{
 							ErrorRatioQuery: `test_expr_ratio_2`,
@@ -253,6 +256,13 @@ version: "prometheus/v1"
 service: "test-svc"
 labels:
   owner: "myteam"
+slo_plugins:
+    chain:
+      - id: test_plugin0
+        priority: -100
+        config: {"k1": 42}
+      - id: test_plugin2
+        config: {"k1": {"k2": "v2"}}
 slos:
   - name: "slo1"
     labels:
@@ -288,6 +298,13 @@ slos:
     sli:
       raw:
         error_ratio_query: test_expr_ratio_2
+    plugins:
+      chain:
+        - id: test_plugin1
+          priority: 100
+          config:
+            k1: v1
+            k2: true
     alerting:
       page_alert:
         disable: true
@@ -338,6 +355,12 @@ slos:
 							"runbook": "http://whatever.com",
 						},
 					},
+					Plugins: model.SLOPlugins{
+						Plugins: []model.PromSLOPluginMetadata{
+							{ID: "test_plugin0", Priority: -100, Config: json.RawMessage([]byte(`{"k1":42}`))},
+							{ID: "test_plugin2", Config: json.RawMessage([]byte(`{"k1":{"k2":"v2"}}`))},
+						},
+					},
 				},
 				{
 					ID:         "test-svc-slo2",
@@ -356,12 +379,25 @@ slos:
 					},
 					PageAlertMeta:   model.PromAlertMeta{Disable: true},
 					TicketAlertMeta: model.PromAlertMeta{Disable: true},
+					Plugins: model.SLOPlugins{
+						Plugins: []model.PromSLOPluginMetadata{
+							{ID: "test_plugin0", Priority: -100, Config: json.RawMessage([]byte(`{"k1":42}`))},
+							{ID: "test_plugin2", Config: json.RawMessage([]byte(`{"k1":{"k2":"v2"}}`))},
+							{ID: "test_plugin1", Priority: 100, Config: json.RawMessage([]byte(`{"k1":"v1","k2":true}`))},
+						},
+					},
 				},
 			},
 				OriginalSource: model.PromSLOGroupSource{SlothV1: &v1.Spec{
 					Version: "prometheus/v1",
 					Service: "test-svc",
 					Labels:  map[string]string{"owner": "myteam"},
+					SLOPlugins: v1.SLOPlugins{
+						Chain: []v1.SLOPlugin{
+							{ID: "test_plugin0", Priority: -100, Config: json.RawMessage([]byte(`{"k1":42}`))},
+							{ID: "test_plugin2", Config: json.RawMessage([]byte(`{"k1":{"k2":"v2"}}`))},
+						},
+					},
 					SLOs: []v1.SLO{
 						{
 							Name:        "slo1",
@@ -399,6 +435,11 @@ slos:
 							Alerting: v1.Alerting{Name: "",
 								PageAlert:   v1.Alert{Disable: true},
 								TicketAlert: v1.Alert{Disable: true},
+							},
+							Plugins: v1.SLOPlugins{
+								Chain: []v1.SLOPlugin{
+									{ID: "test_plugin1", Priority: 100, Config: []byte(`{"k1":"v1","k2":true}`)},
+								},
 							},
 						},
 					},

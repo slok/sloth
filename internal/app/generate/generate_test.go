@@ -52,6 +52,31 @@ func TestIntegrationAppServiceGenerate(t *testing.T) {
 			expErr: true,
 		},
 
+		"Having invalid SLOs should error.": {
+			mocks: func(mspg *generatemock.SLOPluginGetter) {},
+			req: generate.Request{
+				SLOGroup: model.PromSLOGroup{SLOs: []model.PromSLO{
+					{
+						ID:      "test-id",
+						Name:    "test-name",
+						Service: "test-svc",
+						SLI: model.PromSLI{
+							Events: &model.PromSLIEvents{
+								ErrorQuery: `rate(my_metric{error="true"}[{{.window}}])`,
+								TotalQuery: `rate(my_metric[{{.window}}])`,
+							},
+						},
+						TimeWindow:      30 * 24 * time.Hour,
+						Objective:       101, // This is wrong.
+						Labels:          map[string]string{"test_label": "label_1"},
+						PageAlertMeta:   model.PromAlertMeta{Disable: true},
+						TicketAlertMeta: model.PromAlertMeta{Disable: true},
+					},
+				}},
+			},
+			expErr: true,
+		},
+
 		"Having SLOs it should generate Prometheus recording and alert rules.": {
 			mocks: func(mspg *generatemock.SLOPluginGetter) {
 				mspg.On("GetSLOPlugin", mock.Anything, "test-plugin1").Once().Return(&pluginengineslo.Plugin{

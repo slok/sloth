@@ -23,6 +23,7 @@ import (
 	plugincorealertrulesv1 "github.com/slok/sloth/internal/plugin/slo/core/alert_rules_v1"
 	plugincoremetadatarulesv1 "github.com/slok/sloth/internal/plugin/slo/core/metadata_rules_v1"
 	plugincoreslirulesv1 "github.com/slok/sloth/internal/plugin/slo/core/sli_rules_v1"
+	plugincorevalidatev1 "github.com/slok/sloth/internal/plugin/slo/core/validate_v1"
 	"github.com/slok/sloth/internal/storage"
 	storagefs "github.com/slok/sloth/internal/storage/fs"
 	storageio "github.com/slok/sloth/internal/storage/io"
@@ -450,6 +451,15 @@ func (g generator) generateRules(ctx context.Context, info model.Info, slos mode
 		metaRuleGen = metadataPlugin
 	}
 
+	validatePlugin, err := generate.NewSLOProcessorFromSLOPluginV1(
+		plugincorevalidatev1.NewPlugin,
+		g.logger.WithValues(log.Kv{"plugin": plugincorevalidatev1.PluginID}),
+		nil,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("could not create SLO validate plugin: %w", err)
+	}
+
 	// Disable alert rules if required.
 	var alertRuleGen generate.SLOProcessor = generate.NoopPlugin
 	if !g.disableAlerts {
@@ -470,6 +480,7 @@ func (g generator) generateRules(ctx context.Context, info model.Info, slos mode
 		SLIRulesGenSLOPlugin:      sliRuleGen,
 		MetadataRulesGenSLOPlugin: metaRuleGen,
 		AlertRulesGenSLOPlugin:    alertRuleGen,
+		ValidateSLOPlugin:         validatePlugin,
 		SLOPluginGetter:           g.sloPluginRepo,
 		Logger:                    g.logger,
 	})

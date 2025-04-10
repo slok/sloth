@@ -67,7 +67,7 @@ type PromSLOPluginMetadata struct {
 }
 
 type PromSLOGroup struct {
-	SLOs           []PromSLO `validate:"required,dive"`
+	SLOs           []PromSLO
 	OriginalSource PromSLOGroupSource
 }
 
@@ -80,7 +80,7 @@ type PromSLOGroupSource struct {
 }
 
 // Validate validates the SLO.
-func (s PromSLOGroup) Validate() error {
+func (s PromSLO) Validate() error {
 	return modelSpecValidate.Struct(s)
 }
 
@@ -96,7 +96,6 @@ var modelSpecValidate = func() *validator.Validate {
 	mustRegisterValidation(v, "required_if_enabled", validateRequiredEnabledAlertName)
 	mustRegisterValidation(v, "template_vars", validateTemplateVars)
 	v.RegisterStructValidation(validateOneSLI, PromSLI{})
-	v.RegisterStructValidation(validateSLOGroup, PromSLOGroup{})
 	v.RegisterStructValidation(validateSLIEvents, PromSLIEvents{})
 	return v
 }()
@@ -265,29 +264,6 @@ func validateOneSLI(sl validator.StructLevel) {
 	// No SLI types set.
 	if !sliSet {
 		sl.ReportError(sli, "", "", "sli_type_required", "")
-	}
-}
-
-// validateSLOGroup validates SLO IDs are not repeated.
-func validateSLOGroup(sl validator.StructLevel) {
-	sloGroup, ok := sl.Current().Interface().(PromSLOGroup)
-	if !ok {
-		sl.ReportError(sloGroup, "", "SLOGroup", "not_slo_group", "")
-		return
-	}
-
-	if len(sloGroup.SLOs) == 0 {
-		sl.ReportError(sloGroup, "", "", "slos_required", "")
-	}
-
-	// Check SLO IDs not repeated.
-	sloIDs := map[string]struct{}{}
-	for _, slo := range sloGroup.SLOs {
-		_, ok := sloIDs[slo.ID]
-		if ok {
-			sl.ReportError(slo.ID, slo.ID, "", "slo_repeated", "")
-		}
-		sloIDs[slo.ID] = struct{}{}
 	}
 }
 

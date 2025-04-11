@@ -45,11 +45,15 @@ const (
 	PluginID      = "sloth.dev/noop/v1"
 )
 
-func NewPlugin(_ json.RawMessage, _ pluginslov1.AppUtils) (pluginslov1.Plugin, error) {
-	return noopPlugin{}, nil
+func NewPlugin(_ json.RawMessage, appUtils pluginslov1.AppUtils) (pluginslov1.Plugin, error) {
+	return noopPlugin{
+		appUtils: appUtils,
+	}, nil
 }
 
-type noopPlugin struct{}
+type noopPlugin struct{
+	appUtils pluginslov1.AppUtils
+}
 
 func (noopPlugin) ProcessSLO(ctx context.Context, request *pluginslov1.Request, result *pluginslov1.Result) error {
 	return nil
@@ -73,8 +77,10 @@ const (
 	PluginID      = ""
 )
 
-func NewPlugin(_ json.RawMessage, _ pluginslov1.AppUtils) (pluginslov1.Plugin, error) {
-	return noopPlugin{}, nil
+func NewPlugin(_ json.RawMessage, appUtils pluginslov1.AppUtils) (pluginslov1.Plugin, error) {
+	return noopPlugin{
+		appUtils: appUtils,
+	}, nil
 }
 
 type noopPlugin struct{}
@@ -101,8 +107,10 @@ const (
 	PluginID      = "sloth.dev/noop/v1"
 )
 
-func NewPlugin2(_ json.RawMessage, _ pluginslov1.AppUtils) (pluginslov1.Plugin, error) {
-	return noopPlugin{}, nil
+func NewPlugin2(_ json.RawMessage, appUtils pluginslov1.AppUtils) (pluginslov1.Plugin, error) {
+	return noopPlugin{
+		appUtils: appUtils,
+	}, nil
 }
 
 type noopPlugin struct{}
@@ -131,11 +139,15 @@ const (
 	PluginID      = "sloth.dev/test/v1"
 )
 
-func NewPlugin(_ json.RawMessage, _ pluginslov1.AppUtils) (pluginslov1.Plugin, error) {
-	return test{}, nil
+func NewPlugin(_ json.RawMessage, appUtils pluginslov1.AppUtils) (pluginslov1.Plugin, error) {
+	return test{
+		appUtils: appUtils,
+	}, nil
 }
 
-type test struct{}
+type test struct{
+	appUtils pluginslov1.AppUtils
+}
 
 func (test) ProcessSLO(ctx context.Context, request *pluginslov1.Request, result *pluginslov1.Result) error {
 	result.SLORules.MetadataRecRules.Rules = []rulefmt.Rule{
@@ -147,7 +159,9 @@ func (test) ProcessSLO(ctx context.Context, request *pluginslov1.Request, result
 }
 `,
 			execPlugin: func(t *testing.T, p pluginengineslo.Plugin) {
-				plugin, err := p.PluginV1Factory(nil, pluginslov1.AppUtils{Logger: log.Noop})
+				var queryValidator model.QueryValidator
+				queryValidator.MetricsQL = true
+				plugin, err := p.PluginV1Factory(nil, pluginslov1.AppUtils{Logger: log.Noop, QueryValidator: queryValidator})
 				require.NoError(t, err)
 				gotResp := &pluginslov1.Result{}
 				err = plugin.ProcessSLO(t.Context(), &pluginslov1.Request{}, gotResp)

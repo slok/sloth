@@ -21,11 +21,15 @@ const (
 	PluginID      = "sloth.dev/core/alert_rules/v1"
 )
 
-func NewPlugin(_ json.RawMessage, _ pluginslov1.AppUtils) (pluginslov1.Plugin, error) {
-	return plugin{}, nil
+func NewPlugin(_ json.RawMessage, appUtils pluginslov1.AppUtils) (pluginslov1.Plugin, error) {
+	return plugin{
+		appUtils: appUtils,
+	}, nil
 }
 
-type plugin struct{}
+type plugin struct {
+	appUtils pluginslov1.AppUtils
+}
 
 func (p plugin) ProcessSLO(ctx context.Context, request *pluginslov1.Request, result *pluginslov1.Result) error {
 	rules, err := p.generateSLOAlertRules(ctx, request.SLO, request.MWMBAlertGroup)

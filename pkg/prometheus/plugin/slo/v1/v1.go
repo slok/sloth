@@ -23,7 +23,8 @@ const PluginIDName = "PluginID"
 
 // AppUtils are app utils plugins can use in their logic.
 type AppUtils struct {
-	Logger log.Logger
+	Logger         log.Logger
+	QueryValidator model.QueryValidator
 }
 
 type Request struct {

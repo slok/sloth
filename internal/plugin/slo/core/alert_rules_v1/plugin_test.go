@@ -263,7 +263,12 @@ func BenchmarkPluginYaegi(b *testing.B) {
 }
 
 func BenchmarkPluginGo(b *testing.B) {
-	plugin, err := plugin.NewPlugin(nil, pluginslov1.AppUtils{})
+	var queryValidator model.QueryValidator
+	queryValidator.MetricsQL = true
+	plugin, err := plugin.NewPlugin(
+		nil,
+		pluginslov1.AppUtils{QueryValidator: queryValidator},
+	)
 	if err != nil {
 		b.Fatal(err)
 	}

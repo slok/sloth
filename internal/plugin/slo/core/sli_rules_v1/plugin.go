@@ -26,18 +26,22 @@ type PluginConfig struct {
 	Optimized bool
 }
 
-func NewPlugin(c json.RawMessage, _ pluginslov1.AppUtils) (pluginslov1.Plugin, error) {
+func NewPlugin(c json.RawMessage, appUtils pluginslov1.AppUtils) (pluginslov1.Plugin, error) {
 	cfg := &PluginConfig{}
 	err := json.Unmarshal(c, cfg)
 	if err != nil {
 		return nil, err
 	}
 
-	return plugin{cfg: *cfg}, nil
+	return plugin{
+		cfg:      *cfg,
+		appUtils: appUtils,
+	}, nil
 }
 
 type plugin struct {
-	cfg PluginConfig
+	cfg      PluginConfig
+	appUtils pluginslov1.AppUtils
 }
 
 func (p plugin) ProcessSLO(ctx context.Context, request *pluginslov1.Request, result *pluginslov1.Result) error {

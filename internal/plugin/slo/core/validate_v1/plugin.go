@@ -25,7 +25,7 @@ type plugin struct {
 
 func (p plugin) ProcessSLO(ctx context.Context, request *pluginslov1.Request, result *pluginslov1.Result) error {
 	// TODO(slok): Should we stop using validator libraries and just use our own simple validation logic created here?
-	err := request.SLO.Validate()
+	err := request.SLO.Validate(p.appUtils.QueryValidator)
 	if err != nil {
 		return fmt.Errorf("invalid slo %q: %w", request.SLO.ID, err)
 	}

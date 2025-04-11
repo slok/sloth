@@ -44,6 +44,7 @@ type ServiceConfig struct {
 	MetadataRulesGenSLOPlugin SLOProcessor
 	ValidateSLOPlugin         SLOProcessor
 	SLOPluginGetter           SLOPluginGetter
+	QueryValidator            model.QueryValidator
 	Logger                    log.Logger
 }
 
@@ -121,6 +122,7 @@ type Service struct {
 	alertGen        AlertGenerator
 	sloPluginGetter SLOPluginGetter
 	defaultPlugins  []SLOProcessor
+	queryValidator  model.QueryValidator
 	logger          log.Logger
 }
 
@@ -140,7 +142,8 @@ func NewService(config ServiceConfig) (*Service, error) {
 			config.AlertRulesGenSLOPlugin,
 			config.MetadataRulesGenSLOPlugin,
 		},
-		logger: config.Logger,
+		queryValidator: config.QueryValidator,
+		logger:         config.Logger,
 	}, nil
 }
 

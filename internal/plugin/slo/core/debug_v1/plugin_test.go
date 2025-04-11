@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	plugin "github.com/slok/sloth/internal/plugin/slo/core/debug_v1"
+	"github.com/slok/sloth/pkg/common/model"
 	pluginslov1 "github.com/slok/sloth/pkg/prometheus/plugin/slo/v1"
 	pluginslov1testing "github.com/slok/sloth/pkg/prometheus/plugin/slo/v1/testing"
 )
@@ -60,7 +61,12 @@ func BenchmarkPluginYaegi(b *testing.B) {
 }
 
 func BenchmarkPluginGo(b *testing.B) {
-	plugin, err := plugin.NewPlugin([]byte(`{}`), pluginslov1.AppUtils{})
+	var queryValidator model.QueryValidator
+	queryValidator.MetricsQL = true
+	plugin, err := plugin.NewPlugin(
+		[]byte(`{}`),
+		pluginslov1.AppUtils{QueryValidator: queryValidator},
+	)
 	if err != nil {
 		b.Fatal(err)
 	}

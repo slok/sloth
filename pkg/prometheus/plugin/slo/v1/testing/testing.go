@@ -8,6 +8,7 @@ import (
 
 	"github.com/slok/sloth/internal/log"
 	pluginengineslo "github.com/slok/sloth/internal/pluginengine/slo"
+	"github.com/slok/sloth/pkg/common/model"
 	pluginslov1 "github.com/slok/sloth/pkg/prometheus/plugin/slo/v1"
 )
 
@@ -50,7 +51,10 @@ func NewTestPlugin(ctx context.Context, config TestPluginConfig) (pluginslov1.Pl
 		return nil, fmt.Errorf("could not load plugin source code: %w", err)
 	}
 
+	var queryValidator model.QueryValidator
+	queryValidator.MetricsQL = true
 	return plugin.PluginV1Factory(config.PluginConfiguration, pluginslov1.AppUtils{
-		Logger: log.Noop,
+		Logger:         log.Noop,
+		QueryValidator: queryValidator,
 	})
 }

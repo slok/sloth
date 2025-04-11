@@ -45,6 +45,7 @@ type generateCommand struct {
 	sloPluginsPaths       []string
 	sloPeriodWindowsPath  string
 	sloPeriod             string
+	queryDialect          string
 }
 
 // NewGenerateCommand returns the generate command.
@@ -64,6 +65,7 @@ func NewGenerateCommand(app *kingpin.Application) Command {
 	cmd.Flag("slo-period-windows-path", "The directory path to custom SLO period windows catalog (replaces default ones).").StringVar(&c.sloPeriodWindowsPath)
 	cmd.Flag("default-slo-period", "The default SLO period windows to be used for the SLOs.").Default("30d").StringVar(&c.sloPeriod)
 	cmd.Flag("disable-optimized-rules", "If enabled it will disable optimized generated rules.").BoolVar(&c.disableOptimizedRules)
+	cmd.Flag("query-dialect", "Dialect of PromQL to use for expression validator [promql, metricsql].").Default("promql").Short('q').StringVar(&c.queryDialect)
 
 	return c
 }
@@ -258,6 +260,7 @@ func (g generateCommand) Run(ctx context.Context, config RootConfig) error {
 		disableOptimizedRules: g.disableOptimizedRules,
 		extraLabels:           g.extraLabels,
 		sloPluginRepo:         pluginSLORepo,
+		queryDialect:          g.queryDialect,
 	}
 
 	for _, genTarget := range genTargets {
@@ -319,6 +322,7 @@ type generator struct {
 	disableOptimizedRules bool
 	extraLabels           map[string]string
 	sloPluginRepo         *storagefs.FileSLOPluginRepo
+	queryDialect          string
 }
 
 // GeneratePrometheus generates the SLOs based on a raw regular Prometheus spec format input and outs a Prometheus raw yaml.
@@ -474,6 +478,17 @@ func (g generator) generateRules(ctx context.Context, info model.Info, slos mode
 		alertRuleGen = plugin
 	}
 
+	// Choose Validator.
+	var queryValidator model.QueryValidator
+	switch g.queryDialect {
+	case "promql":
+		queryValidator.PromQL = true
+	case "metricsql":
+		queryValidator.MetricsQL = true
+	default:
+		return nil, fmt.Errorf("unknown query dialect %w", err)
+	}
+
 	// Generate.
 	controller, err := generate.NewService(generate.ServiceConfig{
 		AlertGenerator:            alert.NewGenerator(g.windowsRepo),
@@ -483,6 +498,7 @@ func (g generator) generateRules(ctx context.Context, info model.Info, slos mode
 		ValidateSLOPlugin:         validatePlugin,
 		SLOPluginGetter:           g.sloPluginRepo,
 		Logger:                    g.logger,
+		QueryValidator:            queryValidator,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("could not create application service: %w", err)

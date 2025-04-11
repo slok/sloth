@@ -816,10 +816,13 @@ or
 
 			windowsRepo, err := alert.NewFSWindowsRepo(alert.FSWindowsRepoConfig{})
 			require.NoError(err)
+			var queryValidator model.QueryValidator
+			queryValidator.MetricsQL = true
 
 			svc, err := generate.NewService(generate.ServiceConfig{
 				AlertGenerator:  alert.NewGenerator(windowsRepo),
 				SLOPluginGetter: mspg,
+				QueryValidator:  queryValidator,
 			})
 			require.NoError(err)
 

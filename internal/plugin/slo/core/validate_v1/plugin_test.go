@@ -104,7 +104,10 @@ func TestPlugin(t *testing.T) {
 }
 
 func BenchmarkPluginYaegi(b *testing.B) {
-	plugin, err := pluginslov1testing.NewTestPlugin(b.Context(), pluginslov1testing.TestPluginConfig{PluginConfiguration: []byte(`{}`)})
+	plugin, err := pluginslov1testing.NewTestPlugin(
+		b.Context(),
+		pluginslov1testing.TestPluginConfig{PluginConfiguration: []byte(`{}`)},
+	)
 	if err != nil {
 		b.Fatal(err)
 	}
@@ -119,7 +122,12 @@ func BenchmarkPluginYaegi(b *testing.B) {
 }
 
 func BenchmarkPluginGo(b *testing.B) {
-	plugin, err := plugin.NewPlugin([]byte(`{}`), pluginslov1.AppUtils{})
+	var queryValidator model.QueryValidator
+	queryValidator.MetricsQL = true
+	plugin, err := plugin.NewPlugin(
+		[]byte(`{}`),
+		pluginslov1.AppUtils{QueryValidator: queryValidator},
+	)
 	if err != nil {
 		b.Fatal(err)
 	}

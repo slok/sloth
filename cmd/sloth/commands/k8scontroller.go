@@ -40,6 +40,7 @@ import (
 	"github.com/slok/sloth/internal/storage"
 	storageio "github.com/slok/sloth/internal/storage/io"
 	storagek8s "github.com/slok/sloth/internal/storage/k8s"
+	"github.com/slok/sloth/pkg/common/model"
 	slothv1 "github.com/slok/sloth/pkg/kubernetes/api/sloth/v1"
 	slothclientset "github.com/slok/sloth/pkg/kubernetes/gen/clientset/versioned"
 )
@@ -74,6 +75,7 @@ type kubeControllerCommand struct {
 	sloPeriodWindowsPath  string
 	sloPeriod             string
 	disableOptimizedRules bool
+	queryDialect          string
 }
 
 // NewKubeControllerCommand returns the Kubernetes controller command.
@@ -102,6 +104,7 @@ func NewKubeControllerCommand(app *kingpin.Application) Command {
 	cmd.Flag("slo-period-windows-path", "The directory path to custom SLO period windows catalog (replaces default ones).").StringVar(&c.sloPeriodWindowsPath)
 	cmd.Flag("default-slo-period", "The default SLO period windows to be used for the SLOs.").Default("30d").StringVar(&c.sloPeriod)
 	cmd.Flag("disable-optimized-rules", "If enabled it will disable optimized generated rules.").BoolVar(&c.disableOptimizedRules)
+	cmd.Flag("query-dialect", "Dialect of PromQL to use for expression validator [promql, metricsql].").Default("promql").Short('q').StringVar(&c.queryDialect)
 
 	return c
 }
@@ -349,6 +352,17 @@ func (k kubeControllerCommand) Run(ctx context.Context, config RootConfig) error
 			return fmt.Errorf("could not create SLO validate plugin: %w", err)
 		}
 
+		// Choose Validator.
+		var queryValidator model.QueryValidator
+		switch k.queryDialect {
+		case "promql":
+			queryValidator.PromQL = true
+		case "metricsql":
+			queryValidator.MetricsQL = true
+		default:
+			return fmt.Errorf("unknown query dialect %w", err)
+		}
+
 		// Create the generate app service (the one that the CLIs use).
 		generator, err := generate.NewService(generate.ServiceConfig{
 			AlertGenerator:            alert.NewGenerator(windowsRepo),
@@ -358,6 +372,7 @@ func (k kubeControllerCommand) Run(ctx context.Context, config RootConfig) error
 			ValidateSLOPlugin:         validatePlugin,
 			SLOPluginGetter:           pluginSLORepo,
 			Logger:                    generatorLogger{Logger: logger},
+			QueryValidator:            queryValidator,
 		})
 		if err != nil {
 			return fmt.Errorf("could not create Prometheus rules generator: %w", err)

@@ -56,6 +56,9 @@ func getGoodSLO() model.PromSLO {
 }
 
 func TestModelValidationSpec(t *testing.T) {
+	var queryValidator model.QueryValidator
+	queryValidator.MetricsQL = true
+
 	tests := map[string]struct {
 		slo           func() model.PromSLO
 		expErrMessage string
@@ -430,7 +433,7 @@ func TestModelValidationSpec(t *testing.T) {
 			assert := assert.New(t)
 
 			slo := test.slo()
-			err := slo.Validate()
+			err := slo.Validate(queryValidator)
 
 			if test.expErrMessage != "" {
 				assert.Error(err)

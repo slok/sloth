@@ -15,6 +15,7 @@ import (
 	"github.com/slok/sloth/internal/alert"
 	"github.com/slok/sloth/internal/log"
 	storageio "github.com/slok/sloth/internal/storage/io"
+	"github.com/slok/sloth/pkg/common/model"
 )
 
 type validateCommand struct {
@@ -26,6 +27,7 @@ type validateCommand struct {
 	sloPluginsPaths      []string
 	sloPeriodWindowsPath string
 	sloPeriod            string
+	queryDialect         string
 }
 
 // NewValidateCommand returns the validate command.
@@ -40,6 +42,7 @@ func NewValidateCommand(app *kingpin.Application) Command {
 	cmd.Flag("slo-plugins-path", "The path to SLO plugins a.k.a SLO generation middlewares (can be repeated).").Short('m').StringsVar(&c.sloPluginsPaths)
 	cmd.Flag("slo-period-windows-path", "The directory path to custom SLO period windows catalog (replaces default ones).").StringVar(&c.sloPeriodWindowsPath)
 	cmd.Flag("default-slo-period", "The default SLO period windows to be used for the SLOs.").Default("30d").StringVar(&c.sloPeriod)
+	cmd.Flag("query-dialect", "Dialect of PromQL to use for expression validator [promql, metricsql].").Default("promql").Short('q').StringVar(&c.queryDialect)
 
 	return c
 }
@@ -106,6 +109,17 @@ func (v validateCommand) Run(ctx context.Context, config RootConfig) error {
 		return fmt.Errorf("could not load SLO period windows repository: %w", err)
 	}
 
+	// Choose Validator.
+	var queryValidator model.QueryValidator
+	switch v.queryDialect {
+	case "promql":
+		queryValidator.PromQL = true
+	case "metricsql":
+		queryValidator.MetricsQL = true
+	default:
+		return fmt.Errorf("unknown query dialect %w", err)
+	}
+
 	// Check if the default slo period is supported by our windows repo.
 	_, err = windowsRepo.GetWindows(ctx, sloPeriod)
 	if err != nil {
@@ -134,6 +148,7 @@ func (v validateCommand) Run(ctx context.Context, config RootConfig) error {
 			logger:        log.Noop,
 			windowsRepo:   windowsRepo,
 			extraLabels:   v.extraLabels,
+			queryDialect:  v.queryDialect,
 			sloPluginRepo: pluginSLORepo,
 		}
 

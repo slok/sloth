@@ -40,7 +40,9 @@ func NewSLOProcessorFromSLOPluginV1(pluginFactory pluginslov1.PluginFactory, log
 		return nil, fmt.Errorf("could not marshal config: %w", err)
 	}
 
-	plugin, err := pluginFactory(configData, pluginslov1.AppUtils{Logger: logger})
+	var queryValidator model.QueryValidator
+	queryValidator.MetricsQL = true // FIXME: pass from config
+	plugin, err := pluginFactory(configData, pluginslov1.AppUtils{Logger: logger, QueryValidator: queryValidator})
 	if err != nil {
 		return nil, fmt.Errorf("could not create plugin: %w", err)
 	}

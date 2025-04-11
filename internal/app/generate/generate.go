@@ -175,7 +175,7 @@ func (s Service) Generate(ctx context.Context, r Request) (*Response, error) {
 		slo.Labels = utilsdata.MergeLabels(slo.Labels, r.ExtraLabels)
 
 		// Generate SLO result.
-		result, err := s.generateSLO(ctx, r.Info, slo)
+		result, err := s.generateSLO(ctx, r.Info, r.SLOGroup, slo)
 		if err != nil {
 			return nil, fmt.Errorf("could not generate %q slo: %w", slo.ID, err)
 		}
@@ -188,7 +188,7 @@ func (s Service) Generate(ctx context.Context, r Request) (*Response, error) {
 	}, nil
 }
 
-func (s Service) generateSLO(ctx context.Context, info model.Info, slo model.PromSLO) (*model.PromSLORules, error) {
+func (s Service) generateSLO(ctx context.Context, info model.Info, sloGroup model.PromSLOGroup, slo model.PromSLO) (*model.PromSLORules, error) {
 	logger := s.logger.WithCtxValues(ctx).WithValues(log.Kv{"slo": slo.ID})
 
 	// Generate the MWMB alerts.
@@ -242,6 +242,7 @@ func (s Service) generateSLO(ctx context.Context, info model.Info, slo model.Pro
 		Info:           info,
 		MWMBAlertGroup: *as,
 		SLO:            slo,
+		SLOGroup:       sloGroup,
 	}
 	res := &SLOProcessorResult{}
 	for _, p := range sloProcessors {

@@ -52,7 +52,7 @@ spec:
             - --extra-labels={{ $key }}={{ $val }}
             {{- end}}
             {{- if .Values.commonPlugins.enabled }}
-            - --sli-plugins-path=/plugins
+            - --plugins-path=/plugins
             {{- end }}
             {{- with .Values.sloth.defaultSloPeriod }}
             - --default-slo-period={{ . }}

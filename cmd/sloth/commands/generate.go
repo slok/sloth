@@ -41,8 +41,7 @@ type generateCommand struct {
 	disableAlerts         bool
 	disableOptimizedRules bool
 	extraLabels           map[string]string
-	sliPluginsPaths       []string
-	sloPluginsPaths       []string
+	pluginsPaths          []string
 	sloPeriodWindowsPath  string
 	sloPeriod             string
 }
@@ -59,8 +58,7 @@ func NewGenerateCommand(app *kingpin.Application) Command {
 	cmd.Flag("extra-labels", "Extra labels that will be added to all the generated Prometheus rules ('key=value' form, can be repeated).").Short('l').StringMapVar(&c.extraLabels)
 	cmd.Flag("disable-recordings", "Disables recording rules generation.").BoolVar(&c.disableRecordings)
 	cmd.Flag("disable-alerts", "Disables alert rules generation.").BoolVar(&c.disableAlerts)
-	cmd.Flag("sli-plugins-path", "The path to SLI plugins (can be repeated), if not set it disable plugins support.").Short('p').StringsVar(&c.sliPluginsPaths)
-	cmd.Flag("slo-plugins-path", "The path to SLO plugins a.k.a SLO generation middlewares (can be repeated).").Short('m').StringsVar(&c.sloPluginsPaths)
+	cmd.Flag("plugins-path", "The path to SLI and SLO plugins (can be repeated).").Short('p').StringsVar(&c.pluginsPaths)
 	cmd.Flag("slo-period-windows-path", "The directory path to custom SLO period windows catalog (replaces default ones).").StringVar(&c.sloPeriodWindowsPath)
 	cmd.Flag("default-slo-period", "The default SLO period windows to be used for the SLOs.").Default("30d").StringVar(&c.sloPeriod)
 	cmd.Flag("disable-optimized-rules", "If enabled it will disable optimized generated rules.").BoolVar(&c.disableOptimizedRules)
@@ -112,13 +110,8 @@ func (g generateCommand) Run(ctx context.Context, config RootConfig) error {
 		"out": g.slosOut,
 	})
 
-	// Load plugins
-	pluginSLIRepo, err := createSLIPluginLoader(ctx, logger, g.sliPluginsPaths)
-	if err != nil {
-		return err
-	}
-
-	pluginSLORepo, err := createSLOPluginLoader(ctx, logger, g.sloPluginsPaths)
+	// Load plugins.
+	pluginsRepo, err := createPluginLoader(ctx, logger, g.pluginsPaths)
 	if err != nil {
 		return err
 	}
@@ -143,8 +136,8 @@ func (g generateCommand) Run(ctx context.Context, config RootConfig) error {
 	}
 
 	// Create Spec loaders.
-	promYAMLLoader := storageio.NewSlothPrometheusYAMLSpecLoader(pluginSLIRepo, sloPeriod)
-	kubeYAMLLoader := storageio.NewK8sSlothPrometheusYAMLSpecLoader(pluginSLIRepo, sloPeriod)
+	promYAMLLoader := storageio.NewSlothPrometheusYAMLSpecLoader(pluginsRepo, sloPeriod)
+	kubeYAMLLoader := storageio.NewK8sSlothPrometheusYAMLSpecLoader(pluginsRepo, sloPeriod)
 	openSLOYAMLLoader := storageio.NewOpenSLOYAMLSpecLoader(sloPeriod)
 
 	// Get SLO targets.
@@ -257,7 +250,7 @@ func (g generateCommand) Run(ctx context.Context, config RootConfig) error {
 		disableAlerts:         g.disableAlerts,
 		disableOptimizedRules: g.disableOptimizedRules,
 		extraLabels:           g.extraLabels,
-		sloPluginRepo:         pluginSLORepo,
+		sloPluginRepo:         pluginsRepo,
 	}
 
 	for _, genTarget := range genTargets {
@@ -318,7 +311,7 @@ type generator struct {
 	disableAlerts         bool
 	disableOptimizedRules bool
 	extraLabels           map[string]string
-	sloPluginRepo         *storagefs.FileSLOPluginRepo
+	sloPluginRepo         *storagefs.FilePluginRepo
 }
 
 // GeneratePrometheus generates the SLOs based on a raw regular Prometheus spec format input and outs a Prometheus raw yaml.

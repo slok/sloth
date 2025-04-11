@@ -35,7 +35,7 @@ spec:
           image: ghcr.io/slok/sloth:v0.12.0
           args:
             - kubernetes-controller
-            - --sli-plugins-path=/plugins
+            - --plugins-path=/plugins
             - --logger=default
           ports:
             - containerPort: 8081

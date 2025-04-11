@@ -69,8 +69,7 @@ type kubeControllerCommand struct {
 	hotReloadPath         string
 	hotReloadAddr         string
 	metricsListenAddr     string
-	sliPluginsPaths       []string
-	sloPluginsPaths       []string
+	pluginsPaths          []string
 	sloPeriodWindowsPath  string
 	sloPeriod             string
 	disableOptimizedRules bool
@@ -97,8 +96,7 @@ func NewKubeControllerCommand(app *kingpin.Application) Command {
 	cmd.Flag("hot-reload-addr", "The listen address for hot-reloading components that allow it.").Default(":8082").StringVar(&c.hotReloadAddr)
 	cmd.Flag("hot-reload-path", "The webhook path for hot-reloading components that allow it.").Default("/-/reload").StringVar(&c.hotReloadPath)
 	cmd.Flag("extra-labels", "Extra labels that will be added to all the generated Prometheus rules ('key=value' form, can be repeated).").Short('l').StringMapVar(&c.extraLabels)
-	cmd.Flag("sli-plugins-path", "The path to SLI plugins (can be repeated), if not set it disable plugins support.").Short('p').StringsVar(&c.sliPluginsPaths)
-	cmd.Flag("slo-plugins-path", "The path to SLO plugins a.k.a SLO generation middlewares (can be repeated).").Short('m').StringsVar(&c.sloPluginsPaths)
+	cmd.Flag("plugins-path", "The path to SLI and SLO plugins (can be repeated).").Short('p').StringsVar(&c.pluginsPaths)
 	cmd.Flag("slo-period-windows-path", "The directory path to custom SLO period windows catalog (replaces default ones).").StringVar(&c.sloPeriodWindowsPath)
 	cmd.Flag("default-slo-period", "The default SLO period windows to be used for the SLOs.").Default("30d").StringVar(&c.sloPeriod)
 	cmd.Flag("disable-optimized-rules", "If enabled it will disable optimized generated rules.").BoolVar(&c.disableOptimizedRules)
@@ -118,12 +116,7 @@ func (k kubeControllerCommand) Run(ctx context.Context, config RootConfig) error
 	sloPeriod := time.Duration(sp)
 
 	// Plugins.
-	pluginSLIRepo, err := createSLIPluginLoader(ctx, logger, k.sliPluginsPaths)
-	if err != nil {
-		return err
-	}
-
-	pluginSLORepo, err := createSLOPluginLoader(ctx, logger, k.sloPluginsPaths)
+	pluginsRepo, err := createPluginLoader(ctx, logger, k.pluginsPaths)
 	if err != nil {
 		return err
 	}
@@ -169,11 +162,7 @@ func (k kubeControllerCommand) Run(ctx context.Context, config RootConfig) error
 	{
 		// Set SLI plugin repository reloader.
 		reloadManager.Add(1000, reload.ReloaderFunc(func(ctx context.Context, id string) error {
-			return pluginSLIRepo.Reload(ctx)
-		}))
-
-		reloadManager.Add(1000, reload.ReloaderFunc(func(ctx context.Context, id string) error {
-			return pluginSLORepo.Reload(ctx)
+			return pluginsRepo.Reload(ctx)
 		}))
 
 		ctx, cancel := context.WithCancel(ctx)
@@ -356,7 +345,7 @@ func (k kubeControllerCommand) Run(ctx context.Context, config RootConfig) error
 			MetadataRulesGenSLOPlugin: metaRuleGen,
 			AlertRulesGenSLOPlugin:    alertRuleGen,
 			ValidateSLOPlugin:         validatePlugin,
-			SLOPluginGetter:           pluginSLORepo,
+			SLOPluginGetter:           pluginsRepo,
 			Logger:                    generatorLogger{Logger: logger},
 		})
 		if err != nil {
@@ -366,7 +355,7 @@ func (k kubeControllerCommand) Run(ctx context.Context, config RootConfig) error
 		// Create handler.
 		controllerConfig := kubecontroller.HandlerConfig{
 			Generator:        generator,
-			SpecLoader:       storageio.NewK8sSlothPrometheusCRSpecLoader(pluginSLIRepo, sloPeriod),
+			SpecLoader:       storageio.NewK8sSlothPrometheusCRSpecLoader(pluginsRepo, sloPeriod),
 			Repository:       kuberepo,
 			KubeStatusStorer: kuberepo,
 			ExtraLabels:      k.extraLabels,

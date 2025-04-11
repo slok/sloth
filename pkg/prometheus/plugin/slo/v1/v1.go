@@ -29,6 +29,10 @@ type AppUtils struct {
 type Request struct {
 	// Info about the application and execution, normally used as metadata.
 	Info model.Info
+	// OriginalSource is the original specification of the SLO came from, this is informative data that
+	// can be used to make decision on plugins, it should be used only as RO.
+	// The information used on the generation is the SLO model itself not this one.
+	OriginalSource model.PromSLOGroupSource
 	// The SLO to process and generate the final Prom rules.
 	SLO model.PromSLO
 	// The SLO MWMBAlertGroup selected.

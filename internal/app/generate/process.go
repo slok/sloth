@@ -13,6 +13,7 @@ import (
 type SLOProcessorRequest struct {
 	Info           model.Info
 	SLO            model.PromSLO
+	SLOGroup       model.PromSLOGroup
 	MWMBAlertGroup model.MWMBAlertGroup
 }
 type SLOProcessorResult struct {
@@ -51,6 +52,7 @@ func NewSLOProcessorFromSLOPluginV1(pluginFactory pluginslov1.PluginFactory, log
 			Info:           req.Info,
 			SLO:            req.SLO,
 			MWMBAlertGroup: req.MWMBAlertGroup,
+			OriginalSource: req.SLOGroup.OriginalSource,
 		}
 		rs := &pluginslov1.Result{
 			SLORules: res.SLORules,

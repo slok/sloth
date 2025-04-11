@@ -48,8 +48,7 @@ func NewConfig(t *testing.T) Config {
 
 func RunSlothGenerate(ctx context.Context, config Config, cmdArgs string) (stdout, stderr []byte, err error) {
 	env := []string{
-		fmt.Sprintf("SLOTH_SLI_PLUGINS_PATH=%s", "./sli_plugins"),
-		fmt.Sprintf("SLOTH_SLO_PLUGINS_PATH=%s", "./slo_plugins"),
+		fmt.Sprintf("SLOTH_PLUGINS_PATH=%s", "./plugins"),
 	}
 
 	return testutils.RunSloth(ctx, env, config.Binary, fmt.Sprintf("generate %s", cmdArgs), true)
@@ -57,8 +56,7 @@ func RunSlothGenerate(ctx context.Context, config Config, cmdArgs string) (stdou
 
 func RunSlothValidate(ctx context.Context, config Config, cmdArgs string) (stdout, stderr []byte, err error) {
 	env := []string{
-		fmt.Sprintf("SLOTH_SLI_PLUGINS_PATH=%s", "./sli_plugins"),
-		fmt.Sprintf("SLOTH_SLO_PLUGINS_PATH=%s", "./slo_plugins"),
+		fmt.Sprintf("SLOTH_PLUGINS_PATH=%s", "./plugins"),
 	}
 
 	return testutils.RunSloth(ctx, env, config.Binary, fmt.Sprintf("validate %s", cmdArgs), true)

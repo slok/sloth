@@ -224,7 +224,7 @@ func TestKubernetesControllerPromOperatorGenerate(t *testing.T) {
 				args := []string{
 					"--metrics-listen-addr=:0",
 					"--hot-reload-addr=:0",
-					"--sli-plugins-path=./",
+					"--plugins-path=./",
 					fmt.Sprintf("--namespace=%s", ns),
 					fmt.Sprintf("--default-slo-period=%s", test.sloPeriod),
 				}

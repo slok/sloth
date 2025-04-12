@@ -1,0 +1,9 @@
+dir: '{{.InterfaceDir}}/{{.SrcPackageName}}mock'
+filename: mocks.go
+force-file-write: true
+structname: '{{.InterfaceName}}'
+pkgname: '{{.SrcPackageName}}mock'
+template: testify
+packages:
+  github.com/slok/sloth/internal/app/generate: {interfaces: {SLOPluginGetter}}
+  github.com/slok/sloth/internal/storage/fs: {interfaces: {SLIPluginLoader,SLOPluginLoader}}

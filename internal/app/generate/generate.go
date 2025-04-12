@@ -34,8 +34,6 @@ type SLOPluginGetter interface {
 	GetSLOPlugin(ctx context.Context, id string) (*pluginengineslo.Plugin, error)
 }
 
-//go:generate mockery --case underscore --output generatemock --outpkg generatemock --name SLOPluginGetter
-
 // ServiceConfig is the application service configuration.
 type ServiceConfig struct {
 	AlertGenerator            AlertGenerator

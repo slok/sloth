@@ -42,21 +42,7 @@ func splitYAML(data []byte) []string {
 	return nonEmptyData
 }
 
-func createSLIPluginLoader(ctx context.Context, logger log.Logger, paths []string) (*storagefs.FileSLIPluginRepo, error) {
-	config := storagefs.FileSLIPluginRepoConfig{
-		Paths:        paths,
-		PluginLoader: pluginenginesli.PluginLoader,
-		Logger:       logger,
-	}
-	sliPluginRepo, err := storagefs.NewFileSLIPluginRepo(config)
-	if err != nil {
-		return nil, fmt.Errorf("could not create file SLI plugin repository: %w", err)
-	}
-
-	return sliPluginRepo, nil
-}
-
-func createSLOPluginLoader(ctx context.Context, logger log.Logger, paths []string) (*storagefs.FileSLOPluginRepo, error) {
+func createPluginLoader(ctx context.Context, logger log.Logger, paths []string) (*storagefs.FilePluginRepo, error) {
 	fss := []fs.FS{
 		plugin.EmbeddedDefaultSLOPlugins,
 	}
@@ -64,12 +50,12 @@ func createSLOPluginLoader(ctx context.Context, logger log.Logger, paths []strin
 		fss = append(fss, os.DirFS(p))
 	}
 
-	sliPluginRepo, err := storagefs.NewFileSLOPluginRepo(logger, pluginengineslo.PluginLoader, fss...)
+	pluginsRepo, err := storagefs.NewFilePluginRepo(logger, pluginenginesli.PluginLoader, pluginengineslo.PluginLoader, fss...)
 	if err != nil {
-		return nil, fmt.Errorf("could not create file SLO plugin repository: %w", err)
+		return nil, fmt.Errorf("could not create file SLO and SLI plugins repository: %w", err)
 	}
 
-	return sliPluginRepo, nil
+	return pluginsRepo, nil
 }
 
 func discoverSLOManifests(logger log.Logger, exclude, include *regexp.Regexp, path string) ([]string, error) {

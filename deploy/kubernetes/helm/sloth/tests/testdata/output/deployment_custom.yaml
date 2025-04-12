@@ -48,7 +48,7 @@ spec:
             - --label-selector=x=y,z!=y
             - --extra-labels=k1=v1
             - --extra-labels=k2=v2
-            - --sli-plugins-path=/plugins
+            - --plugins-path=/plugins
             - --disable-optimized-rules
             - --logger=default
           ports:

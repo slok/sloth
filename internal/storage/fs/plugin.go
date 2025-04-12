@@ -17,13 +17,9 @@ type SLIPluginLoader interface {
 	LoadRawSLIPlugin(ctx context.Context, src string) (*pluginenginesli.SLIPlugin, error)
 }
 
-//go:generate mockery --case underscore --output fsmock --outpkg fsmock --name SLIPluginLoader
-
 type SLOPluginLoader interface {
 	LoadRawPlugin(ctx context.Context, src string) (*pluginengineslo.Plugin, error)
 }
-
-//go:generate mockery --case underscore --output fsmock --outpkg fsmock --name SLOPluginLoader
 
 type FilePluginRepo struct {
 	fss             []fs.FS

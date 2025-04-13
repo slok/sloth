@@ -1,0 +1,39 @@
+apiVersion: sloth.slok.dev/v1
+kind: PrometheusServiceLevel
+metadata:
+  name: svc
+  namespace: test-ns
+spec:
+  service: "svc01"
+  labels:
+    global01k1: global01v1
+  sloPlugins:
+    chain:
+      - id: "integration-tests/plugin1"
+        priority: 9999999
+        config: {labels: {"k1": "v1", "k2": "v2"}}
+      - id: "integration-tests/plugin1"
+        priority: -999999
+        config: {labels: {"k3": "v3"}} # These should be replaced because is before defaults
+  slos:
+    - name: "slo1"
+      objective: 99.9
+      description: "This is SLO 01."
+      labels:
+        global02k1: global02v1
+      sli:
+        events:
+          errorQuery: sum(rate(http_request_duration_seconds_count{job="myservice",code=~"(5..|429)"}[{{.window}}]))
+          totalQuery: sum(rate(http_request_duration_seconds_count{job="myservice"}[{{.window}}]))
+      plugins:
+        chain:
+          - id: "integration-tests/plugin1"
+            config: {labels: {"k4": "v4"}}
+          - id: "integration-tests/plugin1"
+            priority: 1000
+            config: {labels: {"k2": "v0", "k5": "v5"}} # k2 should be replaced by a (9999999 priority) plugin.
+      alerting:
+        pageAlert:
+          disable: true
+        ticketAlert:
+          disable: true

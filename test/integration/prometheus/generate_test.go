@@ -85,6 +85,11 @@ func TestPrometheusGenerate(t *testing.T) {
 			expOut:     expectLoader.mustLoadExp("./testdata/out-slo-plugin.yaml.tpl"),
 		},
 
+		"Generate with SLO plugins should generate the correct rules for all the SLOs (Kubernetes).": {
+			genCmdArgs: "--input ./testdata/in-slo-plugin-k8s.yaml",
+			expOut:     expectLoader.mustLoadExp("./testdata/out-slo-plugin-k8s.yaml.tpl"),
+		},
+
 		"Generate using multifile YAML in single file should generate the correct rules for all the SLOs.": {
 			genCmdArgs: "--input ./testdata/in-multifile.yaml",
 			expOut:     expectLoader.mustLoadExp("./testdata/out-multifile.yaml.tpl"),

@@ -78,6 +78,41 @@ spec:
               service:
                 description: Service is the application of the SLOs.
                 type: string
+              sloPlugins:
+                description: SLOPlugins will be added to the SLO generation plugin
+                  chain of all SLOs.
+                properties:
+                  chain:
+                    description: chain ths the list of plugin chain to add to the
+                      SLO generation.
+                    items:
+                      description: SLOPlugin is a plugin that will be used on the
+                        chain of plugins for the SLO generation.
+                      properties:
+                        config:
+                          description: Config is the configuration used on the plugin
+                            instance creation.
+                          type: object
+                          x-kubernetes-preserve-unknown-fields: true
+                        id:
+                          description: ID is the ID of the plugin to load .
+                          type: string
+                        priority:
+                          description: |-
+                            Priority is the priority of the plugin in the chain. The lower the number
+                            the higher the priority. The first plugin will be the one with the lowest
+                            priority.
+                            The default plugins loaded by Sloth use `0` priority. If you want to
+                            execute plugins before the default ones, you can use negative priority.
+                            It is recommended to use round gaps of numbers like 10, 100, 1000, -200, -1000...
+                          type: integer
+                      required:
+                      - id
+                      type: object
+                    type: array
+                required:
+                - chain
+                type: object
               slos:
                 description: SLOs are the SLOs of the service.
                 items:
@@ -173,6 +208,42 @@ spec:
                       description: Objective is target of the SLO the percentage (0,
                         100] (e.g 99.9).
                       type: number
+                    plugins:
+                      description: |-
+                        Plugins will be added along the group SLO plugins declared in the spec root level
+                        and Sloth default plugins.
+                      properties:
+                        chain:
+                          description: chain ths the list of plugin chain to add to
+                            the SLO generation.
+                          items:
+                            description: SLOPlugin is a plugin that will be used on
+                              the chain of plugins for the SLO generation.
+                            properties:
+                              config:
+                                description: Config is the configuration used on the
+                                  plugin instance creation.
+                                type: object
+                                x-kubernetes-preserve-unknown-fields: true
+                              id:
+                                description: ID is the ID of the plugin to load .
+                                type: string
+                              priority:
+                                description: |-
+                                  Priority is the priority of the plugin in the chain. The lower the number
+                                  the higher the priority. The first plugin will be the one with the lowest
+                                  priority.
+                                  The default plugins loaded by Sloth use `0` priority. If you want to
+                                  execute plugins before the default ones, you can use negative priority.
+                                  It is recommended to use round gaps of numbers like 10, 100, 1000, -200, -1000...
+                                type: integer
+                            required:
+                            - id
+                            type: object
+                          type: array
+                      required:
+                      - chain
+                      type: object
                     sli:
                       description: SLI is the indicator (service level indicator)
                         for this specific SLO.

@@ -5,12 +5,13 @@ package v1
 // SLOApplyConfiguration represents a declarative configuration of the SLO type for use
 // with apply.
 type SLOApplyConfiguration struct {
-	Name        *string                     `json:"name,omitempty"`
-	Description *string                     `json:"description,omitempty"`
-	Objective   *float64                    `json:"objective,omitempty"`
-	Labels      map[string]string           `json:"labels,omitempty"`
-	SLI         *SLIApplyConfiguration      `json:"sli,omitempty"`
-	Alerting    *AlertingApplyConfiguration `json:"alerting,omitempty"`
+	Name        *string                       `json:"name,omitempty"`
+	Description *string                       `json:"description,omitempty"`
+	Objective   *float64                      `json:"objective,omitempty"`
+	Plugins     *SLOPluginsApplyConfiguration `json:"plugins,omitempty"`
+	Labels      map[string]string             `json:"labels,omitempty"`
+	SLI         *SLIApplyConfiguration        `json:"sli,omitempty"`
+	Alerting    *AlertingApplyConfiguration   `json:"alerting,omitempty"`
 }
 
 // SLOApplyConfiguration constructs a declarative configuration of the SLO type for use with
@@ -40,6 +41,14 @@ func (b *SLOApplyConfiguration) WithDescription(value string) *SLOApplyConfigura
 // If called multiple times, the Objective field is set to the value of the last call.
 func (b *SLOApplyConfiguration) WithObjective(value float64) *SLOApplyConfiguration {
 	b.Objective = &value
+	return b
+}
+
+// WithPlugins sets the Plugins field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the Plugins field is set to the value of the last call.
+func (b *SLOApplyConfiguration) WithPlugins(value *SLOPluginsApplyConfiguration) *SLOApplyConfiguration {
+	b.Plugins = value
 	return b
 }
 

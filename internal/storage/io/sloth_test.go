@@ -257,12 +257,12 @@ service: "test-svc"
 labels:
   owner: "myteam"
 slo_plugins:
-    chain:
-      - id: test_plugin0
-        priority: -100
-        config: {"k1": 42}
-      - id: test_plugin2
-        config: {"k1": {"k2": "v2"}}
+  chain:
+    - id: test_plugin0
+      priority: -100
+      config: {"k1": 42}
+    - id: test_plugin2
+      config: {"k1": {"k2": "v2"}}
 slos:
   - name: "slo1"
     labels:

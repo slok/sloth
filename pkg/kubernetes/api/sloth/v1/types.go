@@ -1,6 +1,8 @@
 package v1
 
 import (
+	"encoding/json"
+
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -38,6 +40,10 @@ type PrometheusServiceLevelSpec struct {
 	// and alerting rules generated for the service SLOs.
 	Labels map[string]string `json:"labels,omitempty"`
 
+	// SLOPlugins will be added to the SLO generation plugin chain of all SLOs.
+	// +optional
+	SLOPlugins *SLOPlugins `json:"sloPlugins,omitempty"`
+
 	// +kubebuilder:validation:MinItems=1
 	//
 	// SLOs are the SLOs of the service.
@@ -61,6 +67,11 @@ type SLO struct {
 	//
 	// Objective is target of the SLO the percentage (0, 100] (e.g 99.9).
 	Objective float64 `json:"objective"`
+
+	// Plugins will be added along the group SLO plugins declared in the spec root level
+	// and Sloth default plugins.
+	// +optional
+	Plugins *SLOPlugins `json:"plugins,omitempty"`
 
 	// Labels are the Prometheus labels that will have all the recording and
 	// alerting rules for this specific SLO. These labels are merged with the
@@ -166,6 +177,36 @@ type Alert struct {
 	// Annotations are the Prometheus annotations for the specific alert.
 	// +optional
 	Annotations map[string]string `json:"annotations,omitempty"`
+}
+
+// SLOPlugins are the list plugins that will be used on the process of SLOs for the
+// rules generation.
+type SLOPlugins struct {
+	// chain ths the list of plugin chain to add to the SLO generation.
+	Chain []SLOPlugin `json:"chain"`
+}
+
+// SLOPlugin is a plugin that will be used on the chain of plugins for the SLO generation.
+type SLOPlugin struct {
+	// ID is the ID of the plugin to load .
+	ID string `json:"id"`
+
+	// +kubebuilder:validation:Schemaless
+	// +kubebuilder:pruning:PreserveUnknownFields
+	// +kubebuilder:validation:Type=object
+	//
+	// Config is the configuration used on the plugin instance creation.
+	// +optional
+	Config json.RawMessage `json:"config,omitempty"`
+
+	// Priority is the priority of the plugin in the chain. The lower the number
+	// the higher the priority. The first plugin will be the one with the lowest
+	// priority.
+	// The default plugins loaded by Sloth use `0` priority. If you want to
+	// execute plugins before the default ones, you can use negative priority.
+	// It is recommended to use round gaps of numbers like 10, 100, 1000, -200, -1000...
+	// +optional
+	Priority int `json:"priority,omitempty"`
 }
 
 type PrometheusServiceLevelStatus struct {

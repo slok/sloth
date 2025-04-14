@@ -10,7 +10,7 @@ metadata:
   labels:
     app.kubernetes.io/component: SLO
     app.kubernetes.io/managed-by: sloth
-  name: sloth-slo-my-service
+  name: sloth-slo-my-service-with-slo-plugins
   namespace: monitoring
 spec:
   groups:

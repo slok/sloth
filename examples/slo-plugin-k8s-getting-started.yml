@@ -1,12 +1,12 @@
-# This example shows the same example as getting-started.yml but using Sloth Kubernetes CRD.
+# This example shows the same example as getting-started.yml but using Sloth Kubernetes CRD and SLO plugins.
 # It will generate the Prometheus rules in a Kubernetes prometheus-operator PrometheusRules CRD.
 #
-# `sloth generate -i ./examples/k8s-getting-started.yml`
+# `sloth generate --debug -i ./examples/slo-plugin-k8s-getting-started.yml`
 #
 apiVersion: sloth.slok.dev/v1
 kind: PrometheusServiceLevel
 metadata:
-  name: sloth-slo-my-service
+  name: sloth-slo-my-service-with-slo-plugins
   namespace: monitoring
 spec:
   service: "myservice"

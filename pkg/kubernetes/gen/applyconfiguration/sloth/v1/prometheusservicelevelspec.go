@@ -5,9 +5,10 @@ package v1
 // PrometheusServiceLevelSpecApplyConfiguration represents a declarative configuration of the PrometheusServiceLevelSpec type for use
 // with apply.
 type PrometheusServiceLevelSpecApplyConfiguration struct {
-	Service *string                 `json:"service,omitempty"`
-	Labels  map[string]string       `json:"labels,omitempty"`
-	SLOs    []SLOApplyConfiguration `json:"slos,omitempty"`
+	Service    *string                       `json:"service,omitempty"`
+	Labels     map[string]string             `json:"labels,omitempty"`
+	SLOPlugins *SLOPluginsApplyConfiguration `json:"sloPlugins,omitempty"`
+	SLOs       []SLOApplyConfiguration       `json:"slos,omitempty"`
 }
 
 // PrometheusServiceLevelSpecApplyConfiguration constructs a declarative configuration of the PrometheusServiceLevelSpec type for use with
@@ -35,6 +36,14 @@ func (b *PrometheusServiceLevelSpecApplyConfiguration) WithLabels(entries map[st
 	for k, v := range entries {
 		b.Labels[k] = v
 	}
+	return b
+}
+
+// WithSLOPlugins sets the SLOPlugins field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the SLOPlugins field is set to the value of the last call.
+func (b *PrometheusServiceLevelSpecApplyConfiguration) WithSLOPlugins(value *SLOPluginsApplyConfiguration) *PrometheusServiceLevelSpecApplyConfiguration {
+	b.SLOPlugins = value
 	return b
 }
 

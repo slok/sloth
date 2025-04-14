@@ -88,7 +88,30 @@ func (l K8sSlothPrometheusYAMLSpecLoader) LoadSpec(ctx context.Context, data []b
 func mapSpecToModel(ctx context.Context, defaultWindowPeriod time.Duration, pluginsRepo SLIPluginRepo, kspec *k8sprometheusv1.PrometheusServiceLevel) (*model.PromSLOGroup, error) {
 	slos := make([]model.PromSLO, 0, len(kspec.Spec.SLOs))
 	spec := kspec.Spec
+
+	var groupSLOPlugins []model.PromSLOPluginMetadata
+	if spec.SLOPlugins != nil {
+		for _, plugin := range spec.SLOPlugins.Chain {
+			groupSLOPlugins = append(groupSLOPlugins, model.PromSLOPluginMetadata{
+				ID:       plugin.ID,
+				Config:   plugin.Config,
+				Priority: plugin.Priority,
+			})
+		}
+	}
+
 	for _, specSLO := range kspec.Spec.SLOs {
+		plugins := append([]model.PromSLOPluginMetadata{}, groupSLOPlugins...) // Add group plugins if any.
+		if specSLO.Plugins != nil {
+			for _, plugin := range specSLO.Plugins.Chain {
+				plugins = append(plugins, model.PromSLOPluginMetadata{
+					ID:       plugin.ID,
+					Config:   plugin.Config,
+					Priority: plugin.Priority,
+				})
+			}
+		}
+
 		slo := model.PromSLO{
 			ID:              fmt.Sprintf("%s-%s", spec.Service, specSLO.Name),
 			Name:            specSLO.Name,
@@ -99,6 +122,7 @@ func mapSpecToModel(ctx context.Context, defaultWindowPeriod time.Duration, plug
 			Labels:          utilsdata.MergeLabels(spec.Labels, specSLO.Labels),
 			PageAlertMeta:   model.PromAlertMeta{Disable: true},
 			TicketAlertMeta: model.PromAlertMeta{Disable: true},
+			Plugins:         model.SLOPlugins{Plugins: plugins},
 		}
 
 		// Set SLIs.

@@ -36,6 +36,10 @@ func ForKind(kind schema.GroupVersionKind) interface{} {
 		return &slothv1.SLIRawApplyConfiguration{}
 	case v1.SchemeGroupVersion.WithKind("SLO"):
 		return &slothv1.SLOApplyConfiguration{}
+	case v1.SchemeGroupVersion.WithKind("SLOPlugin"):
+		return &slothv1.SLOPluginApplyConfiguration{}
+	case v1.SchemeGroupVersion.WithKind("SLOPlugins"):
+		return &slothv1.SLOPluginsApplyConfiguration{}
 
 	}
 	return nil

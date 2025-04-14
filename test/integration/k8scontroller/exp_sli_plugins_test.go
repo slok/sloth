@@ -8,7 +8,7 @@ import (
 	slothv1 "github.com/slok/sloth/pkg/kubernetes/api/sloth/v1"
 )
 
-func getPluginPrometheusServiceLevel() *slothv1.PrometheusServiceLevel {
+func getSLIPluginsPrometheusServiceLevel() *slothv1.PrometheusServiceLevel {
 	return &slothv1.PrometheusServiceLevel{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "test01",
@@ -47,7 +47,7 @@ func getPluginPrometheusServiceLevel() *slothv1.PrometheusServiceLevel {
 	}
 }
 
-func getPluginPromOpPrometheusRule(slothVersion string) *monitoringv1.PrometheusRule {
+func getSLIPluginsPromOpPrometheusRule(slothVersion string) *monitoringv1.PrometheusRule {
 	return &monitoringv1.PrometheusRule{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "test01",

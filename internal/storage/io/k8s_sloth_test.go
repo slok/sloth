@@ -2,6 +2,7 @@ package io_test
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"testing"
 	"time"
@@ -161,6 +162,7 @@ spec:
 					Objective:       99,
 					PageAlertMeta:   model.PromAlertMeta{Disable: true},
 					TicketAlertMeta: model.PromAlertMeta{Disable: true},
+					Plugins:         model.SLOPlugins{Plugins: []model.PromSLOPluginMetadata{}},
 				},
 			},
 				OriginalSource: model.PromSLOGroupSource{K8sSlothV1: &kubeslothv1.PrometheusServiceLevel{
@@ -238,6 +240,13 @@ spec:
   service: "test-svc"
   labels:
     owner: "myteam"
+  sloPlugins:
+    chain:
+      - id: test_plugin0
+        priority: -100
+        config: {"k1": 42}
+      - id: test_plugin2
+        config: {"k1": {"k2": "v2"}}
   slos:
     - name: "slo1"
       labels:
@@ -273,6 +282,13 @@ spec:
       sli:
         raw:
           errorRatioQuery: test_expr_ratio_2
+      plugins:
+        chain:
+          - id: test_plugin1
+            priority: 100
+            config:
+              k1: v1
+              k2: true
       alerting:
         pageAlert:
           disable: true
@@ -323,6 +339,12 @@ spec:
 							"runbook": "http://whatever.com",
 						},
 					},
+					Plugins: model.SLOPlugins{
+						Plugins: []model.PromSLOPluginMetadata{
+							{ID: "test_plugin0", Priority: -100, Config: json.RawMessage([]byte(`{"k1":42}`))},
+							{ID: "test_plugin2", Config: json.RawMessage([]byte(`{"k1":{"k2":"v2"}}`))},
+						},
+					},
 				},
 				{
 					ID:         "test-svc-slo2",
@@ -341,6 +363,13 @@ spec:
 					},
 					PageAlertMeta:   model.PromAlertMeta{Disable: true},
 					TicketAlertMeta: model.PromAlertMeta{Disable: true},
+					Plugins: model.SLOPlugins{
+						Plugins: []model.PromSLOPluginMetadata{
+							{ID: "test_plugin0", Priority: -100, Config: json.RawMessage([]byte(`{"k1":42}`))},
+							{ID: "test_plugin2", Config: json.RawMessage([]byte(`{"k1":{"k2":"v2"}}`))},
+							{ID: "test_plugin1", Priority: 100, Config: json.RawMessage([]byte(`{"k1":"v1","k2":true}`))},
+						},
+					},
 				},
 			},
 				OriginalSource: model.PromSLOGroupSource{K8sSlothV1: &kubeslothv1.PrometheusServiceLevel{
@@ -354,6 +383,12 @@ spec:
 					Spec: kubeslothv1.PrometheusServiceLevelSpec{
 						Service: "test-svc",
 						Labels:  map[string]string{"owner": "myteam"},
+						SLOPlugins: &kubeslothv1.SLOPlugins{
+							Chain: []kubeslothv1.SLOPlugin{
+								{ID: "test_plugin0", Priority: -100, Config: json.RawMessage([]byte(`{"k1":42}`))},
+								{ID: "test_plugin2", Config: json.RawMessage([]byte(`{"k1":{"k2":"v2"}}`))},
+							},
+						},
 						SLOs: []kubeslothv1.SLO{
 							{Name: "slo1", Description: "This is a test.", Objective: 99.99999, Labels: map[string]string{"category": "test"},
 								SLI: kubeslothv1.SLI{Events: &kubeslothv1.SLIEvents{
@@ -379,6 +414,11 @@ spec:
 								Alerting: kubeslothv1.Alerting{
 									PageAlert:   kubeslothv1.Alert{Disable: true},
 									TicketAlert: kubeslothv1.Alert{Disable: true},
+								},
+								Plugins: &kubeslothv1.SLOPlugins{
+									Chain: []kubeslothv1.SLOPlugin{
+										{ID: "test_plugin1", Priority: 100, Config: []byte(`{"k1":"v1","k2":true}`)},
+									},
 								},
 							},
 						},

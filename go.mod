@@ -21,7 +21,7 @@ require (
 	k8s.io/api v0.32.3
 	k8s.io/apimachinery v0.32.3
 	k8s.io/client-go v0.32.3
-	sigs.k8s.io/structured-merge-diff/v4 v4.6.0
+	sigs.k8s.io/structured-merge-diff/v4 v4.7.0
 )
 
 require (

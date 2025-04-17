@@ -233,7 +233,11 @@ func (s Service) generateSLO(ctx context.Context, info model.Info, sloGroup mode
 	}
 
 	// Prepare processors.
-	sloProcessors := append(preDefault, s.defaultPlugins...)
+	sloProcessors := preDefault
+	// Add default plugins if we don't want to override the default ones.
+	if !slo.Plugins.OverrideDefaultPlugins {
+		sloProcessors = append(sloProcessors, s.defaultPlugins...)
+	}
 	sloProcessors = append(sloProcessors, postDefault...)
 
 	req := &SLOProcessorRequest{

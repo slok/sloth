@@ -73,6 +73,7 @@ func (l SlothPrometheusYAMLSpecLoader) mapSpecToModel(ctx context.Context, spec 
 
 	// Get group plugins if any.
 	var groupSLOPlugins []model.PromSLOPluginMetadata
+	groupOverridePlugins := spec.SLOPlugins.OverridePrevious
 	for _, plugin := range spec.SLOPlugins.Chain {
 		groupSLOPlugins = append(groupSLOPlugins, model.PromSLOPluginMetadata{
 			ID:       plugin.ID,
@@ -83,6 +84,14 @@ func (l SlothPrometheusYAMLSpecLoader) mapSpecToModel(ctx context.Context, spec 
 
 	for _, specSLO := range spec.SLOs {
 		plugins := append([]model.PromSLOPluginMetadata{}, groupSLOPlugins...) // Add group plugins if any.
+
+		// If we need to override the previous plugins at SLO level we need to remove the group plugins.
+		overridePlugins := groupOverridePlugins
+		if specSLO.Plugins.OverridePrevious {
+			plugins = []model.PromSLOPluginMetadata{}
+			overridePlugins = true
+		}
+
 		for _, plugin := range specSLO.Plugins.Chain {
 			plugins = append(plugins, model.PromSLOPluginMetadata{
 				ID:       plugin.ID,
@@ -101,7 +110,10 @@ func (l SlothPrometheusYAMLSpecLoader) mapSpecToModel(ctx context.Context, spec 
 			Labels:          utilsdata.MergeLabels(spec.Labels, specSLO.Labels),
 			PageAlertMeta:   model.PromAlertMeta{Disable: true},
 			TicketAlertMeta: model.PromAlertMeta{Disable: true},
-			Plugins:         model.SLOPlugins{Plugins: plugins},
+			Plugins: model.SLOPlugins{
+				OverrideDefaultPlugins: overridePlugins,
+				Plugins:                plugins,
+			},
 		}
 
 		// Set SLIs.

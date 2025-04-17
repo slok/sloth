@@ -17,6 +17,8 @@
 - SLO plugins can be loaded from FS directories recursively using `--slo-plugins-path` in the commands.
 - SLO plugins have a priority value to be able to order in the execution chain.
 - Sloth regular (non-k8s) `prometheus/v1` API support for SLO plugins at SLO group level and per SLO level.
+- Sloth K8s CRD `sloth.slok.dev/v1/PrometheusServiceLevel` API support for SLO plugins at SLO group level and per SLO level.
+- Allow overriding previous declared plugins (includes defaults) at SLO group and SLO level.
 
 ## [v0.12.0] - 2025-03-27
 

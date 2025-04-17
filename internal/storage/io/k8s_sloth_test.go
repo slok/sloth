@@ -257,6 +257,10 @@ spec:
         events:
           errorQuery: test_expr_error_1
           totalQuery: test_expr_total_1
+      plugins:
+        overridePrevious: true
+        chain:
+          - {id: test_plugin1, priority: 100, config: {k1: v1, k3: true}}
       alerting:
         name: testAlert
         labels:
@@ -340,9 +344,9 @@ spec:
 						},
 					},
 					Plugins: model.SLOPlugins{
+						OverrideDefaultPlugins: true,
 						Plugins: []model.PromSLOPluginMetadata{
-							{ID: "test_plugin0", Priority: -100, Config: json.RawMessage([]byte(`{"k1":42}`))},
-							{ID: "test_plugin2", Config: json.RawMessage([]byte(`{"k1":{"k2":"v2"}}`))},
+							{ID: "test_plugin1", Priority: 100, Config: json.RawMessage([]byte(`{"k1":"v1","k3":true}`))},
 						},
 					},
 				},
@@ -395,6 +399,12 @@ spec:
 									ErrorQuery: "test_expr_error_1",
 									TotalQuery: "test_expr_total_1",
 								}},
+								Plugins: &kubeslothv1.SLOPlugins{
+									OverridePrevious: true,
+									Chain: []kubeslothv1.SLOPlugin{
+										{ID: "test_plugin1", Priority: 100, Config: []byte(`{"k1":"v1","k3":true}`)},
+									},
+								},
 								Alerting: kubeslothv1.Alerting{
 									Name:        "testAlert",
 									Labels:      map[string]string{"tier": "1"},

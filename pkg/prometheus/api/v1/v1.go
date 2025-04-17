@@ -170,6 +170,12 @@ type Alert struct {
 // SLOPlugins are the list plugins that will be used on the process of SLOs for the
 // rules generation.
 type SLOPlugins struct {
+	// OverridePrevious will override the previous SLO plugins declared.
+	// Depending on where is this SLO plugins block declared will override:
+	// - If declared at SLO group level: Overrides the default plugins.
+	// - If declared at SLO level: Overrides the default + SLO group plugins.
+	// The declaration order is default plugins -> SLO Group plugins -> SLO plugins.
+	OverridePrevious bool `json:"overridePrevious,omitempty"`
 	// chain ths the list of plugin chain to add to the SLO generation.
 	Chain []SLOPlugin `json:"chain"`
 }

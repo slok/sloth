@@ -804,6 +804,89 @@ or
 				},
 			},
 		},
+
+		"Having SLO plugins with default plugin override should execute only the configured plugins and ignore default plugin execution.": {
+			mocks: func(mspg *generatemock.SLOPluginGetter) {
+				mspg.On("GetSLOPlugin", mock.Anything, "test-plugin1").Once().Return(&pluginengineslo.Plugin{
+					ID: "test-plugin1",
+					PluginV1Factory: func(config json.RawMessage, appUtils pluginslov1.AppUtils) (pluginslov1.Plugin, error) {
+						return testPluginAlertRuleAppender{rule: rulefmt.Rule{Expr: "test1"}}, nil
+					},
+				}, nil)
+			},
+			req: generate.Request{
+				Info: model.Info{
+					Version: "test-ver",
+					Mode:    model.ModeTest,
+					Spec:    "test-spec",
+				},
+				SLOGroup: model.PromSLOGroup{SLOs: []model.PromSLO{
+					{
+						ID:      "test-id",
+						Name:    "test-name",
+						Service: "test-svc",
+						SLI: model.PromSLI{
+							Events: &model.PromSLIEvents{
+								ErrorQuery: `rate(my_metric{error="true"}[{{.window}}])`,
+								TotalQuery: `rate(my_metric[{{.window}}])`,
+							},
+						},
+						TimeWindow: 30 * 24 * time.Hour,
+						Objective:  99.9,
+						Labels:     map[string]string{"test_label": "label_1"},
+						PageAlertMeta: model.PromAlertMeta{
+							Name:        "p_alert_test_name",
+							Labels:      map[string]string{"p_alert_label": "p_label_al_1"},
+							Annotations: map[string]string{"p_alert_annot": "p_label_an_1"},
+						},
+						TicketAlertMeta: model.PromAlertMeta{Disable: true},
+						Plugins: model.SLOPlugins{
+							OverrideDefaultPlugins: true,
+							Plugins: []model.PromSLOPluginMetadata{
+								{ID: "test-plugin1", Priority: 10},
+							},
+						},
+					},
+				}},
+			},
+			expResp: generate.Response{
+				PrometheusSLOs: []generate.SLOResult{
+					{
+						SLO: model.PromSLO{
+							ID:      "test-id",
+							Name:    "test-name",
+							Service: "test-svc",
+							SLI: model.PromSLI{
+								Events: &model.PromSLIEvents{
+									ErrorQuery: `rate(my_metric{error="true"}[{{.window}}])`,
+									TotalQuery: `rate(my_metric[{{.window}}])`,
+								},
+							},
+							TimeWindow: 30 * 24 * time.Hour,
+							Objective:  99.9,
+							Labels:     map[string]string{"test_label": "label_1"},
+							PageAlertMeta: model.PromAlertMeta{
+								Name:        "p_alert_test_name",
+								Labels:      map[string]string{"p_alert_label": "p_label_al_1"},
+								Annotations: map[string]string{"p_alert_annot": "p_label_an_1"},
+							},
+							TicketAlertMeta: model.PromAlertMeta{Disable: true},
+							Plugins: model.SLOPlugins{
+								OverrideDefaultPlugins: true,
+								Plugins: []model.PromSLOPluginMetadata{
+									{ID: "test-plugin1", Priority: 10},
+								},
+							},
+						},
+						SLORules: model.PromSLORules{
+							AlertRules: model.PromRuleGroup{Rules: []rulefmt.Rule{
+								{Expr: "test1"},
+							}},
+						},
+					},
+				},
+			},
+		},
 	}
 
 	for name, test := range tests {

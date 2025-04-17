@@ -57,7 +57,8 @@ type PromSLO struct {
 }
 
 type SLOPlugins struct {
-	Plugins []PromSLOPluginMetadata
+	OverrideDefaultPlugins bool
+	Plugins                []PromSLOPluginMetadata
 }
 
 type PromSLOPluginMetadata struct {

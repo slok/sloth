@@ -89,8 +89,10 @@ func mapSpecToModel(ctx context.Context, defaultWindowPeriod time.Duration, plug
 	slos := make([]model.PromSLO, 0, len(kspec.Spec.SLOs))
 	spec := kspec.Spec
 
+	groupOverridePlugins := false
 	var groupSLOPlugins []model.PromSLOPluginMetadata
 	if spec.SLOPlugins != nil {
+		groupOverridePlugins = spec.SLOPlugins.OverridePrevious
 		for _, plugin := range spec.SLOPlugins.Chain {
 			groupSLOPlugins = append(groupSLOPlugins, model.PromSLOPluginMetadata{
 				ID:       plugin.ID,
@@ -102,7 +104,15 @@ func mapSpecToModel(ctx context.Context, defaultWindowPeriod time.Duration, plug
 
 	for _, specSLO := range kspec.Spec.SLOs {
 		plugins := append([]model.PromSLOPluginMetadata{}, groupSLOPlugins...) // Add group plugins if any.
+
+		overridePlugins := groupOverridePlugins
 		if specSLO.Plugins != nil {
+			// If we need to override the previous plugins at SLO level we need to remove the group plugins.
+			if specSLO.Plugins.OverridePrevious {
+				plugins = []model.PromSLOPluginMetadata{}
+				overridePlugins = true
+			}
+
 			for _, plugin := range specSLO.Plugins.Chain {
 				plugins = append(plugins, model.PromSLOPluginMetadata{
 					ID:       plugin.ID,
@@ -122,7 +132,10 @@ func mapSpecToModel(ctx context.Context, defaultWindowPeriod time.Duration, plug
 			Labels:          utilsdata.MergeLabels(spec.Labels, specSLO.Labels),
 			PageAlertMeta:   model.PromAlertMeta{Disable: true},
 			TicketAlertMeta: model.PromAlertMeta{Disable: true},
-			Plugins:         model.SLOPlugins{Plugins: plugins},
+			Plugins: model.SLOPlugins{
+				OverrideDefaultPlugins: overridePlugins,
+				Plugins:                plugins,
+			},
 		}
 
 		// Set SLIs.

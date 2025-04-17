@@ -5,13 +5,22 @@ package v1
 // SLOPluginsApplyConfiguration represents a declarative configuration of the SLOPlugins type for use
 // with apply.
 type SLOPluginsApplyConfiguration struct {
-	Chain []SLOPluginApplyConfiguration `json:"chain,omitempty"`
+	OverridePrevious *bool                         `json:"overridePrevious,omitempty"`
+	Chain            []SLOPluginApplyConfiguration `json:"chain,omitempty"`
 }
 
 // SLOPluginsApplyConfiguration constructs a declarative configuration of the SLOPlugins type for use with
 // apply.
 func SLOPlugins() *SLOPluginsApplyConfiguration {
 	return &SLOPluginsApplyConfiguration{}
+}
+
+// WithOverridePrevious sets the OverridePrevious field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the OverridePrevious field is set to the value of the last call.
+func (b *SLOPluginsApplyConfiguration) WithOverridePrevious(value bool) *SLOPluginsApplyConfiguration {
+	b.OverridePrevious = &value
+	return b
 }
 
 // WithChain adds the given value to the Chain field in the declarative configuration

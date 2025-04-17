@@ -216,7 +216,7 @@ type SLO struct {
 ```
 
 <a name="SLOPlugin"></a>
-## type [SLOPlugin](<https://github.com/slok/sloth/blob/main/pkg/prometheus/api/v1/v1.go#L178-L190>)
+## type [SLOPlugin](<https://github.com/slok/sloth/blob/main/pkg/prometheus/api/v1/v1.go#L184-L196>)
 
 SLOPlugin is a plugin that will be used on the chain of plugins for the SLO generation.
 
@@ -237,12 +237,18 @@ type SLOPlugin struct {
 ```
 
 <a name="SLOPlugins"></a>
-## type [SLOPlugins](<https://github.com/slok/sloth/blob/main/pkg/prometheus/api/v1/v1.go#L172-L175>)
+## type [SLOPlugins](<https://github.com/slok/sloth/blob/main/pkg/prometheus/api/v1/v1.go#L172-L181>)
 
 SLOPlugins are the list plugins that will be used on the process of SLOs for the rules generation.
 
 ```go
 type SLOPlugins struct {
+    // OverridePrevious will override the previous SLO plugins declared.
+    // Depending on where is this SLO plugins block declared will override:
+    // - If declared at SLO group level: Overrides the default plugins.
+    // - If declared at SLO level: Overrides the default + SLO group plugins.
+    // The declaration order is default plugins -> SLO Group plugins -> SLO plugins.
+    OverridePrevious bool `json:"overridePrevious,omitempty"`
     // chain ths the list of plugin chain to add to the SLO generation.
     Chain []SLOPlugin `json:"chain"`
 }

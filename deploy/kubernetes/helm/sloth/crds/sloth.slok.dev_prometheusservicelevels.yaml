@@ -110,6 +110,14 @@ spec:
                       - id
                       type: object
                     type: array
+                  overridePrevious:
+                    description: |-
+                      OverridePrevious will override the previous SLO plugins declared.
+                      Depending on where is this SLO plugins block declared will override:
+                      - If declared at SLO group level: Overrides the default plugins.
+                      - If declared at SLO level: Overrides the default + SLO group plugins.
+                      The declaration order is default plugins -> SLO Group plugins -> SLO plugins.
+                    type: boolean
                 required:
                 - chain
                 type: object
@@ -241,6 +249,14 @@ spec:
                             - id
                             type: object
                           type: array
+                        overridePrevious:
+                          description: |-
+                            OverridePrevious will override the previous SLO plugins declared.
+                            Depending on where is this SLO plugins block declared will override:
+                            - If declared at SLO group level: Overrides the default plugins.
+                            - If declared at SLO level: Overrides the default + SLO group plugins.
+                            The declaration order is default plugins -> SLO Group plugins -> SLO plugins.
+                          type: boolean
                       required:
                       - chain
                       type: object

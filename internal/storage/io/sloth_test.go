@@ -273,6 +273,11 @@ slos:
       events:
         error_query: test_expr_error_1
         total_query: test_expr_total_1
+    plugins:
+      overridePrevious: true
+      chain:
+        - {id: test_plugin1, priority: 100, config: {k1: v1, k3: true}}
+
     alerting:
       name: testAlert
       labels:
@@ -291,6 +296,7 @@ slos:
           channel: "#a-not-so-important"
         annotations:
           message: "This is not very important."
+            
   - name: "slo2"
     labels:
       category: test2
@@ -356,9 +362,9 @@ slos:
 						},
 					},
 					Plugins: model.SLOPlugins{
+						OverrideDefaultPlugins: true,
 						Plugins: []model.PromSLOPluginMetadata{
-							{ID: "test_plugin0", Priority: -100, Config: json.RawMessage([]byte(`{"k1":42}`))},
-							{ID: "test_plugin2", Config: json.RawMessage([]byte(`{"k1":{"k2":"v2"}}`))},
+							{ID: "test_plugin1", Priority: 100, Config: json.RawMessage([]byte(`{"k1":"v1","k3":true}`))},
 						},
 					},
 				},
@@ -410,6 +416,12 @@ slos:
 								Events: &v1.SLIEvents{
 									ErrorQuery: `test_expr_error_1`,
 									TotalQuery: `test_expr_total_1`,
+								},
+							},
+							Plugins: v1.SLOPlugins{
+								OverridePrevious: true,
+								Chain: []v1.SLOPlugin{
+									{ID: "test_plugin1", Priority: 100, Config: []byte(`{"k1":"v1","k3":true}`)},
 								},
 							},
 							Alerting: v1.Alerting{Name: "testAlert",

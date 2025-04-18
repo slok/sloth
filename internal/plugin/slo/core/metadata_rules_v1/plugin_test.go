@@ -101,9 +101,9 @@ func TestPlugin(t *testing.T) {
 				},
 				{
 					Record: "slo:current_burn_rate:ratio",
-					Expr: `slo:sli_error:ratio_rate5m{sloth_id="test", sloth_service="test-svc", sloth_slo="test-name"}
-/ on(sloth_id, sloth_slo, sloth_service) group_left
-slo:error_budget:ratio{sloth_id="test", sloth_service="test-svc", sloth_slo="test-name"}
+					Expr: `slo:sli_error:ratio_rate5m{kind="test", sloth_id="test", sloth_service="test-svc", sloth_slo="test-name"}
+/ on(kind, sloth_id, sloth_service, sloth_slo) group_left
+slo:error_budget:ratio{kind="test", sloth_id="test", sloth_service="test-svc", sloth_slo="test-name"}
 `,
 					Labels: map[string]string{
 						"kind":          "test",
@@ -114,9 +114,9 @@ slo:error_budget:ratio{sloth_id="test", sloth_service="test-svc", sloth_slo="tes
 				},
 				{
 					Record: "slo:period_burn_rate:ratio",
-					Expr: `slo:sli_error:ratio_rate30d{sloth_id="test", sloth_service="test-svc", sloth_slo="test-name"}
-/ on(sloth_id, sloth_slo, sloth_service) group_left
-slo:error_budget:ratio{sloth_id="test", sloth_service="test-svc", sloth_slo="test-name"}
+					Expr: `slo:sli_error:ratio_rate30d{kind="test", sloth_id="test", sloth_service="test-svc", sloth_slo="test-name"}
+/ on(kind, sloth_id, sloth_service, sloth_slo) group_left
+slo:error_budget:ratio{kind="test", sloth_id="test", sloth_service="test-svc", sloth_slo="test-name"}
 `,
 					Labels: map[string]string{
 						"kind":          "test",
@@ -127,7 +127,7 @@ slo:error_budget:ratio{sloth_id="test", sloth_service="test-svc", sloth_slo="tes
 				},
 				{
 					Record: "slo:period_error_budget_remaining:ratio",
-					Expr:   `1 - slo:period_burn_rate:ratio{sloth_id="test", sloth_service="test-svc", sloth_slo="test-name"}`,
+					Expr:   `1 - slo:period_burn_rate:ratio{kind="test", sloth_id="test", sloth_service="test-svc", sloth_slo="test-name"}`,
 					Labels: map[string]string{
 						"kind":          "test",
 						"sloth_service": "test-svc",

@@ -5,9 +5,11 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"sort"
 	"strconv"
 	"text/template"
 
+	prommodel "github.com/prometheus/common/model"
 	"github.com/prometheus/prometheus/model/rulefmt"
 	"github.com/slok/sloth/pkg/common/conventions"
 	"github.com/slok/sloth/pkg/common/model"
@@ -52,15 +54,14 @@ func generateMetadataRecordingRules(ctx context.Context, info model.Info, slo mo
 
 	sloObjectiveRatio := slo.Objective / 100
 
-	sloFilter := promutils.LabelsToPromFilter(conventions.GetSLOIDPromLabels(slo))
+	sloFilter := promutils.LabelsToPromFilter(labels)
+	sloGroup := labelsToPromGroup(labels)
 
 	var currentBurnRateExpr bytes.Buffer
 	err := burnRateRecordingExprTpl.Execute(&currentBurnRateExpr, map[string]string{
 		"SLIErrorMetric":         conventions.GetSLIErrorMetric(alerts.PageQuick.ShortWindow),
 		"MetricFilter":           sloFilter,
-		"SLOIDName":              conventions.PromSLOIDLabelName,
-		"SLOLabelName":           conventions.PromSLONameLabelName,
-		"SLOServiceName":         conventions.PromSLOServiceLabelName,
+		"SLOGroup":               sloGroup,
 		"ErrorBudgetRatioMetric": metricSLOErrorBudgetRatio,
 	})
 	if err != nil {
@@ -71,9 +72,7 @@ func generateMetadataRecordingRules(ctx context.Context, info model.Info, slo mo
 	err = burnRateRecordingExprTpl.Execute(&periodBurnRateExpr, map[string]string{
 		"SLIErrorMetric":         conventions.GetSLIErrorMetric(slo.TimeWindow),
 		"MetricFilter":           sloFilter,
-		"SLOIDName":              conventions.PromSLOIDLabelName,
-		"SLOLabelName":           conventions.PromSLONameLabelName,
-		"SLOServiceName":         conventions.PromSLOServiceLabelName,
+		"SLOGroup":               sloGroup,
 		"ErrorBudgetRatioMetric": metricSLOErrorBudgetRatio,
 	})
 	if err != nil {
@@ -139,7 +138,18 @@ func generateMetadataRecordingRules(ctx context.Context, info model.Info, slo mo
 	return rules, nil
 }
 
+// labelsToPromGroup converts a map of labels to a Prometheus filter string.
+func labelsToPromGroup(labels map[string]string) string {
+	metricGroup := prommodel.LabelNames{}
+	for k, _ := range labels {
+		metricGroup = append(metricGroup, prommodel.LabelName(k))
+	}
+
+	sort.Sort(metricGroup)
+	return metricGroup.String()
+}
+
 var burnRateRecordingExprTpl = template.Must(template.New("burnRateExpr").Option("missingkey=error").Parse(`{{ .SLIErrorMetric }}{{ .MetricFilter }}
-/ on({{ .SLOIDName }}, {{ .SLOLabelName }}, {{ .SLOServiceName }}) group_left
+/ on({{ .SLOGroup }}) group_left
 {{ .ErrorBudgetRatioMetric }}{{ .MetricFilter }}
 `))

@@ -18,7 +18,6 @@ func init() {
 		"ModeControllerGenKubernetes": reflect.ValueOf(constant.MakeFromLiteral("\"ctrl-gen-k8s\"", token.STRING, 0)),
 		"ModeTest":                    reflect.ValueOf(constant.MakeFromLiteral("\"test\"", token.STRING, 0)),
 		"PageAlertSeverity":           reflect.ValueOf(model.PageAlertSeverity),
-		"PromQueryTPLKeyWindow":       reflect.ValueOf(constant.MakeFromLiteral("\"window\"", token.STRING, 0)),
 		"TicketAlertSeverity":         reflect.ValueOf(model.TicketAlertSeverity),
 		"UnknownAlertSeverity":        reflect.ValueOf(model.UnknownAlertSeverity),
 

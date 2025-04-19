@@ -9,4 +9,7 @@ var (
 
 	// ErrNotFound will be used when a resource has not been found.
 	ErrNotFound = fmt.Errorf("resource not found")
+
+	// ErrRequired will be used when a required field is not set.
+	ErrRequired = fmt.Errorf("required")
 )

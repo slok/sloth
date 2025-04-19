@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/slok/sloth/pkg/common/validation"
 	pluginslov1 "github.com/slok/sloth/pkg/prometheus/plugin/slo/v1"
 )
 
@@ -24,8 +25,7 @@ type plugin struct {
 }
 
 func (p plugin) ProcessSLO(ctx context.Context, request *pluginslov1.Request, result *pluginslov1.Result) error {
-	// TODO(slok): Should we stop using validator libraries and just use our own simple validation logic created here?
-	err := request.SLO.Validate()
+	err := validation.ValidateSLO(request.SLO, validation.PromQLDialectValidator)
 	if err != nil {
 		return fmt.Errorf("invalid slo %q: %w", request.SLO.ID, err)
 	}

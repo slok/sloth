@@ -1,4 +1,4 @@
-package model_test
+package validation_test
 
 import (
 	"testing"
@@ -7,6 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/slok/sloth/pkg/common/model"
+	"github.com/slok/sloth/pkg/common/validation"
 )
 
 func getGoodSLO() model.PromSLO {
@@ -55,7 +56,7 @@ func getGoodSLO() model.PromSLO {
 	}
 }
 
-func TestModelValidationSpec(t *testing.T) {
+func TestModelValidationSpecForPrometheusBackend(t *testing.T) {
 	tests := map[string]struct {
 		slo           func() model.PromSLO
 		expErrMessage string
@@ -72,7 +73,7 @@ func TestModelValidationSpec(t *testing.T) {
 				s.ID = ""
 				return s
 			},
-			expErrMessage: "Key: 'PromSLO.ID' Error:Field validation for 'ID' failed on the 'required' tag",
+			expErrMessage: `invalid SLO ID: required`,
 		},
 
 		"SLO ID must be alphanumeric, `.`, '_', and '-'.": {
@@ -81,7 +82,7 @@ func TestModelValidationSpec(t *testing.T) {
 				s.ID = "this-is-{a-test"
 				return s
 			},
-			expErrMessage: "Key: 'PromSLO.ID' Error:Field validation for 'ID' failed on the 'name' tag",
+			expErrMessage: `invalid SLO ID: name must start and end with an alphanumeric and can only contain alphanumeric, '.', '_', and '-'`,
 		},
 
 		"SLO ID must start with aphanumeric.": {
@@ -90,7 +91,7 @@ func TestModelValidationSpec(t *testing.T) {
 				s.ID = "_" + s.ID
 				return s
 			},
-			expErrMessage: "Key: 'PromSLO.ID' Error:Field validation for 'ID' failed on the 'name' tag",
+			expErrMessage: `invalid SLO ID: name must start and end with an alphanumeric and can only contain alphanumeric, '.', '_', and '-'`,
 		},
 
 		"SLO ID must end with aphanumeric.": {
@@ -99,7 +100,7 @@ func TestModelValidationSpec(t *testing.T) {
 				s.ID = s.ID + "_"
 				return s
 			},
-			expErrMessage: "Key: 'PromSLO.ID' Error:Field validation for 'ID' failed on the 'name' tag",
+			expErrMessage: `invalid SLO ID: name must start and end with an alphanumeric and can only contain alphanumeric, '.', '_', and '-'`,
 		},
 
 		"SLO Name is required.": {
@@ -108,7 +109,7 @@ func TestModelValidationSpec(t *testing.T) {
 				s.Name = ""
 				return s
 			},
-			expErrMessage: "Key: 'PromSLO.Name' Error:Field validation for 'Name' failed on the 'required' tag",
+			expErrMessage: `invalid SLO name: required`,
 		},
 
 		"SLO Name must be alphanumeric, `.`, '_', and '-'.": {
@@ -117,7 +118,7 @@ func TestModelValidationSpec(t *testing.T) {
 				s.Name = "this-is-{a-test"
 				return s
 			},
-			expErrMessage: "Key: 'PromSLO.Name' Error:Field validation for 'Name' failed on the 'name' tag",
+			expErrMessage: `invalid SLO name: name must start and end with an alphanumeric and can only contain alphanumeric, '.', '_', and '-'`,
 		},
 
 		"SLO Name must start with aphanumeric.": {
@@ -126,7 +127,7 @@ func TestModelValidationSpec(t *testing.T) {
 				s.Name = "_" + s.Name
 				return s
 			},
-			expErrMessage: "Key: 'PromSLO.Name' Error:Field validation for 'Name' failed on the 'name' tag",
+			expErrMessage: `invalid SLO name: name must start and end with an alphanumeric and can only contain alphanumeric, '.', '_', and '-'`,
 		},
 
 		"SLO Name must end with aphanumeric.": {
@@ -135,7 +136,7 @@ func TestModelValidationSpec(t *testing.T) {
 				s.Name = s.Name + "_"
 				return s
 			},
-			expErrMessage: "Key: 'PromSLO.Name' Error:Field validation for 'Name' failed on the 'name' tag",
+			expErrMessage: `invalid SLO name: name must start and end with an alphanumeric and can only contain alphanumeric, '.', '_', and '-'`,
 		},
 
 		"SLO Service is required.": {
@@ -144,7 +145,7 @@ func TestModelValidationSpec(t *testing.T) {
 				s.Service = ""
 				return s
 			},
-			expErrMessage: "Key: 'PromSLO.Service' Error:Field validation for 'Service' failed on the 'required' tag",
+			expErrMessage: `invalid SLO service: required`,
 		},
 
 		"SLO Service must be alphanumeric, `.`, '_', and '-'.": {
@@ -153,7 +154,7 @@ func TestModelValidationSpec(t *testing.T) {
 				s.Service = "this-is-{a-test"
 				return s
 			},
-			expErrMessage: "Key: 'PromSLO.Service' Error:Field validation for 'Service' failed on the 'name' tag",
+			expErrMessage: `invalid SLO service: name must start and end with an alphanumeric and can only contain alphanumeric, '.', '_', and '-'`,
 		},
 
 		"SLO Service must start with aphanumeric.": {
@@ -162,7 +163,7 @@ func TestModelValidationSpec(t *testing.T) {
 				s.Service = "_" + s.Service
 				return s
 			},
-			expErrMessage: "Key: 'PromSLO.Service' Error:Field validation for 'Service' failed on the 'name' tag",
+			expErrMessage: `invalid SLO service: name must start and end with an alphanumeric and can only contain alphanumeric, '.', '_', and '-'`,
 		},
 
 		"SLO Service must end with aphanumeric.": {
@@ -171,7 +172,7 @@ func TestModelValidationSpec(t *testing.T) {
 				s.Service = s.Service + "_"
 				return s
 			},
-			expErrMessage: "Key: 'PromSLO.Service' Error:Field validation for 'Service' failed on the 'name' tag",
+			expErrMessage: `invalid SLO service: name must start and end with an alphanumeric and can only contain alphanumeric, '.', '_', and '-'`,
 		},
 
 		"SLO without SLI type should fail.": {
@@ -180,7 +181,7 @@ func TestModelValidationSpec(t *testing.T) {
 				s.SLI = model.PromSLI{}
 				return s
 			},
-			expErrMessage: "Key: 'PromSLO.SLI.' Error:Field validation for '' failed on the 'sli_type_required' tag",
+			expErrMessage: `invalid SLI: at least one SLI type is required`,
 		},
 
 		"SLO with more than one SLI type should fail.": {
@@ -191,7 +192,7 @@ func TestModelValidationSpec(t *testing.T) {
 				}
 				return s
 			},
-			expErrMessage: "Key: 'PromSLO.SLI.' Error:Field validation for '' failed on the 'one_sli_type' tag",
+			expErrMessage: `invalid SLI: only one SLI type is allowed`,
 		},
 
 		"SLO SLI event queries must be different.": {
@@ -201,16 +202,25 @@ func TestModelValidationSpec(t *testing.T) {
 				s.SLI.Events.ErrorQuery = `sum(rate(grpc_server_handled_requests_count{job="myapp",code=~"Internal|Unavailable"}[{{ .window }}]))`
 				return s
 			},
-			expErrMessage: "Key: 'PromSLO.SLI.Events.' Error:Field validation for '' failed on the 'sli_events_queries_different' tag",
+			expErrMessage: `invalid SLI: both error and total queries can't be the same`,
+		},
+
+		"SLO SLI errir query should have a query.": {
+			slo: func() model.PromSLO {
+				s := getGoodSLO()
+				s.SLI.Events.ErrorQuery = ""
+				return s
+			},
+			expErrMessage: `invalid SLI: sli error query template: query template is required: required`,
 		},
 
 		"SLO SLI error query should be valid Prometheus expr.": {
 			slo: func() model.PromSLO {
 				s := getGoodSLO()
-				s.SLI.Events.ErrorQuery = "sum(rate(grpc_server_handled_requests_count{[1m]))"
+				s.SLI.Events.ErrorQuery = "sum(rate(grpc_server_handled_requests_count{[{{ .window }}]))"
 				return s
 			},
-			expErrMessage: "Key: 'PromSLO.SLI.Events.ErrorQuery' Error:Field validation for 'ErrorQuery' failed on the 'prom_expr' tag",
+			expErrMessage: `invalid SLI: sli error query expression: 1:45: parse error: unexpected character inside braces: '['`,
 		},
 
 		"SLO SLI error query should have required template vars.": {
@@ -219,16 +229,25 @@ func TestModelValidationSpec(t *testing.T) {
 				s.SLI.Events.ErrorQuery = "sum(rate(grpc_server_handled_requests_count[1m]))"
 				return s
 			},
-			expErrMessage: "Key: 'PromSLO.SLI.Events.ErrorQuery' Error:Field validation for 'ErrorQuery' failed on the 'template_vars' tag",
+			expErrMessage: `invalid SLI: sli error query template: template must contain the {{ .window }} variable`,
+		},
+
+		"SLO SLI total query should have a query.": {
+			slo: func() model.PromSLO {
+				s := getGoodSLO()
+				s.SLI.Events.TotalQuery = ""
+				return s
+			},
+			expErrMessage: `invalid SLI: sli total query template: query template is required: required`,
 		},
 
 		"SLO SLI total query should be valid Prometheus expr.": {
 			slo: func() model.PromSLO {
 				s := getGoodSLO()
-				s.SLI.Events.TotalQuery = "sum(rate(grpc_server_handled_requests_count{[1m]))"
+				s.SLI.Events.TotalQuery = "sum(rate(grpc_server_handled_requests_count{[{{ .window }}]))"
 				return s
 			},
-			expErrMessage: "Key: 'PromSLO.SLI.Events.TotalQuery' Error:Field validation for 'TotalQuery' failed on the 'prom_expr' tag",
+			expErrMessage: `invalid SLI: sli total query expression: 1:45: parse error: unexpected character inside braces: '['`,
 		},
 
 		"SLO SLI total query should have required template vars.": {
@@ -237,7 +256,50 @@ func TestModelValidationSpec(t *testing.T) {
 				s.SLI.Events.TotalQuery = "sum(rate(grpc_server_handled_requests_count[1m]))"
 				return s
 			},
-			expErrMessage: "Key: 'PromSLO.SLI.Events.TotalQuery' Error:Field validation for 'TotalQuery' failed on the 'template_vars' tag",
+			expErrMessage: `invalid SLI: sli total query template: template must contain the {{ .window }} variable`,
+		},
+
+		"SLO SLI raw query should have a query.": {
+			slo: func() model.PromSLO {
+				s := getGoodSLO()
+				s.SLI.Events = nil
+				s.SLI.Raw = &model.PromSLIRaw{}
+				return s
+			},
+			expErrMessage: `invalid SLI: sli raw query template: query template is required: required`,
+		},
+
+		"SLO SLI raw query should have required template vars.": {
+			slo: func() model.PromSLO {
+				s := getGoodSLO()
+				s.SLI.Events = nil
+				s.SLI.Raw = &model.PromSLIRaw{
+					ErrorRatioQuery: "sum(rate(grpc_server_handled_requests_count[1m]))",
+				}
+				return s
+			},
+			expErrMessage: `invalid SLI: sli raw query template: template must contain the {{ .window }} variable`,
+		},
+
+		"SLO SLI raw query should be valid Prometheus expr.": {
+			slo: func() model.PromSLO {
+				s := getGoodSLO()
+				s.SLI.Events = nil
+				s.SLI.Raw = &model.PromSLIRaw{
+					ErrorRatioQuery: "sum(rate(grpc_server_handled_requests_count{[{{ .window }}]))",
+				}
+				return s
+			},
+			expErrMessage: `invalid SLI: sli raw query expression: 1:45: parse error: unexpected character inside braces: '['`,
+		},
+
+		"SLO time window should be set.": {
+			slo: func() model.PromSLO {
+				s := getGoodSLO()
+				s.TimeWindow = 0
+				return s
+			},
+			expErrMessage: `time window is required`,
 		},
 
 		"SLO Objective shouldn't be less than 0.": {
@@ -246,7 +308,7 @@ func TestModelValidationSpec(t *testing.T) {
 				s.Objective = -1
 				return s
 			},
-			expErrMessage: "Key: 'PromSLO.Objective' Error:Field validation for 'Objective' failed on the 'gt' tag",
+			expErrMessage: `objective must >0 and <=100`,
 		},
 
 		"SLO Objective shouldn't be 0.": {
@@ -255,7 +317,7 @@ func TestModelValidationSpec(t *testing.T) {
 				s.Objective = 0
 				return s
 			},
-			expErrMessage: "Key: 'PromSLO.Objective' Error:Field validation for 'Objective' failed on the 'gt' tag",
+			expErrMessage: `objective must >0 and <=100`,
 		},
 
 		"SLO Objective shouldn't be greater than 100.": {
@@ -264,7 +326,7 @@ func TestModelValidationSpec(t *testing.T) {
 				s.Objective = 100.0001
 				return s
 			},
-			expErrMessage: "Key: 'PromSLO.Objective' Error:Field validation for 'Objective' failed on the 'lte' tag",
+			expErrMessage: `objective must >0 and <=100`,
 		},
 
 		"SLO Labels should be valid prometheus keys.": {
@@ -273,7 +335,7 @@ func TestModelValidationSpec(t *testing.T) {
 				s.Labels["\xF0\x8F\xBF\xBF"] = "label key is wrong"
 				return s
 			},
-			expErrMessage: "Key: 'PromSLO.Labels[\xF0\x8F\xBF\xBF]' Error:Field validation for 'Labels[\xF0\x8F\xBF\xBF]' failed on the 'prom_label_key' tag",
+			expErrMessage: `invalid SLO label key "\xf0\x8f\xbf\xbf": the label key "\xf0\x8f\xbf\xbf" is not valid`,
 		},
 
 		"SLO Labels should have prometheus values.": {
@@ -282,7 +344,7 @@ func TestModelValidationSpec(t *testing.T) {
 				s.Labels["something"] = ""
 				return s
 			},
-			expErrMessage: "Key: 'PromSLO.Labels[something]' Error:Field validation for 'Labels[something]' failed on the 'required' tag",
+			expErrMessage: `invalid SLO label value "": the label value is required`,
 		},
 
 		"SLO Labels should be valid prometheus values.": {
@@ -291,7 +353,7 @@ func TestModelValidationSpec(t *testing.T) {
 				s.Labels["something"] = "\xc3\x28"
 				return s
 			},
-			expErrMessage: "Key: 'PromSLO.Labels[something]' Error:Field validation for 'Labels[something]' failed on the 'prom_label_value' tag",
+			expErrMessage: `invalid SLO label value "\xc3(": the label value "\xc3(" is not valid`,
 		},
 
 		"SLO page alert name is required.": {
@@ -300,7 +362,7 @@ func TestModelValidationSpec(t *testing.T) {
 				s.PageAlertMeta.Name = ""
 				return s
 			},
-			expErrMessage: "Key: 'PromSLO.PageAlertMeta.Name' Error:Field validation for 'Name' failed on the 'required_if_enabled' tag",
+			expErrMessage: `invalid alert: page alert: alert name is required`,
 		},
 
 		"SLO page alert fields are not required if disabled .": {
@@ -320,7 +382,7 @@ func TestModelValidationSpec(t *testing.T) {
 				s.TicketAlertMeta.Name = ""
 				return s
 			},
-			expErrMessage: "Key: 'PromSLO.TicketAlertMeta.Name' Error:Field validation for 'Name' failed on the 'required_if_enabled' tag",
+			expErrMessage: `invalid alert: ticket alert: alert name is required`,
 		},
 
 		"SLO warning alert fields are not required if disabled .": {
@@ -340,7 +402,7 @@ func TestModelValidationSpec(t *testing.T) {
 				s.PageAlertMeta.Labels["\xF0\x8F\xBF\xBF"] = "label key is wrong"
 				return s
 			},
-			expErrMessage: "Key: 'PromSLO.PageAlertMeta.Labels[\xF0\x8F\xBF\xBF]' Error:Field validation for 'Labels[\xF0\x8F\xBF\xBF]' failed on the 'prom_label_key' tag",
+			expErrMessage: `invalid alert: page alert: invalid alert label key "\xf0\x8f\xbf\xbf": the label key "\xf0\x8f\xbf\xbf" is not valid`,
 		},
 
 		"SLO page alert labels should have prometheus values.": {
@@ -349,7 +411,7 @@ func TestModelValidationSpec(t *testing.T) {
 				s.PageAlertMeta.Labels["something"] = ""
 				return s
 			},
-			expErrMessage: "Key: 'PromSLO.PageAlertMeta.Labels[something]' Error:Field validation for 'Labels[something]' failed on the 'required' tag",
+			expErrMessage: `invalid alert: page alert: invalid alert label value "": the label value is required`,
 		},
 
 		"SLO page alert labels should be valid prometheus values.": {
@@ -358,7 +420,7 @@ func TestModelValidationSpec(t *testing.T) {
 				s.PageAlertMeta.Labels["something"] = "\xc3\x28"
 				return s
 			},
-			expErrMessage: "Key: 'PromSLO.PageAlertMeta.Labels[something]' Error:Field validation for 'Labels[something]' failed on the 'prom_label_value' tag",
+			expErrMessage: `invalid alert: page alert: invalid alert label value "\xc3(": the label value "\xc3(" is not valid`,
 		},
 
 		"SLO page alert annotations should be valid prometheus keys.": {
@@ -367,7 +429,7 @@ func TestModelValidationSpec(t *testing.T) {
 				s.PageAlertMeta.Annotations["\xF0\x8F\xBF\xBF"] = "label key is wrong"
 				return s
 			},
-			expErrMessage: "Key: 'PromSLO.PageAlertMeta.Annotations[\xF0\x8F\xBF\xBF]' Error:Field validation for 'Annotations[\xF0\x8F\xBF\xBF]' failed on the 'prom_annot_key' tag",
+			expErrMessage: `invalid alert: page alert: invalid alert annotation key "\xf0\x8f\xbf\xbf": the annotation key "\xf0\x8f\xbf\xbf" is not valid`,
 		},
 
 		"SLO page alert annotations should have prometheus values.": {
@@ -376,7 +438,7 @@ func TestModelValidationSpec(t *testing.T) {
 				s.PageAlertMeta.Annotations["something"] = ""
 				return s
 			},
-			expErrMessage: "Key: 'PromSLO.PageAlertMeta.Annotations[something]' Error:Field validation for 'Annotations[something]' failed on the 'required' tag",
+			expErrMessage: `invalid alert: page alert: invalid alert annotation value "": the annotation value is required`,
 		},
 
 		"SLO warning alert labels should be valid prometheus keys.": {
@@ -385,7 +447,7 @@ func TestModelValidationSpec(t *testing.T) {
 				s.TicketAlertMeta.Labels["\xF0\x8F\xBF\xBF"] = "label key is wrong"
 				return s
 			},
-			expErrMessage: "Key: 'PromSLO.TicketAlertMeta.Labels[\xF0\x8F\xBF\xBF]' Error:Field validation for 'Labels[\xF0\x8F\xBF\xBF]' failed on the 'prom_label_key' tag",
+			expErrMessage: `invalid alert: ticket alert: invalid alert label key "\xf0\x8f\xbf\xbf": the label key "\xf0\x8f\xbf\xbf" is not valid`,
 		},
 
 		"SLO warning alert labels should have prometheus values.": {
@@ -394,7 +456,7 @@ func TestModelValidationSpec(t *testing.T) {
 				s.TicketAlertMeta.Labels["something"] = ""
 				return s
 			},
-			expErrMessage: "Key: 'PromSLO.TicketAlertMeta.Labels[something]' Error:Field validation for 'Labels[something]' failed on the 'required' tag",
+			expErrMessage: `invalid alert: ticket alert: invalid alert label value "": the label value is required`,
 		},
 
 		"SLO warning alert labels should be valid prometheus values.": {
@@ -403,7 +465,7 @@ func TestModelValidationSpec(t *testing.T) {
 				s.TicketAlertMeta.Labels["something"] = "\xc3\x28"
 				return s
 			},
-			expErrMessage: "Key: 'PromSLO.TicketAlertMeta.Labels[something]' Error:Field validation for 'Labels[something]' failed on the 'prom_label_value' tag",
+			expErrMessage: `invalid alert: ticket alert: invalid alert label value "\xc3(": the label value "\xc3(" is not valid`,
 		},
 
 		"SLO warning alert annotations should be valid prometheus keys.": {
@@ -412,7 +474,7 @@ func TestModelValidationSpec(t *testing.T) {
 				s.TicketAlertMeta.Annotations["\xF0\x8F\xBF\xBF"] = "label key is wrong"
 				return s
 			},
-			expErrMessage: "Key: 'PromSLO.TicketAlertMeta.Annotations[\xF0\x8F\xBF\xBF]' Error:Field validation for 'Annotations[\xF0\x8F\xBF\xBF]' failed on the 'prom_annot_key' tag",
+			expErrMessage: `invalid alert: ticket alert: invalid alert annotation key "\xf0\x8f\xbf\xbf": the annotation key "\xf0\x8f\xbf\xbf" is not valid`,
 		},
 
 		"SLO warning alert annotations should have prometheus values.": {
@@ -421,7 +483,28 @@ func TestModelValidationSpec(t *testing.T) {
 				s.TicketAlertMeta.Annotations["something"] = ""
 				return s
 			},
-			expErrMessage: "Key: 'PromSLO.TicketAlertMeta.Annotations[something]' Error:Field validation for 'Annotations[something]' failed on the 'required' tag",
+			expErrMessage: `invalid alert: ticket alert: invalid alert annotation value "": the annotation value is required`,
+		},
+
+		"SLO plugins should have ID.": {
+			slo: func() model.PromSLO {
+				s := getGoodSLO()
+				s.Plugins.Plugins = []model.PromSLOPluginMetadata{
+					{ID: ""},
+				}
+				return s
+			},
+			expErrMessage: `invalid plugins: plugin ID is required`,
+		},
+
+		"SLO plugins should be declared if override default plugins is used.": {
+			slo: func() model.PromSLO {
+				s := getGoodSLO()
+				s.Plugins.OverrideDefaultPlugins = true
+				s.Plugins.Plugins = []model.PromSLOPluginMetadata{}
+				return s
+			},
+			expErrMessage: `invalid plugins: override default plugins is set but no plugins are defined`,
 		},
 	}
 
@@ -430,7 +513,7 @@ func TestModelValidationSpec(t *testing.T) {
 			assert := assert.New(t)
 
 			slo := test.slo()
-			err := slo.Validate()
+			err := validation.ValidateSLO(slo, validation.PromQLDialectValidator)
 
 			if test.expErrMessage != "" {
 				assert.Error(err)

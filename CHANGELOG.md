@@ -8,11 +8,13 @@
 - (BREAKING) Internally Sloth (not k8s) prometheusServiceLevel uses k8s `k8s.io/apimachinery/pkg/util/yaml` lib for unmarshaling YAML instead of `gopkg.in/yaml.v2`.
 - Core SLO validation and SLO rules generation migrated to SLO plugins.
 - (BREAKING) `--sli-plugins-path`, `--slo-plugins-path`, `-m` args and it's env vars `SLOTH_SLI_PLUGINS_PATH`and  `SLOTH_SLO_PLUGINS_PATH` have been removed in favor or `--plugins-path`, `-p` and it's env var `SLOTH_PLUGINS_PATH` that discovers and loads SLI and SLO plugins with a single flag.
+- Simplify validation and improve validation message by using custom logic instead of `go-playground/validator`.
 
 ### Added
 
 - Sloth domain models can be imported in Go apps using `github.com/slok/sloth/pkg/common/model`.
 - Sloth conventions can be imported in Go apps using `github.com/slok/sloth/pkg/common/conventions`.
+- Sloth SLO validation logic can be imported in Go apps using `github.com/slok/sloth/pkg/common/validation`.
 - A new SLO rule generation plugin system has been added to be able to change/extend the SLO rule generation process.
 - SLO plugins can be loaded from FS directories recursively using `--slo-plugins-path` in the commands.
 - SLO plugins have a priority value to be able to order in the execution chain.

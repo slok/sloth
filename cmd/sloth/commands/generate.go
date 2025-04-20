@@ -33,17 +33,16 @@ import (
 )
 
 type generateCommand struct {
-	slosInput             string
-	slosOut               string
-	slosExcludeRegex      string
-	slosIncludeRegex      string
-	disableRecordings     bool
-	disableAlerts         bool
-	disableOptimizedRules bool
-	extraLabels           map[string]string
-	pluginsPaths          []string
-	sloPeriodWindowsPath  string
-	sloPeriod             string
+	slosInput            string
+	slosOut              string
+	slosExcludeRegex     string
+	slosIncludeRegex     string
+	disableRecordings    bool
+	disableAlerts        bool
+	extraLabels          map[string]string
+	pluginsPaths         []string
+	sloPeriodWindowsPath string
+	sloPeriod            string
 }
 
 // NewGenerateCommand returns the generate command.
@@ -61,7 +60,6 @@ func NewGenerateCommand(app *kingpin.Application) Command {
 	cmd.Flag("plugins-path", "The path to SLI and SLO plugins (can be repeated).").Short('p').StringsVar(&c.pluginsPaths)
 	cmd.Flag("slo-period-windows-path", "The directory path to custom SLO period windows catalog (replaces default ones).").StringVar(&c.sloPeriodWindowsPath)
 	cmd.Flag("default-slo-period", "The default SLO period windows to be used for the SLOs.").Default("30d").StringVar(&c.sloPeriod)
-	cmd.Flag("disable-optimized-rules", "If enabled it will disable optimized generated rules.").BoolVar(&c.disableOptimizedRules)
 
 	return c
 }
@@ -244,13 +242,12 @@ func (g generateCommand) Run(ctx context.Context, config RootConfig) error {
 	}
 
 	gen := generator{
-		logger:                logger,
-		windowsRepo:           windowsRepo,
-		disableRecordings:     g.disableRecordings,
-		disableAlerts:         g.disableAlerts,
-		disableOptimizedRules: g.disableOptimizedRules,
-		extraLabels:           g.extraLabels,
-		sloPluginRepo:         pluginsRepo,
+		logger:            logger,
+		windowsRepo:       windowsRepo,
+		disableRecordings: g.disableRecordings,
+		disableAlerts:     g.disableAlerts,
+		extraLabels:       g.extraLabels,
+		sloPluginRepo:     pluginsRepo,
 	}
 
 	for _, genTarget := range genTargets {
@@ -305,13 +302,12 @@ type generateTarget struct {
 }
 
 type generator struct {
-	logger                log.Logger
-	windowsRepo           alert.WindowsRepo
-	disableRecordings     bool
-	disableAlerts         bool
-	disableOptimizedRules bool
-	extraLabels           map[string]string
-	sloPluginRepo         *storagefs.FilePluginRepo
+	logger            log.Logger
+	windowsRepo       alert.WindowsRepo
+	disableRecordings bool
+	disableAlerts     bool
+	extraLabels       map[string]string
+	sloPluginRepo     *storagefs.FilePluginRepo
 }
 
 // GeneratePrometheus generates the SLOs based on a raw regular Prometheus spec format input and outs a Prometheus raw yaml.
@@ -426,7 +422,7 @@ func (g generator) generateRules(ctx context.Context, info model.Info, slos mode
 		sliPlugin, err := generate.NewSLOProcessorFromSLOPluginV1(
 			plugincoreslirulesv1.NewPlugin,
 			g.logger.WithValues(log.Kv{"plugin": plugincoreslirulesv1.PluginID}),
-			plugincoreslirulesv1.PluginConfig{Optimized: !g.disableOptimizedRules},
+			plugincoreslirulesv1.PluginConfig{},
 		)
 		if err != nil {
 			return nil, fmt.Errorf("could not create SLI rules plugin: %w", err)

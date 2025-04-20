@@ -23,7 +23,7 @@ const (
 )
 
 type PluginConfig struct {
-	Optimized bool
+	DisableOptimized bool `json:"disableOptimized,omitempty"`
 }
 
 func NewPlugin(c json.RawMessage, _ pluginslov1.AppUtils) (pluginslov1.Plugin, error) {
@@ -42,7 +42,7 @@ type plugin struct {
 
 func (p plugin) ProcessSLO(ctx context.Context, request *pluginslov1.Request, result *pluginslov1.Result) error {
 	genFunc := factorySLIRecordGenerator
-	if p.cfg.Optimized {
+	if !p.cfg.DisableOptimized {
 		genFunc = optimizedFactorySLIRecordGenerator
 	}
 

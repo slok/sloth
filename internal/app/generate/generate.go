@@ -64,7 +64,7 @@ func (c *ServiceConfig) defaults() error {
 		plugin, err := NewSLOProcessorFromSLOPluginV1(
 			plugincoreslirulesv1.NewPlugin,
 			c.Logger.WithValues(log.Kv{"plugin": plugincoreslirulesv1.PluginID}),
-			plugincoreslirulesv1.PluginConfig{Optimized: true},
+			plugincoreslirulesv1.PluginConfig{},
 		)
 		if err != nil {
 			return fmt.Errorf("could not create SLI rules plugin: %w", err)

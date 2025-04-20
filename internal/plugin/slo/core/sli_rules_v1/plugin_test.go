@@ -497,7 +497,7 @@ func TestGenerateSLIRecordingRules(t *testing.T) {
 			require := require.New(t)
 
 			// Load plugin
-			config, _ := json.Marshal(map[string]any{"optimized": test.optimized})
+			config, _ := json.Marshal(map[string]any{"disableOptimized": !test.optimized})
 			plugin, err := pluginslov1testing.NewTestPlugin(t.Context(), pluginslov1testing.TestPluginConfig{PluginConfiguration: config})
 			require.NoError(err)
 
@@ -520,9 +520,8 @@ func TestGenerateSLIRecordingRules(t *testing.T) {
 }
 
 func BenchmarkPluginYaegi(b *testing.B) {
-	config, _ := json.Marshal(map[string]any{"optimized": true})
 	plugin, err := pluginslov1testing.NewTestPlugin(b.Context(), pluginslov1testing.TestPluginConfig{
-		PluginConfiguration: config,
+		PluginConfiguration: []byte("{}"),
 	})
 	if err != nil {
 		b.Fatal(err)
@@ -541,8 +540,7 @@ func BenchmarkPluginYaegi(b *testing.B) {
 }
 
 func BenchmarkPluginGo(b *testing.B) {
-	config, _ := json.Marshal(map[string]any{"optimized": true})
-	plugin, err := plugin.NewPlugin(config, pluginslov1.AppUtils{})
+	plugin, err := plugin.NewPlugin([]byte("{}"), pluginslov1.AppUtils{})
 	if err != nil {
 		b.Fatal(err)
 	}

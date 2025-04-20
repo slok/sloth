@@ -9,6 +9,7 @@
 - Core SLO validation and SLO rules generation migrated to SLO plugins.
 - (BREAKING) `--sli-plugins-path`, `--slo-plugins-path`, `-m` args and it's env vars `SLOTH_SLI_PLUGINS_PATH`and  `SLOTH_SLO_PLUGINS_PATH` have been removed in favor or `--plugins-path`, `-p` and it's env var `SLOTH_PLUGINS_PATH` that discovers and loads SLI and SLO plugins with a single flag.
 - Simplify validation and improve validation message by using custom logic instead of `go-playground/validator`.
+- (BREAKING) `--disable-optimized-rules` flag and associated env var  has been removed.
 
 ### Added
 
@@ -16,11 +17,11 @@
 - Sloth conventions can be imported in Go apps using `github.com/slok/sloth/pkg/common/conventions`.
 - Sloth SLO validation logic can be imported in Go apps using `github.com/slok/sloth/pkg/common/validation`.
 - A new SLO rule generation plugin system has been added to be able to change/extend the SLO rule generation process.
-- SLO plugins can be loaded from FS directories recursively using `--slo-plugins-path` in the commands.
-- SLO plugins have a priority value to be able to order in the execution chain.
+- SLO plugins can be loaded from FS directories recursively using `--plugins-path` in the commands.
+- SLO plugins have a `priority` value to be able to order in the execution chain.
 - Sloth regular (non-k8s) `prometheus/v1` API support for SLO plugins at SLO group level and per SLO level.
 - Sloth K8s CRD `sloth.slok.dev/v1/PrometheusServiceLevel` API support for SLO plugins at SLO group level and per SLO level.
-- Allow overriding previous declared plugins (includes defaults) at SLO group and SLO level.
+- Allow overriding previous declared SLO plugins (includes defaults) at SLO group and SLO level.
 
 ## [v0.12.0] - 2025-03-27
 

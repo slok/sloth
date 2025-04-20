@@ -56,23 +56,22 @@ const (
 )
 
 type kubeControllerCommand struct {
-	extraLabels           map[string]string
-	workers               int
-	kubeConfig            string
-	kubeContext           string
-	resyncInterval        time.Duration
-	namespace             string
-	labelSelector         string
-	kubeLocal             bool
-	runMode               string
-	metricsPath           string
-	hotReloadPath         string
-	hotReloadAddr         string
-	metricsListenAddr     string
-	pluginsPaths          []string
-	sloPeriodWindowsPath  string
-	sloPeriod             string
-	disableOptimizedRules bool
+	extraLabels          map[string]string
+	workers              int
+	kubeConfig           string
+	kubeContext          string
+	resyncInterval       time.Duration
+	namespace            string
+	labelSelector        string
+	kubeLocal            bool
+	runMode              string
+	metricsPath          string
+	hotReloadPath        string
+	hotReloadAddr        string
+	metricsListenAddr    string
+	pluginsPaths         []string
+	sloPeriodWindowsPath string
+	sloPeriod            string
 }
 
 // NewKubeControllerCommand returns the Kubernetes controller command.
@@ -99,7 +98,6 @@ func NewKubeControllerCommand(app *kingpin.Application) Command {
 	cmd.Flag("plugins-path", "The path to SLI and SLO plugins (can be repeated).").Short('p').StringsVar(&c.pluginsPaths)
 	cmd.Flag("slo-period-windows-path", "The directory path to custom SLO period windows catalog (replaces default ones).").StringVar(&c.sloPeriodWindowsPath)
 	cmd.Flag("default-slo-period", "The default SLO period windows to be used for the SLOs.").Default("30d").StringVar(&c.sloPeriod)
-	cmd.Flag("disable-optimized-rules", "If enabled it will disable optimized generated rules.").BoolVar(&c.disableOptimizedRules)
 
 	return c
 }
@@ -305,7 +303,7 @@ func (k kubeControllerCommand) Run(ctx context.Context, config RootConfig) error
 		sliRuleGen, err := generate.NewSLOProcessorFromSLOPluginV1(
 			plugincoreslirulesv1.NewPlugin,
 			logger.WithValues(log.Kv{"plugin": plugincoreslirulesv1.PluginID}),
-			plugincoreslirulesv1.PluginConfig{Optimized: !k.disableOptimizedRules},
+			plugincoreslirulesv1.PluginConfig{},
 		)
 		if err != nil {
 			return fmt.Errorf("could not create SLI rules plugin: %w", err)

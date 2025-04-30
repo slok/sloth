@@ -36,13 +36,10 @@ type SLOPluginGetter interface {
 
 // ServiceConfig is the application service configuration.
 type ServiceConfig struct {
-	AlertGenerator            AlertGenerator
-	SLIRulesGenSLOPlugin      SLOProcessor
-	AlertRulesGenSLOPlugin    SLOProcessor
-	MetadataRulesGenSLOPlugin SLOProcessor
-	ValidateSLOPlugin         SLOProcessor
-	SLOPluginGetter           SLOPluginGetter
-	Logger                    log.Logger
+	AlertGenerator  AlertGenerator
+	DefaultPlugins  []SLOProcessor
+	SLOPluginGetter SLOPluginGetter
+	Logger          log.Logger
 }
 
 func (c *ServiceConfig) defaults() error {
@@ -60,42 +57,8 @@ func (c *ServiceConfig) defaults() error {
 	c.Logger = c.Logger.WithValues(log.Kv{"svc": "generate.prometheus.Service"})
 
 	// Default plugins.
-	if c.SLIRulesGenSLOPlugin == nil {
-		plugin, err := NewSLOProcessorFromSLOPluginV1(
-			plugincoreslirulesv1.NewPlugin,
-			c.Logger.WithValues(log.Kv{"plugin": plugincoreslirulesv1.PluginID}),
-			plugincoreslirulesv1.PluginConfig{},
-		)
-		if err != nil {
-			return fmt.Errorf("could not create SLI rules plugin: %w", err)
-		}
-		c.SLIRulesGenSLOPlugin = plugin
-	}
-	if c.AlertRulesGenSLOPlugin == nil {
-		plugin, err := NewSLOProcessorFromSLOPluginV1(
-			plugincorealertrulesv1.NewPlugin,
-			c.Logger.WithValues(log.Kv{"plugin": plugincorealertrulesv1.PluginID}),
-			nil,
-		)
-		if err != nil {
-			return fmt.Errorf("could not create alert rules plugin: %w", err)
-		}
-		c.AlertRulesGenSLOPlugin = plugin
-	}
-	if c.MetadataRulesGenSLOPlugin == nil {
-		plugin, err := NewSLOProcessorFromSLOPluginV1(
-			plugincoremetadatarulesv1.NewPlugin,
-			c.Logger.WithValues(log.Kv{"plugin": plugincoremetadatarulesv1.PluginID}),
-			nil,
-		)
-		if err != nil {
-			return fmt.Errorf("could not create metadata rules plugin: %w", err)
-		}
-		c.MetadataRulesGenSLOPlugin = plugin
-	}
-
-	if c.ValidateSLOPlugin == nil {
-		plugin, err := NewSLOProcessorFromSLOPluginV1(
+	if c.DefaultPlugins == nil {
+		pluginValidate, err := NewSLOProcessorFromSLOPluginV1(
 			plugincorevalidatev1.NewPlugin,
 			c.Logger.WithValues(log.Kv{"plugin": plugincorevalidatev1.PluginID}),
 			nil,
@@ -103,7 +66,40 @@ func (c *ServiceConfig) defaults() error {
 		if err != nil {
 			return fmt.Errorf("could not create SLO validate plugin: %w", err)
 		}
-		c.ValidateSLOPlugin = plugin
+
+		pluginSLI, err := NewSLOProcessorFromSLOPluginV1(
+			plugincoreslirulesv1.NewPlugin,
+			c.Logger.WithValues(log.Kv{"plugin": plugincoreslirulesv1.PluginID}),
+			plugincoreslirulesv1.PluginConfig{},
+		)
+		if err != nil {
+			return fmt.Errorf("could not create SLI rules plugin: %w", err)
+		}
+
+		pluginMeta, err := NewSLOProcessorFromSLOPluginV1(
+			plugincoremetadatarulesv1.NewPlugin,
+			c.Logger.WithValues(log.Kv{"plugin": plugincoremetadatarulesv1.PluginID}),
+			nil,
+		)
+		if err != nil {
+			return fmt.Errorf("could not create metadata rules plugin: %w", err)
+		}
+
+		pluginAlert, err := NewSLOProcessorFromSLOPluginV1(
+			plugincorealertrulesv1.NewPlugin,
+			c.Logger.WithValues(log.Kv{"plugin": plugincorealertrulesv1.PluginID}),
+			nil,
+		)
+		if err != nil {
+			return fmt.Errorf("could not create alert rules plugin: %w", err)
+		}
+
+		c.DefaultPlugins = []SLOProcessor{
+			pluginValidate,
+			pluginSLI,
+			pluginMeta,
+			pluginAlert,
+		}
 	}
 
 	return nil
@@ -132,13 +128,8 @@ func NewService(config ServiceConfig) (*Service, error) {
 	return &Service{
 		alertGen:        config.AlertGenerator,
 		sloPluginGetter: config.SLOPluginGetter,
-		defaultPlugins: []SLOProcessor{
-			config.ValidateSLOPlugin,
-			config.SLIRulesGenSLOPlugin,
-			config.AlertRulesGenSLOPlugin,
-			config.MetadataRulesGenSLOPlugin,
-		},
-		logger: config.Logger,
+		defaultPlugins:  config.DefaultPlugins,
+		logger:          config.Logger,
 	}, nil
 }
 

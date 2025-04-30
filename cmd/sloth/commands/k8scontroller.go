@@ -338,13 +338,15 @@ func (k kubeControllerCommand) Run(ctx context.Context, config RootConfig) error
 
 		// Create the generate app service (the one that the CLIs use).
 		generator, err := generate.NewService(generate.ServiceConfig{
-			AlertGenerator:            alert.NewGenerator(windowsRepo),
-			SLIRulesGenSLOPlugin:      sliRuleGen,
-			MetadataRulesGenSLOPlugin: metaRuleGen,
-			AlertRulesGenSLOPlugin:    alertRuleGen,
-			ValidateSLOPlugin:         validatePlugin,
-			SLOPluginGetter:           pluginsRepo,
-			Logger:                    generatorLogger{Logger: logger},
+			AlertGenerator: alert.NewGenerator(windowsRepo),
+			DefaultPlugins: []generate.SLOProcessor{
+				validatePlugin,
+				sliRuleGen,
+				metaRuleGen,
+				alertRuleGen,
+			},
+			SLOPluginGetter: pluginsRepo,
+			Logger:          generatorLogger{Logger: logger},
 		})
 		if err != nil {
 			return fmt.Errorf("could not create Prometheus rules generator: %w", err)

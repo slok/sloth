@@ -465,13 +465,15 @@ func (g generator) generateRules(ctx context.Context, info model.Info, slos mode
 
 	// Generate.
 	controller, err := generate.NewService(generate.ServiceConfig{
-		AlertGenerator:            alert.NewGenerator(g.windowsRepo),
-		SLIRulesGenSLOPlugin:      sliRuleGen,
-		MetadataRulesGenSLOPlugin: metaRuleGen,
-		AlertRulesGenSLOPlugin:    alertRuleGen,
-		ValidateSLOPlugin:         validatePlugin,
-		SLOPluginGetter:           g.sloPluginRepo,
-		Logger:                    g.logger,
+		AlertGenerator: alert.NewGenerator(g.windowsRepo),
+		DefaultPlugins: []generate.SLOProcessor{
+			validatePlugin,
+			sliRuleGen,
+			metaRuleGen,
+			alertRuleGen,
+		},
+		SLOPluginGetter: g.sloPluginRepo,
+		Logger:          g.logger,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("could not create application service: %w", err)

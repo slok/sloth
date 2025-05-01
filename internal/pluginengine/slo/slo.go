@@ -37,7 +37,7 @@ var packageRegexp = regexp.MustCompile(`(?m)^package +([^\s]+) *$`)
 func (p pluginLoader) LoadRawPlugin(ctx context.Context, src string) (*Plugin, error) {
 	// Load the plugin in a new interpreter.
 	// For each plugin we need to use an independent interpreter to avoid name collisions.
-	yaegiInterp, err := newYaeginInterpreter(false, false)
+	yaegiInterp, err := newYaeginInterpreter(true, true)
 	if err != nil {
 		return nil, fmt.Errorf("could not create a new Yaegi interpreter: %w", err)
 	}

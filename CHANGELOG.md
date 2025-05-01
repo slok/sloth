@@ -22,6 +22,8 @@
 - Sloth regular (non-k8s) `prometheus/v1` API support for SLO plugins at SLO group level and per SLO level.
 - Sloth K8s CRD `sloth.slok.dev/v1/PrometheusServiceLevel` API support for SLO plugins at SLO group level and per SLO level.
 - Allow overriding previous declared SLO plugins (includes defaults) at SLO group and SLO level.
+- SLO plugins can access env vars and use OS/exec by default.
+- Allow `github.com/caarlos0/env/v11` module in SLO plugins.
 
 ## [v0.12.0] - 2025-03-27
 

@@ -43,6 +43,7 @@ type generateCommand struct {
 	pluginsPaths         []string
 	sloPeriodWindowsPath string
 	sloPeriod            string
+	sloPlugins           []string
 }
 
 // NewGenerateCommand returns the generate command.
@@ -60,6 +61,7 @@ func NewGenerateCommand(app *kingpin.Application) Command {
 	cmd.Flag("plugins-path", "The path to SLI and SLO plugins (can be repeated).").Short('p').StringsVar(&c.pluginsPaths)
 	cmd.Flag("slo-period-windows-path", "The directory path to custom SLO period windows catalog (replaces default ones).").StringVar(&c.sloPeriodWindowsPath)
 	cmd.Flag("default-slo-period", "The default SLO period windows to be used for the SLOs.").Default("30d").StringVar(&c.sloPeriod)
+	cmd.Flag("slo-plugins", `SLO plugins chain declaration in JSON format '{"id": "foo","priority": 0,"config": "{}"}' (Can be repeated).`).Short('s').StringsVar(&c.sloPlugins)
 
 	return c
 }
@@ -112,6 +114,12 @@ func (g generateCommand) Run(ctx context.Context, config RootConfig) error {
 	pluginsRepo, err := createPluginLoader(ctx, logger, g.pluginsPaths)
 	if err != nil {
 		return err
+	}
+
+	// Load SLO plugin declarations at CMD level.
+	cmdLevelSLOPlugins, err := mapCmdPluginToModel(ctx, g.sloPlugins)
+	if err != nil {
+		return fmt.Errorf("could not load slo plugin declarations: %w", err)
 	}
 
 	// Windows repository.
@@ -248,6 +256,7 @@ func (g generateCommand) Run(ctx context.Context, config RootConfig) error {
 		disableAlerts:     g.disableAlerts,
 		extraLabels:       g.extraLabels,
 		sloPluginRepo:     pluginsRepo,
+		extraSLOPlugins:   cmdLevelSLOPlugins,
 	}
 
 	for _, genTarget := range genTargets {
@@ -308,6 +317,7 @@ type generator struct {
 	disableAlerts     bool
 	extraLabels       map[string]string
 	sloPluginRepo     *storagefs.FilePluginRepo
+	extraSLOPlugins   []model.PromSLOPluginMetadata
 }
 
 // GeneratePrometheus generates the SLOs based on a raw regular Prometheus spec format input and outs a Prometheus raw yaml.
@@ -473,6 +483,7 @@ func (g generator) generateRules(ctx context.Context, info model.Info, slos mode
 			alertRuleGen,
 		},
 		SLOPluginGetter: g.sloPluginRepo,
+		ExtraPlugins:    g.extraSLOPlugins,
 		Logger:          g.logger,
 	})
 	if err != nil {

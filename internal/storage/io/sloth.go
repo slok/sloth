@@ -111,8 +111,8 @@ func (l SlothPrometheusYAMLSpecLoader) mapSpecToModel(ctx context.Context, spec 
 			PageAlertMeta:   model.PromAlertMeta{Disable: true},
 			TicketAlertMeta: model.PromAlertMeta{Disable: true},
 			Plugins: model.SLOPlugins{
-				OverrideDefaultPlugins: overridePlugins,
-				Plugins:                plugins,
+				OverridePlugins: overridePlugins,
+				Plugins:         plugins,
 			},
 		}
 

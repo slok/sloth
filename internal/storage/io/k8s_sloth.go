@@ -133,8 +133,8 @@ func mapSpecToModel(ctx context.Context, defaultWindowPeriod time.Duration, plug
 			PageAlertMeta:   model.PromAlertMeta{Disable: true},
 			TicketAlertMeta: model.PromAlertMeta{Disable: true},
 			Plugins: model.SLOPlugins{
-				OverrideDefaultPlugins: overridePlugins,
-				Plugins:                plugins,
+				OverridePlugins: overridePlugins,
+				Plugins:         plugins,
 			},
 		}
 

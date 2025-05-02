@@ -41,10 +41,11 @@ func (p testPluginAlertRuleAppender) ProcessSLO(ctx context.Context, request *pl
 
 func TestIntegrationAppServiceGenerate(t *testing.T) {
 	tests := map[string]struct {
-		mocks   func(mspg *generatemock.SLOPluginGetter)
-		req     generate.Request
-		expResp generate.Response
-		expErr  bool
+		mocks           func(mspg *generatemock.SLOPluginGetter)
+		extraSLOPlugins []model.PromSLOPluginMetadata
+		req             generate.Request
+		expResp         generate.Response
+		expErr          bool
 	}{
 		"If no SLOs are requested it should error.": {
 			mocks:  func(mspg *generatemock.SLOPluginGetter) {},
@@ -436,6 +437,10 @@ or
 		},
 
 		"Having multiple SLO plugins should execute the plugins in order and generate the rules correctly.": {
+			extraSLOPlugins: []model.PromSLOPluginMetadata{
+				{ID: "test-plugin-99", Priority: 999},
+				{ID: "test-plugin-98", Priority: 998},
+			},
 			mocks: func(mspg *generatemock.SLOPluginGetter) {
 				mspg.On("GetSLOPlugin", mock.Anything, "test-plugin1").Once().Return(&pluginengineslo.Plugin{
 					ID: "test-plugin1",
@@ -478,6 +483,20 @@ or
 					ID: "test-plugin2",
 					PluginV1Factory: func(config json.RawMessage, appUtils pluginslov1.AppUtils) (pluginslov1.Plugin, error) {
 						return testPluginAlertRuleAppender{rule: rulefmt.Rule{Expr: "test7"}}, nil
+					},
+				}, nil)
+
+				mspg.On("GetSLOPlugin", mock.Anything, "test-plugin-98").Once().Return(&pluginengineslo.Plugin{
+					ID: "test-plugin2",
+					PluginV1Factory: func(config json.RawMessage, appUtils pluginslov1.AppUtils) (pluginslov1.Plugin, error) {
+						return testPluginAlertRuleAppender{rule: rulefmt.Rule{Expr: "test98"}}, nil
+					},
+				}, nil)
+
+				mspg.On("GetSLOPlugin", mock.Anything, "test-plugin-99").Once().Return(&pluginengineslo.Plugin{
+					ID: "test-plugin2",
+					PluginV1Factory: func(config json.RawMessage, appUtils pluginslov1.AppUtils) (pluginslov1.Plugin, error) {
+						return testPluginAlertRuleAppender{rule: rulefmt.Rule{Expr: "test99"}}, nil
 					},
 				}, nil)
 			},
@@ -797,6 +816,8 @@ or
 									{Expr: "test6"},
 									{Expr: "test7"},
 									{Expr: "test1"},
+									{Expr: "test98"},
+									{Expr: "test99"},
 									{Expr: "test4"},
 								}},
 						},
@@ -805,7 +826,10 @@ or
 			},
 		},
 
-		"Having SLO plugins with default plugin override should execute only the configured plugins and ignore default plugin execution.": {
+		"Having SLO plugins with plugin override should execute only the configured plugins and ignore other levels declared plugin execution.": {
+			extraSLOPlugins: []model.PromSLOPluginMetadata{
+				{ID: "test-plugin-00", Priority: -99},
+			},
 			mocks: func(mspg *generatemock.SLOPluginGetter) {
 				mspg.On("GetSLOPlugin", mock.Anything, "test-plugin1").Once().Return(&pluginengineslo.Plugin{
 					ID: "test-plugin1",
@@ -841,7 +865,7 @@ or
 						},
 						TicketAlertMeta: model.PromAlertMeta{Disable: true},
 						Plugins: model.SLOPlugins{
-							OverrideDefaultPlugins: true,
+							OverridePlugins: true,
 							Plugins: []model.PromSLOPluginMetadata{
 								{ID: "test-plugin1", Priority: 10},
 							},
@@ -872,7 +896,7 @@ or
 							},
 							TicketAlertMeta: model.PromAlertMeta{Disable: true},
 							Plugins: model.SLOPlugins{
-								OverrideDefaultPlugins: true,
+								OverridePlugins: true,
 								Plugins: []model.PromSLOPluginMetadata{
 									{ID: "test-plugin1", Priority: 10},
 								},
@@ -903,6 +927,7 @@ or
 			svc, err := generate.NewService(generate.ServiceConfig{
 				AlertGenerator:  alert.NewGenerator(windowsRepo),
 				SLOPluginGetter: mspg,
+				ExtraPlugins:    test.extraSLOPlugins,
 			})
 			require.NoError(err)
 

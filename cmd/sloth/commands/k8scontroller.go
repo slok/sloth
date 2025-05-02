@@ -72,6 +72,7 @@ type kubeControllerCommand struct {
 	pluginsPaths         []string
 	sloPeriodWindowsPath string
 	sloPeriod            string
+	sloPlugins           []string
 }
 
 // NewKubeControllerCommand returns the Kubernetes controller command.
@@ -98,6 +99,7 @@ func NewKubeControllerCommand(app *kingpin.Application) Command {
 	cmd.Flag("plugins-path", "The path to SLI and SLO plugins (can be repeated).").Short('p').StringsVar(&c.pluginsPaths)
 	cmd.Flag("slo-period-windows-path", "The directory path to custom SLO period windows catalog (replaces default ones).").StringVar(&c.sloPeriodWindowsPath)
 	cmd.Flag("default-slo-period", "The default SLO period windows to be used for the SLOs.").Default("30d").StringVar(&c.sloPeriod)
+	cmd.Flag("slo-plugins", `SLO plugins chain declaration in JSON format '{"id": "foo","priority": 0,"config": "{}"}' .`).Short('s').StringsVar(&c.sloPlugins)
 
 	return c
 }
@@ -117,6 +119,12 @@ func (k kubeControllerCommand) Run(ctx context.Context, config RootConfig) error
 	pluginsRepo, err := createPluginLoader(ctx, logger, k.pluginsPaths)
 	if err != nil {
 		return err
+	}
+
+	// Load SLO plugin declarations at CMD level.
+	cmdLevelSLOPlugins, err := mapCmdPluginToModel(ctx, k.sloPlugins)
+	if err != nil {
+		return fmt.Errorf("could not load slo plugin declarations: %w", err)
 	}
 
 	// Windows repository.
@@ -346,6 +354,7 @@ func (k kubeControllerCommand) Run(ctx context.Context, config RootConfig) error
 				alertRuleGen,
 			},
 			SLOPluginGetter: pluginsRepo,
+			ExtraPlugins:    cmdLevelSLOPlugins,
 			Logger:          generatorLogger{Logger: logger},
 		})
 		if err != nil {

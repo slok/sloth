@@ -122,8 +122,8 @@ func isValidAlert(alert model.PromAlertMeta, dialect SLODialectValidator) error 
 }
 
 func isValidPlugins(slo model.PromSLO) error {
-	if slo.Plugins.OverrideDefaultPlugins && len(slo.Plugins.Plugins) == 0 {
-		return fmt.Errorf("override default plugins is set but no plugins are defined")
+	if slo.Plugins.OverridePlugins && len(slo.Plugins.Plugins) == 0 {
+		return fmt.Errorf("override plugins is set but no plugins are defined")
 	}
 
 	for _, p := range slo.Plugins.Plugins {

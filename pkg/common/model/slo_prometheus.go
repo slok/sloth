@@ -49,8 +49,8 @@ type PromSLO struct {
 }
 
 type SLOPlugins struct {
-	OverrideDefaultPlugins bool
-	Plugins                []PromSLOPluginMetadata
+	OverridePlugins bool // If true, the default, app and other declared plugins at other levels will be overridden by the ones declared in this struct.
+	Plugins         []PromSLOPluginMetadata
 }
 
 type PromSLOPluginMetadata struct {

@@ -3,6 +3,7 @@ package commands
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"io/fs"
 	"os"
@@ -15,6 +16,7 @@ import (
 	pluginenginesli "github.com/slok/sloth/internal/pluginengine/sli"
 	pluginengineslo "github.com/slok/sloth/internal/pluginengine/slo"
 	storagefs "github.com/slok/sloth/internal/storage/fs"
+	"github.com/slok/sloth/pkg/common/model"
 )
 
 var (
@@ -98,4 +100,29 @@ func discoverSLOManifests(logger log.Logger, exclude, include *regexp.Regexp, pa
 	}
 
 	return paths, nil
+}
+
+func mapCmdPluginToModel(ctx context.Context, jsonPlugins []string) ([]model.PromSLOPluginMetadata, error) {
+	type jsonPlugin struct {
+		ID       string          `json:"id"`
+		Config   json.RawMessage `json:"config"`
+		Priority int             `json:"priority"`
+	}
+
+	plugins := []model.PromSLOPluginMetadata{}
+	for _, jp := range jsonPlugins {
+		p := &jsonPlugin{}
+		err := json.Unmarshal([]byte(jp), p)
+		if err != nil {
+			return nil, fmt.Errorf("could not load cmd plugin json config %q: %w", jp, err)
+		}
+
+		plugins = append(plugins, model.PromSLOPluginMetadata{
+			ID:       p.ID,
+			Config:   p.Config,
+			Priority: p.Priority,
+		})
+	}
+
+	return plugins, nil
 }

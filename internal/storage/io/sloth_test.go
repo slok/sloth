@@ -362,7 +362,7 @@ slos:
 						},
 					},
 					Plugins: model.SLOPlugins{
-						OverrideDefaultPlugins: true,
+						OverridePlugins: true,
 						Plugins: []model.PromSLOPluginMetadata{
 							{ID: "test_plugin1", Priority: 100, Config: json.RawMessage([]byte(`{"k1":"v1","k3":true}`))},
 						},

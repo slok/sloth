@@ -38,6 +38,7 @@ type SLOPluginGetter interface {
 type ServiceConfig struct {
 	AlertGenerator  AlertGenerator
 	DefaultPlugins  []SLOProcessor
+	ExtraPlugins    []model.PromSLOPluginMetadata
 	SLOPluginGetter SLOPluginGetter
 	Logger          log.Logger
 }
@@ -115,6 +116,7 @@ type Service struct {
 	alertGen        AlertGenerator
 	sloPluginGetter SLOPluginGetter
 	defaultPlugins  []SLOProcessor
+	extraPlugins    []model.PromSLOPluginMetadata
 	logger          log.Logger
 }
 
@@ -129,6 +131,7 @@ func NewService(config ServiceConfig) (*Service, error) {
 		alertGen:        config.AlertGenerator,
 		sloPluginGetter: config.SLOPluginGetter,
 		defaultPlugins:  config.DefaultPlugins,
+		extraPlugins:    config.ExtraPlugins,
 		logger:          config.Logger,
 	}, nil
 }
@@ -197,7 +200,11 @@ func (s Service) generateSLO(ctx context.Context, info model.Info, sloGroup mode
 	// That way we create the final processor list: pre-default + default + post-default.
 	preDefault := []SLOProcessor{}
 	postDefault := []SLOProcessor{}
-	sloPluginMetadata := append([]model.PromSLOPluginMetadata{}, slo.Plugins.Plugins...)
+	sloPluginMetadata := []model.PromSLOPluginMetadata{}
+	if !slo.Plugins.OverridePlugins {
+		sloPluginMetadata = append(sloPluginMetadata, s.extraPlugins...) // App level SLO plugins.
+	}
+	sloPluginMetadata = append(sloPluginMetadata, slo.Plugins.Plugins...) // SLO (group and/or individual) level plugins.
 	slices.SortStableFunc(sloPluginMetadata, func(a, b model.PromSLOPluginMetadata) int {
 		return cmp.Compare(a.Priority, b.Priority)
 	})
@@ -225,8 +232,8 @@ func (s Service) generateSLO(ctx context.Context, info model.Info, sloGroup mode
 
 	// Prepare processors.
 	sloProcessors := preDefault
-	// Add default plugins if we don't want to override the default ones.
-	if !slo.Plugins.OverrideDefaultPlugins {
+	// Add default plugins if we don't want to override the plugins.
+	if !slo.Plugins.OverridePlugins {
 		sloProcessors = append(sloProcessors, s.defaultPlugins...)
 	}
 	sloProcessors = append(sloProcessors, postDefault...)

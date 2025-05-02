@@ -497,14 +497,14 @@ func TestModelValidationSpecForPrometheusBackend(t *testing.T) {
 			expErrMessage: `invalid plugins: plugin ID is required`,
 		},
 
-		"SLO plugins should be declared if override default plugins is used.": {
+		"SLO plugins should be declared if override plugins is used.": {
 			slo: func() model.PromSLO {
 				s := getGoodSLO()
-				s.Plugins.OverrideDefaultPlugins = true
+				s.Plugins.OverridePlugins = true
 				s.Plugins.Plugins = []model.PromSLOPluginMetadata{}
 				return s
 			},
-			expErrMessage: `invalid plugins: override default plugins is set but no plugins are defined`,
+			expErrMessage: `invalid plugins: override plugins is set but no plugins are defined`,
 		},
 	}
 

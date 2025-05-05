@@ -27,4 +27,4 @@ This plugin is automatically executed as the first step in the default plugin ch
 ```yaml
 chain:
   - id: "sloth.dev/core/validate/v1"
-````
+```

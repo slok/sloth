@@ -130,8 +130,8 @@ github.com/pkg/errors v0.9.1/go.mod h1:bwawxfHBFNV+L2hUp1rHADufV3IMtnDRdf1r5NINE
 github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
 github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 h1:Jamvg5psRIccs7FGNTlIRMkT8wgtp5eCXdBlqhYGL6U=
 github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
-github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring v0.82.0 h1:Ee6zu4IR/WKYEcYHL4+gbC1A3GAzlHWxSjjMyRVBHYw=
-github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring v0.82.0/go.mod h1:hY5yoQsoIalncoxYqXXCDL5y7f+GGYYlW9Bi2IdU5KY=
+github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring v0.82.1 h1:7zaP53Udfw1flmENke9vKkW0+QyVpFgQn2qP3QqIQBM=
+github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring v0.82.1/go.mod h1:hY5yoQsoIalncoxYqXXCDL5y7f+GGYYlW9Bi2IdU5KY=
 github.com/prometheus-operator/prometheus-operator/pkg/client v0.82.0 h1:g/wIdMrRyQ1Fac8plyQMXzky8R9kOi243tQi3a2YkyU=
 github.com/prometheus-operator/prometheus-operator/pkg/client v0.82.0/go.mod h1:yEp9v3FEYT+iR2ujaXFVS8ugTIQk0Mx+wwXGXoF5az8=
 github.com/prometheus/client_golang v1.22.0 h1:rb93p9lokFEsctTys46VnV1kLCDpVZ0a/Y92Vm0Zc6Q=

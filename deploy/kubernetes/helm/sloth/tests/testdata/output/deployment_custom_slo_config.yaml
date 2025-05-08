@@ -38,6 +38,9 @@ spec:
         runAsGroup: 1000
         runAsNonRoot: true
         runAsUser: 100
+      nodeSelector:
+        k1: v1
+        k2: v2
       containers:
         - name: sloth
           image: slok/sloth-test:v1.42.42

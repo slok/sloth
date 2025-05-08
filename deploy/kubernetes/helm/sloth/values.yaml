@@ -71,6 +71,10 @@ customSloConfig:
 #     value: spot
 #     effect: NoSchedule
 
+# add deployment pod nodeSelector
+# nodeSelector:
+#   kubernetes.io/arch: "arm64"
+
 securityContext:
   pod: null
   #   fsGroup: 100

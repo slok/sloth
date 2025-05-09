@@ -31,6 +31,10 @@ spec:
       tolerations:
 {{ toYaml . | trim | indent 8 }}
       {{- end }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+{{ toYaml . | trim | indent 8 }}
+      {{- end }}
       containers:
         - name: sloth
           image: {{ coalesce .Values.global.imageRegistry .Values.image.registry }}/{{ .Values.image.repository }}:{{ .Values.image.tag }}

@@ -34,6 +34,11 @@ func customValues() msi {
 			},
 		},
 
+		"nodeSelector": msi{
+			"k1": "v1",
+			"k2": "v2",
+		},
+
 		"commonPlugins": msi{
 			"enabled": true,
 			"gitRepo": msi{

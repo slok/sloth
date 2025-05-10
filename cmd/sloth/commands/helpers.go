@@ -11,8 +11,13 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/slok/sloth/internal/app/generate"
 	"github.com/slok/sloth/internal/log"
 	"github.com/slok/sloth/internal/plugin"
+	plugincorealertrulesv1 "github.com/slok/sloth/internal/plugin/slo/core/alert_rules_v1"
+	plugincoremetadatarulesv1 "github.com/slok/sloth/internal/plugin/slo/core/metadata_rules_v1"
+	plugincoreslirulesv1 "github.com/slok/sloth/internal/plugin/slo/core/sli_rules_v1"
+	plugincorevalidatev1 "github.com/slok/sloth/internal/plugin/slo/core/validate_v1"
 	pluginenginesli "github.com/slok/sloth/internal/pluginengine/sli"
 	pluginengineslo "github.com/slok/sloth/internal/pluginengine/slo"
 	storagefs "github.com/slok/sloth/internal/storage/fs"
@@ -125,4 +130,60 @@ func mapCmdPluginToModel(ctx context.Context, jsonPlugins []string) ([]model.Pro
 	}
 
 	return plugins, nil
+}
+
+func createDefaultSLOPlugins(logger log.Logger, disableRecordings, disableAlerts bool) ([]generate.SLOProcessor, error) {
+	var sliRuleGen generate.SLOProcessor = generate.NoopPlugin
+	var metaRuleGen generate.SLOProcessor = generate.NoopPlugin
+	if !disableRecordings {
+		sliPlugin, err := generate.NewSLOProcessorFromSLOPluginV1(
+			plugincoreslirulesv1.NewPlugin,
+			logger.WithValues(log.Kv{"plugin": plugincoreslirulesv1.PluginID}),
+			plugincoreslirulesv1.PluginConfig{},
+		)
+		if err != nil {
+			return nil, fmt.Errorf("could not create SLI rules plugin: %w", err)
+		}
+		sliRuleGen = sliPlugin
+
+		metadataPlugin, err := generate.NewSLOProcessorFromSLOPluginV1(
+			plugincoremetadatarulesv1.NewPlugin,
+			logger.WithValues(log.Kv{"plugin": plugincoremetadatarulesv1.PluginID}),
+			nil,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("could not create metadata rules plugin: %w", err)
+		}
+		metaRuleGen = metadataPlugin
+	}
+
+	validatePlugin, err := generate.NewSLOProcessorFromSLOPluginV1(
+		plugincorevalidatev1.NewPlugin,
+		logger.WithValues(log.Kv{"plugin": plugincorevalidatev1.PluginID}),
+		nil,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("could not create SLO validate plugin: %w", err)
+	}
+
+	// Disable alert rules if required.
+	var alertRuleGen generate.SLOProcessor = generate.NoopPlugin
+	if !disableAlerts {
+		plugin, err := generate.NewSLOProcessorFromSLOPluginV1(
+			plugincorealertrulesv1.NewPlugin,
+			logger.WithValues(log.Kv{"plugin": plugincorealertrulesv1.PluginID}),
+			nil,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("could not create alert rules plugin: %w", err)
+		}
+		alertRuleGen = plugin
+	}
+
+	return []generate.SLOProcessor{
+		validatePlugin,
+		sliRuleGen,
+		metaRuleGen,
+		alertRuleGen,
+	}, nil
 }

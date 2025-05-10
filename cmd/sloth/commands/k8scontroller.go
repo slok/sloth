@@ -33,10 +33,6 @@ import (
 	"github.com/slok/sloth/internal/app/generate"
 	"github.com/slok/sloth/internal/app/kubecontroller"
 	"github.com/slok/sloth/internal/log"
-	plugincorealertrulesv1 "github.com/slok/sloth/internal/plugin/slo/core/alert_rules_v1"
-	plugincoremetadatarulesv1 "github.com/slok/sloth/internal/plugin/slo/core/metadata_rules_v1"
-	plugincoreslirulesv1 "github.com/slok/sloth/internal/plugin/slo/core/sli_rules_v1"
-	plugincorevalidatev1 "github.com/slok/sloth/internal/plugin/slo/core/validate_v1"
 	"github.com/slok/sloth/internal/storage"
 	storageio "github.com/slok/sloth/internal/storage/io"
 	storagek8s "github.com/slok/sloth/internal/storage/k8s"
@@ -56,23 +52,24 @@ const (
 )
 
 type kubeControllerCommand struct {
-	extraLabels          map[string]string
-	workers              int
-	kubeConfig           string
-	kubeContext          string
-	resyncInterval       time.Duration
-	namespace            string
-	labelSelector        string
-	kubeLocal            bool
-	runMode              string
-	metricsPath          string
-	hotReloadPath        string
-	hotReloadAddr        string
-	metricsListenAddr    string
-	pluginsPaths         []string
-	sloPeriodWindowsPath string
-	sloPeriod            string
-	sloPlugins           []string
+	extraLabels              map[string]string
+	workers                  int
+	kubeConfig               string
+	kubeContext              string
+	resyncInterval           time.Duration
+	namespace                string
+	labelSelector            string
+	kubeLocal                bool
+	runMode                  string
+	metricsPath              string
+	hotReloadPath            string
+	hotReloadAddr            string
+	metricsListenAddr        string
+	pluginsPaths             []string
+	sloPeriodWindowsPath     string
+	sloPeriod                string
+	sloPlugins               []string
+	disableDefaultSLOPlugins bool
 }
 
 // NewKubeControllerCommand returns the Kubernetes controller command.
@@ -99,7 +96,8 @@ func NewKubeControllerCommand(app *kingpin.Application) Command {
 	cmd.Flag("plugins-path", "The path to SLI and SLO plugins (can be repeated).").Short('p').StringsVar(&c.pluginsPaths)
 	cmd.Flag("slo-period-windows-path", "The directory path to custom SLO period windows catalog (replaces default ones).").StringVar(&c.sloPeriodWindowsPath)
 	cmd.Flag("default-slo-period", "The default SLO period windows to be used for the SLOs.").Default("30d").StringVar(&c.sloPeriod)
-	cmd.Flag("slo-plugins", `SLO plugins chain declaration in JSON format '{"id": "foo","priority": 0,"config": "{}"}' .`).Short('s').StringsVar(&c.sloPlugins)
+	cmd.Flag("slo-plugins", `SLO plugins chain declaration in JSON format '{"id": "foo","priority": 0,"config": "{}"}' (Can be repeated).`).Short('s').StringsVar(&c.sloPlugins)
+	cmd.Flag("disable-default-slo-plugins", `Disables the default SLO plugins, normally used along with custom SLO plugins to fully customize Sloth behavior`).BoolVar(&c.disableDefaultSLOPlugins)
 
 	return c
 }
@@ -308,51 +306,18 @@ func (k kubeControllerCommand) Run(ctx context.Context, config RootConfig) error
 		ctx, cancel := context.WithCancel(ctx)
 		defer cancel()
 
-		sliRuleGen, err := generate.NewSLOProcessorFromSLOPluginV1(
-			plugincoreslirulesv1.NewPlugin,
-			logger.WithValues(log.Kv{"plugin": plugincoreslirulesv1.PluginID}),
-			plugincoreslirulesv1.PluginConfig{},
-		)
-		if err != nil {
-			return fmt.Errorf("could not create SLI rules plugin: %w", err)
-		}
-
-		metaRuleGen, err := generate.NewSLOProcessorFromSLOPluginV1(
-			plugincoremetadatarulesv1.NewPlugin,
-			logger.WithValues(log.Kv{"plugin": plugincoremetadatarulesv1.PluginID}),
-			nil,
-		)
-		if err != nil {
-			return fmt.Errorf("could not create metadata rules plugin: %w", err)
-		}
-
-		alertRuleGen, err := generate.NewSLOProcessorFromSLOPluginV1(
-			plugincorealertrulesv1.NewPlugin,
-			logger.WithValues(log.Kv{"plugin": plugincorealertrulesv1.PluginID}),
-			nil,
-		)
-		if err != nil {
-			return fmt.Errorf("could not create alert rules plugin: %w", err)
-		}
-
-		validatePlugin, err := generate.NewSLOProcessorFromSLOPluginV1(
-			plugincorevalidatev1.NewPlugin,
-			logger.WithValues(log.Kv{"plugin": plugincorevalidatev1.PluginID}),
-			nil,
-		)
-		if err != nil {
-			return fmt.Errorf("could not create SLO validate plugin: %w", err)
+		defSLOPlugins := []generate.SLOProcessor{}
+		if !k.disableDefaultSLOPlugins {
+			defSLOPlugins, err = createDefaultSLOPlugins(logger, false, false)
+			if err != nil {
+				return fmt.Errorf("could not create default SLO plugins: %w", err)
+			}
 		}
 
 		// Create the generate app service (the one that the CLIs use).
 		generator, err := generate.NewService(generate.ServiceConfig{
-			AlertGenerator: alert.NewGenerator(windowsRepo),
-			DefaultPlugins: []generate.SLOProcessor{
-				validatePlugin,
-				sliRuleGen,
-				metaRuleGen,
-				alertRuleGen,
-			},
+			AlertGenerator:  alert.NewGenerator(windowsRepo),
+			DefaultPlugins:  defSLOPlugins,
 			SLOPluginGetter: pluginsRepo,
 			ExtraPlugins:    cmdLevelSLOPlugins,
 			Logger:          generatorLogger{Logger: logger},

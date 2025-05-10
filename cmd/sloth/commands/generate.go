@@ -20,10 +20,6 @@ import (
 	"github.com/slok/sloth/internal/app/generate"
 	"github.com/slok/sloth/internal/info"
 	"github.com/slok/sloth/internal/log"
-	plugincorealertrulesv1 "github.com/slok/sloth/internal/plugin/slo/core/alert_rules_v1"
-	plugincoremetadatarulesv1 "github.com/slok/sloth/internal/plugin/slo/core/metadata_rules_v1"
-	plugincoreslirulesv1 "github.com/slok/sloth/internal/plugin/slo/core/sli_rules_v1"
-	plugincorevalidatev1 "github.com/slok/sloth/internal/plugin/slo/core/validate_v1"
 	"github.com/slok/sloth/internal/storage"
 	storagefs "github.com/slok/sloth/internal/storage/fs"
 	storageio "github.com/slok/sloth/internal/storage/io"
@@ -33,17 +29,18 @@ import (
 )
 
 type generateCommand struct {
-	slosInput            string
-	slosOut              string
-	slosExcludeRegex     string
-	slosIncludeRegex     string
-	disableRecordings    bool
-	disableAlerts        bool
-	extraLabels          map[string]string
-	pluginsPaths         []string
-	sloPeriodWindowsPath string
-	sloPeriod            string
-	sloPlugins           []string
+	slosInput                string
+	slosOut                  string
+	slosExcludeRegex         string
+	slosIncludeRegex         string
+	disableRecordings        bool
+	disableAlerts            bool
+	extraLabels              map[string]string
+	pluginsPaths             []string
+	sloPeriodWindowsPath     string
+	sloPeriod                string
+	sloPlugins               []string
+	disableDefaultSLOPlugins bool
 }
 
 // NewGenerateCommand returns the generate command.
@@ -62,6 +59,7 @@ func NewGenerateCommand(app *kingpin.Application) Command {
 	cmd.Flag("slo-period-windows-path", "The directory path to custom SLO period windows catalog (replaces default ones).").StringVar(&c.sloPeriodWindowsPath)
 	cmd.Flag("default-slo-period", "The default SLO period windows to be used for the SLOs.").Default("30d").StringVar(&c.sloPeriod)
 	cmd.Flag("slo-plugins", `SLO plugins chain declaration in JSON format '{"id": "foo","priority": 0,"config": "{}"}' (Can be repeated).`).Short('s').StringsVar(&c.sloPlugins)
+	cmd.Flag("disable-default-slo-plugins", `Disables the default SLO plugins, normally used along with custom SLO plugins to fully customize Sloth behavior`).BoolVar(&c.disableDefaultSLOPlugins)
 
 	return c
 }
@@ -250,13 +248,14 @@ func (g generateCommand) Run(ctx context.Context, config RootConfig) error {
 	}
 
 	gen := generator{
-		logger:            logger,
-		windowsRepo:       windowsRepo,
-		disableRecordings: g.disableRecordings,
-		disableAlerts:     g.disableAlerts,
-		extraLabels:       g.extraLabels,
-		sloPluginRepo:     pluginsRepo,
-		extraSLOPlugins:   cmdLevelSLOPlugins,
+		logger:                   logger,
+		windowsRepo:              windowsRepo,
+		disableRecordings:        g.disableRecordings,
+		disableAlerts:            g.disableAlerts,
+		extraLabels:              g.extraLabels,
+		sloPluginRepo:            pluginsRepo,
+		extraSLOPlugins:          cmdLevelSLOPlugins,
+		disableDefaultSLOPlugins: g.disableDefaultSLOPlugins,
 	}
 
 	for _, genTarget := range genTargets {
@@ -311,13 +310,14 @@ type generateTarget struct {
 }
 
 type generator struct {
-	logger            log.Logger
-	windowsRepo       alert.WindowsRepo
-	disableRecordings bool
-	disableAlerts     bool
-	extraLabels       map[string]string
-	sloPluginRepo     *storagefs.FilePluginRepo
-	extraSLOPlugins   []model.PromSLOPluginMetadata
+	logger                   log.Logger
+	windowsRepo              alert.WindowsRepo
+	disableRecordings        bool
+	disableAlerts            bool
+	extraLabels              map[string]string
+	sloPluginRepo            *storagefs.FilePluginRepo
+	extraSLOPlugins          []model.PromSLOPluginMetadata
+	disableDefaultSLOPlugins bool
 }
 
 // GeneratePrometheus generates the SLOs based on a raw regular Prometheus spec format input and outs a Prometheus raw yaml.
@@ -425,63 +425,20 @@ func (g generator) GenerateOpenSLO(ctx context.Context, slos model.PromSLOGroup,
 
 // generate is the main generator logic that all the spec types and storers share. Mainly has the logic of the generate app service.
 func (g generator) generateRules(ctx context.Context, info model.Info, slos model.PromSLOGroup) (*generate.Response, error) {
-	// Disable recording rules if required.
-	var sliRuleGen generate.SLOProcessor = generate.NoopPlugin
-	var metaRuleGen generate.SLOProcessor = generate.NoopPlugin
-	if !g.disableRecordings {
-		sliPlugin, err := generate.NewSLOProcessorFromSLOPluginV1(
-			plugincoreslirulesv1.NewPlugin,
-			g.logger.WithValues(log.Kv{"plugin": plugincoreslirulesv1.PluginID}),
-			plugincoreslirulesv1.PluginConfig{},
-		)
+	var defSLOPlugins = []generate.SLOProcessor{}
+	var err error
+	if !g.disableDefaultSLOPlugins {
+		// Load default slo plugins.
+		defSLOPlugins, err = createDefaultSLOPlugins(g.logger, g.disableRecordings, g.disableAlerts)
 		if err != nil {
-			return nil, fmt.Errorf("could not create SLI rules plugin: %w", err)
+			return nil, fmt.Errorf("could not create default slo plugins: %w", err)
 		}
-		sliRuleGen = sliPlugin
-
-		metadataPlugin, err := generate.NewSLOProcessorFromSLOPluginV1(
-			plugincoremetadatarulesv1.NewPlugin,
-			g.logger.WithValues(log.Kv{"plugin": plugincoremetadatarulesv1.PluginID}),
-			nil,
-		)
-		if err != nil {
-			return nil, fmt.Errorf("could not create metadata rules plugin: %w", err)
-		}
-		metaRuleGen = metadataPlugin
-	}
-
-	validatePlugin, err := generate.NewSLOProcessorFromSLOPluginV1(
-		plugincorevalidatev1.NewPlugin,
-		g.logger.WithValues(log.Kv{"plugin": plugincorevalidatev1.PluginID}),
-		nil,
-	)
-	if err != nil {
-		return nil, fmt.Errorf("could not create SLO validate plugin: %w", err)
-	}
-
-	// Disable alert rules if required.
-	var alertRuleGen generate.SLOProcessor = generate.NoopPlugin
-	if !g.disableAlerts {
-		plugin, err := generate.NewSLOProcessorFromSLOPluginV1(
-			plugincorealertrulesv1.NewPlugin,
-			g.logger.WithValues(log.Kv{"plugin": plugincorealertrulesv1.PluginID}),
-			nil,
-		)
-		if err != nil {
-			return nil, fmt.Errorf("could not create alert rules plugin: %w", err)
-		}
-		alertRuleGen = plugin
 	}
 
 	// Generate.
 	controller, err := generate.NewService(generate.ServiceConfig{
-		AlertGenerator: alert.NewGenerator(g.windowsRepo),
-		DefaultPlugins: []generate.SLOProcessor{
-			validatePlugin,
-			sliRuleGen,
-			metaRuleGen,
-			alertRuleGen,
-		},
+		AlertGenerator:  alert.NewGenerator(g.windowsRepo),
+		DefaultPlugins:  defSLOPlugins,
 		SLOPluginGetter: g.sloPluginRepo,
 		ExtraPlugins:    g.extraSLOPlugins,
 		Logger:          g.logger,

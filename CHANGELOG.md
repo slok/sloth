@@ -25,6 +25,8 @@
 - SLO plugins can access env vars and use OS/exec by default.
 - Allow `github.com/caarlos0/env/v11` module in SLO plugins.
 - Add `--slo-plugins` and `-s` flag (`generate` and `k8s controller`) to be able to declare SLO plugins at cmd level, these plugins will be applied to all SLOs.
+- Add `--disable-default-slo-plugins` flag (`generate` and `k8s controller`) to be able to disable default Sloth SLO plugins.
+- Helm chart supports node selector.
 
 ## [v0.12.0] - 2025-03-27
 

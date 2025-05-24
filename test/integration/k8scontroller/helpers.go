@@ -73,7 +73,7 @@ func RunSlothController(ctx context.Context, config Config, ns string, cmdArgs s
 		fmt.Sprintf("SLOTH_KUBE_LOCAL=%t", true),
 	}
 
-	return testutils.RunSloth(ctx, env, config.Binary, fmt.Sprintf("kubernetes-controller %s", cmdArgs), true)
+	return testutils.RunSloth(ctx, env, config.Binary, fmt.Sprintf("kubernetes-controller %s", cmdArgs), nil, true)
 }
 
 type KubeClients struct {

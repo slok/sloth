@@ -47,7 +47,7 @@ type generateCommand struct {
 func NewGenerateCommand(app *kingpin.Application) Command {
 	c := &generateCommand{extraLabels: map[string]string{}}
 	cmd := app.Command("generate", "Generates Prometheus SLOs.")
-	cmd.Flag("input", "SLO spec input file path or directory (if directory is used, slos will be discovered recursively and out must be a directory).").Short('i').StringVar(&c.slosInput)
+	cmd.Flag("input", "SLO spec input file path or directory (if directory is used, slos will be discovered recursively and out must be a directory). If `-` it will use stdin.").Short('i').StringVar(&c.slosInput)
 	cmd.Flag("out", "Generated rules output file path or directory. If `-` it will use stdout (if input is a directory this must be a directory).").Default("-").Short('o').StringVar(&c.slosOut)
 	cmd.Flag("fs-exclude", "Filter regex to ignore matched discovered SLO file paths (used with directory based input/output).").Short('e').StringVar(&c.slosExcludeRegex)
 	cmd.Flag("fs-include", "Filter regex to include matched discovered SLO file paths, everything else will be ignored. Exclude has preference (used with directory based input/output).").Short('n').StringVar(&c.slosIncludeRegex)
@@ -68,8 +68,18 @@ func (g generateCommand) Name() string { return "generate" }
 func (g generateCommand) Run(ctx context.Context, config RootConfig) error {
 	logger := config.Logger.WithValues(log.Kv{"window": g.sloPeriod})
 
+	var input = os.Stdin
+	if g.slosInput != "-" {
+		inFile, err := os.Open(g.slosInput)
+		if err != nil {
+			return fmt.Errorf("could not open SLOs spec file: %w", err)
+		}
+		defer inFile.Close()
+		input = inFile
+	}
+
 	// Check input and output.
-	inputInfo, err := os.Stat(g.slosInput)
+	inputInfo, err := input.Stat()
 	if err != nil {
 		return err
 	}
@@ -147,16 +157,9 @@ func (g generateCommand) Run(ctx context.Context, config RootConfig) error {
 	// Get SLO targets.
 	genTargets := []generateTarget{}
 
-	// FIle based input/outputs.
+	// File based input/outputs.
 	if !inputInfo.IsDir() {
-		// Get SLO spec data.
-		f, err := os.Open(g.slosInput)
-		if err != nil {
-			return fmt.Errorf("could not open SLOs spec file: %w", err)
-		}
-		defer f.Close()
-
-		slxData, err := io.ReadAll(f)
+		slxData, err := io.ReadAll(input)
 		if err != nil {
 			return fmt.Errorf("could not read SLOs spec file data: %w", err)
 		}
@@ -171,7 +174,7 @@ func (g generateCommand) Run(ctx context.Context, config RootConfig) error {
 			if err != nil {
 				return fmt.Errorf("could not create out file: %w", err)
 			}
-			defer f.Close()
+			defer outFile.Close()
 			out = outFile
 		}
 		for _, s := range splittedSLOsData {

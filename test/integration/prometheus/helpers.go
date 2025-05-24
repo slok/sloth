@@ -3,6 +3,7 @@ package prometheus
 import (
 	"context"
 	"fmt"
+	"io"
 	"os"
 	"os/exec"
 	"testing"
@@ -46,12 +47,12 @@ func NewConfig(t *testing.T) Config {
 	return c
 }
 
-func RunSlothGenerate(ctx context.Context, config Config, cmdArgs string) (stdout, stderr []byte, err error) {
+func RunSlothGenerate(ctx context.Context, config Config, cmdArgs string, input io.Reader) (stdout, stderr []byte, err error) {
 	env := []string{
 		fmt.Sprintf("SLOTH_PLUGINS_PATH=%s", "./plugins"),
 	}
 
-	return testutils.RunSloth(ctx, env, config.Binary, fmt.Sprintf("generate %s", cmdArgs), true)
+	return testutils.RunSloth(ctx, env, config.Binary, fmt.Sprintf("generate %s", cmdArgs), input, true)
 }
 
 func RunSlothValidate(ctx context.Context, config Config, cmdArgs string) (stdout, stderr []byte, err error) {
@@ -59,5 +60,5 @@ func RunSlothValidate(ctx context.Context, config Config, cmdArgs string) (stdou
 		fmt.Sprintf("SLOTH_PLUGINS_PATH=%s", "./plugins"),
 	}
 
-	return testutils.RunSloth(ctx, env, config.Binary, fmt.Sprintf("validate %s", cmdArgs), true)
+	return testutils.RunSloth(ctx, env, config.Binary, fmt.Sprintf("validate %s", cmdArgs), nil, true)
 }

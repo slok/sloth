@@ -93,7 +93,20 @@ spec:
             {{- toYaml . | nindent 12 }}
           {{- end }}
           resources:
-          {{- toYaml .Values.resources | nindent 12 }}
+            limits:
+            {{- with .Values.resources.limits.cpu }}
+              cpu: {{ . }}
+            {{- end }}
+            {{- with .Values.resources.limits.memory }}
+              memory: {{ . }}
+            {{- end }}
+            requests:
+            {{- with .Values.resources.requests.cpu }}
+              cpu: {{ . }}
+            {{- end }}
+            {{- with .Values.resources.requests.memory }}
+              memory: {{ . }}
+            {{- end }}
         {{- if .Values.commonPlugins.enabled }}
         - name: git-sync-plugins
           image: {{ .Values.commonPlugins.image.repository }}:{{ .Values.commonPlugins.image.tag }}
@@ -111,7 +124,20 @@ spec:
             {{- toYaml . | nindent 12 }}
           {{- end }}
           resources:
-          {{- toYaml .Values.commonPlugins.gitRepo.resources | nindent 12 }}
+            limits:
+            {{- with .Values.commonPlugins.gitRepo.resources.limits.cpu }}
+              cpu: {{ . }}
+            {{- end }}
+            {{- with .Values.commonPlugins.gitRepo.resources.limits.memory }}
+              memory: {{ . }}
+            {{- end }}
+            requests:
+            {{- with .Values.commonPlugins.gitRepo.resources.requests.cpu }}
+              cpu: {{ . }}
+            {{- end }}
+            {{- with .Values.commonPlugins.gitRepo.resources.requests.memory }}
+              memory: {{ . }}
+            {{- end }}
         {{- end }}
       {{- if .Values.imagePullSecrets }}
       imagePullSecrets:

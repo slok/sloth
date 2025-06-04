@@ -1,0 +1,63 @@
+---
+# Source: sloth/templates/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sloth-test
+  namespace: custom
+  labels:
+    helm.sh/chart: sloth-<version>
+    app.kubernetes.io/managed-by: Helm
+    app: sloth
+    app.kubernetes.io/name: sloth
+    app.kubernetes.io/instance: test
+    label-from: test
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: sloth
+      app.kubernetes.io/name: sloth
+      app.kubernetes.io/instance: test
+  template:
+    metadata:
+      labels:
+        helm.sh/chart: sloth-<version>
+        app.kubernetes.io/managed-by: Helm
+        app: sloth
+        app.kubernetes.io/name: sloth
+        app.kubernetes.io/instance: test
+        label-from: test
+      annotations:
+        kubectl.kubernetes.io/default-container: sloth
+    spec:
+      serviceAccountName: sloth-test
+      securityContext:
+        fsGroup: 100
+        runAsGroup: 1000
+        runAsNonRoot: true
+        runAsUser: 100
+      nodeSelector:
+        k1: v1
+        k2: v2
+      containers:
+        - name: sloth
+          image: slok/sloth-test:v1.42.42
+          args:
+            - kubernetes-controller
+            - --resync-interval=17m
+            - --workers=99
+            - --namespace=somens
+            - --label-selector=x=y,z!=y
+            - --extra-labels=k1=v1
+            - --extra-labels=k2=v2
+            - --disable-optimized-rules
+            - --logger=default
+          securityContext:
+            allowPrivilegeEscalation: false
+          resources:
+            limits:
+              memory: 150Mi
+            requests:
+              cpu: 5m
+              memory: 75Mi

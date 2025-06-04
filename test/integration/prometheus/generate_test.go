@@ -3,6 +3,8 @@ package prometheus_test
 import (
 	"bytes"
 	"context"
+	_ "embed"
+	"io"
 	"os"
 	"testing"
 	"text/template"
@@ -13,6 +15,11 @@ import (
 	"github.com/slok/sloth/test/integration/prometheus"
 	"github.com/slok/sloth/test/integration/testutils"
 )
+
+// pull the bytes of this file in so we can easily read from it
+//
+//go:embed testdata/in-base.yaml
+var inBase []byte
 
 type expecteOutLoader struct {
 	version string
@@ -44,15 +51,26 @@ func TestPrometheusGenerate(t *testing.T) {
 
 	expectLoader := expecteOutLoader{version: version}
 
+	if len(inBase) == 0 {
+		t.Fatal("testdata/in-base.yaml did not get embedded correctly: []byte is empty")
+	}
+
 	// Tests.
 	tests := map[string]struct {
 		genCmdArgs string
 		expOut     string
 		expErr     bool
+		input      io.Reader
 	}{
 		"Generate should generate the correct rules for all the SLOs.": {
 			genCmdArgs: "--input ./testdata/in-base.yaml",
 			expOut:     expectLoader.mustLoadExp("./testdata/out-base.yaml.tpl"),
+		},
+
+		"Generate with --input=- should read from os.Stdin.": {
+			genCmdArgs: "--input=-",
+			expOut:     expectLoader.mustLoadExp("./testdata/out-base.yaml.tpl"),
+			input:      bytes.NewReader(inBase),
 		},
 
 		"Generate should generate the correct rules for all the SLOs (Kubernetes).": {
@@ -128,7 +146,7 @@ func TestPrometheusGenerate(t *testing.T) {
 			// Run with context to stop on test end.
 			ctx, cancel := context.WithCancel(context.Background())
 			defer cancel()
-			out, _, err := prometheus.RunSlothGenerate(ctx, config, test.genCmdArgs)
+			out, _, err := prometheus.RunSlothGenerate(ctx, config, test.genCmdArgs, test.input)
 
 			if test.expErr {
 				assert.Error(err)

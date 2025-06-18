@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"io"
 	"os"
 	"os/exec"
 	"regexp"
@@ -13,7 +14,7 @@ import (
 var multiSpaceRegex = regexp.MustCompile(" +")
 
 // RunSloth executes sloth command.
-func RunSloth(ctx context.Context, env []string, cmdApp, cmdArgs string, nolog bool) (stdout, stderr []byte, err error) {
+func RunSloth(ctx context.Context, env []string, cmdApp, cmdArgs string, input io.Reader, nolog bool) (stdout, stderr []byte, err error) {
 	// Sanitize command.
 	cmdArgs = strings.TrimSpace(cmdArgs)
 	cmdArgs = multiSpaceRegex.ReplaceAllString(cmdArgs, " ")
@@ -26,6 +27,10 @@ func RunSloth(ctx context.Context, env []string, cmdApp, cmdArgs string, nolog b
 	cmd := exec.CommandContext(ctx, cmdApp, args...)
 	cmd.Stdout = &outData
 	cmd.Stderr = &errData
+
+	if input != nil {
+		cmd.Stdin = input
+	}
 
 	// Set env.
 	newEnv := append([]string{}, env...)
@@ -45,7 +50,7 @@ func RunSloth(ctx context.Context, env []string, cmdApp, cmdArgs string, nolog b
 }
 
 func SlothVersion(ctx context.Context, slothBinary string) (string, error) {
-	stdout, stderr, err := RunSloth(ctx, []string{}, slothBinary, "version", false)
+	stdout, stderr, err := RunSloth(ctx, []string{}, slothBinary, "version", nil, false)
 	if err != nil {
 		return "", fmt.Errorf("could not obtain versions: %s: %w", stderr, err)
 	}

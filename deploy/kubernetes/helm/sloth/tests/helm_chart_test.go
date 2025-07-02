@@ -109,6 +109,18 @@ func TestChartDeployment(t *testing.T) {
 			expTplFile: "testdata/output/deployment_custom_no_extras.yaml",
 		},
 
+		
+		"A chart without cpu limits that should render correclty and don't show cpu limit.": {
+			name:      "test",
+			namespace: "custom",
+			values: func() map[string]interface{} {
+				v := customValues()
+				v["resources"].(msi)["limits"].(msi)["cpu"] = nil
+				return v
+			},
+			expTplFile: "testdata/output/deployment_custom_no_cpu_limit.yaml",
+		},
+
 		"A chart with custom slo config should render correctly.": {
 			name:      "test",
 			namespace: "custom",

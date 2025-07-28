@@ -224,15 +224,15 @@ spec:
           burn rate is too fast.
       expr: |
         (
-            max(slo:sli_error:ratio_rate5m{sloth_id="home-wifi-good-wifi-client-satisfaction", sloth_service="home-wifi", sloth_slo="good-wifi-client-satisfaction"} > (14.4 * 0.05)) without (sloth_window)
+            max(slo:sli_error:ratio_rate5m{sloth_id="home-wifi-good-wifi-client-satisfaction", sloth_service="home-wifi", sloth_slo="good-wifi-client-satisfaction"} > (14.4 * 0.05)) by (owner, sloth_id, sloth_service, sloth_slo, tier)
             and
-            max(slo:sli_error:ratio_rate1h{sloth_id="home-wifi-good-wifi-client-satisfaction", sloth_service="home-wifi", sloth_slo="good-wifi-client-satisfaction"} > (14.4 * 0.05)) without (sloth_window)
+            max(slo:sli_error:ratio_rate1h{sloth_id="home-wifi-good-wifi-client-satisfaction", sloth_service="home-wifi", sloth_slo="good-wifi-client-satisfaction"} > (14.4 * 0.05)) by (owner, sloth_id, sloth_service, sloth_slo, tier)
         )
         or
         (
-            max(slo:sli_error:ratio_rate30m{sloth_id="home-wifi-good-wifi-client-satisfaction", sloth_service="home-wifi", sloth_slo="good-wifi-client-satisfaction"} > (6 * 0.05)) without (sloth_window)
+            max(slo:sli_error:ratio_rate30m{sloth_id="home-wifi-good-wifi-client-satisfaction", sloth_service="home-wifi", sloth_slo="good-wifi-client-satisfaction"} > (6 * 0.05)) by (owner, sloth_id, sloth_service, sloth_slo, tier)
             and
-            max(slo:sli_error:ratio_rate6h{sloth_id="home-wifi-good-wifi-client-satisfaction", sloth_service="home-wifi", sloth_slo="good-wifi-client-satisfaction"} > (6 * 0.05)) without (sloth_window)
+            max(slo:sli_error:ratio_rate6h{sloth_id="home-wifi-good-wifi-client-satisfaction", sloth_service="home-wifi", sloth_slo="good-wifi-client-satisfaction"} > (6 * 0.05)) by (owner, sloth_id, sloth_service, sloth_slo, tier)
         )
       labels:
         severity: home
@@ -245,15 +245,15 @@ spec:
           budget burn rate is too fast.
       expr: |
         (
-            max(slo:sli_error:ratio_rate2h{sloth_id="home-wifi-good-wifi-client-satisfaction", sloth_service="home-wifi", sloth_slo="good-wifi-client-satisfaction"} > (3 * 0.05)) without (sloth_window)
+            max(slo:sli_error:ratio_rate2h{sloth_id="home-wifi-good-wifi-client-satisfaction", sloth_service="home-wifi", sloth_slo="good-wifi-client-satisfaction"} > (3 * 0.05)) by (owner, sloth_id, sloth_service, sloth_slo, tier)
             and
-            max(slo:sli_error:ratio_rate1d{sloth_id="home-wifi-good-wifi-client-satisfaction", sloth_service="home-wifi", sloth_slo="good-wifi-client-satisfaction"} > (3 * 0.05)) without (sloth_window)
+            max(slo:sli_error:ratio_rate1d{sloth_id="home-wifi-good-wifi-client-satisfaction", sloth_service="home-wifi", sloth_slo="good-wifi-client-satisfaction"} > (3 * 0.05)) by (owner, sloth_id, sloth_service, sloth_slo, tier)
         )
         or
         (
-            max(slo:sli_error:ratio_rate6h{sloth_id="home-wifi-good-wifi-client-satisfaction", sloth_service="home-wifi", sloth_slo="good-wifi-client-satisfaction"} > (1 * 0.05)) without (sloth_window)
+            max(slo:sli_error:ratio_rate6h{sloth_id="home-wifi-good-wifi-client-satisfaction", sloth_service="home-wifi", sloth_slo="good-wifi-client-satisfaction"} > (1 * 0.05)) by (owner, sloth_id, sloth_service, sloth_slo, tier)
             and
-            max(slo:sli_error:ratio_rate3d{sloth_id="home-wifi-good-wifi-client-satisfaction", sloth_service="home-wifi", sloth_slo="good-wifi-client-satisfaction"} > (1 * 0.05)) without (sloth_window)
+            max(slo:sli_error:ratio_rate3d{sloth_id="home-wifi-good-wifi-client-satisfaction", sloth_service="home-wifi", sloth_slo="good-wifi-client-satisfaction"} > (1 * 0.05)) by (owner, sloth_id, sloth_service, sloth_slo, tier)
         )
       labels:
         severity: warning
@@ -465,15 +465,15 @@ spec:
           burn rate is too fast.
       expr: |
         (
-            max(slo:sli_error:ratio_rate5m{sloth_id="home-wifi-risk-wifi-client-satisfaction", sloth_service="home-wifi", sloth_slo="risk-wifi-client-satisfaction"} > (14.4 * 0.0009999999999999432)) without (sloth_window)
+            max(slo:sli_error:ratio_rate5m{sloth_id="home-wifi-risk-wifi-client-satisfaction", sloth_service="home-wifi", sloth_slo="risk-wifi-client-satisfaction"} > (14.4 * 0.0009999999999999432)) by (owner, sloth_id, sloth_service, sloth_slo, tier)
             and
-            max(slo:sli_error:ratio_rate1h{sloth_id="home-wifi-risk-wifi-client-satisfaction", sloth_service="home-wifi", sloth_slo="risk-wifi-client-satisfaction"} > (14.4 * 0.0009999999999999432)) without (sloth_window)
+            max(slo:sli_error:ratio_rate1h{sloth_id="home-wifi-risk-wifi-client-satisfaction", sloth_service="home-wifi", sloth_slo="risk-wifi-client-satisfaction"} > (14.4 * 0.0009999999999999432)) by (owner, sloth_id, sloth_service, sloth_slo, tier)
         )
         or
         (
-            max(slo:sli_error:ratio_rate30m{sloth_id="home-wifi-risk-wifi-client-satisfaction", sloth_service="home-wifi", sloth_slo="risk-wifi-client-satisfaction"} > (6 * 0.0009999999999999432)) without (sloth_window)
+            max(slo:sli_error:ratio_rate30m{sloth_id="home-wifi-risk-wifi-client-satisfaction", sloth_service="home-wifi", sloth_slo="risk-wifi-client-satisfaction"} > (6 * 0.0009999999999999432)) by (owner, sloth_id, sloth_service, sloth_slo, tier)
             and
-            max(slo:sli_error:ratio_rate6h{sloth_id="home-wifi-risk-wifi-client-satisfaction", sloth_service="home-wifi", sloth_slo="risk-wifi-client-satisfaction"} > (6 * 0.0009999999999999432)) without (sloth_window)
+            max(slo:sli_error:ratio_rate6h{sloth_id="home-wifi-risk-wifi-client-satisfaction", sloth_service="home-wifi", sloth_slo="risk-wifi-client-satisfaction"} > (6 * 0.0009999999999999432)) by (owner, sloth_id, sloth_service, sloth_slo, tier)
         )
       labels:
         severity: home
@@ -486,15 +486,15 @@ spec:
           budget burn rate is too fast.
       expr: |
         (
-            max(slo:sli_error:ratio_rate2h{sloth_id="home-wifi-risk-wifi-client-satisfaction", sloth_service="home-wifi", sloth_slo="risk-wifi-client-satisfaction"} > (3 * 0.0009999999999999432)) without (sloth_window)
+            max(slo:sli_error:ratio_rate2h{sloth_id="home-wifi-risk-wifi-client-satisfaction", sloth_service="home-wifi", sloth_slo="risk-wifi-client-satisfaction"} > (3 * 0.0009999999999999432)) by (owner, sloth_id, sloth_service, sloth_slo, tier)
             and
-            max(slo:sli_error:ratio_rate1d{sloth_id="home-wifi-risk-wifi-client-satisfaction", sloth_service="home-wifi", sloth_slo="risk-wifi-client-satisfaction"} > (3 * 0.0009999999999999432)) without (sloth_window)
+            max(slo:sli_error:ratio_rate1d{sloth_id="home-wifi-risk-wifi-client-satisfaction", sloth_service="home-wifi", sloth_slo="risk-wifi-client-satisfaction"} > (3 * 0.0009999999999999432)) by (owner, sloth_id, sloth_service, sloth_slo, tier)
         )
         or
         (
-            max(slo:sli_error:ratio_rate6h{sloth_id="home-wifi-risk-wifi-client-satisfaction", sloth_service="home-wifi", sloth_slo="risk-wifi-client-satisfaction"} > (1 * 0.0009999999999999432)) without (sloth_window)
+            max(slo:sli_error:ratio_rate6h{sloth_id="home-wifi-risk-wifi-client-satisfaction", sloth_service="home-wifi", sloth_slo="risk-wifi-client-satisfaction"} > (1 * 0.0009999999999999432)) by (owner, sloth_id, sloth_service, sloth_slo, tier)
             and
-            max(slo:sli_error:ratio_rate3d{sloth_id="home-wifi-risk-wifi-client-satisfaction", sloth_service="home-wifi", sloth_slo="risk-wifi-client-satisfaction"} > (1 * 0.0009999999999999432)) without (sloth_window)
+            max(slo:sli_error:ratio_rate3d{sloth_id="home-wifi-risk-wifi-client-satisfaction", sloth_service="home-wifi", sloth_slo="risk-wifi-client-satisfaction"} > (1 * 0.0009999999999999432)) by (owner, sloth_id, sloth_service, sloth_slo, tier)
         )
       labels:
         severity: warning

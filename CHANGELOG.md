@@ -10,7 +10,8 @@
 - (BREAKING) `--sli-plugins-path`, `--slo-plugins-path`, `-m` args and it's env vars `SLOTH_SLI_PLUGINS_PATH`and  `SLOTH_SLO_PLUGINS_PATH` have been removed in favor or `--plugins-path`, `-p` and it's env var `SLOTH_PLUGINS_PATH` that discovers and loads SLI and SLO plugins with a single flag.
 - Simplify validation and improve validation message by using custom logic instead of `go-playground/validator`.
 - (BREAKING) `--disable-optimized-rules` flag and associated env var  has been removed.
-- Update to Kubernetes v1.33.
+- Update to Kubernetes v1.34.
+- Update to Go v1.25.
 
 ### Added
 

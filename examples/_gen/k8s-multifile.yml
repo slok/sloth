@@ -6,7 +6,6 @@
 apiVersion: monitoring.coreos.com/v1
 kind: PrometheusRule
 metadata:
-  creationTimestamp: null
   labels:
     app.kubernetes.io/component: SLO
     app.kubernetes.io/managed-by: sloth
@@ -265,7 +264,6 @@ spec:
 apiVersion: monitoring.coreos.com/v1
 kind: PrometheusRule
 metadata:
-  creationTimestamp: null
   labels:
     app.kubernetes.io/component: SLO
     app.kubernetes.io/managed-by: sloth

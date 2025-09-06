@@ -67,7 +67,6 @@ kind: PrometheusRule
 metadata:
   annotations:
     ak1: av1
-  creationTimestamp: null
   labels:
     app.kubernetes.io/component: SLO
     app.kubernetes.io/managed-by: sloth
@@ -118,7 +117,6 @@ kind: PrometheusRule
 metadata:
   annotations:
     ak1: av1
-  creationTimestamp: null
   labels:
     app.kubernetes.io/component: SLO
     app.kubernetes.io/managed-by: sloth
@@ -169,7 +167,6 @@ kind: PrometheusRule
 metadata:
   annotations:
     ak1: av1
-  creationTimestamp: null
   labels:
     app.kubernetes.io/component: SLO
     app.kubernetes.io/managed-by: sloth
@@ -279,7 +276,6 @@ kind: PrometheusRule
 metadata:
   annotations:
     ak1: av1
-  creationTimestamp: null
   labels:
     app.kubernetes.io/component: SLO
     app.kubernetes.io/managed-by: sloth

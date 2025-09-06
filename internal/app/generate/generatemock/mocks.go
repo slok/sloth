@@ -72,15 +72,26 @@ type SLOPluginGetter_GetSLOPlugin_Call struct {
 }
 
 // GetSLOPlugin is a helper method to define mock.On call
-//   - ctx
-//   - id
+//   - ctx context.Context
+//   - id string
 func (_e *SLOPluginGetter_Expecter) GetSLOPlugin(ctx interface{}, id interface{}) *SLOPluginGetter_GetSLOPlugin_Call {
 	return &SLOPluginGetter_GetSLOPlugin_Call{Call: _e.mock.On("GetSLOPlugin", ctx, id)}
 }
 
 func (_c *SLOPluginGetter_GetSLOPlugin_Call) Run(run func(ctx context.Context, id string)) *SLOPluginGetter_GetSLOPlugin_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		run(
+			arg0,
+			arg1,
+		)
 	})
 	return _c
 }

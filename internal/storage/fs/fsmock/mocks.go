@@ -73,15 +73,26 @@ type SLIPluginLoader_LoadRawSLIPlugin_Call struct {
 }
 
 // LoadRawSLIPlugin is a helper method to define mock.On call
-//   - ctx
-//   - src
+//   - ctx context.Context
+//   - src string
 func (_e *SLIPluginLoader_Expecter) LoadRawSLIPlugin(ctx interface{}, src interface{}) *SLIPluginLoader_LoadRawSLIPlugin_Call {
 	return &SLIPluginLoader_LoadRawSLIPlugin_Call{Call: _e.mock.On("LoadRawSLIPlugin", ctx, src)}
 }
 
 func (_c *SLIPluginLoader_LoadRawSLIPlugin_Call) Run(run func(ctx context.Context, src string)) *SLIPluginLoader_LoadRawSLIPlugin_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		run(
+			arg0,
+			arg1,
+		)
 	})
 	return _c
 }
@@ -157,15 +168,26 @@ type SLOPluginLoader_LoadRawPlugin_Call struct {
 }
 
 // LoadRawPlugin is a helper method to define mock.On call
-//   - ctx
-//   - src
+//   - ctx context.Context
+//   - src string
 func (_e *SLOPluginLoader_Expecter) LoadRawPlugin(ctx interface{}, src interface{}) *SLOPluginLoader_LoadRawPlugin_Call {
 	return &SLOPluginLoader_LoadRawPlugin_Call{Call: _e.mock.On("LoadRawPlugin", ctx, src)}
 }
 
 func (_c *SLOPluginLoader_LoadRawPlugin_Call) Run(run func(ctx context.Context, src string)) *SLOPluginLoader_LoadRawPlugin_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		run(
+			arg0,
+			arg1,
+		)
 	})
 	return _c
 }

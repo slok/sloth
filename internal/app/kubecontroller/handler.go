@@ -12,14 +12,13 @@ import (
 	"github.com/slok/sloth/internal/info"
 	"github.com/slok/sloth/internal/log"
 	"github.com/slok/sloth/internal/storage"
-	"github.com/slok/sloth/pkg/common/model"
 	commonmodel "github.com/slok/sloth/pkg/common/model"
 	slothv1 "github.com/slok/sloth/pkg/kubernetes/api/sloth/v1"
 )
 
 // SpecLoader Knows how to load a Kubernetes Spec into an app model.
 type SpecLoader interface {
-	LoadSpec(ctx context.Context, spec *slothv1.PrometheusServiceLevel) (*model.PromSLOGroup, error)
+	LoadSpec(ctx context.Context, spec *slothv1.PrometheusServiceLevel) (*commonmodel.PromSLOGroup, error)
 }
 
 // Generator Knows how to generate SLO prometheus rules from app SLO model.

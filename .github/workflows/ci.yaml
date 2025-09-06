@@ -7,9 +7,9 @@ jobs:
     name: Check
     runs-on: ubuntu-latest
     # Execute the checks inside the container instead the VM.
-    container: golangci/golangci-lint:v1.64.8-alpine
+    container: golangci/golangci-lint:v2.4.0-alpine
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - run: |
           # We need this go flag because it started to error after golangci-lint is using Go 1.21.
           # TODO(slok): Remove it on next (>1.54.1) golangci-lint upgrade to check if this problem has gone.
@@ -20,8 +20,8 @@ jobs:
     name: Unit test
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-go@v5
+      - uses: actions/checkout@v5
+      - uses: actions/setup-go@v6
         with:
           go-version-file: go.mod
       - run: make ci-test
@@ -35,13 +35,13 @@ jobs:
     name: Helm chart test
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-go@v5
+      - uses: actions/checkout@v5
+      - uses: actions/setup-go@v6
         with:
           go-version-file: go.mod
       - name: Execute tests
         env:
-          HELM_VERSION: v3.6.3
+          HELM_VERSION: v3.17.0
         run: |
           # Get dependencies.
           echo "Getting dependencies..."
@@ -52,8 +52,8 @@ jobs:
     name: Integration test CLI
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-go@v5
+      - uses: actions/checkout@v5
+      - uses: actions/setup-go@v6
         with:
           go-version-file: go.mod
       - name: Execute tests
@@ -72,15 +72,15 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        kubernetes: [1.30.13, 1.31.9, 1.32.5, 1.33.1]
+        kubernetes: [1.31.12, 1.32.8, 1.33.4, 1.34.0]
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-go@v5
+      - uses: actions/checkout@v5
+      - uses: actions/setup-go@v6
         with:
           go-version-file: go.mod
       - name: Execute tests
         env:
-          KIND_VERSION: v0.28.0
+          KIND_VERSION: v0.30.0
         run: |
           # Get dependencies.
           echo "Getting dependencies..."
@@ -124,7 +124,7 @@ jobs:
     name: Release images
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Docker login
         run: docker login ghcr.io -u ${{ github.actor }} -p "${{ secrets.GITHUB_TOKEN }}"
       - name: Build and publish docker images
@@ -147,7 +147,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - run: echo "VERSION=${GITHUB_REF#refs/*/}" >> ${GITHUB_ENV} # Sets VERSION env var.
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Docker login
         run: docker login ghcr.io -u ${{ github.actor }} -p "${{ secrets.GITHUB_TOKEN }}"
       - name: Build and publish docker images
@@ -168,7 +168,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - run: echo "VERSION=${GITHUB_REF#refs/*/}" >> ${GITHUB_ENV} # Sets VERSION env var.
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Build binaries
         run: |
           mkdir -p ./bin

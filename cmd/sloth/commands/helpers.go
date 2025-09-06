@@ -133,8 +133,8 @@ func mapCmdPluginToModel(ctx context.Context, jsonPlugins []string) ([]model.Pro
 }
 
 func createDefaultSLOPlugins(logger log.Logger, disableRecordings, disableAlerts bool) ([]generate.SLOProcessor, error) {
-	var sliRuleGen generate.SLOProcessor = generate.NoopPlugin
-	var metaRuleGen generate.SLOProcessor = generate.NoopPlugin
+	sliRuleGen := generate.NoopPlugin
+	metaRuleGen := generate.NoopPlugin
 	if !disableRecordings {
 		sliPlugin, err := generate.NewSLOProcessorFromSLOPluginV1(
 			plugincoreslirulesv1.NewPlugin,
@@ -167,7 +167,7 @@ func createDefaultSLOPlugins(logger log.Logger, disableRecordings, disableAlerts
 	}
 
 	// Disable alert rules if required.
-	var alertRuleGen generate.SLOProcessor = generate.NoopPlugin
+	alertRuleGen := generate.NoopPlugin
 	if !disableAlerts {
 		plugin, err := generate.NewSLOProcessorFromSLOPluginV1(
 			plugincorealertrulesv1.NewPlugin,

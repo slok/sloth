@@ -1,21 +1,30 @@
----
+version: "2"
 run:
-  timeout: 3m
   build-tags:
     - integration
-
 linters:
   enable:
-    - misspell
-    - goimports
-    - revive
-    - gofmt
-    #- depguard
     - godot
-
-linters-settings:
-  revive:
-    rules:
-      # Spammy linter and complex to fix on lots of parameters. Makes more harm that it solves.
-      - name: unused-parameter
-        disabled: true
+    - misspell
+    - revive
+  settings:
+    revive:
+      rules:
+        # Spammy linter and complex to fix on lots of parameters. Makes more harm that it solves.
+        - name: unused-parameter
+          disabled: true
+    staticcheck:
+      checks:
+        - all
+        # Omit embedded fields from selector expression.
+        # https://staticcheck.dev/docs/checks/#QF1008
+        - -QF1008
+  exclusions:
+    generated: lax
+    presets:
+      - comments
+      - std-error-handling
+formatters:
+  enable:
+    - gofmt
+    - goimports

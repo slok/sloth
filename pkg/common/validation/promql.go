@@ -18,7 +18,8 @@ func (promQLDialectValidator) ValidateLabelKey(k string) error {
 	if k == prommodel.MetricNameLabel {
 		return fmt.Errorf("the label key %q is not allowed", prommodel.MetricNameLabel)
 	}
-	if !prommodel.LabelName(k).IsValid() {
+
+	if !prommodel.UTF8Validation.IsValidLabelName(k) {
 		return fmt.Errorf("the label key %q is not valid", k)
 	}
 
@@ -38,7 +39,7 @@ func (promQLDialectValidator) ValidateLabelValue(k string) error {
 }
 
 func (promQLDialectValidator) ValidateAnnotationKey(k string) error {
-	if !prommodel.LabelName(k).IsValid() {
+	if !prommodel.UTF8Validation.IsValidLabelName(k) {
 		return fmt.Errorf("the annotation key %q is not valid", k)
 	}
 

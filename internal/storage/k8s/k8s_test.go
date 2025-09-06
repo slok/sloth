@@ -10,7 +10,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/intstr"
 
@@ -250,7 +249,7 @@ func TestApiserverRepositoryStoreSLOs(t *testing.T) {
 			if test.expErr {
 				assert.Error(err)
 			} else if assert.NoError(err) {
-				gotPromRules, err := promOpCli.MonitoringV1().PrometheusRules("").List(t.Context(), v1.ListOptions{})
+				gotPromRules, err := promOpCli.MonitoringV1().PrometheusRules("").List(t.Context(), metav1.ListOptions{})
 				require.NoError(err)
 
 				assert.Equal(test.expPromOperatorRules, gotPromRules.Items)

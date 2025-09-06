@@ -6,7 +6,6 @@
 apiVersion: monitoring.coreos.com/v1
 kind: PrometheusRule
 metadata:
-  creationTimestamp: null
   labels:
     app: sloth
     app.kubernetes.io/component: SLO

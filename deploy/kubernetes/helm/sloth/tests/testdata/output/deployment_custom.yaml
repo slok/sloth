@@ -52,7 +52,6 @@ spec:
             - --extra-labels=k1=v1
             - --extra-labels=k2=v2
             - --plugins-path=/plugins
-            - --disable-optimized-rules
             - --logger=default
           ports:
             - containerPort: 8081

@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [v0.13.0] - 2025-09-10
+
 ### Changed
 
 - Split image registry and repository in Helm chart
@@ -209,7 +211,8 @@
 - Support raw query based SLI.
 - Kubernetes (prometheus-operator) CRD generation support.
 
-[unreleased]: https://github.com/slok/sloth/compare/v0.12.0...HEAD
+[unreleased]: https://github.com/slok/sloth/compare/v0.13.0...HEAD
+[v0.13.0]: https://github.com/slok/sloth/compare/v0.12.0...v0.13.0
 [v0.12.0]: https://github.com/slok/sloth/compare/v0.11.0...v0.12.0
 [v0.11.0]: https://github.com/slok/sloth/compare/v0.10.0...v0.11.0
 [v0.10.0]: https://github.com/slok/sloth/compare/v0.9.0...v0.10.0

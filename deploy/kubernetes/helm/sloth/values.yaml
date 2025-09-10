@@ -6,7 +6,7 @@ labels: {}
 image:
   registry: ghcr.io # This field cannot be empty if global.imageRegistry is also empty.
   repository: slok/sloth
-  tag: v0.12.0
+  tag: v0.13.0
 
 # -- Container resources: requests and limits for CPU, Memory
 resources:
@@ -28,7 +28,6 @@ sloth:
   namespace: ""         # The namespace where sloth will the CRs to process.
   extraLabels: {}       # Labels that will be added to all the generated SLO Rules.
   defaultSloPeriod: ""  # The slo period used by sloth (e.g. 30d).
-  optimizedRules: true  # Reduce prom load for calculating period window burnrates.
   debug:
     enabled: false
   # Could be: default or json

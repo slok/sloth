@@ -27,7 +27,6 @@ func customValues() msi {
 			"workers":        99,
 			"labelSelector":  `x=y,z!=y`,
 			"namespace":      "somens",
-			"optimizedRules": false,
 			"extraLabels": msi{
 				"k1": "v1",
 				"k2": "v2",

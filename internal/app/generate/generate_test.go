@@ -384,15 +384,15 @@ slo:error_budget:ratio{sloth_id="test-id", sloth_service="test-svc", sloth_slo="
 									{
 										Alert: "p_alert_test_name",
 										Expr: `(
-    max(slo:sli_error:ratio_rate5m{sloth_id="test-id", sloth_service="test-svc", sloth_slo="test-name"} > (14.4 * 0.0009999999999999432)) without (sloth_window)
+    max(slo:sli_error:ratio_rate5m{sloth_id="test-id", sloth_service="test-svc", sloth_slo="test-name"} > (14.4 * 0.0009999999999999432)) by (owner, sloth_id, sloth_service, sloth_slo, tier)
     and
-    max(slo:sli_error:ratio_rate1h{sloth_id="test-id", sloth_service="test-svc", sloth_slo="test-name"} > (14.4 * 0.0009999999999999432)) without (sloth_window)
+    max(slo:sli_error:ratio_rate1h{sloth_id="test-id", sloth_service="test-svc", sloth_slo="test-name"} > (14.4 * 0.0009999999999999432)) by (owner, sloth_id, sloth_service, sloth_slo, tier)
 )
 or
 (
-    max(slo:sli_error:ratio_rate30m{sloth_id="test-id", sloth_service="test-svc", sloth_slo="test-name"} > (6 * 0.0009999999999999432)) without (sloth_window)
+    max(slo:sli_error:ratio_rate30m{sloth_id="test-id", sloth_service="test-svc", sloth_slo="test-name"} > (6 * 0.0009999999999999432)) by (owner, sloth_id, sloth_service, sloth_slo, tier)
     and
-    max(slo:sli_error:ratio_rate6h{sloth_id="test-id", sloth_service="test-svc", sloth_slo="test-name"} > (6 * 0.0009999999999999432)) without (sloth_window)
+    max(slo:sli_error:ratio_rate6h{sloth_id="test-id", sloth_service="test-svc", sloth_slo="test-name"} > (6 * 0.0009999999999999432)) by (owner, sloth_id, sloth_service, sloth_slo, tier)
 )
 `,
 										Labels: map[string]string{
@@ -408,15 +408,15 @@ or
 									{
 										Alert: "t_alert_test_name",
 										Expr: `(
-    max(slo:sli_error:ratio_rate2h{sloth_id="test-id", sloth_service="test-svc", sloth_slo="test-name"} > (3 * 0.0009999999999999432)) without (sloth_window)
+    max(slo:sli_error:ratio_rate2h{sloth_id="test-id", sloth_service="test-svc", sloth_slo="test-name"} > (3 * 0.0009999999999999432)) by (owner, sloth_id, sloth_service, sloth_slo, tier)
     and
-    max(slo:sli_error:ratio_rate1d{sloth_id="test-id", sloth_service="test-svc", sloth_slo="test-name"} > (3 * 0.0009999999999999432)) without (sloth_window)
+    max(slo:sli_error:ratio_rate1d{sloth_id="test-id", sloth_service="test-svc", sloth_slo="test-name"} > (3 * 0.0009999999999999432)) by (owner, sloth_id, sloth_service, sloth_slo, tier)
 )
 or
 (
-    max(slo:sli_error:ratio_rate6h{sloth_id="test-id", sloth_service="test-svc", sloth_slo="test-name"} > (1 * 0.0009999999999999432)) without (sloth_window)
+    max(slo:sli_error:ratio_rate6h{sloth_id="test-id", sloth_service="test-svc", sloth_slo="test-name"} > (1 * 0.0009999999999999432)) by (owner, sloth_id, sloth_service, sloth_slo, tier)
     and
-    max(slo:sli_error:ratio_rate3d{sloth_id="test-id", sloth_service="test-svc", sloth_slo="test-name"} > (1 * 0.0009999999999999432)) without (sloth_window)
+    max(slo:sli_error:ratio_rate3d{sloth_id="test-id", sloth_service="test-svc", sloth_slo="test-name"} > (1 * 0.0009999999999999432)) by (owner, sloth_id, sloth_service, sloth_slo, tier)
 )
 `,
 										Labels: map[string]string{
@@ -791,15 +791,15 @@ slo:error_budget:ratio{sloth_id="test-id", sloth_service="test-svc", sloth_slo="
 									{
 										Alert: "p_alert_test_name",
 										Expr: `(
-    max(slo:sli_error:ratio_rate5m{sloth_id="test-id", sloth_service="test-svc", sloth_slo="test-name"} > (14.4 * 0.0009999999999999432)) without (sloth_window)
+    max(slo:sli_error:ratio_rate5m{sloth_id="test-id", sloth_service="test-svc", sloth_slo="test-name"} > (14.4 * 0.0009999999999999432)) by (owner, sloth_id, sloth_service, sloth_slo, tier)
     and
-    max(slo:sli_error:ratio_rate1h{sloth_id="test-id", sloth_service="test-svc", sloth_slo="test-name"} > (14.4 * 0.0009999999999999432)) without (sloth_window)
+    max(slo:sli_error:ratio_rate1h{sloth_id="test-id", sloth_service="test-svc", sloth_slo="test-name"} > (14.4 * 0.0009999999999999432)) by (owner, sloth_id, sloth_service, sloth_slo, tier)
 )
 or
 (
-    max(slo:sli_error:ratio_rate30m{sloth_id="test-id", sloth_service="test-svc", sloth_slo="test-name"} > (6 * 0.0009999999999999432)) without (sloth_window)
+    max(slo:sli_error:ratio_rate30m{sloth_id="test-id", sloth_service="test-svc", sloth_slo="test-name"} > (6 * 0.0009999999999999432)) by (owner, sloth_id, sloth_service, sloth_slo, tier)
     and
-    max(slo:sli_error:ratio_rate6h{sloth_id="test-id", sloth_service="test-svc", sloth_slo="test-name"} > (6 * 0.0009999999999999432)) without (sloth_window)
+    max(slo:sli_error:ratio_rate6h{sloth_id="test-id", sloth_service="test-svc", sloth_slo="test-name"} > (6 * 0.0009999999999999432)) by (owner, sloth_id, sloth_service, sloth_slo, tier)
 )
 `,
 										Labels: map[string]string{

@@ -176,15 +176,15 @@ groups:
   - alert: myServiceAlert
     expr: |
       (
-          max(slo:sli_error:ratio_rate5m{sloth_id="svc01-slo1", sloth_service="svc01", sloth_slo="slo1"} > (13.44 * 0.0009999999999999432)) without (sloth_window)
+          max(slo:sli_error:ratio_rate5m{sloth_id="svc01-slo1", sloth_service="svc01", sloth_slo="slo1"} > (13.44 * 0.0009999999999999432)) by (owner, sloth_id, sloth_service, sloth_slo, tier)
           and
-          max(slo:sli_error:ratio_rate1h{sloth_id="svc01-slo1", sloth_service="svc01", sloth_slo="slo1"} > (13.44 * 0.0009999999999999432)) without (sloth_window)
+          max(slo:sli_error:ratio_rate1h{sloth_id="svc01-slo1", sloth_service="svc01", sloth_slo="slo1"} > (13.44 * 0.0009999999999999432)) by (owner, sloth_id, sloth_service, sloth_slo, tier)
       )
       or
       (
-          max(slo:sli_error:ratio_rate30m{sloth_id="svc01-slo1", sloth_service="svc01", sloth_slo="slo1"} > (5.6000000000000005 * 0.0009999999999999432)) without (sloth_window)
+          max(slo:sli_error:ratio_rate30m{sloth_id="svc01-slo1", sloth_service="svc01", sloth_slo="slo1"} > (5.6000000000000005 * 0.0009999999999999432)) by (owner, sloth_id, sloth_service, sloth_slo, tier)
           and
-          max(slo:sli_error:ratio_rate6h{sloth_id="svc01-slo1", sloth_service="svc01", sloth_slo="slo1"} > (5.6000000000000005 * 0.0009999999999999432)) without (sloth_window)
+          max(slo:sli_error:ratio_rate6h{sloth_id="svc01-slo1", sloth_service="svc01", sloth_slo="slo1"} > (5.6000000000000005 * 0.0009999999999999432)) by (owner, sloth_id, sloth_service, sloth_slo, tier)
       )
     labels:
       alert01k1: alert01v1
@@ -199,15 +199,15 @@ groups:
   - alert: myServiceAlert
     expr: |
       (
-          max(slo:sli_error:ratio_rate2h{sloth_id="svc01-slo1", sloth_service="svc01", sloth_slo="slo1"} > (2.8000000000000003 * 0.0009999999999999432)) without (sloth_window)
+          max(slo:sli_error:ratio_rate2h{sloth_id="svc01-slo1", sloth_service="svc01", sloth_slo="slo1"} > (2.8000000000000003 * 0.0009999999999999432)) by (owner, sloth_id, sloth_service, sloth_slo, tier)
           and
-          max(slo:sli_error:ratio_rate1d{sloth_id="svc01-slo1", sloth_service="svc01", sloth_slo="slo1"} > (2.8000000000000003 * 0.0009999999999999432)) without (sloth_window)
+          max(slo:sli_error:ratio_rate1d{sloth_id="svc01-slo1", sloth_service="svc01", sloth_slo="slo1"} > (2.8000000000000003 * 0.0009999999999999432)) by (owner, sloth_id, sloth_service, sloth_slo, tier)
       )
       or
       (
-          max(slo:sli_error:ratio_rate6h{sloth_id="svc01-slo1", sloth_service="svc01", sloth_slo="slo1"} > (0.9333333333333333 * 0.0009999999999999432)) without (sloth_window)
+          max(slo:sli_error:ratio_rate6h{sloth_id="svc01-slo1", sloth_service="svc01", sloth_slo="slo1"} > (0.9333333333333333 * 0.0009999999999999432)) by (owner, sloth_id, sloth_service, sloth_slo, tier)
           and
-          max(slo:sli_error:ratio_rate3d{sloth_id="svc01-slo1", sloth_service="svc01", sloth_slo="slo1"} > (0.9333333333333333 * 0.0009999999999999432)) without (sloth_window)
+          max(slo:sli_error:ratio_rate3d{sloth_id="svc01-slo1", sloth_service="svc01", sloth_slo="slo1"} > (0.9333333333333333 * 0.0009999999999999432)) by (owner, sloth_id, sloth_service, sloth_slo, tier)
       )
     labels:
       alert01k1: alert01v1

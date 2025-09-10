@@ -206,15 +206,15 @@ groups:
   - alert: MyServiceHighErrorRate
     expr: |
       (
-          max(slo:sli_error:ratio_rate5m{sloth_id="myservice-requests-availability", sloth_service="myservice", sloth_slo="requests-availability"} > (14.4 * 0.0009999999999999432)) without (sloth_window)
+          max(slo:sli_error:ratio_rate5m{sloth_id="myservice-requests-availability", sloth_service="myservice", sloth_slo="requests-availability"} > (14.4 * 0.0009999999999999432)) by (owner, sloth_id, sloth_service, sloth_slo, tier)
           and
-          max(slo:sli_error:ratio_rate1h{sloth_id="myservice-requests-availability", sloth_service="myservice", sloth_slo="requests-availability"} > (14.4 * 0.0009999999999999432)) without (sloth_window)
+          max(slo:sli_error:ratio_rate1h{sloth_id="myservice-requests-availability", sloth_service="myservice", sloth_slo="requests-availability"} > (14.4 * 0.0009999999999999432)) by (owner, sloth_id, sloth_service, sloth_slo, tier)
       )
       or
       (
-          max(slo:sli_error:ratio_rate30m{sloth_id="myservice-requests-availability", sloth_service="myservice", sloth_slo="requests-availability"} > (6 * 0.0009999999999999432)) without (sloth_window)
+          max(slo:sli_error:ratio_rate30m{sloth_id="myservice-requests-availability", sloth_service="myservice", sloth_slo="requests-availability"} > (6 * 0.0009999999999999432)) by (owner, sloth_id, sloth_service, sloth_slo, tier)
           and
-          max(slo:sli_error:ratio_rate6h{sloth_id="myservice-requests-availability", sloth_service="myservice", sloth_slo="requests-availability"} > (6 * 0.0009999999999999432)) without (sloth_window)
+          max(slo:sli_error:ratio_rate6h{sloth_id="myservice-requests-availability", sloth_service="myservice", sloth_slo="requests-availability"} > (6 * 0.0009999999999999432)) by (owner, sloth_id, sloth_service, sloth_slo, tier)
       )
     labels:
       category: availability
@@ -228,15 +228,15 @@ groups:
   - alert: MyServiceHighErrorRate
     expr: |
       (
-          max(slo:sli_error:ratio_rate2h{sloth_id="myservice-requests-availability", sloth_service="myservice", sloth_slo="requests-availability"} > (3 * 0.0009999999999999432)) without (sloth_window)
+          max(slo:sli_error:ratio_rate2h{sloth_id="myservice-requests-availability", sloth_service="myservice", sloth_slo="requests-availability"} > (3 * 0.0009999999999999432)) by (owner, sloth_id, sloth_service, sloth_slo, tier)
           and
-          max(slo:sli_error:ratio_rate1d{sloth_id="myservice-requests-availability", sloth_service="myservice", sloth_slo="requests-availability"} > (3 * 0.0009999999999999432)) without (sloth_window)
+          max(slo:sli_error:ratio_rate1d{sloth_id="myservice-requests-availability", sloth_service="myservice", sloth_slo="requests-availability"} > (3 * 0.0009999999999999432)) by (owner, sloth_id, sloth_service, sloth_slo, tier)
       )
       or
       (
-          max(slo:sli_error:ratio_rate6h{sloth_id="myservice-requests-availability", sloth_service="myservice", sloth_slo="requests-availability"} > (1 * 0.0009999999999999432)) without (sloth_window)
+          max(slo:sli_error:ratio_rate6h{sloth_id="myservice-requests-availability", sloth_service="myservice", sloth_slo="requests-availability"} > (1 * 0.0009999999999999432)) by (owner, sloth_id, sloth_service, sloth_slo, tier)
           and
-          max(slo:sli_error:ratio_rate3d{sloth_id="myservice-requests-availability", sloth_service="myservice", sloth_slo="requests-availability"} > (1 * 0.0009999999999999432)) without (sloth_window)
+          max(slo:sli_error:ratio_rate3d{sloth_id="myservice-requests-availability", sloth_service="myservice", sloth_slo="requests-availability"} > (1 * 0.0009999999999999432)) by (owner, sloth_id, sloth_service, sloth_slo, tier)
       )
     labels:
       category: availability
@@ -455,15 +455,15 @@ groups:
   - alert: MyServiceHighErrorRate
     expr: |
       (
-          max(slo:sli_error:ratio_rate5m{sloth_id="myservice2-requests-availability", sloth_service="myservice2", sloth_slo="requests-availability"} > (14.4 * 0.00010000000000005117)) without (sloth_window)
+          max(slo:sli_error:ratio_rate5m{sloth_id="myservice2-requests-availability", sloth_service="myservice2", sloth_slo="requests-availability"} > (14.4 * 0.00010000000000005117)) by (owner, sloth_id, sloth_service, sloth_slo, tier)
           and
-          max(slo:sli_error:ratio_rate1h{sloth_id="myservice2-requests-availability", sloth_service="myservice2", sloth_slo="requests-availability"} > (14.4 * 0.00010000000000005117)) without (sloth_window)
+          max(slo:sli_error:ratio_rate1h{sloth_id="myservice2-requests-availability", sloth_service="myservice2", sloth_slo="requests-availability"} > (14.4 * 0.00010000000000005117)) by (owner, sloth_id, sloth_service, sloth_slo, tier)
       )
       or
       (
-          max(slo:sli_error:ratio_rate30m{sloth_id="myservice2-requests-availability", sloth_service="myservice2", sloth_slo="requests-availability"} > (6 * 0.00010000000000005117)) without (sloth_window)
+          max(slo:sli_error:ratio_rate30m{sloth_id="myservice2-requests-availability", sloth_service="myservice2", sloth_slo="requests-availability"} > (6 * 0.00010000000000005117)) by (owner, sloth_id, sloth_service, sloth_slo, tier)
           and
-          max(slo:sli_error:ratio_rate6h{sloth_id="myservice2-requests-availability", sloth_service="myservice2", sloth_slo="requests-availability"} > (6 * 0.00010000000000005117)) without (sloth_window)
+          max(slo:sli_error:ratio_rate6h{sloth_id="myservice2-requests-availability", sloth_service="myservice2", sloth_slo="requests-availability"} > (6 * 0.00010000000000005117)) by (owner, sloth_id, sloth_service, sloth_slo, tier)
       )
     labels:
       category: availability
@@ -477,15 +477,15 @@ groups:
   - alert: MyServiceHighErrorRate
     expr: |
       (
-          max(slo:sli_error:ratio_rate2h{sloth_id="myservice2-requests-availability", sloth_service="myservice2", sloth_slo="requests-availability"} > (3 * 0.00010000000000005117)) without (sloth_window)
+          max(slo:sli_error:ratio_rate2h{sloth_id="myservice2-requests-availability", sloth_service="myservice2", sloth_slo="requests-availability"} > (3 * 0.00010000000000005117)) by (owner, sloth_id, sloth_service, sloth_slo, tier)
           and
-          max(slo:sli_error:ratio_rate1d{sloth_id="myservice2-requests-availability", sloth_service="myservice2", sloth_slo="requests-availability"} > (3 * 0.00010000000000005117)) without (sloth_window)
+          max(slo:sli_error:ratio_rate1d{sloth_id="myservice2-requests-availability", sloth_service="myservice2", sloth_slo="requests-availability"} > (3 * 0.00010000000000005117)) by (owner, sloth_id, sloth_service, sloth_slo, tier)
       )
       or
       (
-          max(slo:sli_error:ratio_rate6h{sloth_id="myservice2-requests-availability", sloth_service="myservice2", sloth_slo="requests-availability"} > (1 * 0.00010000000000005117)) without (sloth_window)
+          max(slo:sli_error:ratio_rate6h{sloth_id="myservice2-requests-availability", sloth_service="myservice2", sloth_slo="requests-availability"} > (1 * 0.00010000000000005117)) by (owner, sloth_id, sloth_service, sloth_slo, tier)
           and
-          max(slo:sli_error:ratio_rate3d{sloth_id="myservice2-requests-availability", sloth_service="myservice2", sloth_slo="requests-availability"} > (1 * 0.00010000000000005117)) without (sloth_window)
+          max(slo:sli_error:ratio_rate3d{sloth_id="myservice2-requests-availability", sloth_service="myservice2", sloth_slo="requests-availability"} > (1 * 0.00010000000000005117)) by (owner, sloth_id, sloth_service, sloth_slo, tier)
       )
     labels:
       category: availability

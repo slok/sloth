@@ -150,14 +150,14 @@ func (v validateCommand) Run(ctx context.Context, config RootConfig) error {
 							if sloFile, exists := sloIDs[slo.ID]; !exists {
 								sloIDs[slo.ID] = validation.File
 							} else {
-								validation.Errs = append(validation.Errs, fmt.Errorf("SLO duplicated. SLO{service=%s, name=%s}, ID=%s already exists in a file: %s", slo.Service, slo.Name, slo.ID, sloFile))
+								validation.Errs = append(validation.Errs, fmt.Errorf("a SLO duplicate. SLO{service=%s, name=%s}, ID=%s already exists in a file: %s", slo.Service, slo.Name, slo.ID, sloFile))
 							}
 						}
 					}
 
 					err := gen.GeneratePrometheus(ctx, *sloGroup, io.Discard)
 					if err != nil {
-						validation.Errs = append(validation.Errs, fmt.Errorf("Could not generate Prometheus format rules: %w", err))
+						validation.Errs = append(validation.Errs, fmt.Errorf("could not generate Prometheus format rules: %w", err))
 					}
 					continue
 				}
@@ -172,7 +172,7 @@ func (v validateCommand) Run(ctx context.Context, config RootConfig) error {
 							if sloFile, exists := sloIDs[slo.ID]; !exists {
 								sloIDs[slo.ID] = validation.File
 							} else {
-								validation.Errs = append(validation.Errs, fmt.Errorf("SLO duplicated. SLO{service=%s, name=%s}, ID=%s already exists in a file: %s", slo.Service, slo.Name, slo.ID, sloFile))
+								validation.Errs = append(validation.Errs, fmt.Errorf("a SLO duplicated. SLO{service=%s, name=%s}, ID=%s already exists in a file: %s", slo.Service, slo.Name, slo.ID, sloFile))
 							}
 						}
 					}
@@ -194,14 +194,14 @@ func (v validateCommand) Run(ctx context.Context, config RootConfig) error {
 							if sloFile, exists := sloIDs[slo.ID]; !exists {
 								sloIDs[slo.ID] = validation.File
 							} else {
-								validation.Errs = append(validation.Errs, fmt.Errorf("SLO duplicated. SLO{service=%s, name=%s}, ID=%s already exists in a file: %s", slo.Service, slo.Name, slo.ID, sloFile))
+								validation.Errs = append(validation.Errs, fmt.Errorf("a SLO duplicated. SLO{service=%s, name=%s}, ID=%s already exists in a file: %s", slo.Service, slo.Name, slo.ID, sloFile))
 							}
 						}
 					}
 
 					err := gen.GenerateOpenSLO(ctx, *sloGroup, io.Discard)
 					if err != nil {
-						validation.Errs = append(validation.Errs, fmt.Errorf("Could not generate OpenSLO format rules: %w", err))
+						validation.Errs = append(validation.Errs, fmt.Errorf("could not generate OpenSLO format rules: %w", err))
 					}
 					continue
 				}

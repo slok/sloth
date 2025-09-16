@@ -1,0 +1,38 @@
+version: "prometheus/v1"
+service: "myservice"
+labels:
+  owner: "myteam"
+  repo: "myorg/myservice"
+  tier: "2"
+
+slos:
+  - name: "requests-availability-contrib-plugin-info-labels-v1"
+    objective: 99.9
+    description: "Common SLO based on availability for HTTP request responses."
+    plugins:
+      chain:
+        - id: "sloth.dev/contrib/info_labels/v1"
+          config:
+            labels:
+              plug-l1: in-k1
+              plug-l2: in-k2
+              plug-l3: in-k3
+    sli:
+      events:
+        error_query: sum(rate(http_request_duration_seconds_count{job="myservice",code=~"(5..|429)"}[{{.window}}]))
+        total_query: sum(rate(http_request_duration_seconds_count{job="myservice"}[{{.window}}]))
+    alerting:
+      name: MyServiceHighErrorRate
+      labels:
+        category: "availability"
+      annotations:
+        # Overwrite default Sloth SLO alert summmary on ticket and page alerts.
+        summary: "High error rate on 'myservice' requests responses"
+      page_alert:
+        labels:
+          severity: pageteam
+          routing_key: myteam
+      ticket_alert:
+        labels:
+          severity: "slack"
+          slack_channel: "#alerts-myteam"

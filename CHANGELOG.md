@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+### Added
+
+- Add contrib plugin directory and CODEOWNERS policies.
+- Contrib plugin: `info_labels_v1`.
+
 ## [v0.13.0] - 2025-09-10
 
 ### Changed

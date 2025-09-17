@@ -1,2 +1,8 @@
+# Default owners.
 *       @slok
 
+# Contrib SLO plugins default owners.
+/internal/plugin/slo/contrib/    @slok
+
+# Specific contrib SLO owners.
+/internal/plugin/slo/contrib/info_labels_v1/    @cxdy @slok @wbollock

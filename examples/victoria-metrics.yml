@@ -1,0 +1,50 @@
+version: prometheus/v1
+service: foo-bar
+labels:
+  owner: foo
+  repo: content/foo-bar
+  generated: true
+  type: latency
+  application: slowpoke
+slo_plugins:
+  overridePrevious: true
+  chain:
+    - id: sloth.dev/contrib/validate_victoria_metrics/v1
+    - id: sloth.dev/core/sli_rules/v1
+    - id: sloth.dev/core/metadata_rules/v1
+    - id: sloth.dev/core/alert_rules/v1
+slos:
+- name: grpc-latency-percentile-90
+  objective: 90
+  description: '"grpc" 90 percentile Latency SLO for grade "A"'
+  labels:
+    actual_grade: A
+    target_grade: A
+    actual_le: 0.2
+    target_le: 0.2
+  sli:
+    events:
+      error_query: 1 - histogram_share(0.2, sum by (vmrange) (rate(requests_duration_seconds_bucket{container_name="foo-bar-grpc", agent_dc="dc_sl"}[{{.window}}])))
+      total_query: vector(1)[{{.window}}]
+  alerting:
+    name: slo_foo-bar_grpc-latency-percentile-90_fail
+    labels:
+      objective: 90
+      objective_reversed: 10
+- name: grpc-latency-percentile-99
+  objective: 99
+  description: '"grpc" 99 percentile Latency SLO for grade "A"'
+  labels:
+    actual_grade: A
+    target_grade: A
+    actual_le: 0.4
+    target_le: 0.4
+  sli:
+    events:
+      error_query: 1 - histogram_share(0.4, sum by (vmrange) (rate(requests_duration_seconds_bucket{container_name="foo-bar-grpc", agent_dc="dc_sl"}[{{.window}}])))
+      total_query: vector(1)[{{.window}}]
+  alerting:
+    name: slo_foo-bar_grpc-latency-percentile-99_fail
+    labels:
+      objective: 99
+      objective_reversed: 1

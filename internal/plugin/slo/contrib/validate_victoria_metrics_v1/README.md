@@ -45,3 +45,17 @@ sloth generate \
   -s '{"id": "sloth.dev/core/metadata_rules/v1"}' \
   -s '{"id": "sloth.dev/core/alert_rules/v1"}'
 ```
+
+### Explicit usage using env vars in script
+
+```bash
+#! /bin/bash
+
+export SLOTH_DISABLE_DEFAULT_SLO_PLUGINS=true
+export SLOTH_SLO_PLUGINS='{"id": "sloth.dev/contrib/validate_victoria_metrics/v1"}
+{"id": "sloth.dev/core/sli_rules/v1"}
+{"id": "sloth.dev/core/metadata_rules/v1"}
+{"id": "sloth.dev/core/alert_rules/v1"}'
+
+sloth generate -i ./examples/victoria-metrics.yml
+```

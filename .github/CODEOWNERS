@@ -5,5 +5,6 @@
 /internal/plugin/slo/contrib/    @slok
 
 # Specific contrib SLO owners.
-/internal/plugin/slo/contrib/info_labels_v1/                @cxdy @slok @wbollock
-/internal/plugin/slo/contrib/validate_victoria_metrics_v1/  @slok
+/internal/plugin/slo/contrib/info_labels_v1/                   @cxdy @slok @wbollock
+/internal/plugin/slo/contrib/validate_victoria_metrics_v1/     @slok
+/internal/plugin/slo/contrib/error_budget_exhausted_alert_v1/  @cxdy @slok @wbollock

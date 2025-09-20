@@ -17,6 +17,8 @@ import (
 	"github.com/slok/sloth/test/integration/testutils"
 )
 
+const controllerEventualConsistencySleep = 2000 * time.Millisecond
+
 // sanitizePrometheusRule will remove all the dynamic fields on a monitoringv1.PrometheusRule object
 // these fileds are normally set by Kubernetes.
 func sanitizePrometheusRule(pr *monitoringv1.PrometheusRule) *monitoringv1.PrometheusRule {
@@ -60,7 +62,7 @@ func TestKubernetesControllerPromOperatorGenerate(t *testing.T) {
 				require.NoError(t, err)
 
 				// Wait to be sure the controller had time for handling.
-				time.Sleep(500 * time.Millisecond)
+				time.Sleep(controllerEventualConsistencySleep)
 
 				// Check.
 				expRule := getBasePromOpPrometheusRule(version)
@@ -83,7 +85,7 @@ func TestKubernetesControllerPromOperatorGenerate(t *testing.T) {
 				require.NoError(t, err)
 
 				// Wait to be sure the controller had time for handling.
-				time.Sleep(500 * time.Millisecond)
+				time.Sleep(controllerEventualConsistencySleep)
 
 				// Check.
 				expRule := getBase28DayPromOpPrometheusRule(version)
@@ -106,7 +108,7 @@ func TestKubernetesControllerPromOperatorGenerate(t *testing.T) {
 				require.NoError(t, err)
 
 				// Wait to be sure the controller had time for handling.
-				time.Sleep(500 * time.Millisecond)
+				time.Sleep(controllerEventualConsistencySleep)
 
 				// Check.
 				expRule := getSLIPluginsPromOpPrometheusRule(version)
@@ -129,7 +131,7 @@ func TestKubernetesControllerPromOperatorGenerate(t *testing.T) {
 				require.NoError(t, err)
 
 				// Wait to be sure the controller had time for handling.
-				time.Sleep(500 * time.Millisecond)
+				time.Sleep(controllerEventualConsistencySleep)
 
 				// Check.
 				expRule := getSLOPluginsPromOpPrometheusRule(version)
@@ -152,7 +154,7 @@ func TestKubernetesControllerPromOperatorGenerate(t *testing.T) {
 				require.NoError(t, err)
 
 				// Wait to be sure the controller had time for handling.
-				time.Sleep(500 * time.Millisecond)
+				time.Sleep(controllerEventualConsistencySleep)
 
 				// Check.
 				gotSLOs, err := kubeClis.Sloth.SlothV1().PrometheusServiceLevels(ns).Get(ctx, SLOs.Name, metav1.GetOptions{})
@@ -180,7 +182,7 @@ func TestKubernetesControllerPromOperatorGenerate(t *testing.T) {
 				require.NoError(t, err)
 
 				// Wait to be sure the controller had time for handling.
-				time.Sleep(500 * time.Millisecond)
+				time.Sleep(controllerEventualConsistencySleep)
 
 				// Check.
 				gotSLOs, err := kubeClis.Sloth.SlothV1().PrometheusServiceLevels(ns).Get(ctx, SLOs.Name, metav1.GetOptions{})
@@ -208,7 +210,7 @@ func TestKubernetesControllerPromOperatorGenerate(t *testing.T) {
 				require.NoError(t, err)
 
 				// Wait to be sure the controller had time for handling.
-				time.Sleep(500 * time.Millisecond)
+				time.Sleep(controllerEventualConsistencySleep)
 
 				// Check.
 				expRule := getBase7DayPromOpPrometheusRule(version)

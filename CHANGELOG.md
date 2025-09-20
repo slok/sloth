@@ -8,6 +8,7 @@
 - Contrib plugin: `/internal/plugin/slo/contrib/info_labels_v1/`.
 - Allow `github.com/VictoriaMetrics/metricsql` module in SLO plugins.
 - Contrib plugin: `sloth.dev/contrib/validate_victoria_metrics/v1`.
+- Contrib plugin: `sloth.dev/contrib/rule_intervals/v1`.
 
 ## [v0.13.0] - 2025-09-10
 

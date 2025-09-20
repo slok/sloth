@@ -36,3 +36,32 @@ slos:
         labels:
           severity: "slack"
           slack_channel: "#alerts-myteam"
+
+  - name: "requests-availability-contrib-plugin-rule-intervals-v1"
+    objective: 99.9
+    description: "Common SLO based on availability for HTTP request responses."
+    plugins:
+      chain:
+        - id: "sloth.dev/contrib/rule_intervals/v1"
+          config:
+            interval:
+              default: 5m
+    sli:
+      events:
+        error_query: sum(rate(http_request_duration_seconds_count{job="myservice",code=~"(5..|429)"}[{{.window}}]))
+        total_query: sum(rate(http_request_duration_seconds_count{job="myservice"}[{{.window}}]))
+    alerting:
+      name: MyServiceHighErrorRate
+      labels:
+        category: "availability"
+      annotations:
+        # Overwrite default Sloth SLO alert summmary on ticket and page alerts.
+        summary: "High error rate on 'myservice' requests responses"
+      page_alert:
+        labels:
+          severity: pageteam
+          routing_key: myteam
+      ticket_alert:
+        labels:
+          severity: "slack"
+          slack_channel: "#alerts-myteam"

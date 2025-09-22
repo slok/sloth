@@ -8,7 +8,6 @@ import (
 	"text/template"
 
 	"github.com/VictoriaMetrics/metricsql"
-	prommodel "github.com/prometheus/common/model"
 
 	"github.com/slok/sloth/pkg/common/validation"
 	pluginslov1 "github.com/slok/sloth/pkg/prometheus/plugin/slo/v1"
@@ -39,51 +38,31 @@ func (p plugin) ProcessSLO(ctx context.Context, request *pluginslov1.Request, re
 }
 
 // VictoriaMetricsDialectValidator is the SLO flavour validator for victoria metrics backends dialect.
-const VictoriaMetricsDialectValidator = victoriaMetricsDialectValidator(false)
-
-type victoriaMetricsDialectValidator bool
-
-func (victoriaMetricsDialectValidator) ValidateLabelKey(k string) error {
-	if k == prommodel.MetricNameLabel {
-		return fmt.Errorf("the label key %q is not allowed", prommodel.MetricNameLabel)
-	}
-
-	if !prommodel.UTF8Validation.IsValidLabelName(k) {
-		return fmt.Errorf("the label key %q is not valid", k)
-	}
-
-	return nil
+var VictoriaMetricsDialectValidator = victoriaMetricsDialectValidator{
+	promValidator: validation.PromQLDialectValidator,
 }
 
-func (victoriaMetricsDialectValidator) ValidateLabelValue(k string) error {
-	if k == "" {
-		return fmt.Errorf("the label value is required")
-	}
-
-	if !prommodel.LabelValue(k).IsValid() {
-		return fmt.Errorf("the label value %q is not valid", k)
-	}
-
-	return nil
-}
-
-func (victoriaMetricsDialectValidator) ValidateAnnotationKey(k string) error {
-	if !prommodel.UTF8Validation.IsValidLabelName(k) {
-		return fmt.Errorf("the annotation key %q is not valid", k)
-	}
-
-	return nil
-}
-
-func (victoriaMetricsDialectValidator) ValidateAnnotationValue(k string) error {
-	if k == "" {
-		return fmt.Errorf("the annotation value is required")
-	}
-
-	return nil
+type victoriaMetricsDialectValidator struct {
+	promValidator validation.SLODialectValidator
 }
 
 var promExprTplAllowedFakeData = map[string]string{"window": "1m"}
+
+func (v victoriaMetricsDialectValidator) ValidateLabelKey(key string) error {
+	return v.promValidator.ValidateLabelKey(key)
+}
+
+func (v victoriaMetricsDialectValidator) ValidateLabelValue(label string) error {
+	return v.promValidator.ValidateLabelValue(label)
+}
+
+func (v victoriaMetricsDialectValidator) ValidateAnnotationKey(key string) error {
+	return v.promValidator.ValidateAnnotationKey(key)
+}
+
+func (v victoriaMetricsDialectValidator) ValidateAnnotationValue(annot string) error {
+	return v.promValidator.ValidateAnnotationValue(annot)
+}
 
 func (victoriaMetricsDialectValidator) ValidateQueryExpression(queryExpression string) error {
 	if queryExpression == "" {

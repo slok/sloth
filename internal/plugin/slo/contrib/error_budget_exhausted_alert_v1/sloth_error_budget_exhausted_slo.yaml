@@ -1,0 +1,41 @@
+version: "prometheus/v1"
+service: "nagios"
+labels:
+  component: "nagios"
+  environment: "production"
+# this file is used to generate prometheus rules with sloth - https://github.com/slok/sloth
+# to use it, run:
+# sloth generate -i sloth/nagios.yml -o infra/nagios_slo.yml
+# uses default window of 30 days
+# window defined during generation https://sloth.dev/usage/slo-period-windows/#custom-slo-period-catalog
+slo_plugins:
+  chain:
+  - id: "sloth.dev/contrib/error_budget_exhausted_alert/v1"
+    config:
+      alert_labels:
+        severity: "info"
+      selector_labels:
+        datacenter: "rin1"
+      description: "Error budget is low for {{ $labels.sloth_slo }}"
+slos:
+  - name: "nagios-availability"
+    objective: 90 # low due to 5 min window and scrape_interval of 30s
+    description: "Nagios Availability via prometheus-nagios-exporter scrapes"
+    sli:
+      events: # https://stackoverflow.com/a/71846686
+        error_query: sum(count_over_time(up{job="nagios_exporter",environment="production"}[{{.window}}]) - sum_over_time(nagios_up{environment="production", job="nagios_exporter" ,component="nagios"}[{{.window}}]))
+        total_query: sum(count_over_time(up{job="nagios_exporter",environment="production"}[{{.window}}]))
+        # we don't *have* to sum for this SLI, but we start from 0 labels consistently across the board
+    alerting:
+      name: NagiosAvailabilitySLO
+      annotations:
+        summary: Nagios Availability Error Budget Breached
+        description: "Nagios is not up as often as it should be"
+        grafana: 'https://grafana.linode.com/goto/-NVC3IT4z?orgId=1'
+        runbook: 'https://kb.linode.com/x/lAHqBw'
+      page_alert:
+        labels:
+          severity: warning # warning due to dubious paging value with 5 min window - https://bits.linode.com/ops/prometheus_rules/pull/96#pullrequestreview-80984
+          component: nagios
+      ticket_alert: # sloth comes with ticket alerts by default (warnings) we don't need - https://sloth.dev/introduction/architecture/#alerts
+        disable: true

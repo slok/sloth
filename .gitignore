@@ -19,3 +19,6 @@ vendor/
 
 # Binaries
 /bin
+
+# mise/asdf
+.tool-versions

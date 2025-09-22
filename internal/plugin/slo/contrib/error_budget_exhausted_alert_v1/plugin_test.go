@@ -50,7 +50,7 @@ func TestPlugin(t *testing.T) {
 						Rules: []rulefmt.Rule{
 							{
 								Alert:       "TestAlert",
-								Expr:        `slo:period_error_budget_remaining:ratio{sloth_id="web-service-availability",sloth_service="web-service",sloth_slo="availability"} <= 0`,
+								Expr:        `slo:period_error_budget_remaining:ratio{sloth_id="web-service-availability", sloth_service="web-service", sloth_slo="availability"} <= 0`,
 								For:         prommodel.Duration(5 * time.Minute),
 								Labels:      map[string]string{},
 								Annotations: map[string]string{},
@@ -84,7 +84,7 @@ func TestPlugin(t *testing.T) {
 						Rules: []rulefmt.Rule{
 							{
 								Alert:       "TestAlert",
-								Expr:        `slo:period_error_budget_remaining:ratio{environment="production",sloth_id="web-service-availability",sloth_service="web-service",sloth_slo="availability",team="platform"} <= 0`,
+								Expr:        `slo:period_error_budget_remaining:ratio{environment="production", sloth_id="web-service-availability", sloth_service="web-service", sloth_slo="availability", team="platform"} <= 0`,
 								For:         prommodel.Duration(5 * time.Minute),
 								Labels:      map[string]string{},
 								Annotations: map[string]string{},
@@ -118,7 +118,7 @@ func TestPlugin(t *testing.T) {
 						Rules: []rulefmt.Rule{
 							{
 								Alert:       "TestAlert",
-								Expr:        `slo:period_error_budget_remaining:ratio{region="us-west-2",sloth_id="web-service-availability",sloth_service="web-service",sloth_slo="availability",tier="critical"} <= 0`,
+								Expr:        `slo:period_error_budget_remaining:ratio{region="us-west-2", sloth_id="web-service-availability", sloth_service="web-service", sloth_slo="availability", tier="critical"} <= 0`,
 								For:         prommodel.Duration(5 * time.Minute),
 								Labels:      map[string]string{},
 								Annotations: map[string]string{},
@@ -154,7 +154,7 @@ func TestPlugin(t *testing.T) {
 						Rules: []rulefmt.Rule{
 							{
 								Alert:       "TestAlert",
-								Expr:        `slo:period_error_budget_remaining:ratio{sloth_id="payment-service-error-rate",sloth_service="payment-service",sloth_slo="error-rate"} <= -0.1`,
+								Expr:        `slo:period_error_budget_remaining:ratio{sloth_id="payment-service-error-rate", sloth_service="payment-service", sloth_slo="error-rate"} <= -0.1`,
 								For:         prommodel.Duration(5 * time.Minute),
 								Labels:      map[string]string{},
 								Annotations: map[string]string{},
@@ -189,7 +189,7 @@ func TestPlugin(t *testing.T) {
 						Rules: []rulefmt.Rule{
 							{
 								Alert: "ErrorBudgetExhausted",
-								Expr:  `slo:period_error_budget_remaining:ratio{sloth_id="checkout-availability",sloth_service="checkout",sloth_slo="availability"} <= 0`,
+								Expr:  `slo:period_error_budget_remaining:ratio{sloth_id="checkout-availability", sloth_service="checkout", sloth_slo="availability"} <= 0`,
 								For:   prommodel.Duration(5 * time.Minute),
 								Labels: map[string]string{
 									"severity": "critical",
@@ -225,7 +225,7 @@ func TestPlugin(t *testing.T) {
 						Rules: []rulefmt.Rule{
 							{
 								Alert: "ErrorBudgetLow",
-								Expr:  `slo:period_error_budget_remaining:ratio{sloth_id="api-gateway-latency",sloth_service="api-gateway",sloth_slo="latency"} <= 0.05`,
+								Expr:  `slo:period_error_budget_remaining:ratio{sloth_id="api-gateway-latency", sloth_service="api-gateway", sloth_slo="latency"} <= 0.05`,
 								For:   prommodel.Duration(10 * time.Minute),
 								Labels: map[string]string{
 									"severity": "warning",
@@ -256,7 +256,7 @@ func TestPlugin(t *testing.T) {
 						Rules: []rulefmt.Rule{
 							{
 								Alert:       "ErrorBudgetExhausted",
-								Expr:        `slo:period_error_budget_remaining:ratio{sloth_id="auth-service-reliability",sloth_service="auth-service",sloth_slo="reliability"} <= 0`,
+								Expr:        `slo:period_error_budget_remaining:ratio{sloth_id="auth-service-reliability", sloth_service="auth-service", sloth_slo="reliability"} <= 0`,
 								For:         prommodel.Duration(5 * time.Minute),
 								Labels:      map[string]string{},
 								Annotations: map[string]string{},
@@ -292,7 +292,7 @@ func TestPlugin(t *testing.T) {
 						Rules: []rulefmt.Rule{
 							{
 								Alert: "TestAlert",
-								Expr:  `slo:period_error_budget_remaining:ratio{region="us-west-2",sloth_id="web-service-availability",sloth_service="web-service",sloth_slo="availability"} <= 0`,
+								Expr:  `slo:period_error_budget_remaining:ratio{region="us-west-2", sloth_id="web-service-availability", sloth_service="web-service", sloth_slo="availability"} <= 0`,
 								For:   prommodel.Duration(5 * time.Minute),
 								Labels: map[string]string{
 									"severity": "critical",
@@ -328,7 +328,7 @@ func TestPlugin(t *testing.T) {
 						Rules: []rulefmt.Rule{
 							{
 								Alert:  "TestAlert",
-								Expr:   `slo:period_error_budget_remaining:ratio{sloth_id="web-service-availability",sloth_service="web-service",sloth_slo="availability"} <= 0`,
+								Expr:   `slo:period_error_budget_remaining:ratio{sloth_id="web-service-availability", sloth_service="web-service", sloth_slo="availability"} <= 0`,
 								For:    prommodel.Duration(5 * time.Minute),
 								Labels: map[string]string{},
 								Annotations: map[string]string{
@@ -363,7 +363,7 @@ func TestPlugin(t *testing.T) {
 						Rules: []rulefmt.Rule{
 							{
 								Alert:       "MinimalAlert",
-								Expr:        `slo:period_error_budget_remaining:ratio{sloth_id="database-uptime",sloth_service="database",sloth_slo="uptime"} <= 0.1`,
+								Expr:        `slo:period_error_budget_remaining:ratio{sloth_id="database-uptime", sloth_service="database", sloth_slo="uptime"} <= 0.1`,
 								For:         prommodel.Duration(15 * time.Minute),
 								Labels:      map[string]string{},
 								Annotations: map[string]string{},

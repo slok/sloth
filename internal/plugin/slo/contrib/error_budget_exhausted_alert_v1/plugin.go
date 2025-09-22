@@ -4,8 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"sort"
-	"strings"
 	"time"
 
 	"github.com/prometheus/common/model"
@@ -56,16 +54,11 @@ type plugin struct {
 
 // labelMatcher takes a map of labels and returns a string for PromQL inclusion.
 func labelMatcher(labels map[string]string) string {
-	keys := make([]string, 0, len(labels))
-	for k := range labels {
-		keys = append(keys, k)
+	ls := model.LabelSet{}
+	for k, v := range labels {
+		ls[model.LabelName(k)] = model.LabelValue(v)
 	}
-	sort.Strings(keys)
-	var parts []string
-	for _, k := range keys {
-		parts = append(parts, fmt.Sprintf(`%s="%s"`, k, labels[k]))
-	}
-	return strings.Join(parts, ",")
+	return ls.String()
 }
 
 func (p plugin) ProcessSLO(_ context.Context, req *pluginslov1.Request, result *pluginslov1.Result) error {
@@ -88,7 +81,7 @@ func (p plugin) ProcessSLO(_ context.Context, req *pluginslov1.Request, result *
 		labels[k] = v
 	}
 
-	expr := fmt.Sprintf(`slo:period_error_budget_remaining:ratio{%s} <= %g`, labelMatcher(labels), p.config.Threshold)
+	expr := fmt.Sprintf(`slo:period_error_budget_remaining:ratio%s <= %g`, labelMatcher(labels), p.config.Threshold)
 
 	// Alert annotations mixed in too
 	annotations := make(map[string]string)

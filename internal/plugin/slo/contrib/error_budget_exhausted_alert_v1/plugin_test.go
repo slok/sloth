@@ -131,18 +131,14 @@ func TestPlugin(t *testing.T) {
 		},
 
 		"A config with invalid duration format should fail.": {
-			config: MustJSONRawMessage(t, plugin.Config{
-				Threshold: 0.0,
-				For:       "invalid-duration",
-				AlertName: "TestAlert",
-			}),
+			config:     json.RawMessage(`{"threshold": 0.0, "for": "invalid-duration", "alert_name": "TestAlert"}`),
 			expLoadErr: true,
 		},
 
 		"A config with negative threshold should *not* fail.": {
 			config: MustJSONRawMessage(t, plugin.Config{
 				Threshold: -0.1,
-				For:       "5m",
+				For:       prommodel.Duration(5 * time.Minute),
 				AlertName: "TestAlert",
 			}),
 			req: pluginslov1.Request{
@@ -173,7 +169,7 @@ func TestPlugin(t *testing.T) {
 		"Creating alert rule for exhausted error budget should generate correct rule.": {
 			config: MustJSONRawMessage(t, plugin.Config{
 				Threshold: 0.0,
-				For:       "5m",
+				For:       prommodel.Duration(5 * time.Minute),
 				AlertName: "ErrorBudgetExhausted",
 				AlertLabels: map[string]string{
 					"severity": "critical",
@@ -210,7 +206,7 @@ func TestPlugin(t *testing.T) {
 		"Creating alert rule with positive threshold should generate correct promql expression.": {
 			config: MustJSONRawMessage(t, plugin.Config{
 				Threshold: 0.05,
-				For:       "10m",
+				For:       prommodel.Duration(10 * time.Minute),
 				AlertName: "ErrorBudgetLow",
 				AlertLabels: map[string]string{
 					"severity": "warning",
@@ -351,7 +347,7 @@ func TestPlugin(t *testing.T) {
 		"Creating alert rule with minimal config should work without annotations.": {
 			config: MustJSONRawMessage(t, plugin.Config{
 				Threshold: 0.1,
-				For:       "15m",
+				For:       prommodel.Duration(15 * time.Minute),
 				AlertName: "MinimalAlert",
 			}),
 			req: pluginslov1.Request{

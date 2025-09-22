@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"sort"
 	"strings"
+	"time"
 
 	"github.com/prometheus/common/model"
 	"github.com/prometheus/prometheus/model/rulefmt"
@@ -20,8 +21,7 @@ const (
 
 type Config struct {
 	Threshold      float64           `json:"threshold"`                 // default 0, fully exhausted
-	For            string            `json:"for"`                       // default 5m
-	ForDuration    model.Duration    `json:"-"`                         // parsed duration, not serialized
+	For            model.Duration    `json:"for"`                       // default 5m
 	Annotations    map[string]string `json:"annotations,omitempty"`     // default empty, additional annotations to add to the alert
 	AlertName      string            `json:"alert_name,omitempty"`      // default "ErrorBudgetExhausted"
 	SelectorLabels map[string]string `json:"selector_labels,omitempty"` // default empty, additional labels to determine what should alert
@@ -39,20 +39,13 @@ func NewPlugin(configData json.RawMessage, _ pluginslov1.AppUtils) (pluginslov1.
 		return nil, fmt.Errorf("invalid plugin config: %w", err)
 	}
 
-	// Set defaults if not empty.
-	if cfg.For == "" {
-		cfg.For = "5m"
+	if cfg.For == 0 {
+		cfg.For = model.Duration(5 * time.Minute)
 	}
+
 	if cfg.AlertName == "" {
 		cfg.AlertName = "ErrorBudgetExhausted"
 	}
-
-	// Validate for duration
-	duration, err := model.ParseDuration(cfg.For)
-	if err != nil {
-		return nil, fmt.Errorf("invalid 'for' duration in plugin config: %w", err)
-	}
-	cfg.ForDuration = duration
 
 	return plugin{config: cfg}, nil
 }
@@ -106,7 +99,7 @@ func (p plugin) ProcessSLO(_ context.Context, req *pluginslov1.Request, result *
 	result.SLORules.AlertRules.Rules = append(result.SLORules.AlertRules.Rules, rulefmt.Rule{
 		Alert:       p.config.AlertName,
 		Expr:        expr,
-		For:         p.config.ForDuration,
+		For:         p.config.For,
 		Labels:      p.config.AlertLabels,
 		Annotations: annotations,
 	})

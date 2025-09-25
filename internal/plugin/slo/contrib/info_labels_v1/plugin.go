@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/slok/sloth/pkg/common/conventions"
 	utilsdata "github.com/slok/sloth/pkg/common/utils/data"
 	pluginslov1 "github.com/slok/sloth/pkg/prometheus/plugin/slo/v1"
 )
@@ -27,7 +28,7 @@ func NewPlugin(configData json.RawMessage, _ pluginslov1.AppUtils) (pluginslov1.
 	}
 
 	if config.MetricName == "" {
-		config.MetricName = "sloth_slo_info" // Default info label.
+		config.MetricName = conventions.PromMetaSLOInfoMetric
 	}
 
 	if len(config.Labels) == 0 {

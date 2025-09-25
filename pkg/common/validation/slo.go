@@ -25,7 +25,7 @@ func isValidSLIQueryTemplate(sliQuery string) error {
 		return fmt.Errorf("query template is required: %w", commonerrors.ErrRequired)
 	}
 
-	if !conventions.TplWindowRegex.MatchString(sliQuery) {
+	if !conventions.TplSLIQueryWindowVarRegex.MatchString(sliQuery) {
 		return fmt.Errorf("template must contain the {{ .window }} variable")
 	}
 

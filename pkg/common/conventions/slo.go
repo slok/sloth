@@ -4,8 +4,17 @@ import "github.com/slok/sloth/pkg/common/model"
 
 // Prometheus metrics conventions.
 const (
-	// Metrics.
+	// Metrics SLI.
 	PromSLIErrorMetricFmt = "slo:sli_error:ratio_rate%s"
+
+	// Metrics meta.
+	PromMetaSLOObjectiveRatioMetric                  = "slo:objective:ratio"
+	PromMetaSLOErrorBudgetRatioMetric                = "slo:error_budget:ratio"
+	PromMetaSLOTimePeriodDaysMetric                  = "slo:time_period:days"
+	PromMetaSLOCurrentBurnRateRatioMetric            = "slo:current_burn_rate:ratio"
+	PromMetaSLOPeriodBurnRateRatioMetric             = "slo:period_burn_rate:ratio"
+	PromMetaSLOPeriodErrorBudgetRemainingRatioMetric = "slo:period_error_budget_remaining:ratio"
+	PromMetaSLOInfoMetric                            = "sloth_slo_info"
 
 	// Labels.
 	PromSLONameLabelName      = "sloth_slo"

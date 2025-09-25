@@ -22,6 +22,10 @@ const (
 	PluginID      = "sloth.dev/contrib/denominator_corrected_rules/v1"
 )
 
+const (
+	numeratorCorrectionMetric = "slo:numerator_correction:ratio" // The correction factor metric name.
+)
+
 type PluginConfig struct{}
 
 func NewPlugin(c json.RawMessage, _ pluginslov1.AppUtils) (pluginslov1.Plugin, error) {
@@ -109,7 +113,7 @@ func getAlertGroupWindows(alerts model.MWMBAlertGroup) []time.Duration {
 
 func denominatorCorrectedSLIRecordGenerator(slo model.PromSLO, window time.Duration, alerts model.MWMBAlertGroup) (*rulefmt.Rule, error) {
 	const sliExprTplFmt = `(
-slo:numerator_correction:ratio{{.window}}{{.filter}}
+{{.numeratorCorrectionMetric}}{{.window}}{{.filter}}
 * on()
 %s
 )
@@ -129,9 +133,10 @@ slo:numerator_correction:ratio{{.window}}{{.filter}}
 
 	var b bytes.Buffer
 	err = tpl.Execute(&b, map[string]string{
-		tplKeyWindow: strWindow,
-		"filter":     promutils.LabelsToPromFilter(conventions.GetSLOIDPromLabels(slo)),
-		"windowKey":  conventions.PromSLOWindowLabelName,
+		"numeratorCorrectionMetric": numeratorCorrectionMetric,
+		"window":                    strWindow,
+		"filter":                    promutils.LabelsToPromFilter(conventions.GetSLOIDPromLabels(slo)),
+		"windowKey":                 conventions.PromSLOWindowLabelName,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("could not render SLI expression template: %w", err)
@@ -150,13 +155,9 @@ slo:numerator_correction:ratio{{.window}}{{.filter}}
 	}, nil
 }
 
-const (
-	tplKeyWindow = "window"
-)
-
 func createNumeratorCorrection(slo model.PromSLO, labels map[string]string, currentWindow, totalWindow time.Duration) (*rulefmt.Rule, error) {
 	windowString := promutils.TimeDurationToPromStr(currentWindow)
-	metricSLONumeratorCorrection := fmt.Sprintf("slo:numerator_correction:ratio%s", windowString)
+	metricSLONumeratorCorrection := numeratorCorrectionMetric + windowString
 
 	tpl, err := template.New("sliExpr").Option("missingkey=error").Parse(slo.SLI.Events.TotalQuery)
 	if err != nil {
@@ -165,7 +166,7 @@ func createNumeratorCorrection(slo model.PromSLO, labels map[string]string, curr
 
 	var numeratorBuffer bytes.Buffer
 	err = tpl.Execute(&numeratorBuffer, map[string]string{
-		tplKeyWindow: windowString,
+		conventions.TplSLIQueryWindowVarName: windowString,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("could not create numerator for %s: %w", metricSLONumeratorCorrection, err)
@@ -174,7 +175,7 @@ func createNumeratorCorrection(slo model.PromSLO, labels map[string]string, curr
 	denominatorWindow := promutils.TimeDurationToPromStr(totalWindow)
 	var denominatorBuffer bytes.Buffer
 	err = tpl.Execute(&denominatorBuffer, map[string]string{
-		tplKeyWindow: denominatorWindow,
+		conventions.TplSLIQueryWindowVarName: denominatorWindow,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("could not create denominator for %s: %w", metricSLONumeratorCorrection, err)

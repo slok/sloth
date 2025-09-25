@@ -9,6 +9,7 @@ import (
 
 	"github.com/VictoriaMetrics/metricsql"
 
+	"github.com/slok/sloth/pkg/common/conventions"
 	"github.com/slok/sloth/pkg/common/validation"
 	pluginslov1 "github.com/slok/sloth/pkg/prometheus/plugin/slo/v1"
 )
@@ -46,7 +47,7 @@ type victoriaMetricsDialectValidator struct {
 	promValidator validation.SLODialectValidator
 }
 
-var promExprTplAllowedFakeData = map[string]string{"window": "1m"}
+var promExprTplAllowedFakeData = map[string]string{conventions.TplSLIQueryWindowVarName: "1m"}
 
 func (v victoriaMetricsDialectValidator) ValidateLabelKey(key string) error {
 	return v.promValidator.ValidateLabelKey(key)

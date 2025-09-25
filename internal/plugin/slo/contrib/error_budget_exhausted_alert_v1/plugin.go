@@ -9,6 +9,7 @@ import (
 	"github.com/prometheus/common/model"
 	"github.com/prometheus/prometheus/model/rulefmt"
 
+	"github.com/slok/sloth/pkg/common/conventions"
 	pluginslov1 "github.com/slok/sloth/pkg/prometheus/plugin/slo/v1"
 )
 
@@ -66,9 +67,9 @@ func (p plugin) ProcessSLO(_ context.Context, req *pluginslov1.Request, result *
 
 	// Base labels for the alert
 	labels := map[string]string{
-		"sloth_slo":     slo.Name,
-		"sloth_service": slo.Service,
-		"sloth_id":      fmt.Sprintf("%s-%s", slo.Service, slo.Name),
+		conventions.PromSLONameLabelName:    slo.Name,
+		conventions.PromSLOServiceLabelName: slo.Service,
+		conventions.PromSLOIDLabelName:      fmt.Sprintf("%s-%s", slo.Service, slo.Name),
 	}
 
 	// Add all SLO custom labels
@@ -81,7 +82,7 @@ func (p plugin) ProcessSLO(_ context.Context, req *pluginslov1.Request, result *
 		labels[k] = v
 	}
 
-	expr := fmt.Sprintf(`slo:period_error_budget_remaining:ratio%s <= %g`, labelMatcher(labels), p.config.Threshold)
+	expr := fmt.Sprintf(`%s%s <= %g`, conventions.PromMetaSLOPeriodErrorBudgetRemainingRatioMetric, labelMatcher(labels), p.config.Threshold)
 
 	// Alert annotations mixed in too
 	annotations := make(map[string]string)

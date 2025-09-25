@@ -88,10 +88,6 @@ func optimizedFactorySLIRecordGenerator(slo model.PromSLO, window time.Duration,
 	return factorySLIRecordGenerator(slo, window, alerts)
 }
 
-const (
-	tplKeyWindow = "window"
-)
-
 // factorySLIRecordGenerator knows how to generate the SLI prometheus recording rules
 // form an SLO.
 // Normally these rules are used by the SLO alerts.
@@ -119,7 +115,7 @@ func rawSLIRecordGenerator(slo model.PromSLO, window time.Duration, alerts model
 	strWindow := promutils.TimeDurationToPromStr(window)
 	var b bytes.Buffer
 	err = tpl.Execute(&b, map[string]string{
-		tplKeyWindow: strWindow,
+		conventions.TplSLIQueryWindowVarName: strWindow,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("could not render SLI expression template: %w", err)
@@ -155,7 +151,7 @@ func eventsSLIRecordGenerator(slo model.PromSLO, window time.Duration, alerts mo
 	strWindow := promutils.TimeDurationToPromStr(window)
 	var b bytes.Buffer
 	err = tpl.Execute(&b, map[string]string{
-		tplKeyWindow: strWindow,
+		conventions.TplSLIQueryWindowVarName: strWindow,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("could not render SLI expression template: %w", err)

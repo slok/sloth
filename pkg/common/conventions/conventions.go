@@ -9,6 +9,9 @@ var (
 	// - Contain alphanumeric, `.`, '_', and '-'.
 	NameRegexp = regexp.MustCompile(`^[A-Za-z0-9][-A-Za-z0-9_.]*[A-Za-z0-9]$`)
 
-	// TplWindowRegex is the regex to match the {{ .window }} template variable.
-	TplWindowRegex = regexp.MustCompile(`{{ *\.window *}}`)
+	// TplSLIQueryWindowVarRegex is the regex to match the {{ .window }} template variable used in the SLI queries.
+	TplSLIQueryWindowVarRegex = regexp.MustCompile(`{{ *\.window *}}`)
+
+	// TplSLIQueryWindowVarName is the name of the window template variable used in the SLI queries.
+	TplSLIQueryWindowVarName = "window"
 )

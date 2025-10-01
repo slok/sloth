@@ -135,13 +135,9 @@ spec:
         sloth_window: 3d
       record: slo:sli_error:ratio_rate3d
     - expr: |
-        (
-        slo:numerator_correction:ratio30d{sloth_id="svc01-slo1", sloth_service="svc01", sloth_slo="slo1"}
-        * on()
-        sum(rate(http_request_duration_seconds_count{job="myservice",code=~"(5..|429)"}[30d]))
-        )
-        /
-        (sum(rate(http_request_duration_seconds_count{job="myservice"}[30d])))
+        sum_over_time(slo:sli_error:ratio_rate5m{sloth_id="svc01-slo1", sloth_service="svc01", sloth_slo="slo1"}[30d])
+        / ignoring (sloth_window)
+        count_over_time(slo:sli_error:ratio_rate5m{sloth_id="svc01-slo1", sloth_service="svc01", sloth_slo="slo1"}[30d])
       labels:
         cmd: examplesgen.sh
         global01k1: global01v1
@@ -290,15 +286,6 @@ spec:
         sloth_service: svc01
         sloth_slo: slo1
       record: slo:numerator_correction:ratio3d
-    - expr: (sum(rate(http_request_duration_seconds_count{job="myservice"}[30d])))/(sum(rate(http_request_duration_seconds_count{job="myservice"}[30d])))
-      labels:
-        cmd: examplesgen.sh
-        global01k1: global01v1
-        global02k1: global02v1
-        sloth_id: svc01-slo1
-        sloth_service: svc01
-        sloth_slo: slo1
-      record: slo:numerator_correction:ratio30d
   - name: sloth-slo-alerts-svc01-slo1
     rules:
     - alert: myServiceAlert

@@ -5,7 +5,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"sort"
 	"text/template"
 	"time"
 
@@ -26,7 +25,9 @@ const (
 	numeratorCorrectionMetric = "slo:numerator_correction:ratio" // The correction factor metric name.
 )
 
-type PluginConfig struct{}
+type PluginConfig struct {
+	DisableOptimized bool `json:"disableOptimized,omitempty"`
+}
 
 func NewPlugin(c json.RawMessage, _ pluginslov1.AppUtils) (pluginslov1.Plugin, error) {
 	cfg := &PluginConfig{}
@@ -49,36 +50,31 @@ func (p plugin) ProcessSLO(ctx context.Context, request *pluginslov1.Request, re
 	}
 
 	// Generate and override SLI recordings.
-	sliRules, err := generateSLIRecordingRules(ctx, request.SLO, request.MWMBAlertGroup)
+	sliRules, err := p.generateSLIRecordingRules(ctx, request.SLO, request.MWMBAlertGroup)
 	if err != nil {
 		return err
 	}
 	result.SLORules.SLIErrorRecRules.Rules = sliRules
 
 	// Add required new metadata recordings with the correction factor.
-	windows := getAlertGroupWindows(request.MWMBAlertGroup)
-	windows = append(windows, request.SLO.TimeWindow) // Add the total time window as a handy helper.
-	metadataLabels := utilsdata.MergeLabels(conventions.GetSLOIDPromLabels(request.SLO), request.SLO.Labels)
-	for _, window := range windows {
-		rule, err := createNumeratorCorrection(request.SLO, metadataLabels, window, request.SLO.TimeWindow)
-		if err != nil {
-			return fmt.Errorf("could not create numerator rule: %v", err)
-		}
-		result.SLORules.MetadataRecRules.Rules = append(result.SLORules.MetadataRecRules.Rules, *rule)
+	metaRules, err := p.generateMetaRecordingRules(ctx, request.SLO, request.MWMBAlertGroup)
+	if err != nil {
+		return err
 	}
+	result.SLORules.MetadataRecRules.Rules = append(result.SLORules.MetadataRecRules.Rules, metaRules...)
 
 	return nil
 }
 
-func generateSLIRecordingRules(ctx context.Context, slo model.PromSLO, alerts model.MWMBAlertGroup) ([]rulefmt.Rule, error) {
+func (p plugin) generateSLIRecordingRules(ctx context.Context, slo model.PromSLO, alerts model.MWMBAlertGroup) ([]rulefmt.Rule, error) {
 	// Get the windows we need the recording rules.
-	windows := getAlertGroupWindows(alerts)
+	windows := alerts.TimeDurationWindows()
 	windows = append(windows, slo.TimeWindow) // Add the total time window as a handy helper.
 
 	// Generate the rules
 	rules := make([]rulefmt.Rule, 0, len(windows))
 	for _, window := range windows {
-		rule, err := denominatorCorrectedSLIRecordGenerator(slo, window, alerts)
+		rule, err := p.denominatorCorrectedSLIRecordGenerator(slo, window, alerts)
 		if err != nil {
 			return nil, fmt.Errorf("could not create %q SLO rule for window %s: %w", slo.ID, window, err)
 		}
@@ -88,31 +84,22 @@ func generateSLIRecordingRules(ctx context.Context, slo model.PromSLO, alerts mo
 	return rules, nil
 }
 
-// getAlertGroupWindows gets all the time windows from a multiwindow multiburn alert group.
-func getAlertGroupWindows(alerts model.MWMBAlertGroup) []time.Duration {
-	// Use a map to avoid duplicated windows.
-	windows := map[string]time.Duration{
-		alerts.PageQuick.ShortWindow.String():   alerts.PageQuick.ShortWindow,
-		alerts.PageQuick.LongWindow.String():    alerts.PageQuick.LongWindow,
-		alerts.PageSlow.ShortWindow.String():    alerts.PageSlow.ShortWindow,
-		alerts.PageSlow.LongWindow.String():     alerts.PageSlow.LongWindow,
-		alerts.TicketQuick.ShortWindow.String(): alerts.TicketQuick.ShortWindow,
-		alerts.TicketQuick.LongWindow.String():  alerts.TicketQuick.LongWindow,
-		alerts.TicketSlow.ShortWindow.String():  alerts.TicketSlow.ShortWindow,
-		alerts.TicketSlow.LongWindow.String():   alerts.TicketSlow.LongWindow,
+func (p plugin) generateMetaRecordingRules(ctx context.Context, slo model.PromSLO, alerts model.MWMBAlertGroup) ([]rulefmt.Rule, error) {
+	metadataLabels := utilsdata.MergeLabels(conventions.GetSLOIDPromLabels(slo), slo.Labels)
+	rules := []rulefmt.Rule{}
+	for _, window := range alerts.TimeDurationWindows() {
+		rule, err := createNumeratorCorrection(slo, metadataLabels, window, slo.TimeWindow)
+		if err != nil {
+			return nil, fmt.Errorf("could not create numerator rule: %v", err)
+		}
+		rules = append(rules, *rule)
 	}
-
-	res := make([]time.Duration, 0, len(windows))
-	for _, w := range windows {
-		res = append(res, w)
-	}
-	sort.SliceStable(res, func(i, j int) bool { return res[i] < res[j] })
-
-	return res
+	return rules, nil
 }
 
-func denominatorCorrectedSLIRecordGenerator(slo model.PromSLO, window time.Duration, alerts model.MWMBAlertGroup) (*rulefmt.Rule, error) {
-	const sliExprTplFmt = `(
+func (p plugin) denominatorCorrectedSLIRecordGenerator(slo model.PromSLO, window time.Duration, alerts model.MWMBAlertGroup) (*rulefmt.Rule, error) {
+	const (
+		sliExprTplFmt = `(
 {{.numeratorCorrectionMetric}}{{.window}}{{.filter}}
 * on()
 %s
@@ -120,9 +107,34 @@ func denominatorCorrectedSLIRecordGenerator(slo model.PromSLO, window time.Durat
 /
 (%s)
 `
+		sliExprTotalWindowTplFmt = `(%s)
+/
+(%s)
+`
+		// For more information about optimized SLI check `sloth.dev/core/sli_rules/v1` plugin.
+		sliExprTotalWindowOptimizedTplFmt = `sum_over_time(%s[{{.window}}])
+/ ignoring ({{.windowKey}})
+count_over_time(%s[{{.window}}])
+`
+	)
 
-	sliExprTpl := fmt.Sprintf(sliExprTplFmt, slo.SLI.Events.ErrorQuery, slo.SLI.Events.TotalQuery)
+	sliExprTpl := ""
+	switch {
+	// Last window (total window) when not optimized.
+	case window == slo.TimeWindow && p.cfg.DisableOptimized:
+		sliExprTpl = fmt.Sprintf(sliExprTotalWindowTplFmt, slo.SLI.Events.ErrorQuery, slo.SLI.Events.TotalQuery)
 
+	// Last window (total window) when optimized.
+	case window == slo.TimeWindow && !p.cfg.DisableOptimized:
+		shortWindowSLIRec := conventions.GetSLIErrorMetric(alerts.PageQuick.ShortWindow)
+		filter := promutils.LabelsToPromFilter(conventions.GetSLOIDPromLabels(slo))
+		metric := shortWindowSLIRec + filter
+		sliExprTpl = fmt.Sprintf(sliExprTotalWindowOptimizedTplFmt, metric, metric)
+
+	// Regular SLI.
+	default:
+		sliExprTpl = fmt.Sprintf(sliExprTplFmt, slo.SLI.Events.ErrorQuery, slo.SLI.Events.TotalQuery)
+	}
 	// Render with our templated data.
 	tpl, err := template.New("sliExpr").Option("missingkey=error").Parse(sliExprTpl)
 	if err != nil {

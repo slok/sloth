@@ -1,6 +1,9 @@
 package model
 
-import "time"
+import (
+	"sort"
+	"time"
+)
 
 // AlertSeverity is the type of alert.
 type AlertSeverity int
@@ -43,4 +46,28 @@ type MWMBAlertGroup struct {
 	PageSlow    MWMBAlert
 	TicketQuick MWMBAlert
 	TicketSlow  MWMBAlert
+}
+
+// TimeDurationWindows is a helper method to get the list of unique and sorted time durations
+// windows of the alert group.
+func (m MWMBAlertGroup) TimeDurationWindows() []time.Duration {
+	// Use a map to avoid duplicated windows.
+	windows := map[string]time.Duration{
+		m.PageQuick.ShortWindow.String():   m.PageQuick.ShortWindow,
+		m.PageQuick.LongWindow.String():    m.PageQuick.LongWindow,
+		m.PageSlow.ShortWindow.String():    m.PageSlow.ShortWindow,
+		m.PageSlow.LongWindow.String():     m.PageSlow.LongWindow,
+		m.TicketQuick.ShortWindow.String(): m.TicketQuick.ShortWindow,
+		m.TicketQuick.LongWindow.String():  m.TicketQuick.LongWindow,
+		m.TicketSlow.ShortWindow.String():  m.TicketSlow.ShortWindow,
+		m.TicketSlow.LongWindow.String():   m.TicketSlow.LongWindow,
+	}
+
+	res := make([]time.Duration, 0, len(windows))
+	for _, w := range windows {
+		res = append(res, w)
+	}
+	sort.SliceStable(res, func(i, j int) bool { return res[i] < res[j] })
+
+	return res
 }

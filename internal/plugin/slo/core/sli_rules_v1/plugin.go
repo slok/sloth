@@ -5,7 +5,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"sort"
 	"text/template"
 	"time"
 
@@ -57,7 +56,7 @@ func (p plugin) ProcessSLO(ctx context.Context, request *pluginslov1.Request, re
 
 func generateSLIRecordingRules(ctx context.Context, slo model.PromSLO, alerts model.MWMBAlertGroup, genFunc sliRulesgenFunc) ([]rulefmt.Rule, error) {
 	// Get the windows we need the recording rules.
-	windows := getAlertGroupWindows(alerts)
+	windows := alerts.TimeDurationWindows()
 	windows = append(windows, slo.TimeWindow) // Add the total time window as a handy helper.
 
 	// Generate the rules
@@ -223,27 +222,4 @@ count_over_time({{.metric}}{{.filter}}[{{.window}}])
 			slo.Labels,
 		),
 	}, nil
-}
-
-// getAlertGroupWindows gets all the time windows from a multiwindow multiburn alert group.
-func getAlertGroupWindows(alerts model.MWMBAlertGroup) []time.Duration {
-	// Use a map to avoid duplicated windows.
-	windows := map[string]time.Duration{
-		alerts.PageQuick.ShortWindow.String():   alerts.PageQuick.ShortWindow,
-		alerts.PageQuick.LongWindow.String():    alerts.PageQuick.LongWindow,
-		alerts.PageSlow.ShortWindow.String():    alerts.PageSlow.ShortWindow,
-		alerts.PageSlow.LongWindow.String():     alerts.PageSlow.LongWindow,
-		alerts.TicketQuick.ShortWindow.String(): alerts.TicketQuick.ShortWindow,
-		alerts.TicketQuick.LongWindow.String():  alerts.TicketQuick.LongWindow,
-		alerts.TicketSlow.ShortWindow.String():  alerts.TicketSlow.ShortWindow,
-		alerts.TicketSlow.LongWindow.String():   alerts.TicketSlow.LongWindow,
-	}
-
-	res := make([]time.Duration, 0, len(windows))
-	for _, w := range windows {
-		res = append(res, w)
-	}
-	sort.SliceStable(res, func(i, j int) bool { return res[i] < res[j] })
-
-	return res
 }

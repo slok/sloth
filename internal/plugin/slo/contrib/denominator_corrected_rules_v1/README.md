@@ -17,7 +17,7 @@ More details in the original [PR].
 
 ## Config
 
-None
+- `disableOptimized`(**Optional**, `bool`): If `true`, disables optimized rule generation for long SLI windows. Optimized rules use short-window recording rules to derive long-window SLIs with lower Prometheus resource usage, at the cost of reduced accuracy. Defaults to `false`.
 
 ## Env vars
 
@@ -36,5 +36,16 @@ This plugin should run after rule generation plugins.
     chain:
       - id: "sloth.dev/contrib/denominator_corrected_rules/v1"
 ```
+
+### Disable optimization
+
+```yaml
+sloPlugins:
+  chain:
+    - id: "sloth.dev/contrib/denominator_corrected_rules/v1"
+      config:
+        disableOptimized: true
+```
+
 
 [PR]: https://github.com/slok/sloth/pull/459

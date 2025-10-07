@@ -32,7 +32,7 @@ slo_plugins:
     - id: sloth.dev/core/alert_rules/v1 # Default set again.
 ```
 
-### Explicit usage as app plugin
+### Explicit usage as app plugin
 
 Disable all default logic and set a new logic for all the Sloth app by setting the custom victoria metrics validator plugin and setting again default Sloth SLO generator plugins.
 

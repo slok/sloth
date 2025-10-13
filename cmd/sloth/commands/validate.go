@@ -18,13 +18,15 @@ import (
 )
 
 type validateCommand struct {
-	slosInput            string
-	slosExcludeRegex     string
-	slosIncludeRegex     string
-	extraLabels          map[string]string
-	pluginsPaths         []string
-	sloPeriodWindowsPath string
-	sloPeriod            string
+	slosInput                string
+	slosExcludeRegex         string
+	slosIncludeRegex         string
+	extraLabels              map[string]string
+	pluginsPaths             []string
+	sloPeriodWindowsPath     string
+	sloPeriod                string
+	sloPlugins               []string
+	disableDefaultSLOPlugins bool
 }
 
 // NewValidateCommand returns the validate command.
@@ -38,6 +40,8 @@ func NewValidateCommand(app *kingpin.Application) Command {
 	cmd.Flag("plugins-path", "The path to SLI and SLO plugins (can be repeated).").Short('p').StringsVar(&c.pluginsPaths)
 	cmd.Flag("slo-period-windows-path", "The directory path to custom SLO period windows catalog (replaces default ones).").StringVar(&c.sloPeriodWindowsPath)
 	cmd.Flag("default-slo-period", "The default SLO period windows to be used for the SLOs.").Default("30d").StringVar(&c.sloPeriod)
+	cmd.Flag("slo-plugins", `SLO plugins chain declaration in JSON format '{"id": "foo","priority": 0,"config": "{}"}' (Can be repeated).`).Short('s').StringsVar(&c.sloPlugins)
+	cmd.Flag("disable-default-slo-plugins", `Disables the default SLO plugins, normally used along with custom SLO plugins to fully customize Sloth behavior`).BoolVar(&c.disableDefaultSLOPlugins)
 
 	return c
 }
@@ -86,6 +90,12 @@ func (v validateCommand) Run(ctx context.Context, config RootConfig) error {
 		return err
 	}
 
+	// Load SLO plugin declarations at CMD level.
+	cmdLevelSLOPlugins, err := mapCmdPluginToModel(ctx, v.sloPlugins)
+	if err != nil {
+		return fmt.Errorf("could not load slo plugin declarations: %w", err)
+	}
+
 	// Windows repository.
 	var wfs fs.FS
 	if v.sloPeriodWindowsPath != "" {
@@ -124,10 +134,12 @@ func (v validateCommand) Run(ctx context.Context, config RootConfig) error {
 		splittedSLOsData := splitYAML(slxData)
 
 		gen := generator{
-			logger:        log.Noop,
-			windowsRepo:   windowsRepo,
-			extraLabels:   v.extraLabels,
-			sloPluginRepo: pluginsRepo,
+			logger:                   log.Noop,
+			windowsRepo:              windowsRepo,
+			extraLabels:              v.extraLabels,
+			sloPluginRepo:            pluginsRepo,
+			extraSLOPlugins:          cmdLevelSLOPlugins,
+			disableDefaultSLOPlugins: v.disableDefaultSLOPlugins,
 		}
 
 		// Prepare file validation result and start validation result for every SLO in the file.

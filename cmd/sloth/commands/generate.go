@@ -12,20 +12,16 @@ import (
 	"strings"
 	"time"
 
-	openslov1alpha "github.com/OpenSLO/oslo/pkg/manifest/v1alpha"
 	"github.com/alecthomas/kingpin/v2"
 	prometheusmodel "github.com/prometheus/common/model"
 
-	"github.com/slok/sloth/internal/alert"
-	"github.com/slok/sloth/internal/app/generate"
-	"github.com/slok/sloth/internal/info"
 	"github.com/slok/sloth/internal/log"
+	"github.com/slok/sloth/internal/plugin"
 	"github.com/slok/sloth/internal/storage"
-	storagefs "github.com/slok/sloth/internal/storage/fs"
 	storageio "github.com/slok/sloth/internal/storage/io"
 	"github.com/slok/sloth/pkg/common/model"
-	kubernetesv1 "github.com/slok/sloth/pkg/kubernetes/api/sloth/v1"
-	prometheusv1 "github.com/slok/sloth/pkg/prometheus/api/v1"
+	utilsdata "github.com/slok/sloth/pkg/common/utils/data"
+	slothlib "github.com/slok/sloth/pkg/lib"
 )
 
 type generateCommand struct {
@@ -108,41 +104,11 @@ func (g generateCommand) Run(ctx context.Context, config RootConfig) error {
 		"out": g.slosOut,
 	})
 
-	// Load plugins.
-	pluginsRepo, err := createPluginLoader(ctx, logger, g.pluginsPaths)
-	if err != nil {
-		return err
-	}
-
 	// Load SLO plugin declarations at CMD level.
 	cmdLevelSLOPlugins, err := mapCmdPluginToModel(ctx, g.sloPlugins)
 	if err != nil {
 		return fmt.Errorf("could not load slo plugin declarations: %w", err)
 	}
-
-	// Windows repository.
-	var wfs fs.FS
-	if g.sloPeriodWindowsPath != "" {
-		wfs = os.DirFS(g.sloPeriodWindowsPath)
-	}
-	windowsRepo, err := alert.NewFSWindowsRepo(alert.FSWindowsRepoConfig{
-		FS:     wfs,
-		Logger: logger,
-	})
-	if err != nil {
-		return fmt.Errorf("could not load SLO period windows repository: %w", err)
-	}
-
-	// Check if the default slo period is supported by our windows repo.
-	_, err = windowsRepo.GetWindows(ctx, sloPeriod)
-	if err != nil {
-		return fmt.Errorf("invalid default slo period: %w", err)
-	}
-
-	// Create Spec loaders.
-	promYAMLLoader := storageio.NewSlothPrometheusYAMLSpecLoader(pluginsRepo, sloPeriod)
-	kubeYAMLLoader := storageio.NewK8sSlothPrometheusYAMLSpecLoader(pluginsRepo, sloPeriod)
-	openSLOYAMLLoader := storageio.NewOpenSLOYAMLSpecLoader(sloPeriod)
 
 	// Get SLO targets.
 	genTargets := []generateTarget{}
@@ -162,7 +128,7 @@ func (g generateCommand) Run(ctx context.Context, config RootConfig) error {
 		}
 
 		// Split YAMLs in case we have multiple yaml files in a single file.
-		splittedSLOsData := splitYAML(slxData)
+		splittedSLOsData := utilsdata.SplitYAML(slxData)
 
 		// Prepare store output.
 		var out = config.Stdout
@@ -237,7 +203,7 @@ func (g generateCommand) Run(ctx context.Context, config RootConfig) error {
 			defer outFile.Close()
 
 			// Split YAMLs in case we have multiple yaml files in a single file.
-			splittedSLOsData := splitYAML(slxData)
+			splittedSLOsData := utilsdata.SplitYAML(slxData)
 			for _, s := range splittedSLOsData {
 				genTargets = append(genTargets, generateTarget{
 					SLOData: s,
@@ -247,57 +213,34 @@ func (g generateCommand) Run(ctx context.Context, config RootConfig) error {
 		}
 	}
 
-	gen := generator{
-		logger:                   logger,
-		windowsRepo:              windowsRepo,
-		disableRecordings:        g.disableRecordings,
-		disableAlerts:            g.disableAlerts,
-		extraLabels:              g.extraLabels,
-		sloPluginRepo:            pluginsRepo,
-		extraSLOPlugins:          cmdLevelSLOPlugins,
-		disableDefaultSLOPlugins: g.disableDefaultSLOPlugins,
+	pluginsFSs := []fs.FS{plugin.EmbeddedDefaultSLOPlugins}
+	for _, p := range g.pluginsPaths {
+		pluginsFSs = append(pluginsFSs, os.DirFS(p))
+	}
+
+	var wfs fs.FS
+	if g.sloPeriodWindowsPath != "" {
+		wfs = os.DirFS(g.sloPeriodWindowsPath)
+	}
+
+	genService, err := slothlib.NewPrometheusSLOGenerator(slothlib.Config{
+		WindowsFS:             wfs,
+		PluginsFS:             pluginsFSs,
+		DefaultSLOPeriod:      sloPeriod,
+		DisableDefaultPlugins: g.disableDefaultSLOPlugins,
+		CMDSLOPlugins:         cmdLevelSLOPlugins,
+		ExtraLabels:           g.extraLabels,
+		CallerAgent:           slothlib.CallerAgentCLI,
+		Logger:                logger,
+	})
+	if err != nil {
+		return fmt.Errorf("could not create Prometheus SLO generator: %w", err)
 	}
 
 	for _, genTarget := range genTargets {
-		dataB := []byte(genTarget.SLOData)
-
-		// Match the spec type to know how to generate.
-		switch {
-		case promYAMLLoader.IsSpecType(ctx, dataB):
-			slos, err := promYAMLLoader.LoadSpec(ctx, dataB)
-			if err != nil {
-				return fmt.Errorf("tried loading raw prometheus SLOs spec, it couldn't: %w", err)
-			}
-
-			err = gen.GeneratePrometheus(ctx, *slos, genTarget.Out)
-			if err != nil {
-				return fmt.Errorf("could not generate Prometheus format rules: %w", err)
-			}
-
-		case kubeYAMLLoader.IsSpecType(ctx, dataB):
-			sloGroup, err := kubeYAMLLoader.LoadSpec(ctx, dataB)
-			if err != nil {
-				return fmt.Errorf("tried loading Kubernetes prometheus SLOs spec, it couldn't: %w", err)
-			}
-
-			err = gen.GenerateKubernetes(ctx, *sloGroup, genTarget.Out)
-			if err != nil {
-				return fmt.Errorf("could not generate Kubernetes format rules: %w", err)
-			}
-
-		case openSLOYAMLLoader.IsSpecType(ctx, dataB):
-			slos, err := openSLOYAMLLoader.LoadSpec(ctx, dataB)
-			if err != nil {
-				return fmt.Errorf("tried loading OpenSLO SLOs spec, it couldn't: %w", err)
-			}
-
-			err = gen.GenerateOpenSLO(ctx, *slos, genTarget.Out)
-			if err != nil {
-				return fmt.Errorf("could not generate OpenSLO format rules: %w", err)
-			}
-
-		default:
-			return fmt.Errorf("invalid spec, could not load with any of the supported spec types")
+		err := generateSLOs(ctx, logger, *genService, genTarget, g.disableAlerts, g.disableRecordings)
+		if err != nil {
+			return fmt.Errorf("could not generate SLOs: %w", err)
 		}
 	}
 
@@ -309,152 +252,91 @@ type generateTarget struct {
 	SLOData string
 }
 
-type generator struct {
-	logger                   log.Logger
-	windowsRepo              alert.WindowsRepo
-	disableRecordings        bool
-	disableAlerts            bool
-	extraLabels              map[string]string
-	sloPluginRepo            *storagefs.FilePluginRepo
-	extraSLOPlugins          []model.PromSLOPluginMetadata
-	disableDefaultSLOPlugins bool
-}
+func generateSLOs(ctx context.Context, logger log.Logger, genService slothlib.PrometheusSLOGenerator, genTarget generateTarget, disableAlerts, disableRecordings bool) error {
+	dataB := []byte(genTarget.SLOData)
 
-// GeneratePrometheus generates the SLOs based on a raw regular Prometheus spec format input and outs a Prometheus raw yaml.
-func (g generator) GeneratePrometheus(ctx context.Context, slos model.PromSLOGroup, out io.Writer) error {
-	g.logger.Infof("Generating from Prometheus spec")
-	info := model.Info{
-		Version: info.Version,
-		Mode:    model.ModeCLIGenPrometheus,
-		Spec:    prometheusv1.Version,
-	}
-
-	result, err := g.generateRules(ctx, info, slos)
+	// Generate SLOs.
+	genResult, err := genService.GenerateFromRaw(ctx, dataB)
 	if err != nil {
-		return err
+		return fmt.Errorf("could not generate SLOs: %w", err)
 	}
 
-	repo := storageio.NewStdPrometheusGroupedRulesYAMLRepo(out, g.logger)
-	storageSLOs := make([]storageio.StdPrometheusStorageSLO, 0, len(result.PrometheusSLOs))
-	for _, s := range result.PrometheusSLOs {
-		storageSLOs = append(storageSLOs, storageio.StdPrometheusStorageSLO{
-			SLO:   s.SLO,
-			Rules: s.SLORules,
-		})
-	}
-
-	err = repo.StoreSLOs(ctx, storageSLOs)
-	if err != nil {
-		return fmt.Errorf("could not store SLOS: %w", err)
-	}
-
-	return nil
-}
-
-// generateKubernetes generates the SLOs based on a Kuberentes spec format input and outs a Kubernetes prometheus operator CRD yaml.
-func (g generator) GenerateKubernetes(ctx context.Context, sloGroup model.PromSLOGroup, out io.Writer) error {
-	g.logger.Infof("Generating from Kubernetes Prometheus spec")
-
-	info := model.Info{
-		Version: info.Version,
-		Mode:    model.ModeCLIGenKubernetes,
-		Spec:    fmt.Sprintf("%s/%s", kubernetesv1.SchemeGroupVersion.Group, kubernetesv1.SchemeGroupVersion.Version),
-	}
-	result, err := g.generateRules(ctx, info, sloGroup)
-	if err != nil {
-		return err
-	}
-
-	repo := storageio.NewIOWriterPrometheusOperatorYAMLRepo(out, g.logger)
-	storageSLOs := make([]storage.SLORulesResult, 0, len(result.PrometheusSLOs))
-	for _, s := range result.PrometheusSLOs {
-		storageSLOs = append(storageSLOs, storage.SLORulesResult{
-			SLO:   s.SLO,
-			Rules: s.SLORules,
-		})
-	}
-
-	kmeta := storage.K8sMeta{
-		Kind:        "PrometheusServiceLevel",
-		APIVersion:  "sloth.slok.dev/v1",
-		UID:         string(sloGroup.OriginalSource.K8sSlothV1.UID),
-		Name:        sloGroup.OriginalSource.K8sSlothV1.Name,
-		Namespace:   sloGroup.OriginalSource.K8sSlothV1.Namespace,
-		Labels:      sloGroup.OriginalSource.K8sSlothV1.Labels,
-		Annotations: sloGroup.OriginalSource.K8sSlothV1.Annotations,
-	}
-
-	err = repo.StoreSLOs(ctx, kmeta, storageSLOs)
-	if err != nil {
-		return fmt.Errorf("could not store SLOS: %w", err)
-	}
-
-	return nil
-}
-
-// generateOpenSLO generates the SLOs based on a OpenSLO spec format input and outs a Prometheus raw yaml.
-func (g generator) GenerateOpenSLO(ctx context.Context, slos model.PromSLOGroup, out io.Writer) error {
-	g.logger.Infof("Generating from OpenSLO spec")
-	info := model.Info{
-		Version: info.Version,
-		Mode:    model.ModeCLIGenOpenSLO,
-		Spec:    openslov1alpha.APIVersion,
-	}
-
-	result, err := g.generateRules(ctx, info, slos)
-	if err != nil {
-		return err
-	}
-
-	repo := storageio.NewStdPrometheusGroupedRulesYAMLRepo(out, g.logger)
-	storageSLOs := make([]storageio.StdPrometheusStorageSLO, 0, len(result.PrometheusSLOs))
-	for _, s := range result.PrometheusSLOs {
-		storageSLOs = append(storageSLOs, storageio.StdPrometheusStorageSLO{
-			SLO:   s.SLO,
-			Rules: s.SLORules,
-		})
-	}
-
-	err = repo.StoreSLOs(ctx, storageSLOs)
-	if err != nil {
-		return fmt.Errorf("could not store SLOS: %w", err)
-	}
-
-	return nil
-}
-
-// generate is the main generator logic that all the spec types and storers share. Mainly has the logic of the generate app service.
-func (g generator) generateRules(ctx context.Context, info model.Info, slos model.PromSLOGroup) (*generate.Response, error) {
-	var defSLOPlugins = []generate.SLOProcessor{}
-	var err error
-	if !g.disableDefaultSLOPlugins {
-		// Load default slo plugins.
-		defSLOPlugins, err = createDefaultSLOPlugins(g.logger, g.disableRecordings, g.disableAlerts)
-		if err != nil {
-			return nil, fmt.Errorf("could not create default slo plugins: %w", err)
+	// Disable data if required.
+	for i := range genResult.SLOResult {
+		if disableAlerts {
+			genResult.SLOResult[i].PrometheusRules.AlertRules = model.PromRuleGroup{}
+		}
+		if disableRecordings {
+			genResult.SLOResult[i].PrometheusRules.SLIErrorRecRules = model.PromRuleGroup{}
+			genResult.SLOResult[i].PrometheusRules.MetadataRecRules = model.PromRuleGroup{}
 		}
 	}
 
-	// Generate.
-	controller, err := generate.NewService(generate.ServiceConfig{
-		AlertGenerator:  alert.NewGenerator(g.windowsRepo),
-		DefaultPlugins:  defSLOPlugins,
-		SLOPluginGetter: g.sloPluginRepo,
-		ExtraPlugins:    g.extraSLOPlugins,
-		Logger:          g.logger,
-	})
-	if err != nil {
-		return nil, fmt.Errorf("could not create application service: %w", err)
+	// Store results.
+	switch {
+	// Standard prometheus.
+	case genResult.SLOGroup.OriginalSource.SlothV1 != nil:
+		repo := storageio.NewStdPrometheusGroupedRulesYAMLRepo(genTarget.Out, logger)
+		storageSLOs := make([]storageio.StdPrometheusStorageSLO, 0, len(genResult.SLOResult))
+		for _, s := range genResult.SLOResult {
+			storageSLOs = append(storageSLOs, storageio.StdPrometheusStorageSLO{
+				SLO:   s.SLO,
+				Rules: s.PrometheusRules,
+			})
+		}
+
+		err = repo.StoreSLOs(ctx, storageSLOs)
+		if err != nil {
+			return fmt.Errorf("could not store SLOS: %w", err)
+		}
+
+		return nil
+
+	// K8s Sloth CR.
+	case genResult.SLOGroup.OriginalSource.K8sSlothV1 != nil:
+		repo := storageio.NewIOWriterPrometheusOperatorYAMLRepo(genTarget.Out, logger)
+		storageSLOs := make([]storage.SLORulesResult, 0, len(genResult.SLOResult))
+		for _, s := range genResult.SLOResult {
+			storageSLOs = append(storageSLOs, storage.SLORulesResult{
+				SLO:   s.SLO,
+				Rules: s.PrometheusRules,
+			})
+		}
+
+		kmeta := storage.K8sMeta{
+			Kind:        "PrometheusServiceLevel",
+			APIVersion:  "sloth.slok.dev/v1",
+			UID:         string(genResult.SLOGroup.OriginalSource.K8sSlothV1.UID),
+			Name:        genResult.SLOGroup.OriginalSource.K8sSlothV1.Name,
+			Namespace:   genResult.SLOGroup.OriginalSource.K8sSlothV1.Namespace,
+			Labels:      genResult.SLOGroup.OriginalSource.K8sSlothV1.Labels,
+			Annotations: genResult.SLOGroup.OriginalSource.K8sSlothV1.Annotations,
+		}
+
+		err = repo.StoreSLOs(ctx, kmeta, storageSLOs)
+		if err != nil {
+			return fmt.Errorf("could not store SLOS: %w", err)
+		}
+
+	// OpenSLO.
+	case genResult.SLOGroup.OriginalSource.OpenSLOV1Alpha != nil:
+		repo := storageio.NewStdPrometheusGroupedRulesYAMLRepo(genTarget.Out, logger)
+		storageSLOs := make([]storageio.StdPrometheusStorageSLO, 0, len(genResult.SLOResult))
+		for _, s := range genResult.SLOResult {
+			storageSLOs = append(storageSLOs, storageio.StdPrometheusStorageSLO{
+				SLO:   s.SLO,
+				Rules: s.PrometheusRules,
+			})
+		}
+
+		err = repo.StoreSLOs(ctx, storageSLOs)
+		if err != nil {
+			return fmt.Errorf("could not store SLOS: %w", err)
+		}
+
+	default:
+		return fmt.Errorf("invalid spec, could not load with any of the supported spec types")
 	}
 
-	result, err := controller.Generate(ctx, generate.Request{
-		ExtraLabels: g.extraLabels,
-		Info:        info,
-		SLOGroup:    slos,
-	})
-	if err != nil {
-		return nil, fmt.Errorf("could not generate prometheus rules: %w", err)
-	}
-
-	return result, nil
+	return nil
 }

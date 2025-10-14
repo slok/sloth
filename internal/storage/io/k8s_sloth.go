@@ -58,6 +58,20 @@ func (l K8sSlothPrometheusYAMLSpecLoader) IsSpecType(ctx context.Context, data [
 }
 
 func (l K8sSlothPrometheusYAMLSpecLoader) LoadSpec(ctx context.Context, data []byte) (*model.PromSLOGroup, error) {
+	kslo, err := l.LoadAPI(ctx, data)
+	if err != nil {
+		return nil, fmt.Errorf("could not load API: %w", err)
+	}
+
+	m, err := l.MapSpecToModel(ctx, *kslo)
+	if err != nil {
+		return nil, fmt.Errorf("could not map to model: %w", err)
+	}
+
+	return m, nil
+}
+
+func (l K8sSlothPrometheusYAMLSpecLoader) LoadAPI(ctx context.Context, data []byte) (*k8sprometheusv1.PrometheusServiceLevel, error) {
 	if len(data) == 0 {
 		return nil, fmt.Errorf("spec is required")
 	}
@@ -77,12 +91,11 @@ func (l K8sSlothPrometheusYAMLSpecLoader) LoadSpec(ctx context.Context, data []b
 		return nil, fmt.Errorf("at least one SLO is required")
 	}
 
-	m, err := mapSpecToModel(ctx, l.windowPeriod, l.pluginsRepo, kslo)
-	if err != nil {
-		return nil, fmt.Errorf("could not map to model: %w", err)
-	}
+	return kslo, nil
+}
 
-	return m, nil
+func (l K8sSlothPrometheusYAMLSpecLoader) MapSpecToModel(ctx context.Context, kspec k8sprometheusv1.PrometheusServiceLevel) (*model.PromSLOGroup, error) {
+	return mapSpecToModel(ctx, l.windowPeriod, l.pluginsRepo, &kspec)
 }
 
 func mapSpecToModel(ctx context.Context, defaultWindowPeriod time.Duration, pluginsRepo SLIPluginRepo, kspec *k8sprometheusv1.PrometheusServiceLevel) (*model.PromSLOGroup, error) {

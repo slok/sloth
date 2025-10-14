@@ -2,6 +2,20 @@
 
 ## [Unreleased]
 
+### Added
+
+- Sloth SLO generation can be used as a Go library in `github.com/slok/sloth/pkg/lib`.
+- Sloth lib `PrometheusSLOGenerator` with `GenerateFromSlothV1` to generate SLOs based on Sloth v1 spec.
+- Sloth lib `PrometheusSLOGenerator` with `GenerateFromK8sV1` to generate SLOs based on Kubernetes Sloth v1 spec.
+- Sloth lib `PrometheusSLOGenerator` with `GenerateFromOpenSLOV1Alpha` to generate SLOs based on OpenSLO v1Alpha spec.
+- Sloth lib `PrometheusSLOGenerator` with `GenerateFromRaw` to generate SLOs based on any raw string spec.
+- Sloth lib `WriteResultAsPrometheusStd` helper method to write generated SLO results into standard Prometheus rules YAML.
+- Sloth lib `WriteResultAsK8sPrometheusOperator` helper method to write generated SLO results into Prometheus operator rules YAML.
+
+### Changed
+
+- The CLI commands `generate` and `validate` use the public Sloth Go library.
+
 ## [v0.14.0] - 2025-10-13
 
 ### Added

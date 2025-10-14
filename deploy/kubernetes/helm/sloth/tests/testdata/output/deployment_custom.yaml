@@ -70,7 +70,7 @@ spec:
               cpu: 5m
               memory: 75Mi
         - name: git-sync-plugins
-          image: registry.k8s.io/git-sync/git-sync:v4.4.0
+          image: registry.k8s.io/git-sync/git-sync:v4.5.0
           args:
             - --repo=https://github.com/slok/sloth-test-common-sli-plugins
             - --ref=main

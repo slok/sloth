@@ -6,7 +6,7 @@ labels: {}
 image:
   registry: ghcr.io # This field cannot be empty if global.imageRegistry is also empty.
   repository: slok/sloth
-  tag: v0.13.0
+  tag: v0.14.0
 
 # -- Container resources: requests and limits for CPU, Memory
 resources:
@@ -37,7 +37,7 @@ commonPlugins:
   enabled: true
   image:
     repository: registry.k8s.io/git-sync/git-sync
-    tag: v4.4.0
+    tag: v4.5.0
   gitRepo:
     url: https://github.com/slok/sloth-common-sli-plugins
     branch: main

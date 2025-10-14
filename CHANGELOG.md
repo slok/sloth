@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [v0.14.0] - 2025-10-13
+
 ### Added
 
 - Add contrib plugin directory and CODEOWNERS policies.
@@ -11,6 +13,13 @@
 - Contrib plugin: `sloth.dev/contrib/rule_intervals/v1`.
 - Contrib plugin: `sloth.dev/contrib/error_budget_exhausted_alert/v1`.
 - Contrib plugin: `sloth.dev/contrib/denominator_corrected_rules/v1`.
+- Add `--slo-plugins` and `-s` flag (`validate`) to be able to declare SLO plugins at cmd level, these plugins will be applied to all SLOs.
+- Add `--disable-default-slo-plugins` flag (`validate`) to be able to disable default Sloth SLO plugins.
+
+
+### Changed
+
+- Update chat git sync to v4.5.0
 
 ## [v0.13.0] - 2025-09-10
 
@@ -221,7 +230,8 @@
 - Support raw query based SLI.
 - Kubernetes (prometheus-operator) CRD generation support.
 
-[unreleased]: https://github.com/slok/sloth/compare/v0.13.0...HEAD
+[unreleased]: https://github.com/slok/sloth/compare/v0.14.0...HEAD
+[v0.14.0]: https://github.com/slok/sloth/compare/v0.13.0...v0.14.0
 [v0.13.0]: https://github.com/slok/sloth/compare/v0.12.0...v0.13.0
 [v0.12.0]: https://github.com/slok/sloth/compare/v0.11.0...v0.12.0
 [v0.11.0]: https://github.com/slok/sloth/compare/v0.10.0...v0.11.0

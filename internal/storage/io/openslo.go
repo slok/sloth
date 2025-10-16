@@ -36,6 +36,19 @@ func (l OpenSLOYAMLSpecLoader) IsSpecType(ctx context.Context, data []byte) bool
 }
 
 func (l OpenSLOYAMLSpecLoader) LoadSpec(ctx context.Context, data []byte) (*model.PromSLOGroup, error) {
+	s, err := l.LoadAPI(ctx, data)
+	if err != nil {
+		return nil, fmt.Errorf("could not load API: %w", err)
+	}
+	m, err := l.MapSpecToModel(*s)
+	if err != nil {
+		return nil, fmt.Errorf("could not map to model: %w", err)
+	}
+
+	return m, nil
+}
+
+func (l OpenSLOYAMLSpecLoader) LoadAPI(ctx context.Context, data []byte) (*openslov1alpha.SLO, error) {
 	if len(data) == 0 {
 		return nil, fmt.Errorf("spec is required")
 	}
@@ -62,15 +75,10 @@ func (l OpenSLOYAMLSpecLoader) LoadSpec(ctx context.Context, data []byte) (*mode
 		return nil, fmt.Errorf("invalid SLO time windows: %w", err)
 	}
 
-	m, err := l.mapSpecToModel(s)
-	if err != nil {
-		return nil, fmt.Errorf("could not map to model: %w", err)
-	}
-
-	return m, nil
+	return &s, nil
 }
 
-func (l OpenSLOYAMLSpecLoader) mapSpecToModel(spec openslov1alpha.SLO) (*model.PromSLOGroup, error) {
+func (l OpenSLOYAMLSpecLoader) MapSpecToModel(spec openslov1alpha.SLO) (*model.PromSLOGroup, error) {
 	slos, err := l.getSLOs(spec)
 	if err != nil {
 		return nil, fmt.Errorf("could not map SLOs correctly: %w", err)

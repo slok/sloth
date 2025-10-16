@@ -40,6 +40,20 @@ func (l SlothPrometheusYAMLSpecLoader) IsSpecType(ctx context.Context, data []by
 }
 
 func (l SlothPrometheusYAMLSpecLoader) LoadSpec(ctx context.Context, data []byte) (*model.PromSLOGroup, error) {
+	s, err := l.LoadAPI(ctx, data)
+	if err != nil {
+		return nil, fmt.Errorf("could not load API: %w", err)
+	}
+
+	m, err := l.MapSpecToModel(ctx, *s)
+	if err != nil {
+		return nil, fmt.Errorf("could not map to model: %w", err)
+	}
+
+	return m, nil
+}
+
+func (l SlothPrometheusYAMLSpecLoader) LoadAPI(ctx context.Context, data []byte) (*prometheusv1.Spec, error) {
 	if len(data) == 0 {
 		return nil, fmt.Errorf("spec is required")
 	}
@@ -60,15 +74,10 @@ func (l SlothPrometheusYAMLSpecLoader) LoadSpec(ctx context.Context, data []byte
 		return nil, fmt.Errorf("at least one SLO is required")
 	}
 
-	m, err := l.mapSpecToModel(ctx, s)
-	if err != nil {
-		return nil, fmt.Errorf("could not map to model: %w", err)
-	}
-
-	return m, nil
+	return &s, nil
 }
 
-func (l SlothPrometheusYAMLSpecLoader) mapSpecToModel(ctx context.Context, spec prometheusv1.Spec) (*model.PromSLOGroup, error) {
+func (l SlothPrometheusYAMLSpecLoader) MapSpecToModel(ctx context.Context, spec prometheusv1.Spec) (*model.PromSLOGroup, error) {
 	models := make([]model.PromSLO, 0, len(spec.SLOs))
 
 	// Get group plugins if any.

@@ -12,9 +12,10 @@ import (
 	"github.com/alecthomas/kingpin/v2"
 	prometheusmodel "github.com/prometheus/common/model"
 
-	"github.com/slok/sloth/internal/alert"
 	"github.com/slok/sloth/internal/log"
-	storageio "github.com/slok/sloth/internal/storage/io"
+	"github.com/slok/sloth/internal/plugin"
+	utilsdata "github.com/slok/sloth/pkg/common/utils/data"
+	slothlib "github.com/slok/sloth/pkg/lib"
 )
 
 type validateCommand struct {
@@ -57,6 +58,12 @@ func (v validateCommand) Run(ctx context.Context, config RootConfig) error {
 	}
 	sloPeriod := time.Duration(sp)
 
+	// Load SLO plugin declarations at CMD level.
+	cmdLevelSLOPlugins, err := mapCmdPluginToModel(ctx, v.sloPlugins)
+	if err != nil {
+		return fmt.Errorf("could not load slo plugin declarations: %w", err)
+	}
+
 	// Set up files discovery filter regex.
 	var excludeRegex *regexp.Regexp
 	var includeRegex *regexp.Regexp
@@ -84,41 +91,28 @@ func (v validateCommand) Run(ctx context.Context, config RootConfig) error {
 		return fmt.Errorf("0 slo specs have been discovered")
 	}
 
-	// Load plugins.
-	pluginsRepo, err := createPluginLoader(ctx, logger, v.pluginsPaths)
-	if err != nil {
-		return err
+	pluginsFSs := []fs.FS{plugin.EmbeddedDefaultSLOPlugins}
+	for _, p := range v.pluginsPaths {
+		pluginsFSs = append(pluginsFSs, os.DirFS(p))
 	}
 
-	// Load SLO plugin declarations at CMD level.
-	cmdLevelSLOPlugins, err := mapCmdPluginToModel(ctx, v.sloPlugins)
-	if err != nil {
-		return fmt.Errorf("could not load slo plugin declarations: %w", err)
-	}
-
-	// Windows repository.
 	var wfs fs.FS
 	if v.sloPeriodWindowsPath != "" {
 		wfs = os.DirFS(v.sloPeriodWindowsPath)
 	}
-	windowsRepo, err := alert.NewFSWindowsRepo(alert.FSWindowsRepoConfig{
-		FS:     wfs,
-		Logger: logger,
+
+	genService, err := slothlib.NewPrometheusSLOGenerator(slothlib.Config{
+		WindowsFS:             wfs,
+		PluginsFS:             pluginsFSs,
+		DefaultSLOPeriod:      sloPeriod,
+		DisableDefaultPlugins: v.disableDefaultSLOPlugins,
+		CMDSLOPlugins:         cmdLevelSLOPlugins,
+		ExtraLabels:           v.extraLabels,
+		Logger:                logger,
 	})
 	if err != nil {
-		return fmt.Errorf("could not load SLO period windows repository: %w", err)
+		return fmt.Errorf("could not create Prometheus SLO generator: %w", err)
 	}
-
-	// Check if the default slo period is supported by our windows repo.
-	_, err = windowsRepo.GetWindows(ctx, sloPeriod)
-	if err != nil {
-		return fmt.Errorf("invalid default slo period: %w", err)
-	}
-
-	// Create Spec loaders.
-	promYAMLLoader := storageio.NewSlothPrometheusYAMLSpecLoader(pluginsRepo, sloPeriod)
-	kubeYAMLLoader := storageio.NewK8sSlothPrometheusYAMLSpecLoader(pluginsRepo, sloPeriod)
-	openSLOYAMLLoader := storageio.NewOpenSLOYAMLSpecLoader(sloPeriod)
 
 	// For every file load the data and start the validation process:
 	validations := []*fileValidation{}
@@ -131,16 +125,7 @@ func (v validateCommand) Run(ctx context.Context, config RootConfig) error {
 		}
 
 		// Split YAMLs in case we have multiple yaml files in a single file.
-		splittedSLOsData := splitYAML(slxData)
-
-		gen := generator{
-			logger:                   log.Noop,
-			windowsRepo:              windowsRepo,
-			extraLabels:              v.extraLabels,
-			sloPluginRepo:            pluginsRepo,
-			extraSLOPlugins:          cmdLevelSLOPlugins,
-			disableDefaultSLOPlugins: v.disableDefaultSLOPlugins,
-		}
+		splittedSLOsData := utilsdata.SplitYAML(slxData)
 
 		// Prepare file validation result and start validation result for every SLO in the file.
 		// TODO(slok): Add service meta to validation.
@@ -148,48 +133,14 @@ func (v validateCommand) Run(ctx context.Context, config RootConfig) error {
 		validations = append(validations, validation)
 		for _, data := range splittedSLOsData {
 			totalValidations++
-
-			dataB := []byte(data)
-			// Match the spec type to know how to validate.
-			switch {
-			case promYAMLLoader.IsSpecType(ctx, dataB):
-				slos, promErr := promYAMLLoader.LoadSpec(ctx, dataB)
-				if promErr == nil {
-					err := gen.GeneratePrometheus(ctx, *slos, io.Discard)
-					if err != nil {
-						validation.Errs = []error{fmt.Errorf("could not generate Prometheus format rules: %w", err)}
-					}
-					continue
-				}
-
-				validation.Errs = []error{fmt.Errorf("tried loading raw prometheus SLOs spec, it couldn't: %w", promErr)}
-
-			case kubeYAMLLoader.IsSpecType(ctx, dataB):
-				sloGroup, k8sErr := kubeYAMLLoader.LoadSpec(ctx, dataB)
-				if k8sErr == nil {
-					err := gen.GenerateKubernetes(ctx, *sloGroup, io.Discard)
-					if err != nil {
-						validation.Errs = []error{fmt.Errorf("could not generate Kubernetes format rules: %w", err)}
-					}
-					continue
-				}
-
-				validation.Errs = []error{fmt.Errorf("tried loading Kubernetes prometheus SLOs spec, it couldn't: %w", k8sErr)}
-
-			case openSLOYAMLLoader.IsSpecType(ctx, dataB):
-				slos, openSLOErr := openSLOYAMLLoader.LoadSpec(ctx, dataB)
-				if openSLOErr == nil {
-					err := gen.GenerateOpenSLO(ctx, *slos, io.Discard)
-					if err != nil {
-						validation.Errs = []error{fmt.Errorf("could not generate OpenSLO format rules: %w", err)}
-					}
-					continue
-				}
-
-				validation.Errs = []error{fmt.Errorf("tried loading OpenSLO SLOs spec, it couldn't: %s", openSLOErr)}
-
-			default:
-				validation.Errs = []error{fmt.Errorf("unknown spec type")}
+			_ = data
+			genTarget := generateTarget{
+				SLOData: data,
+				Out:     io.Discard,
+			}
+			err := generateSLOs(ctx, logger, *genService, genTarget, false, false)
+			if err != nil {
+				validation.Errs = append(validation.Errs, fmt.Errorf("invalid SLO: %w", err))
 			}
 		}
 

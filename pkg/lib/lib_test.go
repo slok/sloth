@@ -1,265 +1,195 @@
 package lib_test
 
 import (
-	"bytes"
-	"io/fs"
+	"context"
 	"os"
-	"testing"
-	"text/template"
-	"time"
 
-	"github.com/slok/sloth/internal/info"
-	"github.com/slok/sloth/pkg/common/model"
+	slotk8sv1 "github.com/slok/sloth/pkg/kubernetes/api/sloth/v1"
 	"github.com/slok/sloth/pkg/lib"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
+	slothprometheusv1 "github.com/slok/sloth/pkg/prometheus/api/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// These tests try being as real as possible by using the library to tests against the CLI integration tests.
-// Regarding the features, the CLI offers file and IO operations that the library doesn't offer. However the
-// core SLO generator logic is the same (the CLI uses the public library under the hood).
-func TestLibAsCLIIntegration(t *testing.T) {
-	testWindowsFS := os.DirFS("../../test/integration/prometheus/windows")
-	testPluginsFS := os.DirFS("../../test/integration/prometheus/plugins")
+func ExamplePrometheusSLOGenerator_GenerateFromRaw() {
+	sloSpec := []byte(`
+---
+version: "prometheus/v1"
+service: "myservice"
+labels:
+  owner: "myteam"
+  repo: "myorg/myservice"
+  tier: "2"
+slos:
+  # We allow failing (5xx and 429) 1 request every 1000 requests (99.9%).
+  - name: "requests-availability"
+    objective: 99.9
+    description: "Common SLO based on availability for HTTP request responses."
+    labels:
+      category: availability
+    sli:
+      events:
+        error_query: sum(rate(http_request_duration_seconds_count{job="myservice",code=~"(5..|429)"}[{{.window}}]))
+        total_query: sum(rate(http_request_duration_seconds_count{job="myservice"}[{{.window}}]))
+    alerting:
+      name: "MyServiceHighErrorRate"
+      labels:
+        category: "availability"
+      annotations:
+        # Overwrite default Sloth SLO alert summmary on ticket and page alerts.
+        summary: "High error rate on 'myservice' requests responses"
+      page_alert:
+        labels:
+          severity: "pageteam"
+          routing_key: "myteam"
+      ticket_alert:
+        labels:
+          severity: "slack"
+          slack_channel: "#alerts-myteam"
+`)
 
-	tests := map[string]struct {
-		config          func() lib.Config
-		inFilePath      string
-		resultFormatter func(t *testing.T, result lib.SLOGroupPrometheusStdResult) []byte
-		expOutFilePath  string
-		expGenErr       bool
-	}{
-		"Invalid spec case.": {
-			config:     func() lib.Config { return lib.Config{CallerAgent: lib.CallerAgentCLI} },
-			inFilePath: "../../test/integration/prometheus/testdata/in-invalid-version.yaml",
-			expGenErr:  true,
-		},
+	ctx := context.Background()
 
-		"Prometheus case.": {
-			config:         func() lib.Config { return lib.Config{CallerAgent: lib.CallerAgentCLI} },
-			inFilePath:     "../../test/integration/prometheus/testdata/in-base.yaml",
-			expOutFilePath: "../../test/integration/prometheus/testdata/out-base.yaml.tpl",
-			resultFormatter: func(t *testing.T, result lib.SLOGroupPrometheusStdResult) []byte {
-				var b bytes.Buffer
-				err := lib.WriteResultAsPrometheusStd(t.Context(), result, &b)
-				require.NoError(t, err)
-				return b.Bytes()
-			},
-		},
-
-		"Kubernetes case.": {
-			config:         func() lib.Config { return lib.Config{CallerAgent: lib.CallerAgentCLI} },
-			inFilePath:     "../../test/integration/prometheus/testdata/in-base-k8s.yaml",
-			expOutFilePath: "../../test/integration/prometheus/testdata/out-base-k8s.yaml.tpl",
-			resultFormatter: func(t *testing.T, result lib.SLOGroupPrometheusStdResult) []byte {
-				var b bytes.Buffer
-				kmeta := lib.K8sMeta{Name: "svc", Namespace: "test-ns"}
-				err := lib.WriteResultAsK8sPrometheusOperator(t.Context(), kmeta, result, &b)
-				require.NoError(t, err)
-				return b.Bytes()
-			},
-		},
-
-		"OpenSLO case.": {
-			config:         func() lib.Config { return lib.Config{CallerAgent: lib.CallerAgentCLI} },
-			inFilePath:     "../../test/integration/prometheus/testdata/in-openslo.yaml",
-			expOutFilePath: "../../test/integration/prometheus/testdata/out-openslo.yaml.tpl",
-			resultFormatter: func(t *testing.T, result lib.SLOGroupPrometheusStdResult) []byte {
-				var b bytes.Buffer
-				err := lib.WriteResultAsPrometheusStd(t.Context(), result, &b)
-				require.NoError(t, err)
-				return b.Bytes()
-			},
-		},
-
-		"Default 28d window period case.": {
-			config: func() lib.Config {
-				return lib.Config{
-					DefaultSLOPeriod: 28 * 24 * time.Hour,
-					CallerAgent:      lib.CallerAgentCLI,
-				}
-			},
-			inFilePath:     "../../test/integration/prometheus/testdata/in-base.yaml",
-			expOutFilePath: "../../test/integration/prometheus/testdata/out-base-28d.yaml.tpl",
-			resultFormatter: func(t *testing.T, result lib.SLOGroupPrometheusStdResult) []byte {
-				var b bytes.Buffer
-				err := lib.WriteResultAsPrometheusStd(t.Context(), result, &b)
-				require.NoError(t, err)
-				return b.Bytes()
-			},
-		},
-
-		"Custom 7d window period case.": {
-			config: func() lib.Config {
-				return lib.Config{
-					DefaultSLOPeriod: 7 * 24 * time.Hour,
-					CallerAgent:      lib.CallerAgentCLI,
-					WindowsFS:        testWindowsFS,
-				}
-			},
-			inFilePath:     "../../test/integration/prometheus/testdata/in-base.yaml",
-			expOutFilePath: "../../test/integration/prometheus/testdata/out-base-custom-windows-7d.yaml.tpl",
-			resultFormatter: func(t *testing.T, result lib.SLOGroupPrometheusStdResult) []byte {
-				var b bytes.Buffer
-				err := lib.WriteResultAsPrometheusStd(t.Context(), result, &b)
-				require.NoError(t, err)
-				return b.Bytes()
-			},
-		},
-
-		"Extra labels case.": {
-			config: func() lib.Config {
-				return lib.Config{
-					CallerAgent: lib.CallerAgentCLI,
-					ExtraLabels: map[string]string{"exk1": "exv1", "exk2": "exv2"},
-				}
-			},
-			inFilePath:     "../../test/integration/prometheus/testdata/in-base.yaml",
-			expOutFilePath: "../../test/integration/prometheus/testdata/out-base-extra-labels.yaml.tpl",
-			resultFormatter: func(t *testing.T, result lib.SLOGroupPrometheusStdResult) []byte {
-				var b bytes.Buffer
-				err := lib.WriteResultAsPrometheusStd(t.Context(), result, &b)
-				require.NoError(t, err)
-				return b.Bytes()
-			},
-		},
-
-		"No alerts case.": {
-			config:         func() lib.Config { return lib.Config{CallerAgent: lib.CallerAgentCLI} },
-			inFilePath:     "../../test/integration/prometheus/testdata/in-base.yaml",
-			expOutFilePath: "../../test/integration/prometheus/testdata/out-base-no-alerts.yaml.tpl",
-			resultFormatter: func(t *testing.T, result lib.SLOGroupPrometheusStdResult) []byte {
-
-				for i := range result.SLOResult {
-					result.SLOResult[i].PrometheusRules.AlertRules = model.PromRuleGroup{}
-				}
-
-				var b bytes.Buffer
-				err := lib.WriteResultAsPrometheusStd(t.Context(), result, &b)
-				require.NoError(t, err)
-				return b.Bytes()
-			},
-		},
-
-		"No recording rules case.": {
-			config:         func() lib.Config { return lib.Config{CallerAgent: lib.CallerAgentCLI} },
-			inFilePath:     "../../test/integration/prometheus/testdata/in-base.yaml",
-			expOutFilePath: "../../test/integration/prometheus/testdata/out-base-no-recordings.yaml.tpl",
-			resultFormatter: func(t *testing.T, result lib.SLOGroupPrometheusStdResult) []byte {
-				// Remove alerts.
-				for i := range result.SLOResult {
-					result.SLOResult[i].PrometheusRules.SLIErrorRecRules = model.PromRuleGroup{}
-					result.SLOResult[i].PrometheusRules.MetadataRecRules = model.PromRuleGroup{}
-				}
-
-				var b bytes.Buffer
-				err := lib.WriteResultAsPrometheusStd(t.Context(), result, &b)
-				require.NoError(t, err)
-				return b.Bytes()
-			},
-		},
-
-		"SLI plugin usage.": {
-			config: func() lib.Config {
-				return lib.Config{
-					CallerAgent: lib.CallerAgentCLI,
-					PluginsFS:   []fs.FS{testPluginsFS},
-				}
-			},
-			inFilePath:     "../../test/integration/prometheus/testdata/in-sli-plugin.yaml",
-			expOutFilePath: "../../test/integration/prometheus/testdata/out-sli-plugin.yaml.tpl",
-			resultFormatter: func(t *testing.T, result lib.SLOGroupPrometheusStdResult) []byte {
-				var b bytes.Buffer
-				err := lib.WriteResultAsPrometheusStd(t.Context(), result, &b)
-				require.NoError(t, err)
-				return b.Bytes()
-			},
-		},
-
-		"SLO plugin usage.": {
-			config: func() lib.Config {
-				return lib.Config{
-					CallerAgent: lib.CallerAgentCLI,
-					PluginsFS:   []fs.FS{testPluginsFS},
-				}
-			},
-			inFilePath:     "../../test/integration/prometheus/testdata/in-slo-plugin.yaml",
-			expOutFilePath: "../../test/integration/prometheus/testdata/out-slo-plugin.yaml.tpl",
-			resultFormatter: func(t *testing.T, result lib.SLOGroupPrometheusStdResult) []byte {
-				var b bytes.Buffer
-				err := lib.WriteResultAsPrometheusStd(t.Context(), result, &b)
-				require.NoError(t, err)
-				return b.Bytes()
-			},
-		},
-
-		"SLO plugin K8s usage.": {
-			config: func() lib.Config {
-				return lib.Config{
-					CallerAgent: lib.CallerAgentCLI,
-					PluginsFS:   []fs.FS{testPluginsFS},
-				}
-			},
-			inFilePath:     "../../test/integration/prometheus/testdata/in-slo-plugin-k8s.yaml",
-			expOutFilePath: "../../test/integration/prometheus/testdata/out-slo-plugin-k8s.yaml.tpl",
-			resultFormatter: func(t *testing.T, result lib.SLOGroupPrometheusStdResult) []byte {
-				var b bytes.Buffer
-				kmeta := lib.K8sMeta{Name: "svc", Namespace: "test-ns"}
-				err := lib.WriteResultAsK8sPrometheusOperator(t.Context(), kmeta, result, &b)
-				require.NoError(t, err)
-				return b.Bytes()
-			},
-		},
-
-		"A multifile case (Not supported).": {
-			config:          func() lib.Config { return lib.Config{CallerAgent: lib.CallerAgentCLI} },
-			inFilePath:      "../../test/integration/prometheus/testdata/in-multifile.yaml",
-			resultFormatter: func(t *testing.T, result lib.SLOGroupPrometheusStdResult) []byte { return nil },
-			expGenErr:       true,
-		},
-
-		"A multifile Kubernetes case (Not supported).": {
-			config:          func() lib.Config { return lib.Config{CallerAgent: lib.CallerAgentCLI} },
-			inFilePath:      "../../test/integration/prometheus/testdata/in-multifile-k8s.yaml",
-			resultFormatter: func(t *testing.T, result lib.SLOGroupPrometheusStdResult) []byte { return nil },
-			expGenErr:       true,
-		},
+	gen, err := lib.NewPrometheusSLOGenerator(lib.Config{
+		ExtraLabels: map[string]string{"source": "slothlib-example"},
+	})
+	if err != nil {
+		panic(err)
 	}
 
-	for name, test := range tests {
-		t.Run(name, func(t *testing.T) {
-			assert := assert.New(t)
-			require := require.New(t)
+	// Generate SLO and write result.
+	slo, err := gen.GenerateFromRaw(ctx, sloSpec)
+	if err != nil {
+		panic(err)
+	}
 
-			gen, err := lib.NewPrometheusSLOGenerator(test.config())
-			require.NoError(err)
-
-			// Generate.
-			expInData, err := os.ReadFile(test.inFilePath)
-			require.NoError(err)
-			result, err := gen.GenerateFromRaw(t.Context(), expInData)
-			if test.expGenErr {
-				assert.Error(err)
-				return
-			} else if assert.NoError(err) {
-				// Check result.
-				resultOutData := test.resultFormatter(t, *result)
-				expOutData := getExpData(t, test.expOutFilePath)
-				assert.Equal(string(expOutData), string(resultOutData))
-			}
-		})
+	err = lib.WriteResultAsPrometheusStd(ctx, *slo, os.Stdout)
+	if err != nil {
+		panic(err)
 	}
 }
 
-func getExpData(t *testing.T, path string) []byte {
-	expOutData, err := os.ReadFile(path)
-	require.NoError(t, err)
+func ExamplePrometheusSLOGenerator_GenerateFromSlothV1() {
+	sloSpec := slothprometheusv1.Spec{
+		Service: "myservice",
+		Labels: map[string]string{
+			"owner": "myteam",
+			"repo":  "myorg/myservice",
+			"tier":  "2",
+		},
+		SLOs: []slothprometheusv1.SLO{
+			{
+				Name:        "requests-availability",
+				Objective:   99.9,
+				Description: "Common SLO based on availability for HTTP request responses.",
+				SLI: slothprometheusv1.SLI{
+					Events: &slothprometheusv1.SLIEvents{
+						ErrorQuery: `sum(rate(http_request_duration_seconds_count{job="myservice",code=~"(5..|429)"}[{{.window}}]))`,
+						TotalQuery: `sum(rate(http_request_duration_seconds_count{job="myservice"}[{{.window}}]))`,
+					},
+				},
+				Alerting: slothprometheusv1.Alerting{
+					Name:        "MyServiceHighErrorRate",
+					Labels:      map[string]string{"category": "availability"},
+					Annotations: map[string]string{"summary": "High error rate on 'myservice' requests responses"},
+					PageAlert: slothprometheusv1.Alert{
+						Labels: map[string]string{
+							"severity":    "page",
+							"routing_key": "myteam",
+						},
+					},
+					TicketAlert: slothprometheusv1.Alert{
+						Labels: map[string]string{
+							"severity":      "slack",
+							"slack_channel": "#alerts-myteam",
+						},
+					},
+				},
+			},
+		},
+	}
 
-	var b bytes.Buffer
-	err = template.Must(template.New("").Parse(string(expOutData))).Execute(&b, map[string]string{
-		"version": info.Version,
+	ctx := context.Background()
+
+	gen, err := lib.NewPrometheusSLOGenerator(lib.Config{
+		ExtraLabels: map[string]string{"source": "slothlib-example"},
 	})
-	require.NoError(t, err)
+	if err != nil {
+		panic(err)
+	}
 
-	return b.Bytes()
+	// Generate SLO and write result.
+	slo, err := gen.GenerateFromSlothV1(ctx, sloSpec)
+	if err != nil {
+		panic(err)
+	}
+
+	err = lib.WriteResultAsPrometheusStd(ctx, *slo, os.Stdout)
+	if err != nil {
+		panic(err)
+	}
+}
+
+func ExamplePrometheusSLOGenerator_GenerateFromK8sV1() {
+	sloSpec := slotk8sv1.PrometheusServiceLevel{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "test01",
+			Labels: map[string]string{
+				"prometheus": "default",
+			},
+		},
+		Spec: slotk8sv1.PrometheusServiceLevelSpec{
+			Service: "svc01",
+			Labels: map[string]string{
+				"globalk1": "globalv1",
+			},
+			SLOs: []slotk8sv1.SLO{
+				{
+					Name:      "slo01",
+					Objective: 99.9,
+					Labels: map[string]string{
+						"slo01k1": "slo01v1",
+					},
+					SLI: slotk8sv1.SLI{Events: &slotk8sv1.SLIEvents{
+						ErrorQuery: `sum(rate(http_request_duration_seconds_count{job="myservice",code=~"(5..|429)"}[{{.window}}]))`,
+						TotalQuery: `sum(rate(http_request_duration_seconds_count{job="myservice"}[{{.window}}]))`,
+					}},
+					Alerting: slotk8sv1.Alerting{
+						Name: "myServiceAlert",
+						Labels: map[string]string{
+							"alert01k1": "alert01v1",
+						},
+						Annotations: map[string]string{
+							"alert02k1": "alert02v1",
+						},
+						PageAlert:   slotk8sv1.Alert{},
+						TicketAlert: slotk8sv1.Alert{},
+					},
+				},
+			},
+		},
+	}
+
+	ctx := context.Background()
+
+	gen, err := lib.NewPrometheusSLOGenerator(lib.Config{
+		ExtraLabels: map[string]string{"source": "slothlib-example"},
+	})
+	if err != nil {
+		panic(err)
+	}
+
+	// Generate SLO and write result.
+	slo, err := gen.GenerateFromK8sV1(ctx, sloSpec)
+	if err != nil {
+		panic(err)
+	}
+
+	kmeta := lib.K8sMeta{
+		Name:      "sloth-slo-gen-" + sloSpec.ObjectMeta.Name,
+		Namespace: sloSpec.ObjectMeta.Namespace,
+	}
+	err = lib.WriteResultAsK8sPrometheusOperator(ctx, kmeta, *slo, os.Stdout)
+	if err != nil {
+		panic(err)
+	}
 }

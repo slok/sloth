@@ -11,5 +11,6 @@ func init() {
 	Symbols["github.com/slok/sloth/pkg/common/utils/data/data"] = map[string]reflect.Value{
 		// function, constant and variable definitions
 		"MergeLabels": reflect.ValueOf(data.MergeLabels),
+		"SplitYAML":   reflect.ValueOf(data.SplitYAML),
 	}
 }

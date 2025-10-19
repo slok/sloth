@@ -223,7 +223,7 @@ func (g generateCommand) Run(ctx context.Context, config RootConfig) error {
 		wfs = os.DirFS(g.sloPeriodWindowsPath)
 	}
 
-	genService, err := slothlib.NewPrometheusSLOGenerator(slothlib.Config{
+	genService, err := slothlib.NewPrometheusSLOGenerator(slothlib.PrometheusSLOGeneratorConfig{
 		WindowsFS:             wfs,
 		PluginsFS:             pluginsFSs,
 		DefaultSLOPeriod:      sloPeriod,

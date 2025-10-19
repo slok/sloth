@@ -23,20 +23,24 @@ func TestLibAsCLIIntegration(t *testing.T) {
 	testPluginsFS := os.DirFS("../../test/integration/prometheus/plugins")
 
 	tests := map[string]struct {
-		config          func() lib.Config
+		config          func() lib.PrometheusSLOGeneratorConfig
 		inFilePath      string
 		resultFormatter func(t *testing.T, result lib.SLOGroupPrometheusStdResult) []byte
 		expOutFilePath  string
 		expGenErr       bool
 	}{
 		"Invalid spec case.": {
-			config:     func() lib.Config { return lib.Config{CallerAgent: lib.CallerAgentCLI} },
+			config: func() lib.PrometheusSLOGeneratorConfig {
+				return lib.PrometheusSLOGeneratorConfig{CallerAgent: lib.CallerAgentCLI}
+			},
 			inFilePath: "../../test/integration/prometheus/testdata/in-invalid-version.yaml",
 			expGenErr:  true,
 		},
 
 		"Prometheus case.": {
-			config:         func() lib.Config { return lib.Config{CallerAgent: lib.CallerAgentCLI} },
+			config: func() lib.PrometheusSLOGeneratorConfig {
+				return lib.PrometheusSLOGeneratorConfig{CallerAgent: lib.CallerAgentCLI}
+			},
 			inFilePath:     "../../test/integration/prometheus/testdata/in-base.yaml",
 			expOutFilePath: "../../test/integration/prometheus/testdata/out-base.yaml.tpl",
 			resultFormatter: func(t *testing.T, result lib.SLOGroupPrometheusStdResult) []byte {
@@ -48,7 +52,9 @@ func TestLibAsCLIIntegration(t *testing.T) {
 		},
 
 		"Kubernetes case.": {
-			config:         func() lib.Config { return lib.Config{CallerAgent: lib.CallerAgentCLI} },
+			config: func() lib.PrometheusSLOGeneratorConfig {
+				return lib.PrometheusSLOGeneratorConfig{CallerAgent: lib.CallerAgentCLI}
+			},
 			inFilePath:     "../../test/integration/prometheus/testdata/in-base-k8s.yaml",
 			expOutFilePath: "../../test/integration/prometheus/testdata/out-base-k8s.yaml.tpl",
 			resultFormatter: func(t *testing.T, result lib.SLOGroupPrometheusStdResult) []byte {
@@ -61,7 +67,9 @@ func TestLibAsCLIIntegration(t *testing.T) {
 		},
 
 		"OpenSLO case.": {
-			config:         func() lib.Config { return lib.Config{CallerAgent: lib.CallerAgentCLI} },
+			config: func() lib.PrometheusSLOGeneratorConfig {
+				return lib.PrometheusSLOGeneratorConfig{CallerAgent: lib.CallerAgentCLI}
+			},
 			inFilePath:     "../../test/integration/prometheus/testdata/in-openslo.yaml",
 			expOutFilePath: "../../test/integration/prometheus/testdata/out-openslo.yaml.tpl",
 			resultFormatter: func(t *testing.T, result lib.SLOGroupPrometheusStdResult) []byte {
@@ -73,8 +81,8 @@ func TestLibAsCLIIntegration(t *testing.T) {
 		},
 
 		"Default 28d window period case.": {
-			config: func() lib.Config {
-				return lib.Config{
+			config: func() lib.PrometheusSLOGeneratorConfig {
+				return lib.PrometheusSLOGeneratorConfig{
 					DefaultSLOPeriod: 28 * 24 * time.Hour,
 					CallerAgent:      lib.CallerAgentCLI,
 				}
@@ -90,8 +98,8 @@ func TestLibAsCLIIntegration(t *testing.T) {
 		},
 
 		"Custom 7d window period case.": {
-			config: func() lib.Config {
-				return lib.Config{
+			config: func() lib.PrometheusSLOGeneratorConfig {
+				return lib.PrometheusSLOGeneratorConfig{
 					DefaultSLOPeriod: 7 * 24 * time.Hour,
 					CallerAgent:      lib.CallerAgentCLI,
 					WindowsFS:        testWindowsFS,
@@ -108,8 +116,8 @@ func TestLibAsCLIIntegration(t *testing.T) {
 		},
 
 		"Extra labels case.": {
-			config: func() lib.Config {
-				return lib.Config{
+			config: func() lib.PrometheusSLOGeneratorConfig {
+				return lib.PrometheusSLOGeneratorConfig{
 					CallerAgent: lib.CallerAgentCLI,
 					ExtraLabels: map[string]string{"exk1": "exv1", "exk2": "exv2"},
 				}
@@ -125,7 +133,9 @@ func TestLibAsCLIIntegration(t *testing.T) {
 		},
 
 		"No alerts case.": {
-			config:         func() lib.Config { return lib.Config{CallerAgent: lib.CallerAgentCLI} },
+			config: func() lib.PrometheusSLOGeneratorConfig {
+				return lib.PrometheusSLOGeneratorConfig{CallerAgent: lib.CallerAgentCLI}
+			},
 			inFilePath:     "../../test/integration/prometheus/testdata/in-base.yaml",
 			expOutFilePath: "../../test/integration/prometheus/testdata/out-base-no-alerts.yaml.tpl",
 			resultFormatter: func(t *testing.T, result lib.SLOGroupPrometheusStdResult) []byte {
@@ -142,7 +152,9 @@ func TestLibAsCLIIntegration(t *testing.T) {
 		},
 
 		"No recording rules case.": {
-			config:         func() lib.Config { return lib.Config{CallerAgent: lib.CallerAgentCLI} },
+			config: func() lib.PrometheusSLOGeneratorConfig {
+				return lib.PrometheusSLOGeneratorConfig{CallerAgent: lib.CallerAgentCLI}
+			},
 			inFilePath:     "../../test/integration/prometheus/testdata/in-base.yaml",
 			expOutFilePath: "../../test/integration/prometheus/testdata/out-base-no-recordings.yaml.tpl",
 			resultFormatter: func(t *testing.T, result lib.SLOGroupPrometheusStdResult) []byte {
@@ -160,8 +172,8 @@ func TestLibAsCLIIntegration(t *testing.T) {
 		},
 
 		"SLI plugin usage.": {
-			config: func() lib.Config {
-				return lib.Config{
+			config: func() lib.PrometheusSLOGeneratorConfig {
+				return lib.PrometheusSLOGeneratorConfig{
 					CallerAgent: lib.CallerAgentCLI,
 					PluginsFS:   []fs.FS{testPluginsFS},
 				}
@@ -177,8 +189,8 @@ func TestLibAsCLIIntegration(t *testing.T) {
 		},
 
 		"SLO plugin usage.": {
-			config: func() lib.Config {
-				return lib.Config{
+			config: func() lib.PrometheusSLOGeneratorConfig {
+				return lib.PrometheusSLOGeneratorConfig{
 					CallerAgent: lib.CallerAgentCLI,
 					PluginsFS:   []fs.FS{testPluginsFS},
 				}
@@ -194,8 +206,8 @@ func TestLibAsCLIIntegration(t *testing.T) {
 		},
 
 		"SLO plugin K8s usage.": {
-			config: func() lib.Config {
-				return lib.Config{
+			config: func() lib.PrometheusSLOGeneratorConfig {
+				return lib.PrometheusSLOGeneratorConfig{
 					CallerAgent: lib.CallerAgentCLI,
 					PluginsFS:   []fs.FS{testPluginsFS},
 				}
@@ -212,14 +224,18 @@ func TestLibAsCLIIntegration(t *testing.T) {
 		},
 
 		"A multifile case (Not supported).": {
-			config:          func() lib.Config { return lib.Config{CallerAgent: lib.CallerAgentCLI} },
+			config: func() lib.PrometheusSLOGeneratorConfig {
+				return lib.PrometheusSLOGeneratorConfig{CallerAgent: lib.CallerAgentCLI}
+			},
 			inFilePath:      "../../test/integration/prometheus/testdata/in-multifile.yaml",
 			resultFormatter: func(t *testing.T, result lib.SLOGroupPrometheusStdResult) []byte { return nil },
 			expGenErr:       true,
 		},
 
 		"A multifile Kubernetes case (Not supported).": {
-			config:          func() lib.Config { return lib.Config{CallerAgent: lib.CallerAgentCLI} },
+			config: func() lib.PrometheusSLOGeneratorConfig {
+				return lib.PrometheusSLOGeneratorConfig{CallerAgent: lib.CallerAgentCLI}
+			},
 			inFilePath:      "../../test/integration/prometheus/testdata/in-multifile-k8s.yaml",
 			resultFormatter: func(t *testing.T, result lib.SLOGroupPrometheusStdResult) []byte { return nil },
 			expGenErr:       true,

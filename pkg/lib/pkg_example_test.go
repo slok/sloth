@@ -12,7 +12,7 @@ import (
 func Example() {
 	// Check with `curl -XPOST http://127.0.0.1:8080/sloth/generate -d "$(cat ./examples/getting-started.yml)"`.
 
-	gen, err := sloth.NewPrometheusSLOGenerator(sloth.Config{
+	gen, err := sloth.NewPrometheusSLOGenerator(sloth.PrometheusSLOGeneratorConfig{
 		ExtraLabels: map[string]string{"source": "slothlib-example"},
 	})
 	if err != nil {

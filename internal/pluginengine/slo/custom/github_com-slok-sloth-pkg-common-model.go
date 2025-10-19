@@ -12,6 +12,9 @@ import (
 func init() {
 	Symbols["github.com/slok/sloth/pkg/common/model/model"] = map[string]reflect.Value{
 		// function, constant and variable definitions
+		"ModeAPIGenKubernetes":        reflect.ValueOf(constant.MakeFromLiteral("\"api-gen-k8s\"", token.STRING, 0)),
+		"ModeAPIGenOpenSLO":           reflect.ValueOf(constant.MakeFromLiteral("\"api-gen-openslo\"", token.STRING, 0)),
+		"ModeAPIGenPrometheus":        reflect.ValueOf(constant.MakeFromLiteral("\"api-gen-prom\"", token.STRING, 0)),
 		"ModeCLIGenKubernetes":        reflect.ValueOf(constant.MakeFromLiteral("\"cli-gen-k8s\"", token.STRING, 0)),
 		"ModeCLIGenOpenSLO":           reflect.ValueOf(constant.MakeFromLiteral("\"cli-gen-openslo\"", token.STRING, 0)),
 		"ModeCLIGenPrometheus":        reflect.ValueOf(constant.MakeFromLiteral("\"cli-gen-prom\"", token.STRING, 0)),

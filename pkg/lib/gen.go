@@ -34,8 +34,8 @@ var allCallerAgents = map[CallerAgent]struct{}{
 	CallerAgentAPI: {},
 }
 
-// Config is the configuration for the Prometheus SLO generator.
-type Config struct {
+// PrometheusSLOGenerator is the configuration for the Prometheus SLO generator.
+type PrometheusSLOGeneratorConfig struct {
 	// WindowsFS is the FS where custom SLO definition period windows exist (When not set default Sloth windows will be used).
 	WindowsFS fs.FS
 	// PluginsFS are the FSs where custom SLO and SLI plugins exist.
@@ -54,7 +54,7 @@ type Config struct {
 	Logger log.Logger
 }
 
-func (c *Config) defaults() error {
+func (c *PrometheusSLOGeneratorConfig) defaults() error {
 	if c.DefaultSLOPeriod == 0 {
 		c.DefaultSLOPeriod = 30 * 24 * time.Hour // 30 days.
 	}
@@ -88,7 +88,7 @@ type PrometheusSLOGenerator struct {
 	agent       CallerAgent
 }
 
-func NewPrometheusSLOGenerator(config Config) (*PrometheusSLOGenerator, error) {
+func NewPrometheusSLOGenerator(config PrometheusSLOGeneratorConfig) (*PrometheusSLOGenerator, error) {
 	ctx := context.Background()
 
 	err := config.defaults()

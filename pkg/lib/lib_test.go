@@ -49,7 +49,7 @@ slos:
 
 	ctx := context.Background()
 
-	gen, err := lib.NewPrometheusSLOGenerator(lib.Config{
+	gen, err := lib.NewPrometheusSLOGenerator(lib.PrometheusSLOGeneratorConfig{
 		ExtraLabels: map[string]string{"source": "slothlib-example"},
 	})
 	if err != nil {
@@ -110,7 +110,7 @@ func ExamplePrometheusSLOGenerator_GenerateFromSlothV1() {
 
 	ctx := context.Background()
 
-	gen, err := lib.NewPrometheusSLOGenerator(lib.Config{
+	gen, err := lib.NewPrometheusSLOGenerator(lib.PrometheusSLOGeneratorConfig{
 		ExtraLabels: map[string]string{"source": "slothlib-example"},
 	})
 	if err != nil {
@@ -171,7 +171,7 @@ func ExamplePrometheusSLOGenerator_GenerateFromK8sV1() {
 
 	ctx := context.Background()
 
-	gen, err := lib.NewPrometheusSLOGenerator(lib.Config{
+	gen, err := lib.NewPrometheusSLOGenerator(lib.PrometheusSLOGeneratorConfig{
 		ExtraLabels: map[string]string{"source": "slothlib-example"},
 	})
 	if err != nil {

@@ -11,6 +11,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/intstr"
 
 	"github.com/slok/sloth/internal/storage"
+	"github.com/slok/sloth/pkg/common/conventions"
 	commonerrors "github.com/slok/sloth/pkg/common/errors"
 	promutils "github.com/slok/sloth/pkg/common/utils/prometheus"
 )
@@ -44,26 +45,55 @@ func MapModelToPrometheusOperator(ctx context.Context, kmeta storage.K8sMeta, sl
 
 	for _, slo := range slos {
 		if len(slo.Rules.SLIErrorRecRules.Rules) > 0 {
+			name := slo.Rules.SLIErrorRecRules.Name
+			if name == "" {
+				name = conventions.PromRuleGroupNameSLOSLIPrefix + slo.SLO.ID
+			}
 			rule.Spec.Groups = append(rule.Spec.Groups, monitoringv1.RuleGroup{
 				Interval: timeDurationToPromOpDuration(slo.Rules.SLIErrorRecRules.Interval),
-				Name:     fmt.Sprintf("sloth-slo-sli-recordings-%s", slo.SLO.ID),
+				Name:     name,
 				Rules:    promRulesToKubeRules(slo.Rules.SLIErrorRecRules.Rules),
 			})
 		}
 
 		if len(slo.Rules.MetadataRecRules.Rules) > 0 {
+			name := slo.Rules.MetadataRecRules.Name
+			if name == "" {
+				name = conventions.PromRuleGroupNameSLOMetadataPrefix + slo.SLO.ID
+			}
 			rule.Spec.Groups = append(rule.Spec.Groups, monitoringv1.RuleGroup{
 				Interval: timeDurationToPromOpDuration(slo.Rules.MetadataRecRules.Interval),
-				Name:     fmt.Sprintf("sloth-slo-meta-recordings-%s", slo.SLO.ID),
+				Name:     name,
 				Rules:    promRulesToKubeRules(slo.Rules.MetadataRecRules.Rules),
 			})
 		}
 
 		if len(slo.Rules.AlertRules.Rules) > 0 {
+			name := slo.Rules.AlertRules.Name
+			if name == "" {
+				name = conventions.PromRuleGroupNameSLOAlertsPrefix + slo.SLO.ID
+			}
 			rule.Spec.Groups = append(rule.Spec.Groups, monitoringv1.RuleGroup{
 				Interval: timeDurationToPromOpDuration(slo.Rules.AlertRules.Interval),
-				Name:     fmt.Sprintf("sloth-slo-alerts-%s", slo.SLO.ID),
+				Name:     name,
 				Rules:    promRulesToKubeRules(slo.Rules.AlertRules.Rules),
+			})
+		}
+
+		// Extra rules.
+		for i, extraRuleGroup := range slo.Rules.ExtraRules {
+			if len(extraRuleGroup.Rules) == 0 {
+				continue
+			}
+
+			name := extraRuleGroup.Name
+			if name == "" {
+				name = fmt.Sprintf("%s%03d-%s", conventions.PromRuleGroupNameSLOExtraRulesPrefix, i, slo.SLO.ID)
+			}
+			rule.Spec.Groups = append(rule.Spec.Groups, monitoringv1.RuleGroup{
+				Interval: timeDurationToPromOpDuration(extraRuleGroup.Interval),
+				Name:     name,
+				Rules:    promRulesToKubeRules(extraRuleGroup.Rules),
 			})
 		}
 	}

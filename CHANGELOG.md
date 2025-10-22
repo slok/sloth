@@ -11,6 +11,8 @@
 - Sloth lib `PrometheusSLOGenerator` with `GenerateFromRaw` to generate SLOs based on any raw string spec.
 - Sloth lib `WriteResultAsPrometheusStd` helper method to write generated SLO results into standard Prometheus rules YAML.
 - Sloth lib `WriteResultAsK8sPrometheusOperator` helper method to write generated SLO results into Prometheus operator rules YAML.
+- The resulting SLO Prometheus rule group name can be customized by SLO plugins.
+- SLO plugins have the ability to add extra Prometheus Rule groups.
 
 ### Changed
 

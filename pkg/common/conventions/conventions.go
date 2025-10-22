@@ -15,3 +15,10 @@ var (
 	// TplSLIQueryWindowVarName is the name of the window template variable used in the SLI queries.
 	TplSLIQueryWindowVarName = "window"
 )
+
+const (
+	PromRuleGroupNameSLOSLIPrefix        = "sloth-slo-sli-recordings-"
+	PromRuleGroupNameSLOMetadataPrefix   = "sloth-slo-meta-recordings-"
+	PromRuleGroupNameSLOAlertsPrefix     = "sloth-slo-alerts-"
+	PromRuleGroupNameSLOExtraRulesPrefix = "sloth-slo-extra-rules-"
+)

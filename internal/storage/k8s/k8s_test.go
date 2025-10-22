@@ -3,6 +3,7 @@ package k8s_test
 import (
 	"context"
 	"testing"
+	"time"
 
 	monitoringv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
 	monitoringclientsetfake "github.com/prometheus-operator/prometheus-operator/pkg/client/versioned/fake"
@@ -41,7 +42,7 @@ func TestApiserverRepositoryStoreSLOs(t *testing.T) {
 			expErr: true,
 		},
 
-		"Having multiple SLO alert and recording rules should ensure on Kubernetes correctly.": {
+		"Having a mixed example of multiple SLOs and options should ensure them on k8s correctly.": {
 			k8sMeta: storage.K8sMeta{
 				Name:        "test-name",
 				Namespace:   "test-ns",
@@ -67,32 +68,36 @@ func TestApiserverRepositoryStoreSLOs(t *testing.T) {
 								Labels: map[string]string{"test-label": "a-2"},
 							},
 						}},
-						MetadataRecRules: model.PromRuleGroup{Rules: []rulefmt.Rule{
-							{
-								Record: "test:record-a3",
-								Expr:   "test-expr-a3",
-								Labels: map[string]string{"test-label": "a-3"},
-							},
-							{
-								Record: "test:record-a4",
-								Expr:   "test-expr-a4",
-								Labels: map[string]string{"test-label": "a-4"},
-							},
-						}},
-						AlertRules: model.PromRuleGroup{Rules: []rulefmt.Rule{
-							{
-								Alert:       "testAlertA1",
-								Expr:        "test-expr-a1",
-								Labels:      map[string]string{"test-label": "a-1"},
-								Annotations: map[string]string{"test-annot": "a-1"},
-							},
-							{
-								Alert:       "testAlertA2",
-								Expr:        "test-expr-a2",
-								Labels:      map[string]string{"test-label": "a-2"},
-								Annotations: map[string]string{"test-annot": "a-2"},
-							},
-						}},
+						MetadataRecRules: model.PromRuleGroup{
+							Name: "custom-metadata-name-testa", // Custom name.
+							Rules: []rulefmt.Rule{
+								{
+									Record: "test:record-a3",
+									Expr:   "test-expr-a3",
+									Labels: map[string]string{"test-label": "a-3"},
+								},
+								{
+									Record: "test:record-a4",
+									Expr:   "test-expr-a4",
+									Labels: map[string]string{"test-label": "a-4"},
+								},
+							}},
+						AlertRules: model.PromRuleGroup{
+							Interval: 15 * time.Minute, // Custom interval.
+							Rules: []rulefmt.Rule{
+								{
+									Alert:       "testAlertA1",
+									Expr:        "test-expr-a1",
+									Labels:      map[string]string{"test-label": "a-1"},
+									Annotations: map[string]string{"test-annot": "a-1"},
+								},
+								{
+									Alert:       "testAlertA2",
+									Expr:        "test-expr-a2",
+									Labels:      map[string]string{"test-label": "a-2"},
+									Annotations: map[string]string{"test-annot": "a-2"},
+								},
+							}},
 					},
 				},
 				{
@@ -120,6 +125,34 @@ func TestApiserverRepositoryStoreSLOs(t *testing.T) {
 								Annotations: map[string]string{"test-annot": "b-1"},
 							},
 						}},
+						ExtraRules: []model.PromRuleGroup{
+							{Interval: 42 * time.Minute, Rules: []rulefmt.Rule{
+								{
+									Alert:       "testAlertZ1",
+									Expr:        "test-expr-z1",
+									Labels:      map[string]string{"test-label": "z-1"},
+									Annotations: map[string]string{"test-annot": "z-1"},
+								},
+							}},
+							{}, // Should be skipped.
+							{
+								Name: "custom-test-for-extra-rules-zzzzz",
+								Rules: []rulefmt.Rule{
+									{
+										Alert:       "testAlertZ2",
+										Expr:        "test-expr-z2",
+										Labels:      map[string]string{"test-label": "z-2"},
+										Annotations: map[string]string{"test-annot": "z-2"},
+									},
+									{
+										Alert:       "testAlertZ3",
+										Expr:        "test-expr-z3",
+										Labels:      map[string]string{"test-label": "z-3"},
+										Annotations: map[string]string{"test-annot": "z-3"},
+									},
+								},
+							},
+						},
 					},
 				},
 			},
@@ -165,7 +198,7 @@ func TestApiserverRepositoryStoreSLOs(t *testing.T) {
 								},
 							},
 							{
-								Name: "sloth-slo-meta-recordings-testa",
+								Name: "custom-metadata-name-testa",
 								Rules: []monitoringv1.Rule{
 									{
 										Record: "test:record-a3",
@@ -180,7 +213,8 @@ func TestApiserverRepositoryStoreSLOs(t *testing.T) {
 								},
 							},
 							{
-								Name: "sloth-slo-alerts-testa",
+								Name:     "sloth-slo-alerts-testa",
+								Interval: &([]monitoringv1.Duration{monitoringv1.Duration("15m")}[0]),
 								Rules: []monitoringv1.Rule{
 									{
 										Alert:       "testAlertA1",
@@ -224,6 +258,35 @@ func TestApiserverRepositoryStoreSLOs(t *testing.T) {
 										Expr:        intstr.FromString("test-expr-b1"),
 										Labels:      map[string]string{"test-label": "b-1"},
 										Annotations: map[string]string{"test-annot": "b-1"},
+									},
+								},
+							},
+							{
+								Name:     "sloth-slo-extra-rules-000-testb",
+								Interval: &([]monitoringv1.Duration{monitoringv1.Duration("42m")}[0]),
+								Rules: []monitoringv1.Rule{
+									{
+										Alert:       "testAlertZ1",
+										Expr:        intstr.FromString("test-expr-z1"),
+										Labels:      map[string]string{"test-label": "z-1"},
+										Annotations: map[string]string{"test-annot": "z-1"},
+									},
+								},
+							},
+							{
+								Name: "custom-test-for-extra-rules-zzzzz",
+								Rules: []monitoringv1.Rule{
+									{
+										Alert:       "testAlertZ2",
+										Expr:        intstr.FromString("test-expr-z2"),
+										Labels:      map[string]string{"test-label": "z-2"},
+										Annotations: map[string]string{"test-annot": "z-2"},
+									},
+									{
+										Alert:       "testAlertZ3",
+										Expr:        intstr.FromString("test-expr-z3"),
+										Labels:      map[string]string{"test-label": "z-3"},
+										Annotations: map[string]string{"test-annot": "z-3"},
 									},
 								},
 							},

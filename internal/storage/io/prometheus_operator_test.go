@@ -194,7 +194,6 @@ spec:
 				Annotations: map[string]string{"ak1": "av1"},
 			},
 			slos: []storage.SLORulesResult{
-
 				{
 					SLO: model.PromSLO{ID: "testa"},
 					Rules: model.PromSLORules{
@@ -210,32 +209,36 @@ spec:
 								Labels: map[string]string{"test-label": "a-2"},
 							},
 						}},
-						MetadataRecRules: model.PromRuleGroup{Rules: []rulefmt.Rule{
-							{
-								Record: "test:record-a3",
-								Expr:   "test-expr-a3",
-								Labels: map[string]string{"test-label": "a-3"},
-							},
-							{
-								Record: "test:record-a4",
-								Expr:   "test-expr-a4",
-								Labels: map[string]string{"test-label": "a-4"},
-							},
-						}},
-						AlertRules: model.PromRuleGroup{Rules: []rulefmt.Rule{
-							{
-								Alert:       "testAlertA1",
-								Expr:        "test-expr-a1",
-								Labels:      map[string]string{"test-label": "a-1"},
-								Annotations: map[string]string{"test-annot": "a-1"},
-							},
-							{
-								Alert:       "testAlertA2",
-								Expr:        "test-expr-a2",
-								Labels:      map[string]string{"test-label": "a-2"},
-								Annotations: map[string]string{"test-annot": "a-2"},
-							},
-						}},
+						MetadataRecRules: model.PromRuleGroup{
+							Name: "custom-metadata-name-testa", // Custom name.
+							Rules: []rulefmt.Rule{
+								{
+									Record: "test:record-a3",
+									Expr:   "test-expr-a3",
+									Labels: map[string]string{"test-label": "a-3"},
+								},
+								{
+									Record: "test:record-a4",
+									Expr:   "test-expr-a4",
+									Labels: map[string]string{"test-label": "a-4"},
+								},
+							}},
+						AlertRules: model.PromRuleGroup{
+							Interval: 15 * time.Minute, // Custom interval.
+							Rules: []rulefmt.Rule{
+								{
+									Alert:       "testAlertA1",
+									Expr:        "test-expr-a1",
+									Labels:      map[string]string{"test-label": "a-1"},
+									Annotations: map[string]string{"test-annot": "a-1"},
+								},
+								{
+									Alert:       "testAlertA2",
+									Expr:        "test-expr-a2",
+									Labels:      map[string]string{"test-label": "a-2"},
+									Annotations: map[string]string{"test-annot": "a-2"},
+								},
+							}},
 					},
 				},
 				{
@@ -263,6 +266,34 @@ spec:
 								Annotations: map[string]string{"test-annot": "b-1"},
 							},
 						}},
+						ExtraRules: []model.PromRuleGroup{
+							{Interval: 42 * time.Minute, Rules: []rulefmt.Rule{
+								{
+									Alert:       "testAlertZ1",
+									Expr:        "test-expr-z1",
+									Labels:      map[string]string{"test-label": "z-1"},
+									Annotations: map[string]string{"test-annot": "z-1"},
+								},
+							}},
+							{}, // Should be skipped.
+							{
+								Name: "custom-test-for-extra-rules-zzzzz",
+								Rules: []rulefmt.Rule{
+									{
+										Alert:       "testAlertZ2",
+										Expr:        "test-expr-z2",
+										Labels:      map[string]string{"test-label": "z-2"},
+										Annotations: map[string]string{"test-annot": "z-2"},
+									},
+									{
+										Alert:       "testAlertZ3",
+										Expr:        "test-expr-z3",
+										Labels:      map[string]string{"test-label": "z-3"},
+										Annotations: map[string]string{"test-annot": "z-3"},
+									},
+								},
+							},
+						},
 					},
 				},
 			},
@@ -294,7 +325,7 @@ spec:
       labels:
         test-label: a-2
       record: test:record-a2
-  - name: sloth-slo-meta-recordings-testa
+  - name: custom-metadata-name-testa
     rules:
     - expr: test-expr-a3
       labels:
@@ -304,7 +335,8 @@ spec:
       labels:
         test-label: a-4
       record: test:record-a4
-  - name: sloth-slo-alerts-testa
+  - interval: 15m
+    name: sloth-slo-alerts-testa
     rules:
     - alert: testAlertA1
       annotations:
@@ -338,6 +370,29 @@ spec:
       expr: test-expr-b1
       labels:
         test-label: b-1
+  - interval: 42m
+    name: sloth-slo-extra-rules-000-testb
+    rules:
+    - alert: testAlertZ1
+      annotations:
+        test-annot: z-1
+      expr: test-expr-z1
+      labels:
+        test-label: z-1
+  - name: custom-test-for-extra-rules-zzzzz
+    rules:
+    - alert: testAlertZ2
+      annotations:
+        test-annot: z-2
+      expr: test-expr-z2
+      labels:
+        test-label: z-2
+    - alert: testAlertZ3
+      annotations:
+        test-annot: z-3
+      expr: test-expr-z3
+      labels:
+        test-label: z-3
 `,
 		},
 	}

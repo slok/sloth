@@ -10,6 +10,7 @@ import (
 	"gopkg.in/yaml.v2"
 
 	"github.com/slok/sloth/internal/log"
+	"github.com/slok/sloth/pkg/common/conventions"
 	"github.com/slok/sloth/pkg/common/model"
 )
 
@@ -49,26 +50,55 @@ func (r StdPrometheusGroupedRulesYAMLRepo) StoreSLOs(ctx context.Context, slos [
 	ruleGroups := stdPromRuleGroupsYAMLv2{}
 	for _, slo := range slos {
 		if len(slo.Rules.SLIErrorRecRules.Rules) > 0 {
+			name := slo.Rules.SLIErrorRecRules.Name
+			if name == "" {
+				name = conventions.PromRuleGroupNameSLOSLIPrefix + slo.SLO.ID
+			}
 			ruleGroups.Groups = append(ruleGroups.Groups, stdPromRuleGroupYAMLv2{
 				Interval: prommodel.Duration(slo.Rules.SLIErrorRecRules.Interval),
-				Name:     fmt.Sprintf("sloth-slo-sli-recordings-%s", slo.SLO.ID),
+				Name:     name,
 				Rules:    slo.Rules.SLIErrorRecRules.Rules,
 			})
 		}
 
 		if len(slo.Rules.MetadataRecRules.Rules) > 0 {
+			name := slo.Rules.MetadataRecRules.Name
+			if name == "" {
+				name = conventions.PromRuleGroupNameSLOMetadataPrefix + slo.SLO.ID
+			}
 			ruleGroups.Groups = append(ruleGroups.Groups, stdPromRuleGroupYAMLv2{
 				Interval: prommodel.Duration(slo.Rules.MetadataRecRules.Interval),
-				Name:     fmt.Sprintf("sloth-slo-meta-recordings-%s", slo.SLO.ID),
+				Name:     name,
 				Rules:    slo.Rules.MetadataRecRules.Rules,
 			})
 		}
 
 		if len(slo.Rules.AlertRules.Rules) > 0 {
+			name := slo.Rules.AlertRules.Name
+			if name == "" {
+				name = conventions.PromRuleGroupNameSLOAlertsPrefix + slo.SLO.ID
+			}
 			ruleGroups.Groups = append(ruleGroups.Groups, stdPromRuleGroupYAMLv2{
 				Interval: prommodel.Duration(slo.Rules.AlertRules.Interval),
-				Name:     fmt.Sprintf("sloth-slo-alerts-%s", slo.SLO.ID),
+				Name:     name,
 				Rules:    slo.Rules.AlertRules.Rules,
+			})
+		}
+
+		// Extra rules.
+		for i, extraRuleGroup := range slo.Rules.ExtraRules {
+			if len(extraRuleGroup.Rules) == 0 {
+				continue
+			}
+
+			name := extraRuleGroup.Name
+			if name == "" {
+				name = fmt.Sprintf("%s%03d-%s", conventions.PromRuleGroupNameSLOExtraRulesPrefix, i, slo.SLO.ID)
+			}
+			ruleGroups.Groups = append(ruleGroups.Groups, stdPromRuleGroupYAMLv2{
+				Interval: prommodel.Duration(extraRuleGroup.Interval),
+				Name:     name,
+				Rules:    extraRuleGroup.Rules,
 			})
 		}
 	}

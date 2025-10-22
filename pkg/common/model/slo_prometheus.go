@@ -74,13 +74,20 @@ type PromSLOGroupSource struct {
 
 // PromSLORules are the prometheus rules required by an SLO.
 type PromSLORules struct {
+	// SLIErrorRecRules are the rules for the SLI error recording rules.
 	SLIErrorRecRules PromRuleGroup
+	// MetadataRecRules are the rules for the metadata recording rules.
 	MetadataRecRules PromRuleGroup
-	AlertRules       PromRuleGroup
+	// AlertRules are the rules for the SLO alerting rules.
+	AlertRules PromRuleGroup
+	// ExtraRules are the extra rules for the SLO, normally used for custom use cases required by the SLO plugins.
+	ExtraRules []PromRuleGroup
 }
 
 // PromRuleGroup are regular prometheus group of rules.
 type PromRuleGroup struct {
+	// Name is the name of the rule group. If empty, a default name will be generated.
+	Name     string
 	Interval time.Duration
 	Rules    []rulefmt.Rule
 }

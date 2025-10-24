@@ -19,11 +19,12 @@ import (
 
 func TestFilePluginRepoListSLOPlugins(t *testing.T) {
 	tests := map[string]struct {
-		fss        func() []fs.FS
-		mock       func(mslopl *fsmock.SLOPluginLoader, mslipl *fsmock.SLIPluginLoader)
-		expPlugins map[string]pluginengineslo.Plugin
-		expLoadErr bool
-		expErr     bool
+		failOnError bool
+		fss         func() []fs.FS
+		mock        func(mslopl *fsmock.SLOPluginLoader, mslipl *fsmock.SLIPluginLoader)
+		expPlugins  map[string]pluginengineslo.Plugin
+		expLoadErr  bool
+		expErr      bool
 	}{
 		"Having no files, should return empty list of plugins.": {
 			fss:        func() []fs.FS { return nil },
@@ -113,6 +114,26 @@ func TestFilePluginRepoListSLOPlugins(t *testing.T) {
 				"p1": {ID: "p1"},
 			},
 		},
+
+		"Having an error while loading a plugin on strict mode, should fail.": {
+			failOnError: true,
+			fss: func() []fs.FS {
+				m1 := make(fstest.MapFS)
+				m1["m1/pl1/plugin.go"] = &fstest.MapFile{Data: []byte("p1")}
+				m1["m1/pl2/plugin.go"] = &fstest.MapFile{Data: []byte("p2")}
+
+				return []fs.FS{m1}
+			},
+			mock: func(mslopl *fsmock.SLOPluginLoader, mslipl *fsmock.SLIPluginLoader) {
+				mslipl.On("LoadRawSLIPlugin", mock.Anything, "p1").Once().Return(nil, fmt.Errorf("something"))
+				mslipl.On("LoadRawSLIPlugin", mock.Anything, "p2").Once().Return(nil, fmt.Errorf("something"))
+
+				mslopl.On("LoadRawPlugin", mock.Anything, "p1").Once().Return(&pluginengineslo.Plugin{ID: "p1"}, nil)
+				mslopl.On("LoadRawPlugin", mock.Anything, "p2").Once().Return(nil, fmt.Errorf("something"))
+
+			},
+			expLoadErr: true,
+		},
 	}
 
 	for name, test := range tests {
@@ -124,7 +145,7 @@ func TestFilePluginRepoListSLOPlugins(t *testing.T) {
 			test.mock(mslopl, mslipl)
 
 			// Create repository and load plugins.
-			repo, err := storagefs.NewFilePluginRepo(log.Noop, mslipl, mslopl, test.fss()...)
+			repo, err := storagefs.NewFilePluginRepo(log.Noop, test.failOnError, mslipl, mslopl, test.fss()...)
 			if test.expLoadErr {
 				assert.Error(err)
 				return
@@ -185,7 +206,7 @@ func TestFilePluginRepoGetSLOPlugin(t *testing.T) {
 			test.mock(mslopl, mslipl)
 
 			// Create repository and load plugins.
-			repo, err := storagefs.NewFilePluginRepo(log.Noop, mslipl, mslopl, test.fss()...)
+			repo, err := storagefs.NewFilePluginRepo(log.Noop, false, mslipl, mslopl, test.fss()...)
 			require.NoError(err)
 
 			plugin, err := repo.GetSLOPlugin(t.Context(), test.pluginID)
@@ -200,11 +221,12 @@ func TestFilePluginRepoGetSLOPlugin(t *testing.T) {
 
 func TestFilePluginRepoListSLIPlugins(t *testing.T) {
 	tests := map[string]struct {
-		fss        func() []fs.FS
-		mock       func(mslopl *fsmock.SLOPluginLoader, mslipl *fsmock.SLIPluginLoader)
-		expPlugins map[string]pluginenginesli.SLIPlugin
-		expLoadErr bool
-		expErr     bool
+		failOnError bool
+		fss         func() []fs.FS
+		mock        func(mslopl *fsmock.SLOPluginLoader, mslipl *fsmock.SLIPluginLoader)
+		expPlugins  map[string]pluginenginesli.SLIPlugin
+		expLoadErr  bool
+		expErr      bool
 	}{
 		"Having no files, should return empty list of plugins.": {
 			fss:        func() []fs.FS { return nil },
@@ -281,6 +303,24 @@ func TestFilePluginRepoListSLIPlugins(t *testing.T) {
 				"p1": {ID: "p1"},
 			},
 		},
+
+		"Having an error while loading a plugin on strict mode, should fail.": {
+			failOnError: true,
+			fss: func() []fs.FS {
+				m1 := make(fstest.MapFS)
+				m1["m1/pl1/plugin.go"] = &fstest.MapFile{Data: []byte("p1")}
+				m1["m1/pl2/plugin.go"] = &fstest.MapFile{Data: []byte("p2")}
+
+				return []fs.FS{m1}
+			},
+			mock: func(mslopl *fsmock.SLOPluginLoader, mslipl *fsmock.SLIPluginLoader) {
+				mslipl.On("LoadRawSLIPlugin", mock.Anything, "p1").Once().Return(&pluginenginesli.SLIPlugin{ID: "p1"}, nil)
+				mslipl.On("LoadRawSLIPlugin", mock.Anything, "p2").Once().Return(nil, fmt.Errorf("something"))
+				mslopl.On("LoadRawPlugin", mock.Anything, "p2").Once().Return(nil, fmt.Errorf("something"))
+
+			},
+			expLoadErr: true,
+		},
 	}
 
 	for name, test := range tests {
@@ -292,7 +332,7 @@ func TestFilePluginRepoListSLIPlugins(t *testing.T) {
 			test.mock(mslopl, mslipl)
 
 			// Create repository and load plugins.
-			repo, err := storagefs.NewFilePluginRepo(log.Noop, mslipl, mslopl, test.fss()...)
+			repo, err := storagefs.NewFilePluginRepo(log.Noop, test.failOnError, mslipl, mslopl, test.fss()...)
 			if test.expLoadErr {
 				assert.Error(err)
 				return
@@ -350,7 +390,7 @@ func TestFilePluginRepoGetSLIPlugin(t *testing.T) {
 			test.mock(mslopl, mslipl)
 
 			// Create repository and load plugins.
-			repo, err := storagefs.NewFilePluginRepo(log.Noop, mslipl, mslopl, test.fss()...)
+			repo, err := storagefs.NewFilePluginRepo(log.Noop, false, mslipl, mslopl, test.fss()...)
 			require.NoError(err)
 
 			plugin, err := repo.GetSLIPlugin(t.Context(), test.pluginID)

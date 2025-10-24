@@ -17,14 +17,14 @@ import (
 	storagefs "github.com/slok/sloth/internal/storage/fs"
 )
 
-func createPluginLoader(ctx context.Context, logger log.Logger, pluginsFS []fs.FS) (*storagefs.FilePluginRepo, error) {
+func createPluginLoader(ctx context.Context, logger log.Logger, pluginsFS []fs.FS, strict bool) (*storagefs.FilePluginRepo, error) {
 	// We should load at least the Sloth embedded default ones.
 	fss := append([]fs.FS{}, pluginsFS...)
 	if len(fss) == 0 {
 		fss = append(fss, plugin.EmbeddedDefaultSLOPlugins)
 	}
 
-	pluginsRepo, err := storagefs.NewFilePluginRepo(logger, pluginenginesli.PluginLoader, pluginengineslo.PluginLoader, fss...)
+	pluginsRepo, err := storagefs.NewFilePluginRepo(logger, strict, pluginenginesli.PluginLoader, pluginengineslo.PluginLoader, fss...)
 	if err != nil {
 		return nil, fmt.Errorf("could not create file SLO and SLI plugins repository: %w", err)
 	}

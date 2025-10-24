@@ -29,10 +29,11 @@ type FilePluginRepo struct {
 	sliPluginCache  map[string]pluginenginesli.SLIPlugin
 	logger          log.Logger
 	mu              sync.RWMutex
+	failOnError     bool
 }
 
 // NewFilePluginRepo returns a new FilePluginRepo that loads SLI and SLO plugins from the given file system.
-func NewFilePluginRepo(logger log.Logger, sliPluginLoader SLIPluginLoader, sloPluginLoader SLOPluginLoader, fss ...fs.FS) (*FilePluginRepo, error) {
+func NewFilePluginRepo(logger log.Logger, failOnError bool, sliPluginLoader SLIPluginLoader, sloPluginLoader SLOPluginLoader, fss ...fs.FS) (*FilePluginRepo, error) {
 	r := &FilePluginRepo{
 		fss:             fss,
 		sliPluginLoader: sliPluginLoader,
@@ -40,6 +41,7 @@ func NewFilePluginRepo(logger log.Logger, sliPluginLoader SLIPluginLoader, sloPl
 		sloPluginCache:  map[string]pluginengineslo.Plugin{},
 		sliPluginCache:  map[string]pluginenginesli.SLIPlugin{},
 		logger:          logger,
+		failOnError:     failOnError,
 	}
 
 	err := r.Reload(context.Background())
@@ -153,7 +155,11 @@ func (r *FilePluginRepo) loadPlugins(ctx context.Context, fss ...fs.FS) (map[str
 				return nil
 			}
 
-			r.logger.Errorf("could not load %q as SLI or SLO plugin: (SLI plugin error: %s | SLO plugin error: %s)", path, sliErr, sloErr)
+			err = fmt.Errorf("could not load %q as SLI or SLO plugin: (SLI plugin error: %w | SLO plugin error: %w)", path, sliErr, sloErr)
+			if r.failOnError {
+				return err
+			}
+			r.logger.Errorf(err.Error())
 
 			return nil
 		})

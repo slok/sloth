@@ -14,6 +14,7 @@ import (
 	plugincoreslirulesv1 "github.com/slok/sloth/internal/plugin/slo/core/sli_rules_v1"
 	plugincorevalidatev1 "github.com/slok/sloth/internal/plugin/slo/core/validate_v1"
 	pluginengineslo "github.com/slok/sloth/internal/pluginengine/slo"
+	"github.com/slok/sloth/pkg/common/conventions"
 	commonerrors "github.com/slok/sloth/pkg/common/errors"
 	"github.com/slok/sloth/pkg/common/model"
 	utilsdata "github.com/slok/sloth/pkg/common/utils/data"
@@ -172,6 +173,9 @@ func (s Service) Generate(ctx context.Context, r Request) (*Response, error) {
 			return nil, fmt.Errorf("could not generate %q slo: %w", slo.ID, err)
 		}
 
+		// Set safe defaults on rules result.
+		setDefaultsPromSLORulesResult(slo, result)
+
 		results = append(results, SLOResult{SLO: slo, SLORules: *result})
 	}
 
@@ -271,4 +275,23 @@ func (s Service) validateSLOGroup(sloGroup model.PromSLOGroup) error {
 	}
 
 	return nil
+}
+
+// helper function to set the required safe defaults generated SLO prom rules.
+func setDefaultsPromSLORulesResult(slo model.PromSLO, rules *model.PromSLORules) {
+	// Set rule result naming defaults.
+	if rules.SLIErrorRecRules.Name == "" {
+		rules.SLIErrorRecRules.Name = conventions.PromRuleGroupNameSLOSLIPrefix + slo.ID
+	}
+	if rules.MetadataRecRules.Name == "" {
+		rules.MetadataRecRules.Name = conventions.PromRuleGroupNameSLOMetadataPrefix + slo.ID
+	}
+	if rules.AlertRules.Name == "" {
+		rules.AlertRules.Name = conventions.PromRuleGroupNameSLOAlertsPrefix + slo.ID
+	}
+	for i, extraRuleGroup := range rules.ExtraRules {
+		if extraRuleGroup.Name == "" {
+			extraRuleGroup.Name = fmt.Sprintf("%s%03d-%s", conventions.PromRuleGroupNameSLOExtraRulesPrefix, i, slo.ID)
+		}
+	}
 }

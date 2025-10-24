@@ -56,20 +56,22 @@ func TestApiserverRepositoryStoreSLOs(t *testing.T) {
 				{
 					SLO: model.PromSLO{ID: "testa"},
 					Rules: model.PromSLORules{
-						SLIErrorRecRules: model.PromRuleGroup{Rules: []rulefmt.Rule{
-							{
-								Record: "test:record-a1",
-								Expr:   "test-expr-a1",
-								Labels: map[string]string{"test-label": "a-1"},
-							},
-							{
-								Record: "test:record-a2",
-								Expr:   "test-expr-a2",
-								Labels: map[string]string{"test-label": "a-2"},
-							},
-						}},
+						SLIErrorRecRules: model.PromRuleGroup{
+							Name: "sloth-slo-sli-recordings-testa",
+							Rules: []rulefmt.Rule{
+								{
+									Record: "test:record-a1",
+									Expr:   "test-expr-a1",
+									Labels: map[string]string{"test-label": "a-1"},
+								},
+								{
+									Record: "test:record-a2",
+									Expr:   "test-expr-a2",
+									Labels: map[string]string{"test-label": "a-2"},
+								},
+							}},
 						MetadataRecRules: model.PromRuleGroup{
-							Name: "custom-metadata-name-testa", // Custom name.
+							Name: "sloth-slo-meta-recordings-testa",
 							Rules: []rulefmt.Rule{
 								{
 									Record: "test:record-a3",
@@ -83,6 +85,7 @@ func TestApiserverRepositoryStoreSLOs(t *testing.T) {
 								},
 							}},
 						AlertRules: model.PromRuleGroup{
+							Name:     "sloth-slo-alerts-testa",
 							Interval: 15 * time.Minute, // Custom interval.
 							Rules: []rulefmt.Rule{
 								{
@@ -103,40 +106,49 @@ func TestApiserverRepositoryStoreSLOs(t *testing.T) {
 				{
 					SLO: model.PromSLO{ID: "testb"},
 					Rules: model.PromSLORules{
-						SLIErrorRecRules: model.PromRuleGroup{Rules: []rulefmt.Rule{
-							{
-								Record: "test:record-b1",
-								Expr:   "test-expr-b1",
-								Labels: map[string]string{"test-label": "b-1"},
-							},
-						}},
-						MetadataRecRules: model.PromRuleGroup{Rules: []rulefmt.Rule{
-							{
-								Record: "test:record-b2",
-								Expr:   "test-expr-b2",
-								Labels: map[string]string{"test-label": "b-2"},
-							},
-						}},
-						AlertRules: model.PromRuleGroup{Rules: []rulefmt.Rule{
-							{
-								Alert:       "testAlertB1",
-								Expr:        "test-expr-b1",
-								Labels:      map[string]string{"test-label": "b-1"},
-								Annotations: map[string]string{"test-annot": "b-1"},
-							},
-						}},
-						ExtraRules: []model.PromRuleGroup{
-							{Interval: 42 * time.Minute, Rules: []rulefmt.Rule{
+						SLIErrorRecRules: model.PromRuleGroup{
+							Name: "sloth-slo-sli-recordings-testb",
+							Rules: []rulefmt.Rule{
 								{
-									Alert:       "testAlertZ1",
-									Expr:        "test-expr-z1",
-									Labels:      map[string]string{"test-label": "z-1"},
-									Annotations: map[string]string{"test-annot": "z-1"},
+									Record: "test:record-b1",
+									Expr:   "test-expr-b1",
+									Labels: map[string]string{"test-label": "b-1"},
 								},
 							}},
+						MetadataRecRules: model.PromRuleGroup{
+							Name: "sloth-slo-meta-recordings-testb",
+							Rules: []rulefmt.Rule{
+								{
+									Record: "test:record-b2",
+									Expr:   "test-expr-b2",
+									Labels: map[string]string{"test-label": "b-2"},
+								},
+							}},
+						AlertRules: model.PromRuleGroup{
+							Name: "sloth-slo-alerts-testb",
+							Rules: []rulefmt.Rule{
+								{
+									Alert:       "testAlertB1",
+									Expr:        "test-expr-b1",
+									Labels:      map[string]string{"test-label": "b-1"},
+									Annotations: map[string]string{"test-annot": "b-1"},
+								},
+							}},
+						ExtraRules: []model.PromRuleGroup{
+							{
+								Name:     "sloth-slo-extra-rules-000-testb",
+								Interval: 42 * time.Minute,
+								Rules: []rulefmt.Rule{
+									{
+										Alert:       "testAlertZ1",
+										Expr:        "test-expr-z1",
+										Labels:      map[string]string{"test-label": "z-1"},
+										Annotations: map[string]string{"test-annot": "z-1"},
+									},
+								}},
 							{}, // Should be skipped.
 							{
-								Name: "custom-test-for-extra-rules-zzzzz",
+								Name: "sloth-slo-extra-rules-001-testb",
 								Rules: []rulefmt.Rule{
 									{
 										Alert:       "testAlertZ2",
@@ -198,7 +210,7 @@ func TestApiserverRepositoryStoreSLOs(t *testing.T) {
 								},
 							},
 							{
-								Name: "custom-metadata-name-testa",
+								Name: "sloth-slo-meta-recordings-testa",
 								Rules: []monitoringv1.Rule{
 									{
 										Record: "test:record-a3",
@@ -274,7 +286,7 @@ func TestApiserverRepositoryStoreSLOs(t *testing.T) {
 								},
 							},
 							{
-								Name: "custom-test-for-extra-rules-zzzzz",
+								Name: "sloth-slo-extra-rules-001-testb",
 								Rules: []monitoringv1.Rule{
 									{
 										Alert:       "testAlertZ2",

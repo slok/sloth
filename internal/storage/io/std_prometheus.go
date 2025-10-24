@@ -10,7 +10,6 @@ import (
 	"gopkg.in/yaml.v2"
 
 	"github.com/slok/sloth/internal/log"
-	"github.com/slok/sloth/pkg/common/conventions"
 	"github.com/slok/sloth/pkg/common/model"
 )
 
@@ -50,54 +49,38 @@ func (r StdPrometheusGroupedRulesYAMLRepo) StoreSLOs(ctx context.Context, slos [
 	ruleGroups := stdPromRuleGroupsYAMLv2{}
 	for _, slo := range slos {
 		if len(slo.Rules.SLIErrorRecRules.Rules) > 0 {
-			name := slo.Rules.SLIErrorRecRules.Name
-			if name == "" {
-				name = conventions.PromRuleGroupNameSLOSLIPrefix + slo.SLO.ID
-			}
 			ruleGroups.Groups = append(ruleGroups.Groups, stdPromRuleGroupYAMLv2{
 				Interval: prommodel.Duration(slo.Rules.SLIErrorRecRules.Interval),
-				Name:     name,
+				Name:     slo.Rules.SLIErrorRecRules.Name,
 				Rules:    slo.Rules.SLIErrorRecRules.Rules,
 			})
 		}
 
 		if len(slo.Rules.MetadataRecRules.Rules) > 0 {
-			name := slo.Rules.MetadataRecRules.Name
-			if name == "" {
-				name = conventions.PromRuleGroupNameSLOMetadataPrefix + slo.SLO.ID
-			}
 			ruleGroups.Groups = append(ruleGroups.Groups, stdPromRuleGroupYAMLv2{
 				Interval: prommodel.Duration(slo.Rules.MetadataRecRules.Interval),
-				Name:     name,
+				Name:     slo.Rules.MetadataRecRules.Name,
 				Rules:    slo.Rules.MetadataRecRules.Rules,
 			})
 		}
 
 		if len(slo.Rules.AlertRules.Rules) > 0 {
-			name := slo.Rules.AlertRules.Name
-			if name == "" {
-				name = conventions.PromRuleGroupNameSLOAlertsPrefix + slo.SLO.ID
-			}
 			ruleGroups.Groups = append(ruleGroups.Groups, stdPromRuleGroupYAMLv2{
 				Interval: prommodel.Duration(slo.Rules.AlertRules.Interval),
-				Name:     name,
+				Name:     slo.Rules.AlertRules.Name,
 				Rules:    slo.Rules.AlertRules.Rules,
 			})
 		}
 
 		// Extra rules.
-		for i, extraRuleGroup := range slo.Rules.ExtraRules {
+		for _, extraRuleGroup := range slo.Rules.ExtraRules {
 			if len(extraRuleGroup.Rules) == 0 {
 				continue
 			}
 
-			name := extraRuleGroup.Name
-			if name == "" {
-				name = fmt.Sprintf("%s%03d-%s", conventions.PromRuleGroupNameSLOExtraRulesPrefix, i, slo.SLO.ID)
-			}
 			ruleGroups.Groups = append(ruleGroups.Groups, stdPromRuleGroupYAMLv2{
 				Interval: prommodel.Duration(extraRuleGroup.Interval),
-				Name:     name,
+				Name:     extraRuleGroup.Name,
 				Rules:    extraRuleGroup.Rules,
 			})
 		}
@@ -120,9 +103,6 @@ func (r StdPrometheusGroupedRulesYAMLRepo) StoreSLOs(ctx context.Context, slos [
 	if err != nil {
 		return fmt.Errorf("could not write top disclaimer: %w", err)
 	}
-
-	logger := r.logger.WithCtxValues(ctx)
-	logger.WithValues(log.Kv{"groups": len(ruleGroups.Groups)}).Infof("Prometheus rules written")
 
 	return nil
 }

@@ -47,13 +47,15 @@ func TestIOWriterPrometheusOperatorYAMLRepo(t *testing.T) {
 				{
 					SLO: model.PromSLO{ID: "test1"},
 					Rules: model.PromSLORules{
-						SLIErrorRecRules: model.PromRuleGroup{Rules: []rulefmt.Rule{
-							{
-								Record: "test:record",
-								Expr:   "test-expr",
-								Labels: map[string]string{"test-label": "one"},
-							},
-						}},
+						SLIErrorRecRules: model.PromRuleGroup{
+							Name: "sloth-slo-sli-recordings-test1",
+							Rules: []rulefmt.Rule{
+								{
+									Record: "test:record",
+									Expr:   "test-expr",
+									Labels: map[string]string{"test-label": "one"},
+								},
+							}},
 					},
 				},
 			},
@@ -96,6 +98,7 @@ spec:
 					SLO: model.PromSLO{ID: "test1"},
 					Rules: model.PromSLORules{
 						MetadataRecRules: model.PromRuleGroup{
+							Name:     "sloth-slo-meta-recordings-test1",
 							Interval: 42 * time.Minute,
 							Rules: []rulefmt.Rule{
 								{
@@ -146,14 +149,16 @@ spec:
 				{
 					SLO: model.PromSLO{ID: "test1"},
 					Rules: model.PromSLORules{
-						AlertRules: model.PromRuleGroup{Rules: []rulefmt.Rule{
-							{
-								Alert:       "testAlert",
-								Expr:        "test-expr",
-								Labels:      map[string]string{"test-label": "one"},
-								Annotations: map[string]string{"test-annot": "one"},
-							},
-						}},
+						AlertRules: model.PromRuleGroup{
+							Name: "sloth-slo-alerts-test1",
+							Rules: []rulefmt.Rule{
+								{
+									Alert:       "testAlert",
+									Expr:        "test-expr",
+									Labels:      map[string]string{"test-label": "one"},
+									Annotations: map[string]string{"test-annot": "one"},
+								},
+							}},
 					},
 				},
 			},
@@ -197,20 +202,22 @@ spec:
 				{
 					SLO: model.PromSLO{ID: "testa"},
 					Rules: model.PromSLORules{
-						SLIErrorRecRules: model.PromRuleGroup{Rules: []rulefmt.Rule{
-							{
-								Record: "test:record-a1",
-								Expr:   "test-expr-a1",
-								Labels: map[string]string{"test-label": "a-1"},
-							},
-							{
-								Record: "test:record-a2",
-								Expr:   "test-expr-a2",
-								Labels: map[string]string{"test-label": "a-2"},
-							},
-						}},
+						SLIErrorRecRules: model.PromRuleGroup{
+							Name: "sloth-slo-sli-recordings-testa",
+							Rules: []rulefmt.Rule{
+								{
+									Record: "test:record-a1",
+									Expr:   "test-expr-a1",
+									Labels: map[string]string{"test-label": "a-1"},
+								},
+								{
+									Record: "test:record-a2",
+									Expr:   "test-expr-a2",
+									Labels: map[string]string{"test-label": "a-2"},
+								},
+							}},
 						MetadataRecRules: model.PromRuleGroup{
-							Name: "custom-metadata-name-testa", // Custom name.
+							Name: "sloth-slo-meta-recordings-testa",
 							Rules: []rulefmt.Rule{
 								{
 									Record: "test:record-a3",
@@ -224,6 +231,7 @@ spec:
 								},
 							}},
 						AlertRules: model.PromRuleGroup{
+							Name:     "sloth-slo-alerts-testa",
 							Interval: 15 * time.Minute, // Custom interval.
 							Rules: []rulefmt.Rule{
 								{
@@ -244,40 +252,49 @@ spec:
 				{
 					SLO: model.PromSLO{ID: "testb"},
 					Rules: model.PromSLORules{
-						SLIErrorRecRules: model.PromRuleGroup{Rules: []rulefmt.Rule{
-							{
-								Record: "test:record-b1",
-								Expr:   "test-expr-b1",
-								Labels: map[string]string{"test-label": "b-1"},
-							},
-						}},
-						MetadataRecRules: model.PromRuleGroup{Rules: []rulefmt.Rule{
-							{
-								Record: "test:record-b2",
-								Expr:   "test-expr-b2",
-								Labels: map[string]string{"test-label": "b-2"},
-							},
-						}},
-						AlertRules: model.PromRuleGroup{Rules: []rulefmt.Rule{
-							{
-								Alert:       "testAlertB1",
-								Expr:        "test-expr-b1",
-								Labels:      map[string]string{"test-label": "b-1"},
-								Annotations: map[string]string{"test-annot": "b-1"},
-							},
-						}},
-						ExtraRules: []model.PromRuleGroup{
-							{Interval: 42 * time.Minute, Rules: []rulefmt.Rule{
+						SLIErrorRecRules: model.PromRuleGroup{
+							Name: "sloth-slo-sli-recordings-testb",
+							Rules: []rulefmt.Rule{
 								{
-									Alert:       "testAlertZ1",
-									Expr:        "test-expr-z1",
-									Labels:      map[string]string{"test-label": "z-1"},
-									Annotations: map[string]string{"test-annot": "z-1"},
+									Record: "test:record-b1",
+									Expr:   "test-expr-b1",
+									Labels: map[string]string{"test-label": "b-1"},
 								},
 							}},
+						MetadataRecRules: model.PromRuleGroup{
+							Name: "sloth-slo-meta-recordings-testb",
+							Rules: []rulefmt.Rule{
+								{
+									Record: "test:record-b2",
+									Expr:   "test-expr-b2",
+									Labels: map[string]string{"test-label": "b-2"},
+								},
+							}},
+						AlertRules: model.PromRuleGroup{
+							Name: "sloth-slo-alerts-testb",
+							Rules: []rulefmt.Rule{
+								{
+									Alert:       "testAlertB1",
+									Expr:        "test-expr-b1",
+									Labels:      map[string]string{"test-label": "b-1"},
+									Annotations: map[string]string{"test-annot": "b-1"},
+								},
+							}},
+						ExtraRules: []model.PromRuleGroup{
+							{
+								Name:     "sloth-slo-extra-rules-000-testb",
+								Interval: 42 * time.Minute,
+								Rules: []rulefmt.Rule{
+									{
+										Alert:       "testAlertZ1",
+										Expr:        "test-expr-z1",
+										Labels:      map[string]string{"test-label": "z-1"},
+										Annotations: map[string]string{"test-annot": "z-1"},
+									},
+								}},
 							{}, // Should be skipped.
 							{
-								Name: "custom-test-for-extra-rules-zzzzz",
+								Name: "sloth-slo-extra-rules-001-testb",
 								Rules: []rulefmt.Rule{
 									{
 										Alert:       "testAlertZ2",
@@ -325,7 +342,7 @@ spec:
       labels:
         test-label: a-2
       record: test:record-a2
-  - name: custom-metadata-name-testa
+  - name: sloth-slo-meta-recordings-testa
     rules:
     - expr: test-expr-a3
       labels:
@@ -379,7 +396,7 @@ spec:
       expr: test-expr-z1
       labels:
         test-label: z-1
-  - name: custom-test-for-extra-rules-zzzzz
+  - name: sloth-slo-extra-rules-001-testb
     rules:
     - alert: testAlertZ2
       annotations:

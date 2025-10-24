@@ -175,210 +175,215 @@ func TestIntegrationAppServiceGenerate(t *testing.T) {
 							},
 						},
 						SLORules: model.PromSLORules{
-							SLIErrorRecRules: model.PromRuleGroup{Rules: []rulefmt.Rule{
-								{
-									Record: "slo:sli_error:ratio_rate5m",
-									Expr:   "(rate(my_metric{error=\"true\"}[5m]))\n/\n(rate(my_metric[5m]))\n",
-									Labels: map[string]string{
-										"test_label":    "label_1",
-										"extra_k1":      "extra_v1",
-										"extra_k2":      "extra_v2",
-										"sloth_service": "test-svc",
-										"sloth_slo":     "test-name",
-										"sloth_id":      "test-id",
-										"sloth_window":  "5m",
+							SLIErrorRecRules: model.PromRuleGroup{
+								Name: "sloth-slo-sli-recordings-test-id",
+								Rules: []rulefmt.Rule{
+									{
+										Record: "slo:sli_error:ratio_rate5m",
+										Expr:   "(rate(my_metric{error=\"true\"}[5m]))\n/\n(rate(my_metric[5m]))\n",
+										Labels: map[string]string{
+											"test_label":    "label_1",
+											"extra_k1":      "extra_v1",
+											"extra_k2":      "extra_v2",
+											"sloth_service": "test-svc",
+											"sloth_slo":     "test-name",
+											"sloth_id":      "test-id",
+											"sloth_window":  "5m",
+										},
 									},
-								},
-								{
-									Record: "slo:sli_error:ratio_rate30m",
-									Expr:   "(rate(my_metric{error=\"true\"}[30m]))\n/\n(rate(my_metric[30m]))\n",
-									Labels: map[string]string{
-										"test_label":    "label_1",
-										"extra_k1":      "extra_v1",
-										"extra_k2":      "extra_v2",
-										"sloth_service": "test-svc",
-										"sloth_slo":     "test-name",
-										"sloth_id":      "test-id",
-										"sloth_window":  "30m",
+									{
+										Record: "slo:sli_error:ratio_rate30m",
+										Expr:   "(rate(my_metric{error=\"true\"}[30m]))\n/\n(rate(my_metric[30m]))\n",
+										Labels: map[string]string{
+											"test_label":    "label_1",
+											"extra_k1":      "extra_v1",
+											"extra_k2":      "extra_v2",
+											"sloth_service": "test-svc",
+											"sloth_slo":     "test-name",
+											"sloth_id":      "test-id",
+											"sloth_window":  "30m",
+										},
 									},
-								},
-								{
-									Record: "slo:sli_error:ratio_rate1h",
-									Expr:   "(rate(my_metric{error=\"true\"}[1h]))\n/\n(rate(my_metric[1h]))\n",
-									Labels: map[string]string{
-										"test_label":    "label_1",
-										"extra_k1":      "extra_v1",
-										"extra_k2":      "extra_v2",
-										"sloth_service": "test-svc",
-										"sloth_slo":     "test-name",
-										"sloth_id":      "test-id",
-										"sloth_window":  "1h",
+									{
+										Record: "slo:sli_error:ratio_rate1h",
+										Expr:   "(rate(my_metric{error=\"true\"}[1h]))\n/\n(rate(my_metric[1h]))\n",
+										Labels: map[string]string{
+											"test_label":    "label_1",
+											"extra_k1":      "extra_v1",
+											"extra_k2":      "extra_v2",
+											"sloth_service": "test-svc",
+											"sloth_slo":     "test-name",
+											"sloth_id":      "test-id",
+											"sloth_window":  "1h",
+										},
 									},
-								},
-								{
-									Record: "slo:sli_error:ratio_rate2h",
-									Expr:   "(rate(my_metric{error=\"true\"}[2h]))\n/\n(rate(my_metric[2h]))\n",
-									Labels: map[string]string{
-										"test_label":    "label_1",
-										"extra_k1":      "extra_v1",
-										"extra_k2":      "extra_v2",
-										"sloth_service": "test-svc",
-										"sloth_slo":     "test-name",
-										"sloth_id":      "test-id",
-										"sloth_window":  "2h",
+									{
+										Record: "slo:sli_error:ratio_rate2h",
+										Expr:   "(rate(my_metric{error=\"true\"}[2h]))\n/\n(rate(my_metric[2h]))\n",
+										Labels: map[string]string{
+											"test_label":    "label_1",
+											"extra_k1":      "extra_v1",
+											"extra_k2":      "extra_v2",
+											"sloth_service": "test-svc",
+											"sloth_slo":     "test-name",
+											"sloth_id":      "test-id",
+											"sloth_window":  "2h",
+										},
 									},
-								},
-								{
-									Record: "slo:sli_error:ratio_rate6h",
-									Expr:   "(rate(my_metric{error=\"true\"}[6h]))\n/\n(rate(my_metric[6h]))\n",
-									Labels: map[string]string{
-										"test_label":    "label_1",
-										"extra_k1":      "extra_v1",
-										"extra_k2":      "extra_v2",
-										"sloth_service": "test-svc",
-										"sloth_slo":     "test-name",
-										"sloth_id":      "test-id",
-										"sloth_window":  "6h",
+									{
+										Record: "slo:sli_error:ratio_rate6h",
+										Expr:   "(rate(my_metric{error=\"true\"}[6h]))\n/\n(rate(my_metric[6h]))\n",
+										Labels: map[string]string{
+											"test_label":    "label_1",
+											"extra_k1":      "extra_v1",
+											"extra_k2":      "extra_v2",
+											"sloth_service": "test-svc",
+											"sloth_slo":     "test-name",
+											"sloth_id":      "test-id",
+											"sloth_window":  "6h",
+										},
 									},
-								},
-								{
-									Record: "slo:sli_error:ratio_rate1d",
-									Expr:   "(rate(my_metric{error=\"true\"}[1d]))\n/\n(rate(my_metric[1d]))\n",
-									Labels: map[string]string{
-										"test_label":    "label_1",
-										"extra_k1":      "extra_v1",
-										"extra_k2":      "extra_v2",
-										"sloth_service": "test-svc",
-										"sloth_slo":     "test-name",
-										"sloth_id":      "test-id",
-										"sloth_window":  "1d",
+									{
+										Record: "slo:sli_error:ratio_rate1d",
+										Expr:   "(rate(my_metric{error=\"true\"}[1d]))\n/\n(rate(my_metric[1d]))\n",
+										Labels: map[string]string{
+											"test_label":    "label_1",
+											"extra_k1":      "extra_v1",
+											"extra_k2":      "extra_v2",
+											"sloth_service": "test-svc",
+											"sloth_slo":     "test-name",
+											"sloth_id":      "test-id",
+											"sloth_window":  "1d",
+										},
 									},
-								},
-								{
-									Record: "slo:sli_error:ratio_rate3d",
-									Expr:   "(rate(my_metric{error=\"true\"}[3d]))\n/\n(rate(my_metric[3d]))\n",
-									Labels: map[string]string{
-										"test_label":    "label_1",
-										"extra_k1":      "extra_v1",
-										"extra_k2":      "extra_v2",
-										"sloth_service": "test-svc",
-										"sloth_slo":     "test-name",
-										"sloth_id":      "test-id",
-										"sloth_window":  "3d",
+									{
+										Record: "slo:sli_error:ratio_rate3d",
+										Expr:   "(rate(my_metric{error=\"true\"}[3d]))\n/\n(rate(my_metric[3d]))\n",
+										Labels: map[string]string{
+											"test_label":    "label_1",
+											"extra_k1":      "extra_v1",
+											"extra_k2":      "extra_v2",
+											"sloth_service": "test-svc",
+											"sloth_slo":     "test-name",
+											"sloth_id":      "test-id",
+											"sloth_window":  "3d",
+										},
 									},
-								},
-								{
-									Record: "slo:sli_error:ratio_rate30d",
-									Expr:   "sum_over_time(slo:sli_error:ratio_rate5m{sloth_id=\"test-id\", sloth_service=\"test-svc\", sloth_slo=\"test-name\"}[30d])\n/ ignoring (sloth_window)\ncount_over_time(slo:sli_error:ratio_rate5m{sloth_id=\"test-id\", sloth_service=\"test-svc\", sloth_slo=\"test-name\"}[30d])\n",
-									Labels: map[string]string{
-										"test_label":    "label_1",
-										"extra_k1":      "extra_v1",
-										"extra_k2":      "extra_v2",
-										"sloth_service": "test-svc",
-										"sloth_slo":     "test-name",
-										"sloth_id":      "test-id",
-										"sloth_window":  "30d",
+									{
+										Record: "slo:sli_error:ratio_rate30d",
+										Expr:   "sum_over_time(slo:sli_error:ratio_rate5m{sloth_id=\"test-id\", sloth_service=\"test-svc\", sloth_slo=\"test-name\"}[30d])\n/ ignoring (sloth_window)\ncount_over_time(slo:sli_error:ratio_rate5m{sloth_id=\"test-id\", sloth_service=\"test-svc\", sloth_slo=\"test-name\"}[30d])\n",
+										Labels: map[string]string{
+											"test_label":    "label_1",
+											"extra_k1":      "extra_v1",
+											"extra_k2":      "extra_v2",
+											"sloth_service": "test-svc",
+											"sloth_slo":     "test-name",
+											"sloth_id":      "test-id",
+											"sloth_window":  "30d",
+										},
 									},
-								},
-							}},
-							MetadataRecRules: model.PromRuleGroup{Rules: []rulefmt.Rule{
-								// Metadata labels.
-								{
-									Record: "slo:objective:ratio",
-									Expr:   "vector(0.9990000000000001)",
-									Labels: map[string]string{
-										"test_label":    "label_1",
-										"extra_k1":      "extra_v1",
-										"extra_k2":      "extra_v2",
-										"sloth_service": "test-svc",
-										"sloth_slo":     "test-name",
-										"sloth_id":      "test-id",
+								}},
+							MetadataRecRules: model.PromRuleGroup{
+								Name: "sloth-slo-meta-recordings-test-id",
+								Rules: []rulefmt.Rule{
+									// Metadata labels.
+									{
+										Record: "slo:objective:ratio",
+										Expr:   "vector(0.9990000000000001)",
+										Labels: map[string]string{
+											"test_label":    "label_1",
+											"extra_k1":      "extra_v1",
+											"extra_k2":      "extra_v2",
+											"sloth_service": "test-svc",
+											"sloth_slo":     "test-name",
+											"sloth_id":      "test-id",
+										},
 									},
-								},
-								{
-									Record: "slo:error_budget:ratio",
-									Expr:   "vector(1-0.9990000000000001)",
-									Labels: map[string]string{
-										"test_label":    "label_1",
-										"extra_k1":      "extra_v1",
-										"extra_k2":      "extra_v2",
-										"sloth_service": "test-svc",
-										"sloth_slo":     "test-name",
-										"sloth_id":      "test-id",
+									{
+										Record: "slo:error_budget:ratio",
+										Expr:   "vector(1-0.9990000000000001)",
+										Labels: map[string]string{
+											"test_label":    "label_1",
+											"extra_k1":      "extra_v1",
+											"extra_k2":      "extra_v2",
+											"sloth_service": "test-svc",
+											"sloth_slo":     "test-name",
+											"sloth_id":      "test-id",
+										},
 									},
-								},
-								{
-									Record: "slo:time_period:days",
-									Expr:   "vector(30)",
-									Labels: map[string]string{
-										"test_label":    "label_1",
-										"extra_k1":      "extra_v1",
-										"extra_k2":      "extra_v2",
-										"sloth_service": "test-svc",
-										"sloth_slo":     "test-name",
-										"sloth_id":      "test-id",
+									{
+										Record: "slo:time_period:days",
+										Expr:   "vector(30)",
+										Labels: map[string]string{
+											"test_label":    "label_1",
+											"extra_k1":      "extra_v1",
+											"extra_k2":      "extra_v2",
+											"sloth_service": "test-svc",
+											"sloth_slo":     "test-name",
+											"sloth_id":      "test-id",
+										},
 									},
-								},
-								{
-									Record: "slo:current_burn_rate:ratio",
-									Expr: `slo:sli_error:ratio_rate5m{sloth_id="test-id", sloth_service="test-svc", sloth_slo="test-name"}
+									{
+										Record: "slo:current_burn_rate:ratio",
+										Expr: `slo:sli_error:ratio_rate5m{sloth_id="test-id", sloth_service="test-svc", sloth_slo="test-name"}
 / on(sloth_id, sloth_slo, sloth_service) group_left
 slo:error_budget:ratio{sloth_id="test-id", sloth_service="test-svc", sloth_slo="test-name"}
 `,
-									Labels: map[string]string{
-										"test_label":    "label_1",
-										"extra_k1":      "extra_v1",
-										"extra_k2":      "extra_v2",
-										"sloth_service": "test-svc",
-										"sloth_slo":     "test-name",
-										"sloth_id":      "test-id",
+										Labels: map[string]string{
+											"test_label":    "label_1",
+											"extra_k1":      "extra_v1",
+											"extra_k2":      "extra_v2",
+											"sloth_service": "test-svc",
+											"sloth_slo":     "test-name",
+											"sloth_id":      "test-id",
+										},
 									},
-								},
-								{
-									Record: "slo:period_burn_rate:ratio",
-									Expr: `slo:sli_error:ratio_rate30d{sloth_id="test-id", sloth_service="test-svc", sloth_slo="test-name"}
+									{
+										Record: "slo:period_burn_rate:ratio",
+										Expr: `slo:sli_error:ratio_rate30d{sloth_id="test-id", sloth_service="test-svc", sloth_slo="test-name"}
 / on(sloth_id, sloth_slo, sloth_service) group_left
 slo:error_budget:ratio{sloth_id="test-id", sloth_service="test-svc", sloth_slo="test-name"}
 `,
-									Labels: map[string]string{
-										"test_label":    "label_1",
-										"extra_k1":      "extra_v1",
-										"extra_k2":      "extra_v2",
-										"sloth_service": "test-svc",
-										"sloth_slo":     "test-name",
-										"sloth_id":      "test-id",
+										Labels: map[string]string{
+											"test_label":    "label_1",
+											"extra_k1":      "extra_v1",
+											"extra_k2":      "extra_v2",
+											"sloth_service": "test-svc",
+											"sloth_slo":     "test-name",
+											"sloth_id":      "test-id",
+										},
 									},
-								},
-								{
-									Record: "slo:period_error_budget_remaining:ratio",
-									Expr:   `1 - slo:period_burn_rate:ratio{sloth_id="test-id", sloth_service="test-svc", sloth_slo="test-name"}`,
-									Labels: map[string]string{
-										"test_label":    "label_1",
-										"extra_k1":      "extra_v1",
-										"extra_k2":      "extra_v2",
-										"sloth_service": "test-svc",
-										"sloth_slo":     "test-name",
-										"sloth_id":      "test-id",
+									{
+										Record: "slo:period_error_budget_remaining:ratio",
+										Expr:   `1 - slo:period_burn_rate:ratio{sloth_id="test-id", sloth_service="test-svc", sloth_slo="test-name"}`,
+										Labels: map[string]string{
+											"test_label":    "label_1",
+											"extra_k1":      "extra_v1",
+											"extra_k2":      "extra_v2",
+											"sloth_service": "test-svc",
+											"sloth_slo":     "test-name",
+											"sloth_id":      "test-id",
+										},
 									},
-								},
-								{
-									Record: "sloth_slo_info",
-									Expr:   `vector(1)`,
-									Labels: map[string]string{
-										"test_label":      "label_1",
-										"extra_k1":        "extra_v1",
-										"extra_k2":        "extra_v2",
-										"sloth_service":   "test-svc",
-										"sloth_slo":       "test-name",
-										"sloth_id":        "test-id",
-										"sloth_mode":      "test",
-										"sloth_version":   "test-ver",
-										"sloth_spec":      "test-spec",
-										"sloth_objective": "99.9",
+									{
+										Record: "sloth_slo_info",
+										Expr:   `vector(1)`,
+										Labels: map[string]string{
+											"test_label":      "label_1",
+											"extra_k1":        "extra_v1",
+											"extra_k2":        "extra_v2",
+											"sloth_service":   "test-svc",
+											"sloth_slo":       "test-name",
+											"sloth_id":        "test-id",
+											"sloth_mode":      "test",
+											"sloth_version":   "test-ver",
+											"sloth_spec":      "test-spec",
+											"sloth_objective": "99.9",
+										},
 									},
-								},
-							}},
+								}},
 							AlertRules: model.PromRuleGroup{
+								Name:     "sloth-slo-alerts-test-id",
 								Interval: 99 * time.Minute, // From the SLO plugins.
 								Rules: []rulefmt.Rule{
 									{
@@ -583,210 +588,215 @@ or
 							},
 						},
 						SLORules: model.PromSLORules{
-							SLIErrorRecRules: model.PromRuleGroup{Rules: []rulefmt.Rule{
-								{
-									Record: "slo:sli_error:ratio_rate5m",
-									Expr:   "(rate(my_metric{error=\"true\"}[5m]))\n/\n(rate(my_metric[5m]))\n",
-									Labels: map[string]string{
-										"test_label":    "label_1",
-										"extra_k1":      "extra_v1",
-										"extra_k2":      "extra_v2",
-										"sloth_service": "test-svc",
-										"sloth_slo":     "test-name",
-										"sloth_id":      "test-id",
-										"sloth_window":  "5m",
+							SLIErrorRecRules: model.PromRuleGroup{
+								Name: "sloth-slo-sli-recordings-test-id",
+								Rules: []rulefmt.Rule{
+									{
+										Record: "slo:sli_error:ratio_rate5m",
+										Expr:   "(rate(my_metric{error=\"true\"}[5m]))\n/\n(rate(my_metric[5m]))\n",
+										Labels: map[string]string{
+											"test_label":    "label_1",
+											"extra_k1":      "extra_v1",
+											"extra_k2":      "extra_v2",
+											"sloth_service": "test-svc",
+											"sloth_slo":     "test-name",
+											"sloth_id":      "test-id",
+											"sloth_window":  "5m",
+										},
 									},
-								},
-								{
-									Record: "slo:sli_error:ratio_rate30m",
-									Expr:   "(rate(my_metric{error=\"true\"}[30m]))\n/\n(rate(my_metric[30m]))\n",
-									Labels: map[string]string{
-										"test_label":    "label_1",
-										"extra_k1":      "extra_v1",
-										"extra_k2":      "extra_v2",
-										"sloth_service": "test-svc",
-										"sloth_slo":     "test-name",
-										"sloth_id":      "test-id",
-										"sloth_window":  "30m",
+									{
+										Record: "slo:sli_error:ratio_rate30m",
+										Expr:   "(rate(my_metric{error=\"true\"}[30m]))\n/\n(rate(my_metric[30m]))\n",
+										Labels: map[string]string{
+											"test_label":    "label_1",
+											"extra_k1":      "extra_v1",
+											"extra_k2":      "extra_v2",
+											"sloth_service": "test-svc",
+											"sloth_slo":     "test-name",
+											"sloth_id":      "test-id",
+											"sloth_window":  "30m",
+										},
 									},
-								},
-								{
-									Record: "slo:sli_error:ratio_rate1h",
-									Expr:   "(rate(my_metric{error=\"true\"}[1h]))\n/\n(rate(my_metric[1h]))\n",
-									Labels: map[string]string{
-										"test_label":    "label_1",
-										"extra_k1":      "extra_v1",
-										"extra_k2":      "extra_v2",
-										"sloth_service": "test-svc",
-										"sloth_slo":     "test-name",
-										"sloth_id":      "test-id",
-										"sloth_window":  "1h",
+									{
+										Record: "slo:sli_error:ratio_rate1h",
+										Expr:   "(rate(my_metric{error=\"true\"}[1h]))\n/\n(rate(my_metric[1h]))\n",
+										Labels: map[string]string{
+											"test_label":    "label_1",
+											"extra_k1":      "extra_v1",
+											"extra_k2":      "extra_v2",
+											"sloth_service": "test-svc",
+											"sloth_slo":     "test-name",
+											"sloth_id":      "test-id",
+											"sloth_window":  "1h",
+										},
 									},
-								},
-								{
-									Record: "slo:sli_error:ratio_rate2h",
-									Expr:   "(rate(my_metric{error=\"true\"}[2h]))\n/\n(rate(my_metric[2h]))\n",
-									Labels: map[string]string{
-										"test_label":    "label_1",
-										"extra_k1":      "extra_v1",
-										"extra_k2":      "extra_v2",
-										"sloth_service": "test-svc",
-										"sloth_slo":     "test-name",
-										"sloth_id":      "test-id",
-										"sloth_window":  "2h",
+									{
+										Record: "slo:sli_error:ratio_rate2h",
+										Expr:   "(rate(my_metric{error=\"true\"}[2h]))\n/\n(rate(my_metric[2h]))\n",
+										Labels: map[string]string{
+											"test_label":    "label_1",
+											"extra_k1":      "extra_v1",
+											"extra_k2":      "extra_v2",
+											"sloth_service": "test-svc",
+											"sloth_slo":     "test-name",
+											"sloth_id":      "test-id",
+											"sloth_window":  "2h",
+										},
 									},
-								},
-								{
-									Record: "slo:sli_error:ratio_rate6h",
-									Expr:   "(rate(my_metric{error=\"true\"}[6h]))\n/\n(rate(my_metric[6h]))\n",
-									Labels: map[string]string{
-										"test_label":    "label_1",
-										"extra_k1":      "extra_v1",
-										"extra_k2":      "extra_v2",
-										"sloth_service": "test-svc",
-										"sloth_slo":     "test-name",
-										"sloth_id":      "test-id",
-										"sloth_window":  "6h",
+									{
+										Record: "slo:sli_error:ratio_rate6h",
+										Expr:   "(rate(my_metric{error=\"true\"}[6h]))\n/\n(rate(my_metric[6h]))\n",
+										Labels: map[string]string{
+											"test_label":    "label_1",
+											"extra_k1":      "extra_v1",
+											"extra_k2":      "extra_v2",
+											"sloth_service": "test-svc",
+											"sloth_slo":     "test-name",
+											"sloth_id":      "test-id",
+											"sloth_window":  "6h",
+										},
 									},
-								},
-								{
-									Record: "slo:sli_error:ratio_rate1d",
-									Expr:   "(rate(my_metric{error=\"true\"}[1d]))\n/\n(rate(my_metric[1d]))\n",
-									Labels: map[string]string{
-										"test_label":    "label_1",
-										"extra_k1":      "extra_v1",
-										"extra_k2":      "extra_v2",
-										"sloth_service": "test-svc",
-										"sloth_slo":     "test-name",
-										"sloth_id":      "test-id",
-										"sloth_window":  "1d",
+									{
+										Record: "slo:sli_error:ratio_rate1d",
+										Expr:   "(rate(my_metric{error=\"true\"}[1d]))\n/\n(rate(my_metric[1d]))\n",
+										Labels: map[string]string{
+											"test_label":    "label_1",
+											"extra_k1":      "extra_v1",
+											"extra_k2":      "extra_v2",
+											"sloth_service": "test-svc",
+											"sloth_slo":     "test-name",
+											"sloth_id":      "test-id",
+											"sloth_window":  "1d",
+										},
 									},
-								},
-								{
-									Record: "slo:sli_error:ratio_rate3d",
-									Expr:   "(rate(my_metric{error=\"true\"}[3d]))\n/\n(rate(my_metric[3d]))\n",
-									Labels: map[string]string{
-										"test_label":    "label_1",
-										"extra_k1":      "extra_v1",
-										"extra_k2":      "extra_v2",
-										"sloth_service": "test-svc",
-										"sloth_slo":     "test-name",
-										"sloth_id":      "test-id",
-										"sloth_window":  "3d",
+									{
+										Record: "slo:sli_error:ratio_rate3d",
+										Expr:   "(rate(my_metric{error=\"true\"}[3d]))\n/\n(rate(my_metric[3d]))\n",
+										Labels: map[string]string{
+											"test_label":    "label_1",
+											"extra_k1":      "extra_v1",
+											"extra_k2":      "extra_v2",
+											"sloth_service": "test-svc",
+											"sloth_slo":     "test-name",
+											"sloth_id":      "test-id",
+											"sloth_window":  "3d",
+										},
 									},
-								},
-								{
-									Record: "slo:sli_error:ratio_rate30d",
-									Expr:   "sum_over_time(slo:sli_error:ratio_rate5m{sloth_id=\"test-id\", sloth_service=\"test-svc\", sloth_slo=\"test-name\"}[30d])\n/ ignoring (sloth_window)\ncount_over_time(slo:sli_error:ratio_rate5m{sloth_id=\"test-id\", sloth_service=\"test-svc\", sloth_slo=\"test-name\"}[30d])\n",
-									Labels: map[string]string{
-										"test_label":    "label_1",
-										"extra_k1":      "extra_v1",
-										"extra_k2":      "extra_v2",
-										"sloth_service": "test-svc",
-										"sloth_slo":     "test-name",
-										"sloth_id":      "test-id",
-										"sloth_window":  "30d",
+									{
+										Record: "slo:sli_error:ratio_rate30d",
+										Expr:   "sum_over_time(slo:sli_error:ratio_rate5m{sloth_id=\"test-id\", sloth_service=\"test-svc\", sloth_slo=\"test-name\"}[30d])\n/ ignoring (sloth_window)\ncount_over_time(slo:sli_error:ratio_rate5m{sloth_id=\"test-id\", sloth_service=\"test-svc\", sloth_slo=\"test-name\"}[30d])\n",
+										Labels: map[string]string{
+											"test_label":    "label_1",
+											"extra_k1":      "extra_v1",
+											"extra_k2":      "extra_v2",
+											"sloth_service": "test-svc",
+											"sloth_slo":     "test-name",
+											"sloth_id":      "test-id",
+											"sloth_window":  "30d",
+										},
 									},
-								},
-							}},
-							MetadataRecRules: model.PromRuleGroup{Rules: []rulefmt.Rule{
-								// Metadata labels.
-								{
-									Record: "slo:objective:ratio",
-									Expr:   "vector(0.9990000000000001)",
-									Labels: map[string]string{
-										"test_label":    "label_1",
-										"extra_k1":      "extra_v1",
-										"extra_k2":      "extra_v2",
-										"sloth_service": "test-svc",
-										"sloth_slo":     "test-name",
-										"sloth_id":      "test-id",
+								}},
+							MetadataRecRules: model.PromRuleGroup{
+								Name: "sloth-slo-meta-recordings-test-id",
+								Rules: []rulefmt.Rule{
+									// Metadata labels.
+									{
+										Record: "slo:objective:ratio",
+										Expr:   "vector(0.9990000000000001)",
+										Labels: map[string]string{
+											"test_label":    "label_1",
+											"extra_k1":      "extra_v1",
+											"extra_k2":      "extra_v2",
+											"sloth_service": "test-svc",
+											"sloth_slo":     "test-name",
+											"sloth_id":      "test-id",
+										},
 									},
-								},
-								{
-									Record: "slo:error_budget:ratio",
-									Expr:   "vector(1-0.9990000000000001)",
-									Labels: map[string]string{
-										"test_label":    "label_1",
-										"extra_k1":      "extra_v1",
-										"extra_k2":      "extra_v2",
-										"sloth_service": "test-svc",
-										"sloth_slo":     "test-name",
-										"sloth_id":      "test-id",
+									{
+										Record: "slo:error_budget:ratio",
+										Expr:   "vector(1-0.9990000000000001)",
+										Labels: map[string]string{
+											"test_label":    "label_1",
+											"extra_k1":      "extra_v1",
+											"extra_k2":      "extra_v2",
+											"sloth_service": "test-svc",
+											"sloth_slo":     "test-name",
+											"sloth_id":      "test-id",
+										},
 									},
-								},
-								{
-									Record: "slo:time_period:days",
-									Expr:   "vector(30)",
-									Labels: map[string]string{
-										"test_label":    "label_1",
-										"extra_k1":      "extra_v1",
-										"extra_k2":      "extra_v2",
-										"sloth_service": "test-svc",
-										"sloth_slo":     "test-name",
-										"sloth_id":      "test-id",
+									{
+										Record: "slo:time_period:days",
+										Expr:   "vector(30)",
+										Labels: map[string]string{
+											"test_label":    "label_1",
+											"extra_k1":      "extra_v1",
+											"extra_k2":      "extra_v2",
+											"sloth_service": "test-svc",
+											"sloth_slo":     "test-name",
+											"sloth_id":      "test-id",
+										},
 									},
-								},
-								{
-									Record: "slo:current_burn_rate:ratio",
-									Expr: `slo:sli_error:ratio_rate5m{sloth_id="test-id", sloth_service="test-svc", sloth_slo="test-name"}
+									{
+										Record: "slo:current_burn_rate:ratio",
+										Expr: `slo:sli_error:ratio_rate5m{sloth_id="test-id", sloth_service="test-svc", sloth_slo="test-name"}
 / on(sloth_id, sloth_slo, sloth_service) group_left
 slo:error_budget:ratio{sloth_id="test-id", sloth_service="test-svc", sloth_slo="test-name"}
 `,
-									Labels: map[string]string{
-										"test_label":    "label_1",
-										"extra_k1":      "extra_v1",
-										"extra_k2":      "extra_v2",
-										"sloth_service": "test-svc",
-										"sloth_slo":     "test-name",
-										"sloth_id":      "test-id",
+										Labels: map[string]string{
+											"test_label":    "label_1",
+											"extra_k1":      "extra_v1",
+											"extra_k2":      "extra_v2",
+											"sloth_service": "test-svc",
+											"sloth_slo":     "test-name",
+											"sloth_id":      "test-id",
+										},
 									},
-								},
-								{
-									Record: "slo:period_burn_rate:ratio",
-									Expr: `slo:sli_error:ratio_rate30d{sloth_id="test-id", sloth_service="test-svc", sloth_slo="test-name"}
+									{
+										Record: "slo:period_burn_rate:ratio",
+										Expr: `slo:sli_error:ratio_rate30d{sloth_id="test-id", sloth_service="test-svc", sloth_slo="test-name"}
 / on(sloth_id, sloth_slo, sloth_service) group_left
 slo:error_budget:ratio{sloth_id="test-id", sloth_service="test-svc", sloth_slo="test-name"}
 `,
-									Labels: map[string]string{
-										"test_label":    "label_1",
-										"extra_k1":      "extra_v1",
-										"extra_k2":      "extra_v2",
-										"sloth_service": "test-svc",
-										"sloth_slo":     "test-name",
-										"sloth_id":      "test-id",
+										Labels: map[string]string{
+											"test_label":    "label_1",
+											"extra_k1":      "extra_v1",
+											"extra_k2":      "extra_v2",
+											"sloth_service": "test-svc",
+											"sloth_slo":     "test-name",
+											"sloth_id":      "test-id",
+										},
 									},
-								},
-								{
-									Record: "slo:period_error_budget_remaining:ratio",
-									Expr:   `1 - slo:period_burn_rate:ratio{sloth_id="test-id", sloth_service="test-svc", sloth_slo="test-name"}`,
-									Labels: map[string]string{
-										"test_label":    "label_1",
-										"extra_k1":      "extra_v1",
-										"extra_k2":      "extra_v2",
-										"sloth_service": "test-svc",
-										"sloth_slo":     "test-name",
-										"sloth_id":      "test-id",
+									{
+										Record: "slo:period_error_budget_remaining:ratio",
+										Expr:   `1 - slo:period_burn_rate:ratio{sloth_id="test-id", sloth_service="test-svc", sloth_slo="test-name"}`,
+										Labels: map[string]string{
+											"test_label":    "label_1",
+											"extra_k1":      "extra_v1",
+											"extra_k2":      "extra_v2",
+											"sloth_service": "test-svc",
+											"sloth_slo":     "test-name",
+											"sloth_id":      "test-id",
+										},
 									},
-								},
-								{
-									Record: "sloth_slo_info",
-									Expr:   `vector(1)`,
-									Labels: map[string]string{
-										"test_label":      "label_1",
-										"extra_k1":        "extra_v1",
-										"extra_k2":        "extra_v2",
-										"sloth_service":   "test-svc",
-										"sloth_slo":       "test-name",
-										"sloth_id":        "test-id",
-										"sloth_mode":      "test",
-										"sloth_version":   "test-ver",
-										"sloth_spec":      "test-spec",
-										"sloth_objective": "99.9",
+									{
+										Record: "sloth_slo_info",
+										Expr:   `vector(1)`,
+										Labels: map[string]string{
+											"test_label":      "label_1",
+											"extra_k1":        "extra_v1",
+											"extra_k2":        "extra_v2",
+											"sloth_service":   "test-svc",
+											"sloth_slo":       "test-name",
+											"sloth_id":        "test-id",
+											"sloth_mode":      "test",
+											"sloth_version":   "test-ver",
+											"sloth_spec":      "test-spec",
+											"sloth_objective": "99.9",
+										},
 									},
-								},
-							}},
+								}},
 							AlertRules: model.PromRuleGroup{
+								Name: "sloth-slo-alerts-test-id",
 								Rules: []rulefmt.Rule{
 									{
 										Alert: "p_alert_test_name",
@@ -903,9 +913,18 @@ or
 							},
 						},
 						SLORules: model.PromSLORules{
-							AlertRules: model.PromRuleGroup{Rules: []rulefmt.Rule{
-								{Expr: "test1"},
-							}},
+							SLIErrorRecRules: model.PromRuleGroup{
+								Name: "sloth-slo-sli-recordings-test-id",
+							},
+							MetadataRecRules: model.PromRuleGroup{
+								Name: "sloth-slo-meta-recordings-test-id",
+							},
+							AlertRules: model.PromRuleGroup{
+								Name: "sloth-slo-alerts-test-id",
+								Rules: []rulefmt.Rule{
+									{Expr: "test1"},
+								},
+							},
 						},
 					},
 				},

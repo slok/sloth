@@ -40,6 +40,8 @@ type PrometheusSLOGeneratorConfig struct {
 	WindowsFS fs.FS
 	// PluginsFS are the FSs where custom SLO and SLI plugins exist.
 	PluginsFS []fs.FS
+	// StrictPlugins makes the plugin loader fail when a plugin can't be loaded.
+	StrictPlugins bool
 	// DefaultSLOPeriod is the default SLO period to use when not specified in the SLO definition.
 	DefaultSLOPeriod time.Duration
 	// DisableDefaultPlugins disables the default SLO plugins, normally used along with custom SLO plugins to fully customize Sloth behavior.
@@ -110,7 +112,7 @@ func NewPrometheusSLOGenerator(config PrometheusSLOGeneratorConfig) (*Prometheus
 	}
 
 	// Create plugin repo.
-	pluginRepo, err := createPluginLoader(ctx, config.Logger, config.PluginsFS)
+	pluginRepo, err := createPluginLoader(ctx, config.Logger, config.PluginsFS, config.StrictPlugins)
 	if err != nil {
 		return nil, fmt.Errorf("could not create plugin repository: %w", err)
 	}

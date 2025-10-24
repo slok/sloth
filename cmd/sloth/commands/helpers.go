@@ -5,39 +5,18 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/fs"
-	"os"
 	"path/filepath"
 	"regexp"
 	"strings"
 
 	"github.com/slok/sloth/internal/app/generate"
 	"github.com/slok/sloth/internal/log"
-	"github.com/slok/sloth/internal/plugin"
 	plugincorealertrulesv1 "github.com/slok/sloth/internal/plugin/slo/core/alert_rules_v1"
 	plugincoremetadatarulesv1 "github.com/slok/sloth/internal/plugin/slo/core/metadata_rules_v1"
 	plugincoreslirulesv1 "github.com/slok/sloth/internal/plugin/slo/core/sli_rules_v1"
 	plugincorevalidatev1 "github.com/slok/sloth/internal/plugin/slo/core/validate_v1"
-	pluginenginesli "github.com/slok/sloth/internal/pluginengine/sli"
-	pluginengineslo "github.com/slok/sloth/internal/pluginengine/slo"
-	storagefs "github.com/slok/sloth/internal/storage/fs"
 	"github.com/slok/sloth/pkg/common/model"
 )
-
-func createPluginLoader(ctx context.Context, logger log.Logger, paths []string) (*storagefs.FilePluginRepo, error) {
-	fss := []fs.FS{
-		plugin.EmbeddedDefaultSLOPlugins,
-	}
-	for _, p := range paths {
-		fss = append(fss, os.DirFS(p))
-	}
-
-	pluginsRepo, err := storagefs.NewFilePluginRepo(logger, pluginenginesli.PluginLoader, pluginengineslo.PluginLoader, fss...)
-	if err != nil {
-		return nil, fmt.Errorf("could not create file SLO and SLI plugins repository: %w", err)
-	}
-
-	return pluginsRepo, nil
-}
 
 func discoverSLOManifests(logger log.Logger, exclude, include *regexp.Regexp, path string) ([]string, error) {
 	logger = logger.WithValues(log.Kv{"svc": "SLODiscovery"})

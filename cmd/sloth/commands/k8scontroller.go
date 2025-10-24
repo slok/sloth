@@ -33,7 +33,11 @@ import (
 	"github.com/slok/sloth/internal/app/generate"
 	"github.com/slok/sloth/internal/app/kubecontroller"
 	"github.com/slok/sloth/internal/log"
+	"github.com/slok/sloth/internal/plugin"
+	pluginenginesli "github.com/slok/sloth/internal/pluginengine/sli"
+	pluginengineslo "github.com/slok/sloth/internal/pluginengine/slo"
 	"github.com/slok/sloth/internal/storage"
+	storagefs "github.com/slok/sloth/internal/storage/fs"
 	storageio "github.com/slok/sloth/internal/storage/io"
 	storagek8s "github.com/slok/sloth/internal/storage/k8s"
 	slothv1 "github.com/slok/sloth/pkg/kubernetes/api/sloth/v1"
@@ -482,4 +486,20 @@ func (g generatorLogger) WithValues(values map[string]interface{}) log.Logger {
 }
 func (g generatorLogger) WithCtxValues(ctx context.Context) log.Logger {
 	return generatorLogger{Logger: g.Logger.WithCtxValues(ctx)}
+}
+
+func createPluginLoader(ctx context.Context, logger log.Logger, paths []string) (*storagefs.FilePluginRepo, error) {
+	fss := []fs.FS{
+		plugin.EmbeddedDefaultSLOPlugins,
+	}
+	for _, p := range paths {
+		fss = append(fss, os.DirFS(p))
+	}
+
+	pluginsRepo, err := storagefs.NewFilePluginRepo(logger, false, pluginenginesli.PluginLoader, pluginengineslo.PluginLoader, fss...)
+	if err != nil {
+		return nil, fmt.Errorf("could not create file SLO and SLI plugins repository: %w", err)
+	}
+
+	return pluginsRepo, nil
 }

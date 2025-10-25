@@ -50,9 +50,8 @@ func WriteResultAsK8sPrometheusOperator(ctx context.Context, k8sMeta K8sMeta, sl
 	storageResults := []storage.SLORulesResult{}
 	for _, rule := range slo.SLOResult {
 		storageResults = append(storageResults, storage.SLORulesResult{
-			K8sMeta: kmeta,
-			SLO:     rule.SLO,
-			Rules:   rule.PrometheusRules,
+			SLO:   rule.SLO,
+			Rules: rule.PrometheusRules,
 		})
 	}
 

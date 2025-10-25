@@ -138,7 +138,7 @@ func (v validateCommand) Run(ctx context.Context, config RootConfig) error {
 				SLOData: data,
 				Out:     io.Discard,
 			}
-			err := generateSLOs(ctx, logger, *genService, genTarget, false, false)
+			err := generateSLOs(ctx, logger, *genService, genTarget, false, false, nil)
 			if err != nil {
 				validation.Errs = append(validation.Errs, fmt.Errorf("invalid SLO: %w", err))
 			}

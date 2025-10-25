@@ -37,6 +37,7 @@ type generateCommand struct {
 	sloPeriod                string
 	sloPlugins               []string
 	disableDefaultSLOPlugins bool
+	outTemplate              string
 }
 
 // NewGenerateCommand returns the generate command.
@@ -56,6 +57,7 @@ func NewGenerateCommand(app *kingpin.Application) Command {
 	cmd.Flag("default-slo-period", "The default SLO period windows to be used for the SLOs.").Default("30d").StringVar(&c.sloPeriod)
 	cmd.Flag("slo-plugins", `SLO plugins chain declaration in JSON format '{"id": "foo","priority": 0,"config": "{}"}' (Can be repeated).`).Short('s').StringsVar(&c.sloPlugins)
 	cmd.Flag("disable-default-slo-plugins", `Disables the default SLO plugins, normally used along with custom SLO plugins to fully customize Sloth behavior`).BoolVar(&c.disableDefaultSLOPlugins)
+	cmd.Flag("out-template", "Output template for the generated SLOs.").StringVar(&c.outTemplate)
 
 	return c
 }
@@ -93,16 +95,20 @@ func (g generateCommand) Run(ctx context.Context, config RootConfig) error {
 		}
 	}
 
+	var outTplData []byte
+	if g.outTemplate != "" {
+		outTplData, err = os.ReadFile(g.outTemplate)
+		if err != nil {
+			return fmt.Errorf("could not read output template file: %w", err)
+		}
+	}
+
 	// SLO period.
 	sp, err := prometheusmodel.ParseDuration(g.sloPeriod)
 	if err != nil {
 		return fmt.Errorf("invalid SLO period duration: %w", err)
 	}
 	sloPeriod := time.Duration(sp)
-
-	ctx = logger.SetValuesOnCtx(ctx, log.Kv{
-		"out": g.slosOut,
-	})
 
 	// Load SLO plugin declarations at CMD level.
 	cmdLevelSLOPlugins, err := mapCmdPluginToModel(ctx, g.sloPlugins)
@@ -206,6 +212,8 @@ func (g generateCommand) Run(ctx context.Context, config RootConfig) error {
 			splittedSLOsData := utilsdata.SplitYAML(slxData)
 			for _, s := range splittedSLOsData {
 				genTargets = append(genTargets, generateTarget{
+					InPath:  sloPath,
+					OutPath: outputPath,
 					SLOData: s,
 					Out:     outFile,
 				})
@@ -237,22 +245,29 @@ func (g generateCommand) Run(ctx context.Context, config RootConfig) error {
 		return fmt.Errorf("could not create Prometheus SLO generator: %w", err)
 	}
 
+	totalFiles := 0
 	for _, genTarget := range genTargets {
-		err := generateSLOs(ctx, logger, *genService, genTarget, g.disableAlerts, g.disableRecordings)
+		totalFiles++
+		err := generateSLOs(ctx, logger, *genService, genTarget, g.disableAlerts, g.disableRecordings, outTplData)
 		if err != nil {
 			return fmt.Errorf("could not generate SLOs: %w", err)
 		}
 	}
+	logger.WithValues(log.Kv{"in-files": totalFiles}).Infof("SLOs generated")
 
 	return nil
 }
 
 type generateTarget struct {
+	InPath  string
+	OutPath string
 	Out     io.Writer
 	SLOData string
 }
 
-func generateSLOs(ctx context.Context, logger log.Logger, genService slothlib.PrometheusSLOGenerator, genTarget generateTarget, disableAlerts, disableRecordings bool) error {
+func generateSLOs(ctx context.Context, logger log.Logger, genService slothlib.PrometheusSLOGenerator, genTarget generateTarget, disableAlerts, disableRecordings bool, outTplData []byte) (err error) {
+	ctx = logger.SetValuesOnCtx(ctx, log.Kv{"in": genTarget.InPath, "out": genTarget.OutPath})
+
 	dataB := []byte(genTarget.SLOData)
 
 	// Generate SLOs.
@@ -260,6 +275,13 @@ func generateSLOs(ctx context.Context, logger log.Logger, genService slothlib.Pr
 	if err != nil {
 		return fmt.Errorf("could not generate SLOs: %w", err)
 	}
+	defer func() {
+		if err == nil {
+			logger.WithCtxValues(ctx).
+				WithValues(log.Kv{"slos": len(genResult.SLOGroup.SLOs)}).
+				Debugf("SLOs generated")
+		}
+	}()
 
 	// Disable data if required.
 	for i := range genResult.SLOResult {
@@ -274,6 +296,24 @@ func generateSLOs(ctx context.Context, logger log.Logger, genService slothlib.Pr
 
 	// Store results.
 	switch {
+	case len(outTplData) != 0:
+		repo, err := storageio.NewCustomGoTemplateRepo(genTarget.Out, logger, outTplData)
+		if err != nil {
+			return fmt.Errorf("could not create custom template repo: %w", err)
+		}
+
+		result := storageio.TplSLOGroupResult{SLOGroup: genResult.SLOGroup}
+		for _, s := range genResult.SLOResult {
+			result.SLOResult = append(result.SLOResult, storageio.TplSLOResult{
+				SLO:             s.SLO,
+				PrometheusRules: s.PrometheusRules,
+			})
+		}
+		err = repo.StoreSLOs(ctx, nil, result)
+		if err != nil {
+			return fmt.Errorf("could not execute output template: %w", err)
+		}
+
 	// Standard prometheus.
 	case genResult.SLOGroup.OriginalSource.SlothV1 != nil:
 		repo := storageio.NewStdPrometheusGroupedRulesYAMLRepo(genTarget.Out, logger)

@@ -119,6 +119,11 @@ func TestPrometheusGenerate(t *testing.T) {
 			genCmdArgs: "--input ./testdata/in-invalid-version.yaml",
 			expErr:     true,
 		},
+
+		"Generate using out template.": {
+			genCmdArgs: "--input ./testdata/in-base.yaml --out-template ./out-tpl/test.tmpl",
+			expOut:     expectLoader.mustLoadExp("./testdata/out-base-with-out-template.yaml.tpl"),
+		},
 	}
 
 	for name, test := range tests {

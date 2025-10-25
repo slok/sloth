@@ -15,7 +15,6 @@ type K8sMeta struct {
 
 // SLORulesResult is a common type used to store final SLO rules result in batches.
 type SLORulesResult struct {
-	K8sMeta K8sMeta
-	SLO     model.PromSLO
-	Rules   model.PromSLORules
+	SLO   model.PromSLO
+	Rules model.PromSLORules
 }

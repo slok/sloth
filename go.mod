@@ -7,6 +7,7 @@ require (
 	github.com/VictoriaMetrics/metricsql v0.84.8
 	github.com/alecthomas/kingpin/v2 v2.4.0
 	github.com/caarlos0/env/v11 v11.3.1
+	github.com/go-sprout/sprout v1.0.2
 	github.com/oklog/run v1.2.0
 	github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring v0.86.1
 	github.com/prometheus-operator/prometheus-operator/pkg/client v0.86.1
@@ -26,6 +27,7 @@ require (
 )
 
 require (
+	dario.cat/mergo v1.0.2 // indirect
 	github.com/VictoriaMetrics/metrics v1.40.2 // indirect
 	github.com/alecthomas/units v0.0.0-20240927000941-0f3dac36c52b // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
@@ -64,6 +66,7 @@ require (
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/prometheus/client_model v0.6.2 // indirect
 	github.com/prometheus/procfs v0.17.0 // indirect
+	github.com/spf13/cast v1.9.2 // indirect
 	github.com/spf13/pflag v1.0.10 // indirect
 	github.com/stretchr/objx v0.5.3 // indirect
 	github.com/valyala/fastrand v1.1.0 // indirect

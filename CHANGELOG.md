@@ -13,6 +13,7 @@
 - Sloth lib `WriteResultAsK8sPrometheusOperator` helper method to write generated SLO results into Prometheus operator rules YAML.
 - The resulting SLO Prometheus rule group name can be customized by SLO plugins.
 - SLO plugins have the ability to add extra Prometheus Rule groups.
+- Allow setting a go template (With Sprout) as an optional way of storing the result of the SLO rules generated (using CLI `--out-template ./bin/test.tpl`)
 
 ### Changed
 

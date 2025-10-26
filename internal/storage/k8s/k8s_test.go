@@ -24,20 +24,20 @@ import (
 func TestApiserverRepositoryStoreSLOs(t *testing.T) {
 	tests := map[string]struct {
 		k8sMeta              storage.K8sMeta
-		slos                 []storage.SLORulesResult
+		slos                 model.PromSLOGroupResult
 		expPromOperatorRules []monitoringv1.PrometheusRule
 		expErr               bool
 	}{
 		"Having 0 SLO rules should fail.": {
 			k8sMeta: storage.K8sMeta{},
-			slos:    []storage.SLORulesResult{},
+			slos:    model.PromSLOGroupResult{},
 			expErr:  true,
 		},
 
 		"Having 0 SLO rules generated should fail.": {
 			k8sMeta: storage.K8sMeta{},
-			slos: []storage.SLORulesResult{
-				{},
+			slos: model.PromSLOGroupResult{
+				SLOResults: []model.PromSLOResult{},
 			},
 			expErr: true,
 		},
@@ -52,10 +52,10 @@ func TestApiserverRepositoryStoreSLOs(t *testing.T) {
 				APIVersion:  "test-apiversion",
 				UID:         "test-uid",
 			},
-			slos: []storage.SLORulesResult{
+			slos: model.PromSLOGroupResult{SLOResults: []model.PromSLOResult{
 				{
 					SLO: model.PromSLO{ID: "testa"},
-					Rules: model.PromSLORules{
+					PrometheusRules: model.PromSLORules{
 						SLIErrorRecRules: model.PromRuleGroup{
 							Name: "sloth-slo-sli-recordings-testa",
 							Rules: []rulefmt.Rule{
@@ -105,7 +105,7 @@ func TestApiserverRepositoryStoreSLOs(t *testing.T) {
 				},
 				{
 					SLO: model.PromSLO{ID: "testb"},
-					Rules: model.PromSLORules{
+					PrometheusRules: model.PromSLORules{
 						SLIErrorRecRules: model.PromRuleGroup{
 							Name: "sloth-slo-sli-recordings-testb",
 							Rules: []rulefmt.Rule{
@@ -167,7 +167,7 @@ func TestApiserverRepositoryStoreSLOs(t *testing.T) {
 						},
 					},
 				},
-			},
+			}},
 			expPromOperatorRules: []monitoringv1.PrometheusRule{
 				{
 					TypeMeta: metav1.TypeMeta{

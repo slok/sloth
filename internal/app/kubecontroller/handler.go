@@ -13,6 +13,7 @@ import (
 	"github.com/slok/sloth/internal/log"
 	"github.com/slok/sloth/internal/storage"
 	commonmodel "github.com/slok/sloth/pkg/common/model"
+
 	slothv1 "github.com/slok/sloth/pkg/kubernetes/api/sloth/v1"
 )
 
@@ -28,7 +29,7 @@ type Generator interface {
 
 // Repository knows how to store generated SLO Prometheus rules.
 type Repository interface {
-	StoreSLOs(ctx context.Context, kmeta storage.K8sMeta, slos []storage.SLORulesResult) error
+	StoreSLOs(ctx context.Context, kmeta storage.K8sMeta, slos commonmodel.PromSLOGroupResult) error
 }
 
 // KubeStatusStorer knows how to set the status of Prometheus service levels Kubernetes CRD.
@@ -161,11 +162,13 @@ func (h handler) handlePrometheusServiceLevelV1(ctx context.Context, psl *slothv
 	}
 
 	// Store on k8s as Prometheus operator Rules.
-	storageSLOs := make([]storage.SLORulesResult, 0, len(resp.PrometheusSLOs))
+	sloResult := commonmodel.PromSLOGroupResult{
+		OriginalSource: model.OriginalSource,
+	}
 	for _, s := range resp.PrometheusSLOs {
-		storageSLOs = append(storageSLOs, storage.SLORulesResult{
-			SLO:   s.SLO,
-			Rules: s.SLORules,
+		sloResult.SLOResults = append(sloResult.SLOResults, commonmodel.PromSLOResult{
+			SLO:             s.SLO,
+			PrometheusRules: s.SLORules,
 		})
 	}
 
@@ -179,7 +182,7 @@ func (h handler) handlePrometheusServiceLevelV1(ctx context.Context, psl *slothv
 		Annotations: model.OriginalSource.K8sSlothV1.Annotations,
 	}
 
-	err = h.repository.StoreSLOs(ctx, kmeta, storageSLOs)
+	err = h.repository.StoreSLOs(ctx, kmeta, sloResult)
 	if err != nil {
 		return fmt.Errorf("could not store SLOs: %w", err)
 	}

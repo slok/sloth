@@ -15,6 +15,7 @@ import (
 	kubernetesmodelmap "github.com/slok/sloth/internal/kubernetes/modelmap"
 	"github.com/slok/sloth/internal/log"
 	"github.com/slok/sloth/internal/storage"
+	"github.com/slok/sloth/pkg/common/model"
 	slothv1 "github.com/slok/sloth/pkg/kubernetes/api/sloth/v1"
 	slothclientset "github.com/slok/sloth/pkg/kubernetes/gen/clientset/versioned"
 )
@@ -64,7 +65,7 @@ func (r ApiserverRepository) EnsurePrometheusServiceLevelStatus(ctx context.Cont
 	return err
 }
 
-func (r ApiserverRepository) StoreSLOs(ctx context.Context, kmeta storage.K8sMeta, slos []storage.SLORulesResult) error {
+func (r ApiserverRepository) StoreSLOs(ctx context.Context, kmeta storage.K8sMeta, slos model.PromSLOGroupResult) error {
 	// Map to the Prometheus operator CRD.
 	rule, err := kubernetesmodelmap.MapModelToPrometheusOperator(ctx, kmeta, slos)
 	if err != nil {

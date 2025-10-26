@@ -2,6 +2,9 @@ apiVersion: v2
 name: sloth
 description: Base chart for Sloth.
 type: application
-home: https://github.com/slok/sloth
+home: https://sloth.dev
+sources:
+  - "https://github.com/slok/sloth"
 kubeVersion: ">= 1.19.0-0"
 version: 0.15.0
+appVersion: 0.14.0

@@ -36,7 +36,6 @@ import (
 	"github.com/slok/sloth/internal/plugin"
 	pluginenginesli "github.com/slok/sloth/internal/pluginengine/sli"
 	pluginengineslo "github.com/slok/sloth/internal/pluginengine/slo"
-	"github.com/slok/sloth/internal/storage"
 	storagefs "github.com/slok/sloth/internal/storage/fs"
 	storageio "github.com/slok/sloth/internal/storage/io"
 	storagek8s "github.com/slok/sloth/internal/storage/k8s"
@@ -388,7 +387,7 @@ type kubernetesService interface {
 	ListPrometheusServiceLevels(ctx context.Context, ns string, opts metav1.ListOptions) (*slothv1.PrometheusServiceLevelList, error)
 	WatchPrometheusServiceLevels(ctx context.Context, ns string, opts metav1.ListOptions) (watch.Interface, error)
 	EnsurePrometheusServiceLevelStatus(ctx context.Context, slo *slothv1.PrometheusServiceLevel, err error) error
-	StoreSLOs(ctx context.Context, kmeta storage.K8sMeta, slos model.PromSLOGroupResult) error
+	StoreSLOs(ctx context.Context, kmeta model.K8sMeta, slos model.PromSLOGroupResult) error
 }
 
 func (k kubeControllerCommand) newKubernetesService(ctx context.Context, config RootConfig) (kubernetesService, error) {

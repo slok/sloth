@@ -15,27 +15,27 @@ import (
 	"k8s.io/apimachinery/pkg/util/intstr"
 
 	"github.com/slok/sloth/internal/log"
-	"github.com/slok/sloth/internal/storage"
 	storagek8s "github.com/slok/sloth/internal/storage/k8s"
 	"github.com/slok/sloth/pkg/common/model"
+	slothv1 "github.com/slok/sloth/pkg/kubernetes/api/sloth/v1"
 	slothclientsetfake "github.com/slok/sloth/pkg/kubernetes/gen/clientset/versioned/fake"
 )
 
 func TestApiserverRepositoryStoreSLOs(t *testing.T) {
 	tests := map[string]struct {
-		k8sMeta              storage.K8sMeta
+		k8sMeta              model.K8sMeta
 		slos                 model.PromSLOGroupResult
 		expPromOperatorRules []monitoringv1.PrometheusRule
 		expErr               bool
 	}{
 		"Having 0 SLO rules should fail.": {
-			k8sMeta: storage.K8sMeta{},
+			k8sMeta: model.K8sMeta{},
 			slos:    model.PromSLOGroupResult{},
 			expErr:  true,
 		},
 
 		"Having 0 SLO rules generated should fail.": {
-			k8sMeta: storage.K8sMeta{},
+			k8sMeta: model.K8sMeta{},
 			slos: model.PromSLOGroupResult{
 				SLOResults: []model.PromSLOResult{},
 			},
@@ -43,131 +43,137 @@ func TestApiserverRepositoryStoreSLOs(t *testing.T) {
 		},
 
 		"Having a mixed example of multiple SLOs and options should ensure them on k8s correctly.": {
-			k8sMeta: storage.K8sMeta{
+			k8sMeta: model.K8sMeta{
 				Name:        "test-name",
 				Namespace:   "test-ns",
 				Labels:      map[string]string{"lk1": "lv1"},
 				Annotations: map[string]string{"ak1": "av1"},
-				Kind:        "test-kind",
-				APIVersion:  "test-apiversion",
-				UID:         "test-uid",
 			},
-			slos: model.PromSLOGroupResult{SLOResults: []model.PromSLOResult{
-				{
-					SLO: model.PromSLO{ID: "testa"},
-					PrometheusRules: model.PromSLORules{
-						SLIErrorRecRules: model.PromRuleGroup{
-							Name: "sloth-slo-sli-recordings-testa",
-							Rules: []rulefmt.Rule{
-								{
-									Record: "test:record-a1",
-									Expr:   "test-expr-a1",
-									Labels: map[string]string{"test-label": "a-1"},
-								},
-								{
-									Record: "test:record-a2",
-									Expr:   "test-expr-a2",
-									Labels: map[string]string{"test-label": "a-2"},
-								},
-							}},
-						MetadataRecRules: model.PromRuleGroup{
-							Name: "sloth-slo-meta-recordings-testa",
-							Rules: []rulefmt.Rule{
-								{
-									Record: "test:record-a3",
-									Expr:   "test-expr-a3",
-									Labels: map[string]string{"test-label": "a-3"},
-								},
-								{
-									Record: "test:record-a4",
-									Expr:   "test-expr-a4",
-									Labels: map[string]string{"test-label": "a-4"},
-								},
-							}},
-						AlertRules: model.PromRuleGroup{
-							Name:     "sloth-slo-alerts-testa",
-							Interval: 15 * time.Minute, // Custom interval.
-							Rules: []rulefmt.Rule{
-								{
-									Alert:       "testAlertA1",
-									Expr:        "test-expr-a1",
-									Labels:      map[string]string{"test-label": "a-1"},
-									Annotations: map[string]string{"test-annot": "a-1"},
-								},
-								{
-									Alert:       "testAlertA2",
-									Expr:        "test-expr-a2",
-									Labels:      map[string]string{"test-label": "a-2"},
-									Annotations: map[string]string{"test-annot": "a-2"},
-								},
-							}},
+			slos: model.PromSLOGroupResult{
+				OriginalSource: model.PromSLOGroupSource{
+					K8sSlothV1: &slothv1.PrometheusServiceLevel{
+						ObjectMeta: metav1.ObjectMeta{
+							Name: "test-name",
+							UID:  types.UID("test-uid"),
+						},
 					},
 				},
-				{
-					SLO: model.PromSLO{ID: "testb"},
-					PrometheusRules: model.PromSLORules{
-						SLIErrorRecRules: model.PromRuleGroup{
-							Name: "sloth-slo-sli-recordings-testb",
-							Rules: []rulefmt.Rule{
-								{
-									Record: "test:record-b1",
-									Expr:   "test-expr-b1",
-									Labels: map[string]string{"test-label": "b-1"},
-								},
-							}},
-						MetadataRecRules: model.PromRuleGroup{
-							Name: "sloth-slo-meta-recordings-testb",
-							Rules: []rulefmt.Rule{
-								{
-									Record: "test:record-b2",
-									Expr:   "test-expr-b2",
-									Labels: map[string]string{"test-label": "b-2"},
-								},
-							}},
-						AlertRules: model.PromRuleGroup{
-							Name: "sloth-slo-alerts-testb",
-							Rules: []rulefmt.Rule{
-								{
-									Alert:       "testAlertB1",
-									Expr:        "test-expr-b1",
-									Labels:      map[string]string{"test-label": "b-1"},
-									Annotations: map[string]string{"test-annot": "b-1"},
-								},
-							}},
-						ExtraRules: []model.PromRuleGroup{
-							{
-								Name:     "sloth-slo-extra-rules-000-testb",
-								Interval: 42 * time.Minute,
+				SLOResults: []model.PromSLOResult{
+					{
+						SLO: model.PromSLO{ID: "testa"},
+						PrometheusRules: model.PromSLORules{
+							SLIErrorRecRules: model.PromRuleGroup{
+								Name: "sloth-slo-sli-recordings-testa",
 								Rules: []rulefmt.Rule{
 									{
-										Alert:       "testAlertZ1",
-										Expr:        "test-expr-z1",
-										Labels:      map[string]string{"test-label": "z-1"},
-										Annotations: map[string]string{"test-annot": "z-1"},
+										Record: "test:record-a1",
+										Expr:   "test-expr-a1",
+										Labels: map[string]string{"test-label": "a-1"},
+									},
+									{
+										Record: "test:record-a2",
+										Expr:   "test-expr-a2",
+										Labels: map[string]string{"test-label": "a-2"},
 									},
 								}},
-							{}, // Should be skipped.
-							{
-								Name: "sloth-slo-extra-rules-001-testb",
+							MetadataRecRules: model.PromRuleGroup{
+								Name: "sloth-slo-meta-recordings-testa",
 								Rules: []rulefmt.Rule{
 									{
-										Alert:       "testAlertZ2",
-										Expr:        "test-expr-z2",
-										Labels:      map[string]string{"test-label": "z-2"},
-										Annotations: map[string]string{"test-annot": "z-2"},
+										Record: "test:record-a3",
+										Expr:   "test-expr-a3",
+										Labels: map[string]string{"test-label": "a-3"},
 									},
 									{
-										Alert:       "testAlertZ3",
-										Expr:        "test-expr-z3",
-										Labels:      map[string]string{"test-label": "z-3"},
-										Annotations: map[string]string{"test-annot": "z-3"},
+										Record: "test:record-a4",
+										Expr:   "test-expr-a4",
+										Labels: map[string]string{"test-label": "a-4"},
+									},
+								}},
+							AlertRules: model.PromRuleGroup{
+								Name:     "sloth-slo-alerts-testa",
+								Interval: 15 * time.Minute, // Custom interval.
+								Rules: []rulefmt.Rule{
+									{
+										Alert:       "testAlertA1",
+										Expr:        "test-expr-a1",
+										Labels:      map[string]string{"test-label": "a-1"},
+										Annotations: map[string]string{"test-annot": "a-1"},
+									},
+									{
+										Alert:       "testAlertA2",
+										Expr:        "test-expr-a2",
+										Labels:      map[string]string{"test-label": "a-2"},
+										Annotations: map[string]string{"test-annot": "a-2"},
+									},
+								}},
+						},
+					},
+					{
+						SLO: model.PromSLO{ID: "testb"},
+						PrometheusRules: model.PromSLORules{
+							SLIErrorRecRules: model.PromRuleGroup{
+								Name: "sloth-slo-sli-recordings-testb",
+								Rules: []rulefmt.Rule{
+									{
+										Record: "test:record-b1",
+										Expr:   "test-expr-b1",
+										Labels: map[string]string{"test-label": "b-1"},
+									},
+								}},
+							MetadataRecRules: model.PromRuleGroup{
+								Name: "sloth-slo-meta-recordings-testb",
+								Rules: []rulefmt.Rule{
+									{
+										Record: "test:record-b2",
+										Expr:   "test-expr-b2",
+										Labels: map[string]string{"test-label": "b-2"},
+									},
+								}},
+							AlertRules: model.PromRuleGroup{
+								Name: "sloth-slo-alerts-testb",
+								Rules: []rulefmt.Rule{
+									{
+										Alert:       "testAlertB1",
+										Expr:        "test-expr-b1",
+										Labels:      map[string]string{"test-label": "b-1"},
+										Annotations: map[string]string{"test-annot": "b-1"},
+									},
+								}},
+							ExtraRules: []model.PromRuleGroup{
+								{
+									Name:     "sloth-slo-extra-rules-000-testb",
+									Interval: 42 * time.Minute,
+									Rules: []rulefmt.Rule{
+										{
+											Alert:       "testAlertZ1",
+											Expr:        "test-expr-z1",
+											Labels:      map[string]string{"test-label": "z-1"},
+											Annotations: map[string]string{"test-annot": "z-1"},
+										},
+									}},
+								{}, // Should be skipped.
+								{
+									Name: "sloth-slo-extra-rules-001-testb",
+									Rules: []rulefmt.Rule{
+										{
+											Alert:       "testAlertZ2",
+											Expr:        "test-expr-z2",
+											Labels:      map[string]string{"test-label": "z-2"},
+											Annotations: map[string]string{"test-annot": "z-2"},
+										},
+										{
+											Alert:       "testAlertZ3",
+											Expr:        "test-expr-z3",
+											Labels:      map[string]string{"test-label": "z-3"},
+											Annotations: map[string]string{"test-annot": "z-3"},
+										},
 									},
 								},
 							},
 						},
 					},
-				},
-			}},
+				}},
 			expPromOperatorRules: []monitoringv1.PrometheusRule{
 				{
 					TypeMeta: metav1.TypeMeta{
@@ -185,8 +191,8 @@ func TestApiserverRepositoryStoreSLOs(t *testing.T) {
 						Annotations: map[string]string{"ak1": "av1"},
 						OwnerReferences: []metav1.OwnerReference{
 							{
-								Kind:       "test-kind",
-								APIVersion: "test-apiversion",
+								Kind:       "PrometheusServiceLevel",
+								APIVersion: "sloth.slok.dev/v1",
 								Name:       "test-name",
 								UID:        types.UID("test-uid"),
 							},

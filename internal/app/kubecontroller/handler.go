@@ -11,7 +11,6 @@ import (
 	"github.com/slok/sloth/internal/app/generate"
 	"github.com/slok/sloth/internal/info"
 	"github.com/slok/sloth/internal/log"
-	"github.com/slok/sloth/internal/storage"
 	commonmodel "github.com/slok/sloth/pkg/common/model"
 
 	slothv1 "github.com/slok/sloth/pkg/kubernetes/api/sloth/v1"
@@ -29,7 +28,7 @@ type Generator interface {
 
 // Repository knows how to store generated SLO Prometheus rules.
 type Repository interface {
-	StoreSLOs(ctx context.Context, kmeta storage.K8sMeta, slos commonmodel.PromSLOGroupResult) error
+	StoreSLOs(ctx context.Context, kmeta commonmodel.K8sMeta, slos commonmodel.PromSLOGroupResult) error
 }
 
 // KubeStatusStorer knows how to set the status of Prometheus service levels Kubernetes CRD.
@@ -172,10 +171,7 @@ func (h handler) handlePrometheusServiceLevelV1(ctx context.Context, psl *slothv
 		})
 	}
 
-	kmeta := storage.K8sMeta{
-		Kind:        "PrometheusServiceLevel",
-		APIVersion:  "sloth.slok.dev/v1",
-		UID:         string(model.OriginalSource.K8sSlothV1.UID),
+	kmeta := commonmodel.K8sMeta{
 		Name:        model.OriginalSource.K8sSlothV1.Name,
 		Namespace:   model.OriginalSource.K8sSlothV1.Namespace,
 		Labels:      model.OriginalSource.K8sSlothV1.Labels,

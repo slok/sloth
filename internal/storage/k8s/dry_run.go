@@ -7,7 +7,6 @@ import (
 	"k8s.io/apimachinery/pkg/watch"
 
 	"github.com/slok/sloth/internal/log"
-	"github.com/slok/sloth/internal/storage"
 	"github.com/slok/sloth/pkg/common/model"
 	slothv1 "github.com/slok/sloth/pkg/kubernetes/api/sloth/v1"
 )
@@ -38,7 +37,7 @@ func (r DryRunApiserverRepository) EnsurePrometheusServiceLevelStatus(ctx contex
 	return nil
 }
 
-func (r DryRunApiserverRepository) StoreSLOs(ctx context.Context, kmeta storage.K8sMeta, slos model.PromSLOGroupResult) error {
+func (r DryRunApiserverRepository) StoreSLOs(ctx context.Context, kmeta model.K8sMeta, slos model.PromSLOGroupResult) error {
 	r.logger.Infof("Dry run StoreSLOs")
 	return nil
 }

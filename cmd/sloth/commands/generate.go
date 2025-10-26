@@ -17,7 +17,6 @@ import (
 
 	"github.com/slok/sloth/internal/log"
 	"github.com/slok/sloth/internal/plugin"
-	"github.com/slok/sloth/internal/storage"
 	storageio "github.com/slok/sloth/internal/storage/io"
 	"github.com/slok/sloth/pkg/common/model"
 	utilsdata "github.com/slok/sloth/pkg/common/utils/data"
@@ -288,10 +287,7 @@ func generateSLOs(ctx context.Context, logger log.Logger, genService slothlib.Pr
 	case genResult.OriginalSource.K8sSlothV1 != nil:
 		repo := storageio.NewIOWriterPrometheusOperatorYAMLRepo(genTarget.Out, logger)
 
-		kmeta := storage.K8sMeta{
-			Kind:        "PrometheusServiceLevel",
-			APIVersion:  "sloth.slok.dev/v1",
-			UID:         string(genResult.OriginalSource.K8sSlothV1.UID),
+		kmeta := model.K8sMeta{
 			Name:        genResult.OriginalSource.K8sSlothV1.Name,
 			Namespace:   genResult.OriginalSource.K8sSlothV1.Namespace,
 			Labels:      genResult.OriginalSource.K8sSlothV1.Labels,

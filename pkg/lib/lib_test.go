@@ -4,6 +4,7 @@ import (
 	"context"
 	"os"
 
+	"github.com/slok/sloth/pkg/common/model"
 	slotk8sv1 "github.com/slok/sloth/pkg/kubernetes/api/sloth/v1"
 	"github.com/slok/sloth/pkg/lib"
 	slothprometheusv1 "github.com/slok/sloth/pkg/prometheus/api/v1"
@@ -184,7 +185,7 @@ func ExamplePrometheusSLOGenerator_GenerateFromK8sV1() {
 		panic(err)
 	}
 
-	kmeta := lib.K8sMeta{
+	kmeta := model.K8sMeta{
 		Name:      "sloth-slo-gen-" + sloSpec.ObjectMeta.Name,
 		Namespace: sloSpec.ObjectMeta.Namespace,
 	}

@@ -10,26 +10,25 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/slok/sloth/internal/log"
-	"github.com/slok/sloth/internal/storage"
 	"github.com/slok/sloth/internal/storage/io"
 	"github.com/slok/sloth/pkg/common/model"
 )
 
 func TestIOWriterPrometheusOperatorYAMLRepo(t *testing.T) {
 	tests := map[string]struct {
-		k8sMeta storage.K8sMeta
+		k8sMeta model.K8sMeta
 		slos    model.PromSLOGroupResult
 		expYAML string
 		expErr  bool
 	}{
 		"Having 0 SLO rules should fail.": {
-			k8sMeta: storage.K8sMeta{},
+			k8sMeta: model.K8sMeta{},
 			slos:    model.PromSLOGroupResult{},
 			expErr:  true,
 		},
 
 		"Having 0 SLO rules generated should fail.": {
-			k8sMeta: storage.K8sMeta{},
+			k8sMeta: model.K8sMeta{},
 			slos: model.PromSLOGroupResult{
 				SLOResults: []model.PromSLOResult{},
 			},
@@ -37,7 +36,7 @@ func TestIOWriterPrometheusOperatorYAMLRepo(t *testing.T) {
 		},
 
 		"Having a single SLI recording rule should render correctly.": {
-			k8sMeta: storage.K8sMeta{
+			k8sMeta: model.K8sMeta{
 				Name:        "test-name",
 				Namespace:   "test-ns",
 				Labels:      map[string]string{"lk1": "lv1"},
@@ -87,7 +86,7 @@ spec:
 		},
 
 		"Having a single metadata recording rule should render correctly.": {
-			k8sMeta: storage.K8sMeta{
+			k8sMeta: model.K8sMeta{
 				Name:        "test-name",
 				Namespace:   "test-ns",
 				Labels:      map[string]string{"lk1": "lv1"},
@@ -139,7 +138,7 @@ spec:
 		},
 
 		"Having a single SLO alert rule should render correctly.": {
-			k8sMeta: storage.K8sMeta{
+			k8sMeta: model.K8sMeta{
 				Name:        "test-name",
 				Namespace:   "test-ns",
 				Labels:      map[string]string{"lk1": "lv1"},
@@ -192,7 +191,7 @@ spec:
 		},
 
 		"Having a multiple SLO alert and recording rules should render correctly.": {
-			k8sMeta: storage.K8sMeta{
+			k8sMeta: model.K8sMeta{
 				Name:        "test-name",
 				Namespace:   "test-ns",
 				Labels:      map[string]string{"lk1": "lv1"},

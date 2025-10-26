@@ -27,6 +27,7 @@ func init() {
 		// type definitions
 		"AlertSeverity":         reflect.ValueOf((*model.AlertSeverity)(nil)),
 		"Info":                  reflect.ValueOf((*model.Info)(nil)),
+		"K8sMeta":               reflect.ValueOf((*model.K8sMeta)(nil)),
 		"MWMBAlert":             reflect.ValueOf((*model.MWMBAlert)(nil)),
 		"MWMBAlertGroup":        reflect.ValueOf((*model.MWMBAlertGroup)(nil)),
 		"Mode":                  reflect.ValueOf((*model.Mode)(nil)),

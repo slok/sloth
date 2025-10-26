@@ -9,12 +9,10 @@ import (
 	monitoringclientset "github.com/prometheus-operator/prometheus-operator/pkg/client/versioned"
 	kubeerrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/watch"
 
 	kubernetesmodelmap "github.com/slok/sloth/internal/kubernetes/modelmap"
 	"github.com/slok/sloth/internal/log"
-	"github.com/slok/sloth/internal/storage"
 	"github.com/slok/sloth/pkg/common/model"
 	slothv1 "github.com/slok/sloth/pkg/kubernetes/api/sloth/v1"
 	slothclientset "github.com/slok/sloth/pkg/kubernetes/gen/clientset/versioned"
@@ -65,7 +63,7 @@ func (r ApiserverRepository) EnsurePrometheusServiceLevelStatus(ctx context.Cont
 	return err
 }
 
-func (r ApiserverRepository) StoreSLOs(ctx context.Context, kmeta storage.K8sMeta, slos model.PromSLOGroupResult) error {
+func (r ApiserverRepository) StoreSLOs(ctx context.Context, kmeta model.K8sMeta, slos model.PromSLOGroupResult) error {
 	// Map to the Prometheus operator CRD.
 	rule, err := kubernetesmodelmap.MapModelToPrometheusOperator(ctx, kmeta, slos)
 	if err != nil {
@@ -74,10 +72,10 @@ func (r ApiserverRepository) StoreSLOs(ctx context.Context, kmeta storage.K8sMet
 
 	// Add object reference.
 	rule.ObjectMeta.OwnerReferences = append(rule.ObjectMeta.OwnerReferences, metav1.OwnerReference{
-		Kind:       kmeta.Kind,
-		APIVersion: kmeta.APIVersion,
-		Name:       kmeta.Name,
-		UID:        types.UID(kmeta.UID),
+		Kind:       "PrometheusServiceLevel",
+		APIVersion: "sloth.slok.dev/v1",
+		Name:       slos.OriginalSource.K8sSlothV1.Name,
+		UID:        slos.OriginalSource.K8sSlothV1.UID,
 	})
 
 	// Create on API server.

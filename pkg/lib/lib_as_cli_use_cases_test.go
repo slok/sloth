@@ -59,7 +59,7 @@ func TestLibAsCLIIntegration(t *testing.T) {
 			expOutFilePath: "../../test/integration/prometheus/testdata/out-base-k8s.yaml.tpl",
 			resultFormatter: func(t *testing.T, result model.PromSLOGroupResult) []byte {
 				var b bytes.Buffer
-				kmeta := lib.K8sMeta{Name: "svc", Namespace: "test-ns"}
+				kmeta := model.K8sMeta{Name: "svc", Namespace: "test-ns"}
 				err := lib.WriteResultAsK8sPrometheusOperator(t.Context(), kmeta, result, &b)
 				require.NoError(t, err)
 				return b.Bytes()
@@ -216,7 +216,7 @@ func TestLibAsCLIIntegration(t *testing.T) {
 			expOutFilePath: "../../test/integration/prometheus/testdata/out-slo-plugin-k8s.yaml.tpl",
 			resultFormatter: func(t *testing.T, result model.PromSLOGroupResult) []byte {
 				var b bytes.Buffer
-				kmeta := lib.K8sMeta{Name: "svc", Namespace: "test-ns"}
+				kmeta := model.K8sMeta{Name: "svc", Namespace: "test-ns"}
 				err := lib.WriteResultAsK8sPrometheusOperator(t.Context(), kmeta, result, &b)
 				require.NoError(t, err)
 				return b.Bytes()

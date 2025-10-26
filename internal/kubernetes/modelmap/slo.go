@@ -10,13 +10,12 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 
-	"github.com/slok/sloth/internal/storage"
 	commonerrors "github.com/slok/sloth/pkg/common/errors"
 	"github.com/slok/sloth/pkg/common/model"
 	promutils "github.com/slok/sloth/pkg/common/utils/prometheus"
 )
 
-func MapModelToPrometheusOperator(ctx context.Context, kmeta storage.K8sMeta, slos model.PromSLOGroupResult) (*monitoringv1.PrometheusRule, error) {
+func MapModelToPrometheusOperator(ctx context.Context, kmeta model.K8sMeta, slos model.PromSLOGroupResult) (*monitoringv1.PrometheusRule, error) {
 	// Add extra labels.
 	labels := map[string]string{
 		"app.kubernetes.io/component":  "SLO",

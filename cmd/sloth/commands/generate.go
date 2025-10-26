@@ -262,30 +262,22 @@ func generateSLOs(ctx context.Context, logger log.Logger, genService slothlib.Pr
 	}
 
 	// Disable data if required.
-	for i := range genResult.SLOResult {
+	for i := range genResult.SLOResults {
 		if disableAlerts {
-			genResult.SLOResult[i].PrometheusRules.AlertRules = model.PromRuleGroup{}
+			genResult.SLOResults[i].PrometheusRules.AlertRules = model.PromRuleGroup{}
 		}
 		if disableRecordings {
-			genResult.SLOResult[i].PrometheusRules.SLIErrorRecRules = model.PromRuleGroup{}
-			genResult.SLOResult[i].PrometheusRules.MetadataRecRules = model.PromRuleGroup{}
+			genResult.SLOResults[i].PrometheusRules.SLIErrorRecRules = model.PromRuleGroup{}
+			genResult.SLOResults[i].PrometheusRules.MetadataRecRules = model.PromRuleGroup{}
 		}
 	}
 
 	// Store results.
 	switch {
 	// Standard prometheus.
-	case genResult.SLOGroup.OriginalSource.SlothV1 != nil:
+	case genResult.OriginalSource.SlothV1 != nil:
 		repo := storageio.NewStdPrometheusGroupedRulesYAMLRepo(genTarget.Out, logger)
-		storageSLOs := make([]storageio.StdPrometheusStorageSLO, 0, len(genResult.SLOResult))
-		for _, s := range genResult.SLOResult {
-			storageSLOs = append(storageSLOs, storageio.StdPrometheusStorageSLO{
-				SLO:   s.SLO,
-				Rules: s.PrometheusRules,
-			})
-		}
-
-		err = repo.StoreSLOs(ctx, storageSLOs)
+		err = repo.StoreSLOs(ctx, *genResult)
 		if err != nil {
 			return fmt.Errorf("could not store SLOS: %w", err)
 		}
@@ -293,43 +285,28 @@ func generateSLOs(ctx context.Context, logger log.Logger, genService slothlib.Pr
 		return nil
 
 	// K8s Sloth CR.
-	case genResult.SLOGroup.OriginalSource.K8sSlothV1 != nil:
+	case genResult.OriginalSource.K8sSlothV1 != nil:
 		repo := storageio.NewIOWriterPrometheusOperatorYAMLRepo(genTarget.Out, logger)
-		storageSLOs := make([]storage.SLORulesResult, 0, len(genResult.SLOResult))
-		for _, s := range genResult.SLOResult {
-			storageSLOs = append(storageSLOs, storage.SLORulesResult{
-				SLO:   s.SLO,
-				Rules: s.PrometheusRules,
-			})
-		}
 
 		kmeta := storage.K8sMeta{
 			Kind:        "PrometheusServiceLevel",
 			APIVersion:  "sloth.slok.dev/v1",
-			UID:         string(genResult.SLOGroup.OriginalSource.K8sSlothV1.UID),
-			Name:        genResult.SLOGroup.OriginalSource.K8sSlothV1.Name,
-			Namespace:   genResult.SLOGroup.OriginalSource.K8sSlothV1.Namespace,
-			Labels:      genResult.SLOGroup.OriginalSource.K8sSlothV1.Labels,
-			Annotations: genResult.SLOGroup.OriginalSource.K8sSlothV1.Annotations,
+			UID:         string(genResult.OriginalSource.K8sSlothV1.UID),
+			Name:        genResult.OriginalSource.K8sSlothV1.Name,
+			Namespace:   genResult.OriginalSource.K8sSlothV1.Namespace,
+			Labels:      genResult.OriginalSource.K8sSlothV1.Labels,
+			Annotations: genResult.OriginalSource.K8sSlothV1.Annotations,
 		}
 
-		err = repo.StoreSLOs(ctx, kmeta, storageSLOs)
+		err = repo.StoreSLOs(ctx, kmeta, *genResult)
 		if err != nil {
 			return fmt.Errorf("could not store SLOS: %w", err)
 		}
 
 	// OpenSLO.
-	case genResult.SLOGroup.OriginalSource.OpenSLOV1Alpha != nil:
+	case genResult.OriginalSource.OpenSLOV1Alpha != nil:
 		repo := storageio.NewStdPrometheusGroupedRulesYAMLRepo(genTarget.Out, logger)
-		storageSLOs := make([]storageio.StdPrometheusStorageSLO, 0, len(genResult.SLOResult))
-		for _, s := range genResult.SLOResult {
-			storageSLOs = append(storageSLOs, storageio.StdPrometheusStorageSLO{
-				SLO:   s.SLO,
-				Rules: s.PrometheusRules,
-			})
-		}
-
-		err = repo.StoreSLOs(ctx, storageSLOs)
+		err = repo.StoreSLOs(ctx, *genResult)
 		if err != nil {
 			return fmt.Errorf("could not store SLOS: %w", err)
 		}

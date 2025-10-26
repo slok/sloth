@@ -37,8 +37,10 @@ func init() {
 		"PromSLIRaw":            reflect.ValueOf((*model.PromSLIRaw)(nil)),
 		"PromSLO":               reflect.ValueOf((*model.PromSLO)(nil)),
 		"PromSLOGroup":          reflect.ValueOf((*model.PromSLOGroup)(nil)),
+		"PromSLOGroupResult":    reflect.ValueOf((*model.PromSLOGroupResult)(nil)),
 		"PromSLOGroupSource":    reflect.ValueOf((*model.PromSLOGroupSource)(nil)),
 		"PromSLOPluginMetadata": reflect.ValueOf((*model.PromSLOPluginMetadata)(nil)),
+		"PromSLOResult":         reflect.ValueOf((*model.PromSLOResult)(nil)),
 		"PromSLORules":          reflect.ValueOf((*model.PromSLORules)(nil)),
 		"SLOPlugins":            reflect.ValueOf((*model.SLOPlugins)(nil)),
 	}

@@ -41,39 +41,39 @@ type StdPrometheusStorageSLO struct {
 // StoreSLOs will store the recording and alert prometheus rules, if grouped is false it will
 // split and store as 2 different groups the alerts and the recordings, if true
 // it will be save as a single group.
-func (r StdPrometheusGroupedRulesYAMLRepo) StoreSLOs(ctx context.Context, slos []StdPrometheusStorageSLO) error {
-	if len(slos) == 0 {
+func (r StdPrometheusGroupedRulesYAMLRepo) StoreSLOs(ctx context.Context, slos model.PromSLOGroupResult) error {
+	if len(slos.SLOResults) == 0 {
 		return fmt.Errorf("slo rules required")
 	}
 
 	ruleGroups := stdPromRuleGroupsYAMLv2{}
-	for _, slo := range slos {
-		if len(slo.Rules.SLIErrorRecRules.Rules) > 0 {
+	for _, slo := range slos.SLOResults {
+		if len(slo.PrometheusRules.SLIErrorRecRules.Rules) > 0 {
 			ruleGroups.Groups = append(ruleGroups.Groups, stdPromRuleGroupYAMLv2{
-				Interval: prommodel.Duration(slo.Rules.SLIErrorRecRules.Interval),
-				Name:     slo.Rules.SLIErrorRecRules.Name,
-				Rules:    slo.Rules.SLIErrorRecRules.Rules,
+				Interval: prommodel.Duration(slo.PrometheusRules.SLIErrorRecRules.Interval),
+				Name:     slo.PrometheusRules.SLIErrorRecRules.Name,
+				Rules:    slo.PrometheusRules.SLIErrorRecRules.Rules,
 			})
 		}
 
-		if len(slo.Rules.MetadataRecRules.Rules) > 0 {
+		if len(slo.PrometheusRules.MetadataRecRules.Rules) > 0 {
 			ruleGroups.Groups = append(ruleGroups.Groups, stdPromRuleGroupYAMLv2{
-				Interval: prommodel.Duration(slo.Rules.MetadataRecRules.Interval),
-				Name:     slo.Rules.MetadataRecRules.Name,
-				Rules:    slo.Rules.MetadataRecRules.Rules,
+				Interval: prommodel.Duration(slo.PrometheusRules.MetadataRecRules.Interval),
+				Name:     slo.PrometheusRules.MetadataRecRules.Name,
+				Rules:    slo.PrometheusRules.MetadataRecRules.Rules,
 			})
 		}
 
-		if len(slo.Rules.AlertRules.Rules) > 0 {
+		if len(slo.PrometheusRules.AlertRules.Rules) > 0 {
 			ruleGroups.Groups = append(ruleGroups.Groups, stdPromRuleGroupYAMLv2{
-				Interval: prommodel.Duration(slo.Rules.AlertRules.Interval),
-				Name:     slo.Rules.AlertRules.Name,
-				Rules:    slo.Rules.AlertRules.Rules,
+				Interval: prommodel.Duration(slo.PrometheusRules.AlertRules.Interval),
+				Name:     slo.PrometheusRules.AlertRules.Name,
+				Rules:    slo.PrometheusRules.AlertRules.Rules,
 			})
 		}
 
 		// Extra rules.
-		for _, extraRuleGroup := range slo.Rules.ExtraRules {
+		for _, extraRuleGroup := range slo.PrometheusRules.ExtraRules {
 			if len(extraRuleGroup.Rules) == 0 {
 				continue
 			}

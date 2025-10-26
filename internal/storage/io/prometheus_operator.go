@@ -12,6 +12,7 @@ import (
 	kubernetesmodelmap "github.com/slok/sloth/internal/kubernetes/modelmap"
 	"github.com/slok/sloth/internal/log"
 	"github.com/slok/sloth/internal/storage"
+	"github.com/slok/sloth/pkg/common/model"
 )
 
 func NewIOWriterPrometheusOperatorYAMLRepo(writer io.Writer, logger log.Logger) IOWriterPrometheusOperatorYAMLRepo {
@@ -30,7 +31,7 @@ type IOWriterPrometheusOperatorYAMLRepo struct {
 	logger  log.Logger
 }
 
-func (i IOWriterPrometheusOperatorYAMLRepo) StoreSLOs(ctx context.Context, kmeta storage.K8sMeta, slos []storage.SLORulesResult) error {
+func (i IOWriterPrometheusOperatorYAMLRepo) StoreSLOs(ctx context.Context, kmeta storage.K8sMeta, slos model.PromSLOGroupResult) error {
 	rule, err := kubernetesmodelmap.MapModelToPrometheusOperator(ctx, kmeta, slos)
 	if err != nil {
 		return fmt.Errorf("could not map model to Prometheus operator CR: %w", err)

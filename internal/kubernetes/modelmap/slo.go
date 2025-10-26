@@ -12,10 +12,11 @@ import (
 
 	"github.com/slok/sloth/internal/storage"
 	commonerrors "github.com/slok/sloth/pkg/common/errors"
+	"github.com/slok/sloth/pkg/common/model"
 	promutils "github.com/slok/sloth/pkg/common/utils/prometheus"
 )
 
-func MapModelToPrometheusOperator(ctx context.Context, kmeta storage.K8sMeta, slos []storage.SLORulesResult) (*monitoringv1.PrometheusRule, error) {
+func MapModelToPrometheusOperator(ctx context.Context, kmeta storage.K8sMeta, slos model.PromSLOGroupResult) (*monitoringv1.PrometheusRule, error) {
 	// Add extra labels.
 	labels := map[string]string{
 		"app.kubernetes.io/component":  "SLO",
@@ -38,37 +39,37 @@ func MapModelToPrometheusOperator(ctx context.Context, kmeta storage.K8sMeta, sl
 		},
 	}
 
-	if len(slos) == 0 {
+	if len(slos.SLOResults) == 0 {
 		return nil, fmt.Errorf("slo rules required")
 	}
 
-	for _, slo := range slos {
-		if len(slo.Rules.SLIErrorRecRules.Rules) > 0 {
+	for _, slo := range slos.SLOResults {
+		if len(slo.PrometheusRules.SLIErrorRecRules.Rules) > 0 {
 			rule.Spec.Groups = append(rule.Spec.Groups, monitoringv1.RuleGroup{
-				Interval: timeDurationToPromOpDuration(slo.Rules.SLIErrorRecRules.Interval),
-				Name:     slo.Rules.SLIErrorRecRules.Name,
-				Rules:    promRulesToKubeRules(slo.Rules.SLIErrorRecRules.Rules),
+				Interval: timeDurationToPromOpDuration(slo.PrometheusRules.SLIErrorRecRules.Interval),
+				Name:     slo.PrometheusRules.SLIErrorRecRules.Name,
+				Rules:    promRulesToKubeRules(slo.PrometheusRules.SLIErrorRecRules.Rules),
 			})
 		}
 
-		if len(slo.Rules.MetadataRecRules.Rules) > 0 {
+		if len(slo.PrometheusRules.MetadataRecRules.Rules) > 0 {
 			rule.Spec.Groups = append(rule.Spec.Groups, monitoringv1.RuleGroup{
-				Interval: timeDurationToPromOpDuration(slo.Rules.MetadataRecRules.Interval),
-				Name:     slo.Rules.MetadataRecRules.Name,
-				Rules:    promRulesToKubeRules(slo.Rules.MetadataRecRules.Rules),
+				Interval: timeDurationToPromOpDuration(slo.PrometheusRules.MetadataRecRules.Interval),
+				Name:     slo.PrometheusRules.MetadataRecRules.Name,
+				Rules:    promRulesToKubeRules(slo.PrometheusRules.MetadataRecRules.Rules),
 			})
 		}
 
-		if len(slo.Rules.AlertRules.Rules) > 0 {
+		if len(slo.PrometheusRules.AlertRules.Rules) > 0 {
 			rule.Spec.Groups = append(rule.Spec.Groups, monitoringv1.RuleGroup{
-				Interval: timeDurationToPromOpDuration(slo.Rules.AlertRules.Interval),
-				Name:     slo.Rules.AlertRules.Name,
-				Rules:    promRulesToKubeRules(slo.Rules.AlertRules.Rules),
+				Interval: timeDurationToPromOpDuration(slo.PrometheusRules.AlertRules.Interval),
+				Name:     slo.PrometheusRules.AlertRules.Name,
+				Rules:    promRulesToKubeRules(slo.PrometheusRules.AlertRules.Rules),
 			})
 		}
 
 		// Extra rules.
-		for _, extraRuleGroup := range slo.Rules.ExtraRules {
+		for _, extraRuleGroup := range slo.PrometheusRules.ExtraRules {
 			if len(extraRuleGroup.Rules) == 0 {
 				continue
 			}

@@ -148,22 +148,10 @@ func NewPrometheusSLOGenerator(config PrometheusSLOGeneratorConfig) (*Prometheus
 	}, nil
 }
 
-// SLOGroupPrometheusStdResult is the result of generating standard Prometheus SLO rules from SLO definitions as SLO group.
-type SLOGroupPrometheusStdResult struct {
-	SLOGroup  model.PromSLOGroup
-	SLOResult []SLOPrometheusStdResult
-}
-
-// SLOPrometheusStdResult is the result of generating standard Prometheus SLO rules from SLO definitions.
-type SLOPrometheusStdResult struct {
-	SLO             model.PromSLO
-	PrometheusRules model.PromSLORules
-}
-
 // GenerateFromRaw generates SLO rules from raw data, it will infer what type of SLO spec receives. This method is the most
 // generic one as the user doesn't need to know what type of SLO spec is using.
 // For more custom programmatic usage use the other Go struct API spec generators.
-func (p PrometheusSLOGenerator) GenerateFromRaw(ctx context.Context, data []byte) (*SLOGroupPrometheusStdResult, error) {
+func (p PrometheusSLOGenerator) GenerateFromRaw(ctx context.Context, data []byte) (*model.PromSLOGroupResult, error) {
 	// For now we only support yaml specs, so this is safe to do.
 	yamlData := utilsdata.SplitYAML(data)
 	if len(yamlData) > 1 {
@@ -202,7 +190,7 @@ func (p PrometheusSLOGenerator) GenerateFromRaw(ctx context.Context, data []byte
 }
 
 // GenerateFromSlothV1 generates SLOs from a Sloth Prometheus SLO definition spec struct.
-func (p PrometheusSLOGenerator) GenerateFromSlothV1(ctx context.Context, spec prometheusv1.Spec) (*SLOGroupPrometheusStdResult, error) {
+func (p PrometheusSLOGenerator) GenerateFromSlothV1(ctx context.Context, spec prometheusv1.Spec) (*model.PromSLOGroupResult, error) {
 	spec.Version = prometheusv1.Version // Force version in case is missing(we already know what it is with the type).
 
 	sloGroup, err := p.promYAMLLoader.MapSpecToModel(ctx, spec)
@@ -233,7 +221,7 @@ func (p PrometheusSLOGenerator) GenerateFromSlothV1(ctx context.Context, spec pr
 }
 
 // GenerateFromK8sV1 generates SLO rules from a Kubernetes Sloth CR SLO definition spec struct.
-func (p PrometheusSLOGenerator) GenerateFromK8sV1(ctx context.Context, spec kubernetesv1.PrometheusServiceLevel) (*SLOGroupPrometheusStdResult, error) {
+func (p PrometheusSLOGenerator) GenerateFromK8sV1(ctx context.Context, spec kubernetesv1.PrometheusServiceLevel) (*model.PromSLOGroupResult, error) {
 	sloGroup, err := p.kubeYAMLLoader.MapSpecToModel(ctx, spec)
 	if err != nil {
 		return nil, fmt.Errorf("could not map to model: %w", err)
@@ -262,7 +250,7 @@ func (p PrometheusSLOGenerator) GenerateFromK8sV1(ctx context.Context, spec kube
 }
 
 // GenerateFromOpenSLOV1Alpha generates SLO rules from an OpenSLO SLO definition spec struct.
-func (p PrometheusSLOGenerator) GenerateFromOpenSLOV1Alpha(ctx context.Context, spec openslov1alpha.SLO) (*SLOGroupPrometheusStdResult, error) {
+func (p PrometheusSLOGenerator) GenerateFromOpenSLOV1Alpha(ctx context.Context, spec openslov1alpha.SLO) (*model.PromSLOGroupResult, error) {
 	sloGroup, err := p.openSLOYAMLLoader.MapSpecToModel(spec)
 	if err != nil {
 		return nil, fmt.Errorf("could not map to model: %w", err)
@@ -290,22 +278,22 @@ func (p PrometheusSLOGenerator) GenerateFromOpenSLOV1Alpha(ctx context.Context, 
 	return p.generateFromModel(ctx, req)
 }
 
-func (p PrometheusSLOGenerator) generateFromModel(ctx context.Context, req generate.Request) (*SLOGroupPrometheusStdResult, error) {
+func (p PrometheusSLOGenerator) generateFromModel(ctx context.Context, req generate.Request) (*model.PromSLOGroupResult, error) {
 	res, err := p.genSvc.Generate(ctx, req)
 	if err != nil {
 		return nil, fmt.Errorf("could not generate Prometheus SLO rules: %w", err)
 	}
 
-	result := []SLOPrometheusStdResult{}
+	result := []model.PromSLOResult{}
 	for _, r := range res.PrometheusSLOs {
-		result = append(result, SLOPrometheusStdResult{
+		result = append(result, model.PromSLOResult{
 			SLO:             r.SLO,
 			PrometheusRules: r.SLORules,
 		})
 	}
 
-	return &SLOGroupPrometheusStdResult{
-		SLOGroup:  req.SLOGroup,
-		SLOResult: result,
+	return &model.PromSLOGroupResult{
+		OriginalSource: req.SLOGroup.OriginalSource,
+		SLOResults:     result,
 	}, nil
 }

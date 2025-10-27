@@ -25,7 +25,7 @@ func TestLibAsCLIIntegration(t *testing.T) {
 	tests := map[string]struct {
 		config          func() lib.PrometheusSLOGeneratorConfig
 		inFilePath      string
-		resultFormatter func(t *testing.T, result model.PromSLOGroupResult) []byte
+		resultFormatter func(t *testing.T, gen *lib.PrometheusSLOGenerator, result model.PromSLOGroupResult) []byte
 		expOutFilePath  string
 		expGenErr       bool
 	}{
@@ -43,9 +43,9 @@ func TestLibAsCLIIntegration(t *testing.T) {
 			},
 			inFilePath:     "../../test/integration/prometheus/testdata/in-base.yaml",
 			expOutFilePath: "../../test/integration/prometheus/testdata/out-base.yaml.tpl",
-			resultFormatter: func(t *testing.T, result model.PromSLOGroupResult) []byte {
+			resultFormatter: func(t *testing.T, gen *lib.PrometheusSLOGenerator, result model.PromSLOGroupResult) []byte {
 				var b bytes.Buffer
-				err := lib.WriteResultAsPrometheusStd(t.Context(), result, &b)
+				err := gen.WriteResultAsPrometheusStd(t.Context(), result, &b)
 				require.NoError(t, err)
 				return b.Bytes()
 			},
@@ -57,10 +57,10 @@ func TestLibAsCLIIntegration(t *testing.T) {
 			},
 			inFilePath:     "../../test/integration/prometheus/testdata/in-base-k8s.yaml",
 			expOutFilePath: "../../test/integration/prometheus/testdata/out-base-k8s.yaml.tpl",
-			resultFormatter: func(t *testing.T, result model.PromSLOGroupResult) []byte {
+			resultFormatter: func(t *testing.T, gen *lib.PrometheusSLOGenerator, result model.PromSLOGroupResult) []byte {
 				var b bytes.Buffer
 				kmeta := model.K8sMeta{Name: "svc", Namespace: "test-ns"}
-				err := lib.WriteResultAsK8sPrometheusOperator(t.Context(), kmeta, result, &b)
+				err := gen.WriteResultAsK8sPrometheusOperator(t.Context(), kmeta, result, &b)
 				require.NoError(t, err)
 				return b.Bytes()
 			},
@@ -72,9 +72,9 @@ func TestLibAsCLIIntegration(t *testing.T) {
 			},
 			inFilePath:     "../../test/integration/prometheus/testdata/in-openslo.yaml",
 			expOutFilePath: "../../test/integration/prometheus/testdata/out-openslo.yaml.tpl",
-			resultFormatter: func(t *testing.T, result model.PromSLOGroupResult) []byte {
+			resultFormatter: func(t *testing.T, gen *lib.PrometheusSLOGenerator, result model.PromSLOGroupResult) []byte {
 				var b bytes.Buffer
-				err := lib.WriteResultAsPrometheusStd(t.Context(), result, &b)
+				err := gen.WriteResultAsPrometheusStd(t.Context(), result, &b)
 				require.NoError(t, err)
 				return b.Bytes()
 			},
@@ -89,9 +89,9 @@ func TestLibAsCLIIntegration(t *testing.T) {
 			},
 			inFilePath:     "../../test/integration/prometheus/testdata/in-base.yaml",
 			expOutFilePath: "../../test/integration/prometheus/testdata/out-base-28d.yaml.tpl",
-			resultFormatter: func(t *testing.T, result model.PromSLOGroupResult) []byte {
+			resultFormatter: func(t *testing.T, gen *lib.PrometheusSLOGenerator, result model.PromSLOGroupResult) []byte {
 				var b bytes.Buffer
-				err := lib.WriteResultAsPrometheusStd(t.Context(), result, &b)
+				err := gen.WriteResultAsPrometheusStd(t.Context(), result, &b)
 				require.NoError(t, err)
 				return b.Bytes()
 			},
@@ -107,9 +107,9 @@ func TestLibAsCLIIntegration(t *testing.T) {
 			},
 			inFilePath:     "../../test/integration/prometheus/testdata/in-base.yaml",
 			expOutFilePath: "../../test/integration/prometheus/testdata/out-base-custom-windows-7d.yaml.tpl",
-			resultFormatter: func(t *testing.T, result model.PromSLOGroupResult) []byte {
+			resultFormatter: func(t *testing.T, gen *lib.PrometheusSLOGenerator, result model.PromSLOGroupResult) []byte {
 				var b bytes.Buffer
-				err := lib.WriteResultAsPrometheusStd(t.Context(), result, &b)
+				err := gen.WriteResultAsPrometheusStd(t.Context(), result, &b)
 				require.NoError(t, err)
 				return b.Bytes()
 			},
@@ -124,9 +124,9 @@ func TestLibAsCLIIntegration(t *testing.T) {
 			},
 			inFilePath:     "../../test/integration/prometheus/testdata/in-base.yaml",
 			expOutFilePath: "../../test/integration/prometheus/testdata/out-base-extra-labels.yaml.tpl",
-			resultFormatter: func(t *testing.T, result model.PromSLOGroupResult) []byte {
+			resultFormatter: func(t *testing.T, gen *lib.PrometheusSLOGenerator, result model.PromSLOGroupResult) []byte {
 				var b bytes.Buffer
-				err := lib.WriteResultAsPrometheusStd(t.Context(), result, &b)
+				err := gen.WriteResultAsPrometheusStd(t.Context(), result, &b)
 				require.NoError(t, err)
 				return b.Bytes()
 			},
@@ -138,14 +138,14 @@ func TestLibAsCLIIntegration(t *testing.T) {
 			},
 			inFilePath:     "../../test/integration/prometheus/testdata/in-base.yaml",
 			expOutFilePath: "../../test/integration/prometheus/testdata/out-base-no-alerts.yaml.tpl",
-			resultFormatter: func(t *testing.T, result model.PromSLOGroupResult) []byte {
+			resultFormatter: func(t *testing.T, gen *lib.PrometheusSLOGenerator, result model.PromSLOGroupResult) []byte {
 
 				for i := range result.SLOResults {
 					result.SLOResults[i].PrometheusRules.AlertRules = model.PromRuleGroup{}
 				}
 
 				var b bytes.Buffer
-				err := lib.WriteResultAsPrometheusStd(t.Context(), result, &b)
+				err := gen.WriteResultAsPrometheusStd(t.Context(), result, &b)
 				require.NoError(t, err)
 				return b.Bytes()
 			},
@@ -157,7 +157,7 @@ func TestLibAsCLIIntegration(t *testing.T) {
 			},
 			inFilePath:     "../../test/integration/prometheus/testdata/in-base.yaml",
 			expOutFilePath: "../../test/integration/prometheus/testdata/out-base-no-recordings.yaml.tpl",
-			resultFormatter: func(t *testing.T, result model.PromSLOGroupResult) []byte {
+			resultFormatter: func(t *testing.T, gen *lib.PrometheusSLOGenerator, result model.PromSLOGroupResult) []byte {
 				// Remove alerts.
 				for i := range result.SLOResults {
 					result.SLOResults[i].PrometheusRules.SLIErrorRecRules = model.PromRuleGroup{}
@@ -165,7 +165,7 @@ func TestLibAsCLIIntegration(t *testing.T) {
 				}
 
 				var b bytes.Buffer
-				err := lib.WriteResultAsPrometheusStd(t.Context(), result, &b)
+				err := gen.WriteResultAsPrometheusStd(t.Context(), result, &b)
 				require.NoError(t, err)
 				return b.Bytes()
 			},
@@ -180,9 +180,9 @@ func TestLibAsCLIIntegration(t *testing.T) {
 			},
 			inFilePath:     "../../test/integration/prometheus/testdata/in-sli-plugin.yaml",
 			expOutFilePath: "../../test/integration/prometheus/testdata/out-sli-plugin.yaml.tpl",
-			resultFormatter: func(t *testing.T, result model.PromSLOGroupResult) []byte {
+			resultFormatter: func(t *testing.T, gen *lib.PrometheusSLOGenerator, result model.PromSLOGroupResult) []byte {
 				var b bytes.Buffer
-				err := lib.WriteResultAsPrometheusStd(t.Context(), result, &b)
+				err := gen.WriteResultAsPrometheusStd(t.Context(), result, &b)
 				require.NoError(t, err)
 				return b.Bytes()
 			},
@@ -197,9 +197,9 @@ func TestLibAsCLIIntegration(t *testing.T) {
 			},
 			inFilePath:     "../../test/integration/prometheus/testdata/in-slo-plugin.yaml",
 			expOutFilePath: "../../test/integration/prometheus/testdata/out-slo-plugin.yaml.tpl",
-			resultFormatter: func(t *testing.T, result model.PromSLOGroupResult) []byte {
+			resultFormatter: func(t *testing.T, gen *lib.PrometheusSLOGenerator, result model.PromSLOGroupResult) []byte {
 				var b bytes.Buffer
-				err := lib.WriteResultAsPrometheusStd(t.Context(), result, &b)
+				err := gen.WriteResultAsPrometheusStd(t.Context(), result, &b)
 				require.NoError(t, err)
 				return b.Bytes()
 			},
@@ -214,10 +214,10 @@ func TestLibAsCLIIntegration(t *testing.T) {
 			},
 			inFilePath:     "../../test/integration/prometheus/testdata/in-slo-plugin-k8s.yaml",
 			expOutFilePath: "../../test/integration/prometheus/testdata/out-slo-plugin-k8s.yaml.tpl",
-			resultFormatter: func(t *testing.T, result model.PromSLOGroupResult) []byte {
+			resultFormatter: func(t *testing.T, gen *lib.PrometheusSLOGenerator, result model.PromSLOGroupResult) []byte {
 				var b bytes.Buffer
 				kmeta := model.K8sMeta{Name: "svc", Namespace: "test-ns"}
-				err := lib.WriteResultAsK8sPrometheusOperator(t.Context(), kmeta, result, &b)
+				err := gen.WriteResultAsK8sPrometheusOperator(t.Context(), kmeta, result, &b)
 				require.NoError(t, err)
 				return b.Bytes()
 			},
@@ -227,18 +227,22 @@ func TestLibAsCLIIntegration(t *testing.T) {
 			config: func() lib.PrometheusSLOGeneratorConfig {
 				return lib.PrometheusSLOGeneratorConfig{CallerAgent: lib.CallerAgentCLI}
 			},
-			inFilePath:      "../../test/integration/prometheus/testdata/in-multifile.yaml",
-			resultFormatter: func(t *testing.T, result model.PromSLOGroupResult) []byte { return nil },
-			expGenErr:       true,
+			inFilePath: "../../test/integration/prometheus/testdata/in-multifile.yaml",
+			resultFormatter: func(t *testing.T, gen *lib.PrometheusSLOGenerator, result model.PromSLOGroupResult) []byte {
+				return nil
+			},
+			expGenErr: true,
 		},
 
 		"A multifile Kubernetes case (Not supported).": {
 			config: func() lib.PrometheusSLOGeneratorConfig {
 				return lib.PrometheusSLOGeneratorConfig{CallerAgent: lib.CallerAgentCLI}
 			},
-			inFilePath:      "../../test/integration/prometheus/testdata/in-multifile-k8s.yaml",
-			resultFormatter: func(t *testing.T, result model.PromSLOGroupResult) []byte { return nil },
-			expGenErr:       true,
+			inFilePath: "../../test/integration/prometheus/testdata/in-multifile-k8s.yaml",
+			resultFormatter: func(t *testing.T, gen *lib.PrometheusSLOGenerator, result model.PromSLOGroupResult) []byte {
+				return nil
+			},
+			expGenErr: true,
 		},
 	}
 
@@ -256,10 +260,9 @@ func TestLibAsCLIIntegration(t *testing.T) {
 			result, err := gen.GenerateFromRaw(t.Context(), expInData)
 			if test.expGenErr {
 				assert.Error(err)
-				return
 			} else if assert.NoError(err) {
 				// Check result.
-				resultOutData := test.resultFormatter(t, *result)
+				resultOutData := test.resultFormatter(t, gen, *result)
 				expOutData := getExpData(t, test.expOutFilePath)
 				assert.Equal(string(expOutData), string(resultOutData))
 			}

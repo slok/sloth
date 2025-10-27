@@ -3,6 +3,7 @@ package lib
 import (
 	"context"
 	"fmt"
+	"io"
 	"io/fs"
 	"time"
 
@@ -11,6 +12,7 @@ import (
 	"github.com/slok/sloth/internal/alert"
 	"github.com/slok/sloth/internal/app/generate"
 	"github.com/slok/sloth/internal/info"
+	storagefs "github.com/slok/sloth/internal/storage/fs"
 	storageio "github.com/slok/sloth/internal/storage/io"
 	"github.com/slok/sloth/pkg/common/model"
 	utilsdata "github.com/slok/sloth/pkg/common/utils/data"
@@ -78,16 +80,14 @@ func (c *PrometheusSLOGeneratorConfig) defaults() error {
 
 // PrometheusSLOGenerator is a Prometheus SLO rules generator from the Sloth supported SLO definitions.
 type PrometheusSLOGenerator struct {
-	// Generator.
-	genSvc generate.Service
-
-	// Spec loaders.
+	genSvc            generate.Service
 	promYAMLLoader    storageio.SlothPrometheusYAMLSpecLoader
 	kubeYAMLLoader    storageio.K8sSlothPrometheusYAMLSpecLoader
 	openSLOYAMLLoader storageio.OpenSLOYAMLSpecLoader
-
-	extraLabels map[string]string
-	agent       CallerAgent
+	pluginsRepo       *storagefs.FilePluginRepo
+	extraLabels       map[string]string
+	agent             CallerAgent
+	logger            log.Logger
 }
 
 func NewPrometheusSLOGenerator(config PrometheusSLOGeneratorConfig) (*PrometheusSLOGenerator, error) {
@@ -132,7 +132,7 @@ func NewPrometheusSLOGenerator(config PrometheusSLOGeneratorConfig) (*Prometheus
 		DefaultPlugins:  defSLOPlugins,
 		SLOPluginGetter: pluginRepo,
 		ExtraPlugins:    config.CMDSLOPlugins,
-		Logger:          log.Noop,
+		Logger:          config.Logger,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("could not create application service: %w", err)
@@ -143,8 +143,10 @@ func NewPrometheusSLOGenerator(config PrometheusSLOGeneratorConfig) (*Prometheus
 		promYAMLLoader:    storageio.NewSlothPrometheusYAMLSpecLoader(pluginRepo, config.DefaultSLOPeriod),
 		kubeYAMLLoader:    storageio.NewK8sSlothPrometheusYAMLSpecLoader(pluginRepo, config.DefaultSLOPeriod),
 		openSLOYAMLLoader: storageio.NewOpenSLOYAMLSpecLoader(config.DefaultSLOPeriod),
+		pluginsRepo:       pluginRepo,
 		extraLabels:       config.ExtraLabels,
 		agent:             config.CallerAgent,
+		logger:            config.Logger,
 	}, nil
 }
 
@@ -296,4 +298,20 @@ func (p PrometheusSLOGenerator) generateFromModel(ctx context.Context, req gener
 		OriginalSource: req.SLOGroup.OriginalSource,
 		SLOResults:     result,
 	}, nil
+}
+
+// WriteResultAsPrometheusStd writes the SLO results into the writer as a Prometheus standard rules file.
+// More information in:
+//   - https://prometheus.io/docs/prometheus/latest/configuration/recording_rules/#recording-rules.
+//   - https://prometheus.io/docs/prometheus/latest/configuration/alerting_rules/.
+func (p PrometheusSLOGenerator) WriteResultAsPrometheusStd(ctx context.Context, slo model.PromSLOGroupResult, w io.Writer) error {
+	repo := storageio.NewStdPrometheusGroupedRulesYAMLRepo(w, p.logger)
+	return repo.StoreSLOs(ctx, slo)
+}
+
+// WriteResultAsK8sPrometheusOperator writes the SLO results into the writer as a Prometheus Operator CRD file.
+// More information in: https://prometheus-operator.dev/docs/api-reference/api/#monitoring.coreos.com/v1.PrometheusRule.
+func (p PrometheusSLOGenerator) WriteResultAsK8sPrometheusOperator(ctx context.Context, k8sMeta model.K8sMeta, slo model.PromSLOGroupResult, w io.Writer) error {
+	repo := storageio.NewIOWriterPrometheusOperatorYAMLRepo(w, p.logger)
+	return repo.StoreSLOs(ctx, k8sMeta, slo)
 }

@@ -17,7 +17,6 @@ import (
 
 	"github.com/slok/sloth/internal/log"
 	"github.com/slok/sloth/internal/plugin"
-	storageio "github.com/slok/sloth/internal/storage/io"
 	"github.com/slok/sloth/pkg/common/model"
 	utilsdata "github.com/slok/sloth/pkg/common/utils/data"
 	slothlib "github.com/slok/sloth/pkg/lib"
@@ -237,9 +236,26 @@ func (g generateCommand) Run(ctx context.Context, config RootConfig) error {
 	}
 
 	for _, genTarget := range genTargets {
-		err := generateSLOs(ctx, logger, *genService, genTarget, g.disableAlerts, g.disableRecordings)
+		// Generate SLOs.
+		genResult, err := genService.GenerateFromRaw(ctx, []byte(genTarget.SLOData))
 		if err != nil {
 			return fmt.Errorf("could not generate SLOs: %w", err)
+		}
+
+		// Disable data if required.
+		for i := range genResult.SLOResults {
+			if g.disableAlerts {
+				genResult.SLOResults[i].PrometheusRules.AlertRules = model.PromRuleGroup{}
+			}
+			if g.disableRecordings {
+				genResult.SLOResults[i].PrometheusRules.SLIErrorRecRules = model.PromRuleGroup{}
+				genResult.SLOResults[i].PrometheusRules.MetadataRecRules = model.PromRuleGroup{}
+			}
+		}
+
+		err = g.storeSLOs(ctx, logger, genService, *genResult, genTarget.Out)
+		if err != nil {
+			return fmt.Errorf("could not store SLOs: %w", err)
 		}
 	}
 
@@ -251,42 +267,15 @@ type generateTarget struct {
 	SLOData string
 }
 
-func generateSLOs(ctx context.Context, logger log.Logger, genService slothlib.PrometheusSLOGenerator, genTarget generateTarget, disableAlerts, disableRecordings bool) error {
-	dataB := []byte(genTarget.SLOData)
-
-	// Generate SLOs.
-	genResult, err := genService.GenerateFromRaw(ctx, dataB)
-	if err != nil {
-		return fmt.Errorf("could not generate SLOs: %w", err)
-	}
-
-	// Disable data if required.
-	for i := range genResult.SLOResults {
-		if disableAlerts {
-			genResult.SLOResults[i].PrometheusRules.AlertRules = model.PromRuleGroup{}
-		}
-		if disableRecordings {
-			genResult.SLOResults[i].PrometheusRules.SLIErrorRecRules = model.PromRuleGroup{}
-			genResult.SLOResults[i].PrometheusRules.MetadataRecRules = model.PromRuleGroup{}
-		}
-	}
-
+func (g generateCommand) storeSLOs(ctx context.Context, logger log.Logger, generator *slothlib.PrometheusSLOGenerator, genResult model.PromSLOGroupResult, out io.Writer) error {
 	// Store results.
 	switch {
 	// Standard prometheus.
 	case genResult.OriginalSource.SlothV1 != nil:
-		repo := storageio.NewStdPrometheusGroupedRulesYAMLRepo(genTarget.Out, logger)
-		err = repo.StoreSLOs(ctx, *genResult)
-		if err != nil {
-			return fmt.Errorf("could not store SLOS: %w", err)
-		}
-
-		return nil
+		return generator.WriteResultAsPrometheusStd(ctx, genResult, out)
 
 	// K8s Sloth CR.
 	case genResult.OriginalSource.K8sSlothV1 != nil:
-		repo := storageio.NewIOWriterPrometheusOperatorYAMLRepo(genTarget.Out, logger)
-
 		kmeta := model.K8sMeta{
 			Name:        genResult.OriginalSource.K8sSlothV1.Name,
 			Namespace:   genResult.OriginalSource.K8sSlothV1.Namespace,
@@ -294,22 +283,13 @@ func generateSLOs(ctx context.Context, logger log.Logger, genService slothlib.Pr
 			Annotations: genResult.OriginalSource.K8sSlothV1.Annotations,
 		}
 
-		err = repo.StoreSLOs(ctx, kmeta, *genResult)
-		if err != nil {
-			return fmt.Errorf("could not store SLOS: %w", err)
-		}
+		return generator.WriteResultAsK8sPrometheusOperator(ctx, kmeta, genResult, out)
 
 	// OpenSLO.
 	case genResult.OriginalSource.OpenSLOV1Alpha != nil:
-		repo := storageio.NewStdPrometheusGroupedRulesYAMLRepo(genTarget.Out, logger)
-		err = repo.StoreSLOs(ctx, *genResult)
-		if err != nil {
-			return fmt.Errorf("could not store SLOS: %w", err)
-		}
+		return generator.WriteResultAsPrometheusStd(ctx, genResult, out)
 
 	default:
 		return fmt.Errorf("invalid spec, could not load with any of the supported spec types")
 	}
-
-	return nil
 }

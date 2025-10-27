@@ -63,7 +63,7 @@ slos:
 		panic(err)
 	}
 
-	err = lib.WriteResultAsPrometheusStd(ctx, *slo, os.Stdout)
+	err = gen.WriteResultAsPrometheusStd(ctx, *slo, os.Stdout)
 	if err != nil {
 		panic(err)
 	}
@@ -124,7 +124,7 @@ func ExamplePrometheusSLOGenerator_GenerateFromSlothV1() {
 		panic(err)
 	}
 
-	err = lib.WriteResultAsPrometheusStd(ctx, *slo, os.Stdout)
+	err = gen.WriteResultAsPrometheusStd(ctx, *slo, os.Stdout)
 	if err != nil {
 		panic(err)
 	}
@@ -189,7 +189,7 @@ func ExamplePrometheusSLOGenerator_GenerateFromK8sV1() {
 		Name:      "sloth-slo-gen-" + sloSpec.ObjectMeta.Name,
 		Namespace: sloSpec.ObjectMeta.Namespace,
 	}
-	err = lib.WriteResultAsK8sPrometheusOperator(ctx, kmeta, *slo, os.Stdout)
+	err = gen.WriteResultAsK8sPrometheusOperator(ctx, kmeta, *slo, os.Stdout)
 	if err != nil {
 		panic(err)
 	}

@@ -60,7 +60,7 @@ slos:
 			b.Fatal(err)
 		}
 
-		err = lib.WriteResultAsPrometheusStd(ctx, *slo, io.Discard)
+		err = gen.WriteResultAsPrometheusStd(ctx, *slo, io.Discard)
 		if err != nil {
 			b.Fatal(err)
 		}

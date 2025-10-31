@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [v0.15.0] - 2025-10-31
+
 ### Added
 
 - Sloth SLO generation can be used as a Go library in `github.com/slok/sloth/pkg/lib`.
@@ -246,7 +248,8 @@
 - Support raw query based SLI.
 - Kubernetes (prometheus-operator) CRD generation support.
 
-[unreleased]: https://github.com/slok/sloth/compare/v0.14.0...HEAD
+[unreleased]: https://github.com/slok/sloth/compare/v0.15.0...HEAD
+[v0.15.0]: https://github.com/slok/sloth/compare/v0.14.0...v0.15.0
 [v0.14.0]: https://github.com/slok/sloth/compare/v0.13.0...v0.14.0
 [v0.13.0]: https://github.com/slok/sloth/compare/v0.12.0...v0.13.0
 [v0.12.0]: https://github.com/slok/sloth/compare/v0.11.0...v0.12.0

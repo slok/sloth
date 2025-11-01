@@ -2,16 +2,20 @@ package k8s
 
 import (
 	"context"
+	"fmt"
 
-	monitoringclientsetfake "github.com/prometheus-operator/prometheus-operator/pkg/client/versioned/fake"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/watch"
+	fakediscovery "k8s.io/client-go/discovery/fake"
+	fakedynamic "k8s.io/client-go/dynamic/fake"
+	k8stesting "k8s.io/client-go/testing"
 
 	"github.com/slok/sloth/internal/log"
 	"github.com/slok/sloth/pkg/common/model"
 	slothv1 "github.com/slok/sloth/pkg/kubernetes/api/sloth/v1"
 	slothclientsetfake "github.com/slok/sloth/pkg/kubernetes/gen/clientset/versioned/fake"
+	plugink8stransformv1 "github.com/slok/sloth/pkg/prometheus/plugin/k8stransform/v1"
 )
 
 type FakeApiserverRepository struct {
@@ -20,13 +24,40 @@ type FakeApiserverRepository struct {
 
 // NewFakeApiserverRepository returns a new Kubernetes Service that will fake Kubernetes operations
 // using fake clients.
-func NewFakeApiserverRepository(logger log.Logger) FakeApiserverRepository {
-	return FakeApiserverRepository{
-		ksvc: NewApiserverRepository(
-			slothclientsetfake.NewSimpleClientset(prometheusServiceLevelFakes...),
-			monitoringclientsetfake.NewSimpleClientset(),
-			logger),
+func NewFakeApiserverRepository(logger log.Logger, k8sTransformPlugin plugink8stransformv1.Plugin) (*FakeApiserverRepository, error) {
+	// Setup fake dynamic client with ConfigMap scheme.
+	// Important: When adding new k8s transform plugins we need to add their
+	// resources to the fake discovery client to be able to fake them.
+	dynamicCli := fakedynamic.NewSimpleDynamicClient(runtime.NewScheme())
+	fakeDiscovery := &fakediscovery.FakeDiscovery{Fake: &k8stesting.Fake{Resources: []*metav1.APIResourceList{
+		{
+			GroupVersion: "v1",
+			APIResources: []metav1.APIResource{
+				{Name: "configmaps", Namespaced: true, Kind: "ConfigMap"},
+			},
+		},
+		{
+			GroupVersion: "monitoring.coreos.com/v1",
+			APIResources: []metav1.APIResource{
+				{Name: "prometheusrules", Namespaced: true, Kind: "PrometheusRule"},
+			},
+		},
+	}}}
+
+	c, err := NewApiserverRepository(ApiserverRepositoryConfig{
+		SlothCli:           slothclientsetfake.NewSimpleClientset(prometheusServiceLevelFakes...),
+		DynamicCli:         dynamicCli,
+		DiscoveryCli:       fakeDiscovery,
+		K8sTransformPlugin: k8sTransformPlugin,
+		Logger:             logger,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("could not create fake k8s apiserver repository: %w", err)
 	}
+
+	return &FakeApiserverRepository{
+		ksvc: *c,
+	}, nil
 }
 
 func (r FakeApiserverRepository) ListPrometheusServiceLevels(ctx context.Context, ns string, opts metav1.ListOptions) (*slothv1.PrometheusServiceLevelList, error) {

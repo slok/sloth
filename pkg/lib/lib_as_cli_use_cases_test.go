@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/slok/sloth/internal/info"
+	"github.com/slok/sloth/internal/plugin"
 	"github.com/slok/sloth/pkg/common/model"
 	"github.com/slok/sloth/pkg/lib"
 	"github.com/stretchr/testify/assert"
@@ -20,7 +21,10 @@ import (
 // core SLO generator logic is the same (the CLI uses the public library under the hood).
 func TestLibAsCLIIntegration(t *testing.T) {
 	testWindowsFS := os.DirFS("../../test/integration/prometheus/windows")
-	testPluginsFS := os.DirFS("../../test/integration/prometheus/plugins")
+	testPluginsFS := []fs.FS{
+		os.DirFS("../../test/integration/prometheus/plugins"),
+		plugin.EmbeddedDefaultK8sTransformPlugins,
+	}
 
 	tests := map[string]struct {
 		config          func() lib.PrometheusSLOGeneratorConfig
@@ -175,7 +179,7 @@ func TestLibAsCLIIntegration(t *testing.T) {
 			config: func() lib.PrometheusSLOGeneratorConfig {
 				return lib.PrometheusSLOGeneratorConfig{
 					CallerAgent: lib.CallerAgentCLI,
-					PluginsFS:   []fs.FS{testPluginsFS},
+					PluginsFS:   testPluginsFS,
 				}
 			},
 			inFilePath:     "../../test/integration/prometheus/testdata/in-sli-plugin.yaml",
@@ -192,7 +196,7 @@ func TestLibAsCLIIntegration(t *testing.T) {
 			config: func() lib.PrometheusSLOGeneratorConfig {
 				return lib.PrometheusSLOGeneratorConfig{
 					CallerAgent: lib.CallerAgentCLI,
-					PluginsFS:   []fs.FS{testPluginsFS},
+					PluginsFS:   testPluginsFS,
 				}
 			},
 			inFilePath:     "../../test/integration/prometheus/testdata/in-slo-plugin.yaml",
@@ -209,7 +213,7 @@ func TestLibAsCLIIntegration(t *testing.T) {
 			config: func() lib.PrometheusSLOGeneratorConfig {
 				return lib.PrometheusSLOGeneratorConfig{
 					CallerAgent: lib.CallerAgentCLI,
-					PluginsFS:   []fs.FS{testPluginsFS},
+					PluginsFS:   testPluginsFS,
 				}
 			},
 			inFilePath:     "../../test/integration/prometheus/testdata/in-slo-plugin-k8s.yaml",

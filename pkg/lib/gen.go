@@ -12,6 +12,7 @@ import (
 	"github.com/slok/sloth/internal/alert"
 	"github.com/slok/sloth/internal/app/generate"
 	"github.com/slok/sloth/internal/info"
+	k8stransformpromopv1 "github.com/slok/sloth/internal/plugin/k8stransform/prom_operator_prometheus_rule_v1"
 	storagefs "github.com/slok/sloth/internal/storage/fs"
 	storageio "github.com/slok/sloth/internal/storage/io"
 	"github.com/slok/sloth/pkg/common/model"
@@ -312,6 +313,20 @@ func (p PrometheusSLOGenerator) WriteResultAsPrometheusStd(ctx context.Context, 
 // WriteResultAsK8sPrometheusOperator writes the SLO results into the writer as a Prometheus Operator CRD file.
 // More information in: https://prometheus-operator.dev/docs/api-reference/api/#monitoring.coreos.com/v1.PrometheusRule.
 func (p PrometheusSLOGenerator) WriteResultAsK8sPrometheusOperator(ctx context.Context, k8sMeta model.K8sMeta, slo model.PromSLOGroupResult, w io.Writer) error {
-	repo := storageio.NewIOWriterPrometheusOperatorYAMLRepo(w, p.logger)
+	return p.WriteResultAsK8sObjects(ctx, k8stransformpromopv1.PluginID, k8sMeta, slo, w)
+}
+
+// WriteResultAsK8sObjects writes the SLO results into the writer as Kubernetes objects using a custom K8s transformer plugin.
+func (p PrometheusSLOGenerator) WriteResultAsK8sObjects(ctx context.Context, k8sTransformerPluginID string, k8sMeta model.K8sMeta, slo model.PromSLOGroupResult, w io.Writer) error {
+	pluginFactory, err := p.pluginsRepo.GetK8sTransformPlugin(ctx, k8sTransformerPluginID)
+	if err != nil {
+		return fmt.Errorf("could not get k8s transformer plugin %q: %w", k8sTransformerPluginID, err)
+	}
+	plugin, err := pluginFactory.PluginK8sTransformV1()
+	if err != nil {
+		return fmt.Errorf("could not create k8s transformer plugin %q: %w", k8sTransformerPluginID, err)
+	}
+
+	repo := storageio.NewIOWriterK8sObjectYAMLRepo(w, plugin, p.logger)
 	return repo.StoreSLOs(ctx, k8sMeta, slo)
 }

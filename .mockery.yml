@@ -6,4 +6,4 @@ pkgname: '{{.SrcPackageName}}mock'
 template: testify
 packages:
   github.com/slok/sloth/internal/app/generate: {interfaces: {SLOPluginGetter}}
-  github.com/slok/sloth/internal/storage/fs: {interfaces: {SLIPluginLoader,SLOPluginLoader}}
+  github.com/slok/sloth/internal/storage/fs: {interfaces: {SLIPluginLoader,SLOPluginLoader, K8sTransformPluginLoader}}

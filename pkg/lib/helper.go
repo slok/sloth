@@ -12,6 +12,7 @@ import (
 	plugincoremetadatarulesv1 "github.com/slok/sloth/internal/plugin/slo/core/metadata_rules_v1"
 	plugincoreslirulesv1 "github.com/slok/sloth/internal/plugin/slo/core/sli_rules_v1"
 	plugincorevalidatev1 "github.com/slok/sloth/internal/plugin/slo/core/validate_v1"
+	pluginenginesk8stransform "github.com/slok/sloth/internal/pluginengine/k8stransform"
 	pluginenginesli "github.com/slok/sloth/internal/pluginengine/sli"
 	pluginengineslo "github.com/slok/sloth/internal/pluginengine/slo"
 	storagefs "github.com/slok/sloth/internal/storage/fs"
@@ -21,10 +22,10 @@ func createPluginLoader(ctx context.Context, logger log.Logger, pluginsFS []fs.F
 	// We should load at least the Sloth embedded default ones.
 	fss := append([]fs.FS{}, pluginsFS...)
 	if len(fss) == 0 {
-		fss = append(fss, plugin.EmbeddedDefaultSLOPlugins)
+		fss = append(fss, plugin.EmbeddedDefaultSLOPlugins, plugin.EmbeddedDefaultK8sTransformPlugins)
 	}
 
-	pluginsRepo, err := storagefs.NewFilePluginRepo(logger, strict, pluginenginesli.PluginLoader, pluginengineslo.PluginLoader, fss...)
+	pluginsRepo, err := storagefs.NewFilePluginRepo(logger, strict, pluginenginesli.PluginLoader, pluginengineslo.PluginLoader, pluginenginesk8stransform.PluginLoader, fss...)
 	if err != nil {
 		return nil, fmt.Errorf("could not create file SLO and SLI plugins repository: %w", err)
 	}

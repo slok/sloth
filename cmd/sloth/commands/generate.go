@@ -17,6 +17,7 @@ import (
 
 	"github.com/slok/sloth/internal/log"
 	"github.com/slok/sloth/internal/plugin"
+	k8stransformpromopv1 "github.com/slok/sloth/internal/plugin/k8stransform/prom_operator_prometheus_rule_v1"
 	"github.com/slok/sloth/pkg/common/model"
 	utilsdata "github.com/slok/sloth/pkg/common/utils/data"
 	slothlib "github.com/slok/sloth/pkg/lib"
@@ -35,6 +36,7 @@ type generateCommand struct {
 	sloPeriod                string
 	sloPlugins               []string
 	disableDefaultSLOPlugins bool
+	k8sTransformPluginID     string
 }
 
 // NewGenerateCommand returns the generate command.
@@ -49,11 +51,12 @@ func NewGenerateCommand(app *kingpin.Application) Command {
 	cmd.Flag("extra-labels", "Extra labels that will be added to all the generated Prometheus rules ('key=value' form, can be repeated).").Short('l').StringMapVar(&c.extraLabels)
 	cmd.Flag("disable-recordings", "Disables recording rules generation.").BoolVar(&c.disableRecordings)
 	cmd.Flag("disable-alerts", "Disables alert rules generation.").BoolVar(&c.disableAlerts)
-	cmd.Flag("plugins-path", "The path to SLI and SLO plugins (can be repeated).").Short('p').StringsVar(&c.pluginsPaths)
+	cmd.Flag("plugins-path", "The path to any of the sloth compatible plugin types (can be repeated).").Short('p').StringsVar(&c.pluginsPaths)
 	cmd.Flag("slo-period-windows-path", "The directory path to custom SLO period windows catalog (replaces default ones).").StringVar(&c.sloPeriodWindowsPath)
 	cmd.Flag("default-slo-period", "The default SLO period windows to be used for the SLOs.").Default("30d").StringVar(&c.sloPeriod)
 	cmd.Flag("slo-plugins", `SLO plugins chain declaration in JSON format '{"id": "foo","priority": 0,"config": "{}"}' (Can be repeated).`).Short('s').StringsVar(&c.sloPlugins)
 	cmd.Flag("disable-default-slo-plugins", `Disables the default SLO plugins, normally used along with custom SLO plugins to fully customize Sloth behavior`).BoolVar(&c.disableDefaultSLOPlugins)
+	cmd.Flag("k8s-transform-plugin-id", "The ID of the plugin that will transform generated SLOs into k8s objects.").Default(k8stransformpromopv1.PluginID).StringVar(&c.k8sTransformPluginID)
 
 	return c
 }
@@ -211,7 +214,7 @@ func (g generateCommand) Run(ctx context.Context, config RootConfig) error {
 		}
 	}
 
-	pluginsFSs := []fs.FS{plugin.EmbeddedDefaultSLOPlugins}
+	pluginsFSs := []fs.FS{plugin.EmbeddedDefaultSLOPlugins, plugin.EmbeddedDefaultK8sTransformPlugins}
 	for _, p := range g.pluginsPaths {
 		pluginsFSs = append(pluginsFSs, os.DirFS(p))
 	}

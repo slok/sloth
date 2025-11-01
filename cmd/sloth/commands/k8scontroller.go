@@ -14,7 +14,6 @@ import (
 
 	"github.com/alecthomas/kingpin/v2"
 	"github.com/oklog/run"
-	monitoringclientset "github.com/prometheus-operator/prometheus-operator/pkg/client/versioned"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	prometheusmodel "github.com/prometheus/common/model"
 	"github.com/slok/reload"
@@ -24,6 +23,8 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/watch"
+	"k8s.io/client-go/discovery"
+	"k8s.io/client-go/dynamic"
 	_ "k8s.io/client-go/plugin/pkg/client/auth" // Init all available Kube client auth systems.
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
@@ -34,6 +35,8 @@ import (
 	"github.com/slok/sloth/internal/app/kubecontroller"
 	"github.com/slok/sloth/internal/log"
 	"github.com/slok/sloth/internal/plugin"
+	k8stransformpromopv1 "github.com/slok/sloth/internal/plugin/k8stransform/prom_operator_prometheus_rule_v1"
+	pluginenginesk8stransform "github.com/slok/sloth/internal/pluginengine/k8stransform"
 	pluginenginesli "github.com/slok/sloth/internal/pluginengine/sli"
 	pluginengineslo "github.com/slok/sloth/internal/pluginengine/slo"
 	storagefs "github.com/slok/sloth/internal/storage/fs"
@@ -74,6 +77,7 @@ type kubeControllerCommand struct {
 	sloPeriod                string
 	sloPlugins               []string
 	disableDefaultSLOPlugins bool
+	k8sTransformPluginID     string
 }
 
 // NewKubeControllerCommand returns the Kubernetes controller command.
@@ -102,6 +106,7 @@ func NewKubeControllerCommand(app *kingpin.Application) Command {
 	cmd.Flag("default-slo-period", "The default SLO period windows to be used for the SLOs.").Default("30d").StringVar(&c.sloPeriod)
 	cmd.Flag("slo-plugins", `SLO plugins chain declaration in JSON format '{"id": "foo","priority": 0,"config": "{}"}' (Can be repeated).`).Short('s').StringsVar(&c.sloPlugins)
 	cmd.Flag("disable-default-slo-plugins", `Disables the default SLO plugins, normally used along with custom SLO plugins to fully customize Sloth behavior`).BoolVar(&c.disableDefaultSLOPlugins)
+	cmd.Flag("k8s-transform-plugin-id", "The ID of the plugin that will transform generated SLOs into k8s objects.").Default(k8stransformpromopv1.PluginID).StringVar(&c.k8sTransformPluginID)
 
 	return c
 }
@@ -149,7 +154,7 @@ func (k kubeControllerCommand) Run(ctx context.Context, config RootConfig) error
 	}
 
 	// Kubernetes services.
-	kuberepo, err := k.newKubernetesService(ctx, config)
+	kuberepo, err := k.newKubernetesService(ctx, config, pluginsRepo)
 	if err != nil {
 		return fmt.Errorf("could not create Kubernetes service: %w", err)
 	}
@@ -390,12 +395,22 @@ type kubernetesService interface {
 	StoreSLOs(ctx context.Context, kmeta model.K8sMeta, slos model.PromSLOGroupResult) error
 }
 
-func (k kubeControllerCommand) newKubernetesService(ctx context.Context, config RootConfig) (kubernetesService, error) {
+func (k kubeControllerCommand) newKubernetesService(ctx context.Context, config RootConfig, pluginsRepo *storagefs.FilePluginRepo) (kubernetesService, error) {
 	config.Logger.Infof("Loading Kubernetes configuration...")
+
+	// Get k8s transform plugin.
+	pluginFact, err := pluginsRepo.GetK8sTransformPlugin(ctx, k.k8sTransformPluginID)
+	if err != nil {
+		return nil, fmt.Errorf("could not get k8s transform plugin %q: %w", k.k8sTransformPluginID, err)
+	}
+	plugin, err := pluginFact.PluginK8sTransformV1()
+	if err != nil {
+		return nil, fmt.Errorf("could not create k8s transform plugin %q: %w", k.k8sTransformPluginID, err)
+	}
 
 	// Fake mode.
 	if k.runMode == controllerModeFake {
-		return storagek8s.NewFakeApiserverRepository(config.Logger), nil
+		return storagek8s.NewFakeApiserverRepository(config.Logger, plugin)
 	}
 
 	// Load Kubernetes clients.
@@ -409,18 +424,34 @@ func (k kubeControllerCommand) newKubernetesService(ctx context.Context, config 
 		return nil, fmt.Errorf("could not create Kubernetes sloth client: %w", err)
 	}
 
-	kubeMonitoringCli, err := monitoringclientset.NewForConfig(kubeCfg)
+	// Get required clients.
+	dynamicCli, err := dynamic.NewForConfig(kubeCfg)
 	if err != nil {
-		return nil, fmt.Errorf("could not create Kubernetes monitoring (prometheus-operator) client: %w", err)
+		return nil, fmt.Errorf("could not create Kubernetes dynamic client: %w", err)
+	}
+	discoveryCli, err := discovery.NewDiscoveryClientForConfig(kubeCfg)
+	if err != nil {
+		return nil, fmt.Errorf("could not create Kubernetes discovery client: %w", err)
+	}
+
+	apiserverRepoConfig := storagek8s.ApiserverRepositoryConfig{
+		SlothCli:           kubeSlothcli,
+		Logger:             config.Logger,
+		DynamicCli:         dynamicCli,
+		DiscoveryCli:       discoveryCli,
+		K8sTransformPlugin: plugin,
 	}
 
 	// Create Kubernetes service.
-	kuberepo := storagek8s.NewApiserverRepository(kubeSlothcli, kubeMonitoringCli, config.Logger)
+	kuberepo, err := storagek8s.NewApiserverRepository(apiserverRepoConfig)
+	if err != nil {
+		return nil, fmt.Errorf("could not create Kubernetes API server repository: %w", err)
+	}
 
 	// Dry run mode.
 	if k.runMode == controllerModeDryRun {
 		config.Logger.Warningf("Kubernetes in dry run mode")
-		return storagek8s.NewDryRunApiserverRepository(kuberepo, config.Logger), nil
+		return storagek8s.NewDryRunApiserverRepository(*kuberepo, config.Logger), nil
 	}
 
 	// Default mode.
@@ -491,12 +522,13 @@ func (g generatorLogger) WithCtxValues(ctx context.Context) log.Logger {
 func createPluginLoader(ctx context.Context, logger log.Logger, paths []string) (*storagefs.FilePluginRepo, error) {
 	fss := []fs.FS{
 		plugin.EmbeddedDefaultSLOPlugins,
+		plugin.EmbeddedDefaultK8sTransformPlugins,
 	}
 	for _, p := range paths {
 		fss = append(fss, os.DirFS(p))
 	}
 
-	pluginsRepo, err := storagefs.NewFilePluginRepo(logger, false, pluginenginesli.PluginLoader, pluginengineslo.PluginLoader, fss...)
+	pluginsRepo, err := storagefs.NewFilePluginRepo(logger, false, pluginenginesli.PluginLoader, pluginengineslo.PluginLoader, pluginenginesk8stransform.PluginLoader, fss...)
 	if err != nil {
 		return nil, fmt.Errorf("could not create file SLO and SLI plugins repository: %w", err)
 	}

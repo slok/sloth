@@ -1,0 +1,30 @@
+
+{{define "app_slos"}}
+<!DOCTYPE html>
+<html lang="en">
+<body>
+{{template "shared_head" .}}
+{{template "shared_nav" .}}
+<main class="container">
+<h1>SLOs</h1>
+<div class="grid">
+    <input
+    type="search"
+    name="slo-search"
+    value="{{ .Data.SLOSearchInput }}"
+    placeholder="Search"
+    aria-label="Search"
+    hx-get="{{ .Data.SLOSearchURL }}"
+    hx-trigger="change, keyup changed delay:500ms, search"
+    hx-target="#slo-list"
+    hx-include="this"
+    />
+    <div></div>
+    <div></div>
+</div>
+{{template "app_slos_comp_slo_list" .}}
+</main>
+</body>
+{{template "shared_footer" .}}
+</html>
+{{end}}

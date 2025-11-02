@@ -1,0 +1,16 @@
+
+{{define "app_slo"}}
+<!DOCTYPE html>
+<html lang="en">
+<body>
+{{template "shared_head" .}}
+{{template "shared_nav" .}}
+<main class="container">
+<h1> <a href="{{.Data.SLOData.ServiceURL}}">{{.Data.SLOData.ServiceID}}</a> / {{.Data.SLOData.Name}}</h1>
+<br />
+{{template "app_slo_comp_slo_data" .}}
+</main>
+</body>
+{{template "shared_footer" .}}
+</html>
+{{end}}

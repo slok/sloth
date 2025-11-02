@@ -1,0 +1,24 @@
+{{define "shared_head"}}
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Sloth</title>
+
+    
+    <link rel="icon" href="{{.Common.ImagePath}}/favicon/favicon-32x32.png" type="image/png" sizes="32x32">
+    <link rel="apple-touch-icon" href="{{.Common.ImagePath}}/favicon/apple-touch-icon.png" type="image/png" sizes="180x180">
+
+    <script src="https://unpkg.com/htmx.org@^2"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
+    <link rel="stylesheet" href="https://unpkg.com/lucide-static@latest/font/lucide.css" />
+    <link rel="stylesheet" href="{{.Common.CSSPath}}/main.css" />
+
+    <link rel="stylesheet" href="https://unpkg.com/uplot@1/dist/uPlot.min.css">
+    <script src="https://unpkg.com/uplot@1/dist/uPlot.iife.min.js"></script>
+    
+    <script type="text/javascript" src="{{.Common.JSPath}}/main.js"></script>
+</head>
+{{end}}

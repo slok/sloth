@@ -7,3 +7,6 @@ template: testify
 packages:
   github.com/slok/sloth/internal/app/generate: {interfaces: {SLOPluginGetter}}
   github.com/slok/sloth/internal/storage/fs: {interfaces: {SLIPluginLoader,SLOPluginLoader, K8sTransformPluginLoader}}
+  github.com/slok/sloth/internal/http/backend/storage: {interfaces: {SLOGetter, ServiceGetter}}
+  github.com/slok/sloth/internal/http/backend/storage/prometheus: {interfaces: {PrometheusAPIClient}}
+  github.com/slok/sloth/internal/http/ui: {interfaces: {ServiceApp}}

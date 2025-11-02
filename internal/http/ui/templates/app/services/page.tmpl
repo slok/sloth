@@ -1,0 +1,30 @@
+
+{{define "app_services"}}
+<!DOCTYPE html>
+<html lang="en">
+<body>
+{{template "shared_head" .}}
+{{template "shared_nav" .}}
+<main class="container">
+<h1>Services</h1>
+<div class="grid">
+    <input
+    type="search"
+    name="service-search"
+    value="{{ .Data.ServiceSearchInput }}"
+    placeholder="Search"
+    aria-label="Search"
+    hx-get="{{ .Data.ServiceSearchURL }}"
+    hx-trigger="change, keyup changed delay:500ms, search"
+    hx-target="#services-list"
+    hx-include="this"
+    />
+    <div></div>
+    <div></div>
+</div>
+{{template "app_services_comp_service_list" .}}
+</main>
+</body>
+{{template "shared_footer" .}}
+</html>
+{{end}}

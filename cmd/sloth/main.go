@@ -24,12 +24,14 @@ func Run(ctx context.Context, args []string, stdin io.Reader, stdout, stderr io.
 	// Setup commands (registers flags).
 	generateCmd := commands.NewGenerateCommand(app)
 	kubeCtrlCmd := commands.NewKubeControllerCommand(app)
+	serverCmd := commands.NewServerCommand(app)
 	validateCmd := commands.NewValidateCommand(app)
 	versionCmd := commands.NewVersionCommand(app)
 
 	cmds := map[string]commands.Command{
 		generateCmd.Name(): generateCmd,
 		kubeCtrlCmd.Name(): kubeCtrlCmd,
+		serverCmd.Name():   serverCmd,
 		validateCmd.Name(): validateCmd,
 		versionCmd.Name():  versionCmd,
 	}

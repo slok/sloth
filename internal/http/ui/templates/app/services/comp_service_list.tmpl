@@ -1,0 +1,62 @@
+{{define "app_services_comp_service_list"}}
+
+<div id="services-list">
+
+{{ if not .Data.Services }}
+    <p>No services found.</p>
+{{ else }}
+    <table>
+    <thead>
+        <tr>
+        <th scope="col">Service</th>
+        <th scope="col">Status</th>
+        </tr>
+    </thead>
+    <tbody>
+        {{range .Data.Services}}
+        <tr>
+        <td><a href="{{.DetailsURL}}">{{.Name}}</a></td>
+        <td>
+        {{ if .HasCritical }}
+        <div class="icon-triangle-alert is-critical"></div>
+        {{ else if .HasWarning }}
+        <div class="icon-triangle-alert is-warning"></div>
+        {{ else }}
+        <div class="icon-circle-check is-ok"></div>
+        {{ end }}
+        </td>
+        </tr>
+        {{end}}
+    </tbody>
+     <tfoot>
+        <tr>
+            <td colspan="6">
+                <div class="pagination grid">
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <button class="secondary" {{ if not .Data.ServicePagination.HasPrevious }} disabled {{ end }}
+                       hx-get="{{ .Data.ServicePagination.PrevURL }}"
+                       hx-target="#services-list"
+                       hx-swap="innerHTML show:window:top">
+                    << Previous
+                    </button>
+                    <button class="secondary" {{ if not .Data.ServicePagination.HasNext }} disabled {{ end }}
+                       hx-get="{{ .Data.ServicePagination.NextURL }}"
+                       hx-target="#services-list"
+                       hx-swap="innerHTML show:window:top">
+                    Next >>
+                    </button>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                </div>
+            </td>
+        </tr>
+    </tfoot>
+    </table>
+{{ end }}
+</div>
+{{ end }}

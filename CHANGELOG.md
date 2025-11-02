@@ -7,10 +7,11 @@
 - K8s transformer plugins to be able to customize the k8s resulting objects without depending on current Prometheys operator Rule CR.
 - `sloth.dev/k8stransform/prom-operator-prometheus-rule/v1` K8s transformer plugin.
 - Users can now create multiple K8s objects as the output of the SLO generated rules.
+- Sloth lib support for K8s transformer plugins using `WriteResultAsK8sObjects`.
 
 ### Changed
 
-- By default sloth now uses a dynamic `unstructured` plugin (`sloth.dev/k8stransform/prom-operator-prometheus-rule/v1`) to create and manager the prometheus operator Rule K8s CRs.
+- Sloth now uses a dynamic `unstructured` plugin (`sloth.dev/k8stransform/prom-operator-prometheus-rule/v1`) to create and manage the prometheus operator Rule K8s CRs.
 
 ## [v0.15.0] - 2025-10-31
 

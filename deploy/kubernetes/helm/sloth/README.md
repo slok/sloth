@@ -1,6 +1,6 @@
 # sloth
 
-![Version: 0.14.0](https://img.shields.io/badge/Version-0.14.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 0.14.0](https://img.shields.io/badge/AppVersion-0.14.0-informational?style=flat-square)
+![Version: 0.15.0](https://img.shields.io/badge/Version-0.15.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 0.15.0](https://img.shields.io/badge/AppVersion-0.15.0-informational?style=flat-square)
 
 Base chart for Sloth.
 
@@ -22,7 +22,7 @@ helm repo update
 After you've added the repo you can install the chart.
 
 ```shell
-helm upgrade --install sloth sloth/sloth --version 0.14.0
+helm upgrade --install sloth sloth/sloth --version 0.15.0
 ```
 
 ## Requirements
@@ -48,7 +48,7 @@ Kubernetes: `>= 1.19.0-0`
 | global.imageRegistry | string | `""` |  |
 | image.registry | string | `"ghcr.io"` |  |
 | image.repository | string | `"slok/sloth"` |  |
-| image.tag | string | `"v0.14.0"` |  |
+| image.tag | string | `"v0.15.0"` |  |
 | imagePullSecrets | list | `[]` |  |
 | labels | object | `{}` |  |
 | metrics.enabled | bool | `true` |  |

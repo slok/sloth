@@ -286,7 +286,7 @@ func (g generateCommand) storeSLOs(ctx context.Context, logger log.Logger, gener
 			Annotations: genResult.OriginalSource.K8sSlothV1.Annotations,
 		}
 
-		return generator.WriteResultAsK8sPrometheusOperator(ctx, kmeta, genResult, out)
+		return generator.WriteResultAsK8sObjects(ctx, g.k8sTransformPluginID, kmeta, genResult, out)
 
 	// OpenSLO.
 	case genResult.OriginalSource.OpenSLOV1Alpha != nil:

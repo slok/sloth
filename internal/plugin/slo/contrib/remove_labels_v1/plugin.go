@@ -34,21 +34,21 @@ func NewPlugin(configData json.RawMessage, _ pluginslov1.AppUtils) (pluginslov1.
 }
 
 func (p plugin) ProcessSLO(ctx context.Context, request *pluginslov1.Request, result *pluginslov1.Result) error {
-	preserveLabels := map[string]bool{"sloth_window": true}
+	preserveLabels := map[string]struct{}{"sloth_window": struct{}{}}
 	for k := range conventions.GetSLOIDPromLabels(request.SLO) {
-		preserveLabels[k] = true
+		preserveLabels[k] = struct{}{}
 	}
 	for _, k := range p.config.PreserveLabels {
-		preserveLabels[k] = true
+		preserveLabels[k] = struct{}{}
 	}
 
-	skipMetrics := map[string]bool{conventions.PromMetaSLOInfoMetric: true}
+	skipMetrics := map[string]struct{}{conventions.PromMetaSLOInfoMetric: struct{}{}}
 	for _, k := range p.config.SkipMetrics {
-		skipMetrics[k] = true
+		skipMetrics[k] = struct{}{}
 	}
 
 	for i := range result.SLORules.SLIErrorRecRules.Rules {
-		if skipMetrics[result.SLORules.SLIErrorRecRules.Rules[i].Record] {
+		if _, ok := skipMetrics[result.SLORules.SLIErrorRecRules.Rules[i].Record]; ok {
 			continue
 		}
 		removeLabels(result.SLORules.SLIErrorRecRules.Rules[i].Labels, preserveLabels)
@@ -56,7 +56,7 @@ func (p plugin) ProcessSLO(ctx context.Context, request *pluginslov1.Request, re
 
 	delete(preserveLabels, "sloth_window")
 	for i := range result.SLORules.MetadataRecRules.Rules {
-		if skipMetrics[result.SLORules.MetadataRecRules.Rules[i].Record] {
+		if _, ok := skipMetrics[result.SLORules.MetadataRecRules.Rules[i].Record]; ok {
 			continue
 		}
 		removeLabels(result.SLORules.MetadataRecRules.Rules[i].Labels, preserveLabels)
@@ -65,9 +65,9 @@ func (p plugin) ProcessSLO(ctx context.Context, request *pluginslov1.Request, re
 	return nil
 }
 
-func removeLabels(labels map[string]string, preserveLabels map[string]bool) {
+func removeLabels(labels map[string]string, preserveLabels map[string]struct{}) {
 	for k := range labels {
-		if !preserveLabels[k] {
+		if _, ok := preserveLabels[k]; !ok {
 			delete(labels, k)
 		}
 	}

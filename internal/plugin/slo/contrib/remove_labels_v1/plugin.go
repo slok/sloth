@@ -34,7 +34,7 @@ func NewPlugin(configData json.RawMessage, _ pluginslov1.AppUtils) (pluginslov1.
 }
 
 func (p plugin) ProcessSLO(ctx context.Context, request *pluginslov1.Request, result *pluginslov1.Result) error {
-	preserveLabels := map[string]struct{}{"sloth_window": struct{}{}}
+	preserveLabels := map[string]struct{}{"sloth_window": {}}
 	for k := range conventions.GetSLOIDPromLabels(request.SLO) {
 		preserveLabels[k] = struct{}{}
 	}
@@ -42,7 +42,7 @@ func (p plugin) ProcessSLO(ctx context.Context, request *pluginslov1.Request, re
 		preserveLabels[k] = struct{}{}
 	}
 
-	skipMetrics := map[string]struct{}{conventions.PromMetaSLOInfoMetric: struct{}{}}
+	skipMetrics := map[string]struct{}{conventions.PromMetaSLOInfoMetric: {}}
 	for _, k := range p.config.SkipMetrics {
 		skipMetrics[k] = struct{}{}
 	}

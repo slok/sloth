@@ -51,7 +51,7 @@ func (p plugin) ProcessSLO(ctx context.Context, request *pluginslov1.Request, re
 		if skipMetrics[result.SLORules.SLIErrorRecRules.Rules[i].Record] {
 			continue
 		}
-		result.SLORules.SLIErrorRecRules.Rules[i].Labels = removeLabels(result.SLORules.SLIErrorRecRules.Rules[i].Labels, preserveLabels)
+		removeLabels(result.SLORules.SLIErrorRecRules.Rules[i].Labels, preserveLabels)
 	}
 
 	delete(preserveLabels, "sloth_window")
@@ -59,18 +59,16 @@ func (p plugin) ProcessSLO(ctx context.Context, request *pluginslov1.Request, re
 		if skipMetrics[result.SLORules.MetadataRecRules.Rules[i].Record] {
 			continue
 		}
-		result.SLORules.MetadataRecRules.Rules[i].Labels = removeLabels(result.SLORules.MetadataRecRules.Rules[i].Labels, preserveLabels)
+		removeLabels(result.SLORules.MetadataRecRules.Rules[i].Labels, preserveLabels)
 	}
 
 	return nil
 }
 
-func removeLabels(existingLabels map[string]string, preserveLabels map[string]bool) map[string]string {
-	newLabels := map[string]string{}
-	for k, v := range existingLabels {
-		if preserveLabels[k] {
-			newLabels[k] = v
+func removeLabels(labels map[string]string, preserveLabels map[string]bool) {
+	for k := range labels {
+		if !preserveLabels[k] {
+			delete(labels, k)
 		}
 	}
-	return newLabels
 }

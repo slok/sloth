@@ -9,7 +9,7 @@ jobs:
     # Execute the checks inside the container instead the VM.
     container: golangci/golangci-lint:v2.4.0-alpine
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - run: |
           # We need this go flag because it started to error after golangci-lint is using Go 1.21.
           # TODO(slok): Remove it on next (>1.54.1) golangci-lint upgrade to check if this problem has gone.
@@ -20,7 +20,7 @@ jobs:
     name: Unit test
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - uses: actions/setup-go@v6
         with:
           go-version-file: go.mod
@@ -35,7 +35,7 @@ jobs:
     name: Helm chart test
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - uses: actions/setup-go@v6
         with:
           go-version-file: go.mod
@@ -52,7 +52,7 @@ jobs:
     name: Integration test CLI
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - uses: actions/setup-go@v6
         with:
           go-version-file: go.mod
@@ -74,7 +74,7 @@ jobs:
       matrix:
         kubernetes: [1.31.12, 1.32.8, 1.33.4, 1.34.0]
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - uses: actions/setup-go@v6
         with:
           go-version-file: go.mod
@@ -124,7 +124,7 @@ jobs:
     name: Release images
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - name: Docker login
         run: docker login ghcr.io -u ${{ github.actor }} -p "${{ secrets.GITHUB_TOKEN }}"
       - name: Build and publish docker images
@@ -147,7 +147,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - run: echo "VERSION=${GITHUB_REF#refs/*/}" >> ${GITHUB_ENV} # Sets VERSION env var.
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - name: Docker login
         run: docker login ghcr.io -u ${{ github.actor }} -p "${{ secrets.GITHUB_TOKEN }}"
       - name: Build and publish docker images
@@ -168,7 +168,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - run: echo "VERSION=${GITHUB_REF#refs/*/}" >> ${GITHUB_ENV} # Sets VERSION env var.
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - name: Build binaries
         run: |
           mkdir -p ./bin

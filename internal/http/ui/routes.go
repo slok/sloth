@@ -26,7 +26,7 @@ func (u ui) registerRoutes() {
 	u.wrapGet(URLPathAppPrefix+"/services", u.handlerSelectService())
 	u.wrapGet(URLPathAppPrefix+"/slos", u.handlerSelectSLO())
 	u.wrapGet(URLPathAppPrefix+fmt.Sprintf("/services/{%s:%s}", URLParamServiceID, conventions.NameRegexpStr), u.handlerServiceDetails())
-	u.wrapGet(URLPathAppPrefix+fmt.Sprintf("/slos/{%s:%s}", URLParamSLOID, conventions.NameRegexpStr), u.handlerSLODetails())
+	u.wrapGet(URLPathAppPrefix+fmt.Sprintf("/slos/{%s:%s}", URLParamSLOID, ".*"), u.handlerSLODetails())
 }
 
 func (u ui) wrapGet(pattern string, h http.HandlerFunc) {

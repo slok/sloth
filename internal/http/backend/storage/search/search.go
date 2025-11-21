@@ -71,8 +71,14 @@ func (s SearchRepositoryWrapper) ListSLOInstantDetailsServiceBySLOSearch(ctx con
 	indexed := map[string]*storage.SLOInstantDetails{}
 	sloIDs := []string{}
 	for _, slo := range slos {
-		indexed[slo.SLO.ID] = &slo
-		sloIDs = append(sloIDs, slo.SLO.ID)
+		id := slo.SLO.ID
+		// Add group label values to the searchable ID.
+		for _, v := range slo.SLO.GroupLabels {
+			id += v
+		}
+
+		indexed[id] = &slo
+		sloIDs = append(sloIDs, id)
 	}
 
 	matches := find(sloSearchInput, sloIDs)
@@ -101,8 +107,14 @@ func (s SearchRepositoryWrapper) ListSLOInstantDetailsBySLOSearch(ctx context.Co
 	indexed := map[string]*storage.SLOInstantDetails{}
 	sloIDs := []string{}
 	for _, slo := range slos {
-		indexed[slo.SLO.ID] = &slo
-		sloIDs = append(sloIDs, slo.SLO.ID)
+		id := slo.SLO.ID
+		// Add group label values to the searchable ID.
+		for _, v := range slo.SLO.GroupLabels {
+			id += v
+		}
+
+		indexed[id] = &slo
+		sloIDs = append(sloIDs, id)
 	}
 
 	matches := find(sloSearchInput, sloIDs)

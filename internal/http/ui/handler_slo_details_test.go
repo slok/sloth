@@ -30,10 +30,16 @@ func TestHandlerSLODetails(t *testing.T) {
 				m.ServiceApp.On("GetSLO", mock.Anything, expReq1).Return(&app.GetSLOResponse{
 					SLO: app.RealTimeSLODetails{
 						SLO: model.SLO{
-							ID:        "slo-1",
+							ID:        "slo-1:test-grouped",
+							SlothID:   "slo-1",
 							Name:      "SLO 1",
 							ServiceID: "svc-1",
 							Objective: 99.9,
+							IsGrouped: true,
+							GroupLabels: map[string]string{
+								"operation": "create",
+								"type":      "something",
+							},
 						},
 						Budget: model.SLOBudgetDetails{
 							SLOID:                     "slo-1",
@@ -88,6 +94,9 @@ func TestHandlerSLODetails(t *testing.T) {
 				`<!DOCTYPE html>`,               // We rendered a full page.
 				`<div class="container"> <nav>`, // We have the menu.
 				`<h1> <a href="/u/app/services/svc-1">svc-1</a> / SLO 1</h1>`, // We have the SLO title with service link.
+
+				// Grouped SLO info.
+				`<div><mark>operation: <strong>create</strong></mark> <span> </span><mark>type: <strong>something</strong></mark> <span> </span></div>`,
 
 				// Stats.
 				`<div class="grid stats" hx-trigger="every 30s" hx-get="/u/app/slos/slo-1?component=slo-stats" hx-swap="outerHTML">`,                                                           // Autoreload status with HTMX.

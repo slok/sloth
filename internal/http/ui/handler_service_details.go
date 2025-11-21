@@ -22,6 +22,7 @@ func (u ui) handlerServiceDetails() http.HandlerFunc {
 		DetailsURL                   string
 		CriticalAlertName            string
 		WarningAlertName             string
+		GroupLabels                  map[string]string
 	}
 
 	type tplData struct {
@@ -50,6 +51,7 @@ func (u ui) handlerServiceDetails() http.HandlerFunc {
 				DetailsURL:                   urls.AppURL("/slos/" + slo.SLO.ID),
 				CriticalAlertName:            critAlert,
 				WarningAlertName:             warnAlert,
+				GroupLabels:                  slo.SLO.GroupLabels,
 			})
 		}
 		return slos

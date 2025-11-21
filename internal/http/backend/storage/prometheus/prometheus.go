@@ -3,6 +3,7 @@ package prometheus
 import (
 	"context"
 	"fmt"
+	"math"
 	"slices"
 	"strings"
 	"sync"
@@ -16,6 +17,7 @@ import (
 	"github.com/slok/sloth/internal/log"
 	"github.com/slok/sloth/pkg/common/conventions"
 	commonerrors "github.com/slok/sloth/pkg/common/errors"
+	"github.com/slok/sloth/pkg/common/utils/prometheus"
 )
 
 // PrometheusAPIClient is an interface that defines the methods we use from the Prometheus client.
@@ -108,6 +110,12 @@ func (r *Repository) ListAllServiceAndAlerts(ctx context.Context) ([]storage.Ser
 	for serviceID, slos := range r.cache.SLODetailsByService {
 		sloAlertsList := []model.SLOAlerts{}
 		for _, slo := range slos {
+			// Skip SLOs without budget details (probably invalid SLOs).
+			bd := r.cache.BudgetDetailsBySLO[slo.ID]
+			if math.IsNaN(bd.BurnedBudgetWindowPercent) {
+				continue
+			}
+
 			alerts, ok := r.cache.SLOAlertsBySLO[slo.ID]
 			if ok {
 				// TODO: Deep copy alerts.
@@ -135,9 +143,14 @@ func (r *Repository) ListServiceAndAlertsByServiceSearch(ctx context.Context, se
 func (r *Repository) ListSLOInstantDetailsService(ctx context.Context, serviceID string) ([]storage.SLOInstantDetails, error) {
 	details := []storage.SLOInstantDetails{}
 	for _, slo := range r.cache.SLODetailsByService[serviceID] {
+		// Skip SLOs without budget details (probably invalid SLOs).
+		bd := r.cache.BudgetDetailsBySLO[slo.ID]
+		if math.IsNaN(bd.BurnedBudgetWindowPercent) {
+			continue
+		}
 		details = append(details, storage.SLOInstantDetails{
 			SLO:           slo,
-			BudgetDetails: r.cache.BudgetDetailsBySLO[slo.ID],
+			BudgetDetails: bd,
 			Alerts:        r.cache.SLOAlertsBySLO[slo.ID],
 		})
 	}
@@ -155,9 +168,15 @@ func (r *Repository) ListSLOInstantDetails(ctx context.Context) ([]storage.SLOIn
 	details := []storage.SLOInstantDetails{}
 	for _, slos := range r.cache.SLODetailsByService {
 		for _, slo := range slos {
+			// Skip SLOs without budget details (probably invalid SLOs).
+			bd := r.cache.BudgetDetailsBySLO[slo.ID]
+			if math.IsNaN(bd.BurnedBudgetWindowPercent) {
+				continue
+			}
+
 			details = append(details, storage.SLOInstantDetails{
 				SLO:           slo,
-				BudgetDetails: r.cache.BudgetDetailsBySLO[slo.ID],
+				BudgetDetails: bd,
 				Alerts:        r.cache.SLOAlertsBySLO[slo.ID],
 			})
 		}
@@ -191,8 +210,14 @@ func (r *Repository) GetSLOInstantDetails(ctx context.Context, sloID string) (*s
 }
 
 func (r *Repository) GetSLIAvailabilityInRange(ctx context.Context, sloID string, from, to time.Time, step time.Duration) ([]model.DataPoint, error) {
+	// SLI windows are shared by grouped SLOs.
+	slothID, _, err := model.SLOGroupLabelsIDUnmarshal(sloID)
+	if err != nil {
+		return nil, fmt.Errorf("could not unmarshal slo grouping labels id: %w", err)
+	}
+
 	// Get the SLI shortest window for the SLO.
-	windows, ok := r.cache.SLOSLIWindows[sloID]
+	windows, ok := r.cache.SLOSLIWindows[slothID]
 	if !ok || len(windows) == 0 {
 		// Most probably that does not exist yet.
 		r.logger.Warningf("Could not find SLI windows for SLO ID %q", sloID)
@@ -206,7 +231,13 @@ func (r *Repository) GetSLIAvailabilityInRange(ctx context.Context, sloID string
 func (r *Repository) GetSLIAvailabilityInRangeAutoStep(ctx context.Context, sloID string, from, to time.Time) ([]model.DataPoint, error) {
 	const autoSteps = 120 // Aim to have at least 120 data points per range.
 
-	windows, ok := r.cache.SLOSLIWindows[sloID]
+	// SLI windows are shared by grouped SLOs.
+	slothID, _, err := model.SLOGroupLabelsIDUnmarshal(sloID)
+	if err != nil {
+		return nil, fmt.Errorf("could not unmarshal slo grouping labels id: %w", err)
+	}
+
+	windows, ok := r.cache.SLOSLIWindows[slothID]
 	if !ok || len(windows) == 0 {
 		// Most probably that does not exist yet.
 		r.logger.Warningf("Could not find SLI windows for SLO ID %q", sloID)
@@ -230,7 +261,16 @@ func (r *Repository) GetSLIAvailabilityInRangeAutoStep(ctx context.Context, sloI
 }
 
 func (r *Repository) getSLIAvailabilityInRange(ctx context.Context, sloID string, from, to time.Time, step time.Duration, sliMetric string) ([]model.DataPoint, error) {
-	query := fmt.Sprintf(`1 - (max(%s{sloth_id="%s"}))`, sliMetric, sloID)
+	slothID, labels, err := model.SLOGroupLabelsIDUnmarshal(sloID)
+	if err != nil {
+		return nil, fmt.Errorf("could not unmarshal slo grouping labels id: %w", err)
+	}
+	if labels == nil {
+		labels = map[string]string{}
+	}
+	labels[conventions.PromSLOIDLabelName] = slothID
+	query := fmt.Sprintf(`1 - (max(%s%s))`, sliMetric, prometheus.LabelsToPromFilter(labels))
+
 	r.logger.Debugf("Querying Prometheus with query=%q, from=%s, to=%s, step=%s", query, from, to, step)
 
 	result, warnings, err := r.promcli.QueryRange(ctx, query, prometheusv1.Range{

@@ -26,6 +26,7 @@ func (u ui) handlerSelectSLO() http.HandlerFunc {
 		ServiceURL                   string
 		CriticalAlertName            string
 		WarningAlertName             string
+		GroupLabels                  map[string]string
 	}
 
 	type tplData struct {
@@ -55,6 +56,7 @@ func (u ui) handlerSelectSLO() http.HandlerFunc {
 				CriticalAlertName:            critAlert,
 				WarningAlertName:             warnAlert,
 				ServiceURL:                   urls.AppURL("/services/" + slo.SLO.ServiceID),
+				GroupLabels:                  slo.SLO.GroupLabels,
 			})
 		}
 		return slos

@@ -11,6 +11,7 @@ func init() {
 	Symbols["github.com/slok/sloth/pkg/common/utils/prometheus/prometheus"] = map[string]reflect.Value{
 		// function, constant and variable definitions
 		"LabelsToPromFilter":    reflect.ValueOf(prometheus.LabelsToPromFilter),
+		"PromStrToTimeDuration": reflect.ValueOf(prometheus.PromStrToTimeDuration),
 		"TimeDurationToPromStr": reflect.ValueOf(prometheus.TimeDurationToPromStr),
 	}
 }

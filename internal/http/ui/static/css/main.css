@@ -1,0 +1,31 @@
+:root {
+    /* Resize PicoCSS, make it more compact */
+    --pico-form-element-spacing-vertical: 0.35rem;
+    --pico-form-element-spacing-horizontal: 0.75rem;
+    --pico-font-size: 1rem;
+}
+
+.stats article header{
+    text-align: center;
+}
+
+.stats article div {
+    margin-bottom: calc(var(--pico-spacing) * .25);
+    font-size: 1.75rem;
+    line-height: 1.15;
+    text-align: center;
+    font-weight: bold;
+}
+
+.is-ok {
+    color: #45a861;
+}
+
+.is-warning {
+    color: #FF9500;
+}
+
+.is-critical {
+    color: #d43e30;
+}
+

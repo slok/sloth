@@ -1,0 +1,15 @@
+
+{{define "app_service"}}
+<!DOCTYPE html>
+<html lang="en">
+<body>
+{{template "shared_head" .}}
+{{template "shared_nav" .}}
+<main class="container">
+<h1>Service {{.Data.ServiceID}} </h1>
+{{template "app_service_comp_slo_list" .}}
+</main>
+</body>
+{{template "shared_footer" .}}
+</html>
+{{end}}

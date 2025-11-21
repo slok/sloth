@@ -5,7 +5,8 @@ import "github.com/slok/sloth/pkg/common/model"
 // Prometheus metrics conventions.
 const (
 	// Metrics SLI.
-	PromSLIErrorMetricFmt = "slo:sli_error:ratio_rate%s"
+	PromSLIErrorMetric    = "slo:sli_error:ratio_rate"
+	PromSLIErrorMetricFmt = PromSLIErrorMetric + "%s"
 
 	// Metrics meta.
 	PromMetaSLOObjectiveRatioMetric                  = "slo:objective:ratio"

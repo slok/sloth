@@ -1,0 +1,29 @@
+{{define "app_slo_comp_stats"}}
+
+<div class="grid stats"
+    hx-trigger="every {{ .Data.AutoReloadSLODataSeconds }}s"
+    hx-get="{{ .Data.SLOData.RefreshURL }}"
+    hx-swap="outerHTML">
+
+    <article><header data-tooltip="The % of error budget being consumed right now">Current Burning budget</header>
+    <div class="{{ .Data.SLOData.BurningBudgetPercent | percentUpColorCSSClass }}">{{.Data.SLOData.BurningBudgetPercent | prettyPercent}}</div>
+    </article>
+    <article><header data-tooltip="The % of error budget remaining in the period as a rolling window">Remaining budget (Window)</header>
+    <div class="{{ .Data.SLOData.RemainingBudgetWindowPercent | percentDownColorCSSClass }}">{{.Data.SLOData.RemainingBudgetWindowPercent | prettyPercent}}</div>
+    </article>
+    <article><header>Warning Alert</header>
+    {{ if .Data.SLOData.WarningAlertName }}
+        <div class="is-warning">FIRING</div>
+    {{ else }}
+        <div class="is-ok">OK</div>
+    {{ end }}
+    </article>
+    <article><header>Critical Alert</header>
+    {{ if .Data.SLOData.CriticalAlertName }}
+        <div class="is-critical">FIRING</div>
+    {{ else }}
+        <div class="is-ok">OK</div>
+    {{ end }}
+    </article>
+</div>
+{{ end }}

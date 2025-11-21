@@ -8,6 +8,10 @@
 - `sloth.dev/k8stransform/prom-operator-prometheus-rule/v1` K8s transformer plugin.
 - Users can now create multiple K8s objects as the output of the SLO generated rules.
 - Sloth lib support for K8s transformer plugins using `WriteResultAsK8sObjects`.
+- New `server` command that serves the new UI.
+- UI: Service listing and searching.
+- UI: SLO listing, searching and filtered by service.
+- UI: SLO details with stats, alerts state, SLI chart and budged burn in period chart.
 
 ### Changed
 

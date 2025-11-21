@@ -1,0 +1,37 @@
+{{ define "app_slo_comp_sli_chart" }}
+
+<article id="sli-chart-section">
+    <div class="grid">
+        <select name="sli-range"
+            hx-get="{{.Data.SLIChartData.RefreshURL}}"
+            hx-target="#sli-chart-section"
+            hx-swap="outerHTML"
+            hx-include="[name='sli-range']"
+        >
+            <option {{if eq .Data.SLIChartData.Range "1h"}}selected{{end}}>1h</option>
+            <option {{if eq .Data.SLIChartData.Range "3h"}}selected{{end}}>3h</option>
+            <option {{if eq .Data.SLIChartData.Range "24h"}}selected{{end}}>24h</option>
+            <option {{if eq .Data.SLIChartData.Range "72h"}}selected{{end}}>72h</option>
+            <option {{if eq .Data.SLIChartData.Range "7d"}}selected{{end}}>7d</option>
+            <option {{if eq .Data.SLIChartData.Range "15d"}}selected{{end}}>15d</option>
+            <option {{if eq .Data.SLIChartData.Range "30d"}}selected{{end}}>30d</option>
+        </select>
+        <!-- Filler divs to align the grid, ugly but effective -->
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+    </div>
+
+    <div id="sli-chart"></div>
+    <script>
+    (function() {
+        const chartData = JSON.parse('{{.Data.SLIChartData.DataJSON}}');
+        renderUplotSLIChart('sli-chart', chartData);
+    })();
+    </script>
+</article>
+{{ end }}

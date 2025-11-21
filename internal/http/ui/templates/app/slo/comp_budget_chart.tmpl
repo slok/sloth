@@ -1,0 +1,33 @@
+{{ define "app_slo_comp_budget_chart" }}
+
+<article id="budget-chart-section">
+    <div class="grid">
+        <select name="budget-range"
+            hx-get="{{.Data.BudgetChartData.RefreshURL}}"
+            hx-target="#budget-chart-section"
+            hx-swap="outerHTML"
+            hx-include="[name='budget-range']"
+        >
+            <option {{if eq .Data.BudgetChartData.Range "Weekly"}}selected{{end}}>Weekly</option>
+            <option {{if eq .Data.BudgetChartData.Range "Monthly"}}selected{{end}}>Monthly</option>
+            <option {{if eq .Data.BudgetChartData.Range "Quarterly"}}selected{{end}}>Quarterly</option>
+            <option {{if eq .Data.BudgetChartData.Range "Yearly"}}selected{{end}}>Yearly</option>
+        </select>
+        <!-- Filler divs to align the grid, ugly but effective -->
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+    </div>
+    <div id="budget-chart"></div>
+    <script>
+    (function() {
+        const chartData = JSON.parse('{{.Data.BudgetChartData.DataJSON}}');
+        renderUPlotBudgetBurnChart('budget-chart', chartData);
+    })();
+    </script>
+</article>
+{{ end }}

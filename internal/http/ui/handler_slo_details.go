@@ -75,6 +75,7 @@ func (u ui) handlerSLODetails() http.HandlerFunc {
 		CriticalAlertName            string
 		WarningAlertName             string
 		RefreshURL                   string
+		GroupLabels                  map[string]string
 	}
 
 	type tplData struct {
@@ -102,6 +103,7 @@ func (u ui) handlerSLODetails() http.HandlerFunc {
 			RemainingBudgetWindowPercent: 100 - s.Budget.BurnedBudgetWindowPercent,
 			CriticalAlertName:            critAlert,
 			WarningAlertName:             warnAlert,
+			GroupLabels:                  s.SLO.GroupLabels,
 		}
 	}
 

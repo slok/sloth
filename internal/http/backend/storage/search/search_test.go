@@ -30,6 +30,7 @@ func TestSearchRepositoryWrapperListServiceAndAlertsByServiceSearch(t *testing.T
 					{Service: model.Service{ID: "unrelated"}},
 					{Service: model.Service{ID: "service-mt-2"}},
 					{Service: model.Service{ID: "service-z"}},
+					{Service: model.Service{ID: "service-z"}},
 				}, nil)
 			},
 			expRes: []storage.ServiceAndAlerts{
@@ -95,12 +96,14 @@ func TestSearchRepositoryWrapperListSLOInstantDetailsServiceBySLOSearch(t *testi
 					{SLO: model.SLO{ID: "unrelated"}},
 					{SLO: model.SLO{ID: "service-mt-2"}},
 					{SLO: model.SLO{ID: "service-z"}},
+					{SLO: model.SLO{ID: "service-z2", GroupLabels: map[string]string{"env": "prod-mt"}}},
 				}, nil)
 			},
 			expRes: []storage.SLOInstantDetails{
 				{SLO: model.SLO{ID: "service-mt"}},
 				{SLO: model.SLO{ID: "another-service-mt"}},
 				{SLO: model.SLO{ID: "service-mt-2"}},
+				{SLO: model.SLO{ID: "service-z2", GroupLabels: map[string]string{"env": "prod-mt"}}},
 			},
 		},
 
@@ -115,6 +118,7 @@ func TestSearchRepositoryWrapperListSLOInstantDetailsServiceBySLOSearch(t *testi
 					{SLO: model.SLO{ID: "unrelated"}},
 					{SLO: model.SLO{ID: "service-mt-2"}},
 					{SLO: model.SLO{ID: "service-z"}},
+					{SLO: model.SLO{ID: "service-z2", GroupLabels: map[string]string{"env": "prod-mt"}}},
 				}, nil)
 			},
 		},
@@ -160,12 +164,14 @@ func TestSearchRepositoryWrapperListSLOInstantDetailsBySLOSearch(t *testing.T) {
 					{SLO: model.SLO{ID: "unrelated"}},
 					{SLO: model.SLO{ID: "service-mt-2"}},
 					{SLO: model.SLO{ID: "service-z"}},
+					{SLO: model.SLO{ID: "service-z2", GroupLabels: map[string]string{"env": "prod-mt"}}},
 				}, nil)
 			},
 			expRes: []storage.SLOInstantDetails{
 				{SLO: model.SLO{ID: "service-mt"}},
 				{SLO: model.SLO{ID: "another-service-mt"}},
 				{SLO: model.SLO{ID: "service-mt-2"}},
+				{SLO: model.SLO{ID: "service-z2", GroupLabels: map[string]string{"env": "prod-mt"}}},
 			},
 		},
 
@@ -179,6 +185,7 @@ func TestSearchRepositoryWrapperListSLOInstantDetailsBySLOSearch(t *testing.T) {
 					{SLO: model.SLO{ID: "unrelated"}},
 					{SLO: model.SLO{ID: "service-mt-2"}},
 					{SLO: model.SLO{ID: "service-z"}},
+					{SLO: model.SLO{ID: "service-z2", GroupLabels: map[string]string{"env": "prod-mt"}}},
 				}, nil)
 			},
 		},

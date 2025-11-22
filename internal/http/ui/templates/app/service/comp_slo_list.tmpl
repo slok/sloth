@@ -17,7 +17,17 @@
     <tbody>
         {{range .Data.SLOs}}
         <tr>
-        <td><a href="{{.DetailsURL}}">{{.Name}}</td>
+        <td>
+            <a href="{{.DetailsURL}}">{{.Name}}</a>
+            {{ if .GroupLabels }}
+            <div>
+            {{- range $key, $value := .GroupLabels -}}
+                <small><mark>{{ $key }}=<strong>{{ $value }}</strong></mark></small>
+                <span></span>
+            {{- end -}}
+            </div>
+            {{ end }}
+        </td>
         <td class="{{.BurningBudgetPercent | percentUpColorCSSClass}}">{{.BurningBudgetPercent | prettyPercent}}</td>
         <td class="{{.RemainingBudgetWindowPercent | percentDownColorCSSClass}}">{{.RemainingBudgetWindowPercent | prettyPercent}}</td>
         <td>

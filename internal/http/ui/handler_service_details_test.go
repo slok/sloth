@@ -69,6 +69,25 @@ func TestHandlerServiceDetails(t *testing.T) {
 								FiringPage: &model.Alert{Name: "slo-2-critical"},
 							},
 						},
+						{
+							SLO: model.SLO{
+								ID:        "test-svc3-slo3:test-grouped",
+								SlothID:   "test-svc3-slo3",
+								ServiceID: "svc-1",
+								Name:      "Test SLO 3",
+								IsGrouped: true,
+								GroupLabels: map[string]string{
+									"operation": "create",
+									"env":       "prod",
+								},
+							},
+							Alerts: model.SLOAlerts{},
+							Budget: model.SLOBudgetDetails{
+								SLOID:                     "test-svc3-slo3",
+								BurningBudgetPercent:      30.0,
+								BurnedBudgetWindowPercent: 35.0,
+							},
+						},
 					},
 				}, nil)
 			},
@@ -80,11 +99,12 @@ func TestHandlerServiceDetails(t *testing.T) {
 				`<!DOCTYPE html>`,               // We rendered a full page.
 				`<div class="container"> <nav>`, // We have the menu.
 				`<h1>Service svc-1 </h1>`,       // We have the service title.
-				`<table> <thead> <tr> <th scope="col">SLO</th> <th scope="col">Burning budget</th> <th scope="col">Remaining budget (Window)</th> <th scope="col">Alerts</th>`,                                  // We have the SLOs table.
-				`<td><a href="/u/app/slos/slo-1">SLO 1</td> <td class="is-ok">23.5%</td> <td class="is-ok">90%</td> <td> <div class="is-warning">Warning</div> </td>`,                                           // We have the SLO 1 row.
-				`<td><a href="/u/app/slos/slo-2">SLO 2</td> <td class="is-ok">50%</td> <td class="is-warning">2%</td> <td> <div class="is-critical">Critical</div> </td>`,                                       // We have the SLO 2 row.
-				`<button class="secondary" hx-get="/u/app/services/svc-1?component=slo-list&backward-cursor=test-prev-cursor" hx-target="#slo-list" hx-swap="innerHTML show:window:top"> << Previous </button>`, // We have the pagination next.
-				`<button class="secondary" hx-get="/u/app/services/svc-1?component=slo-list&forward-cursor=test-next-cursor" hx-target="#slo-list" hx-swap="innerHTML show:window:top"> Next >> </button>`,      // We have the pagination prev.
+				`<table> <thead> <tr> <th scope="col">SLO</th> <th scope="col">Burning budget</th> <th scope="col">Remaining budget (Window)</th> <th scope="col">Alerts</th>`,                                                                                                                                                        // We have the SLOs table.
+				`<td> <a href="/u/app/slos/slo-1">SLO 1</a> </td> <td class="is-ok">23.5%</td> <td class="is-ok">90%</td> <td> <div class="is-warning">Warning</div> </td>`,                                                                                                                                                           // We have the SLO 1 row.
+				`<td> <a href="/u/app/slos/slo-2">SLO 2</a> </td> <td class="is-ok">50%</td> <td class="is-warning">2%</td> <td> <div class="is-critical">Critical</div> </td>`,                                                                                                                                                       // We have the SLO 2 row.
+				`<td> <a href="/u/app/slos/test-svc3-slo3:test-grouped">Test SLO 3</a> <div><small><mark>env=<strong>prod</strong></mark></small> <span></span><small><mark>operation=<strong>create</strong></mark></small> <span></span></div> </td> <td class="is-ok">30%</td> <td class="is-ok">65%</td> <td> <div>-</div> </td>`, // We have the SLO 3 row with grouped SLO.
+				`<button class="secondary" hx-get="/u/app/services/svc-1?component=slo-list&backward-cursor=test-prev-cursor" hx-target="#slo-list" hx-swap="innerHTML show:window:top"> << Previous </button>`,                                                                                                                       // We have the pagination next.
+				`<button class="secondary" hx-get="/u/app/services/svc-1?component=slo-list&forward-cursor=test-next-cursor" hx-target="#slo-list" hx-swap="innerHTML show:window:top"> Next >> </button>`,                                                                                                                            // We have the pagination prev.
 			},
 		},
 
@@ -131,7 +151,7 @@ func TestHandlerServiceDetails(t *testing.T) {
 			expCode: 200,
 			expBody: []string{
 				`<table> <thead> <tr> <th scope="col">SLO</th> <th scope="col">Burning budget</th> <th scope="col">Remaining budget (Window)</th> <th scope="col">Alerts</th>`,                                 // We have the SLOs table.
-				`<td><a href="/u/app/slos/slo-1">SLO 1</td> <td class="is-ok">23.5%</td> <td class="is-ok">90%</td> <td> <div class="is-warning">Warning</div> </td>`,                                          // We have the SLO 1 row.
+				`<td> <a href="/u/app/slos/slo-1">SLO 1</a> </td> <td class="is-ok">23.5%</td> <td class="is-ok">90%</td> <td> <div class="is-warning">Warning</div> </td>`,                                    // We have the SLO 1 row.
 				`<button class="secondary" hx-get="/u/app/services/svc-1?component=slo-list&backward-cursor=test-prev-cursor" hx-target="#slo-list" hx-swap="innerHTML show:window:top"> << Previous </button`, // We have the pagination next.
 				`<button class="secondary"  disabled hx-get="" hx-target="#slo-list" hx-swap="innerHTML show:window:top"> Next >> </button>`,                                                                   // We have the pagination prev.
 			},
@@ -180,7 +200,7 @@ func TestHandlerServiceDetails(t *testing.T) {
 			expCode: 200,
 			expBody: []string{
 				`<table> <thead> <tr> <th scope="col">SLO</th> <th scope="col">Burning budget</th> <th scope="col">Remaining budget (Window)</th> <th scope="col">Alerts</th>`,                             // We have the SLOs table.
-				`<td><a href="/u/app/slos/slo-1">SLO 1</td> <td class="is-ok">23.5%</td> <td class="is-ok">90%</td> <td> <div class="is-warning">Warning</div> </td>`,                                      // We have the SLO 1 row.
+				`<td> <a href="/u/app/slos/slo-1">SLO 1</a> </td> <td class="is-ok">23.5%</td> <td class="is-ok">90%</td> <td> <div class="is-warning">Warning</div> </td>`,                                // We have the SLO 1 row.
 				`<button class="secondary"  disabled hx-get="" hx-target="#slo-list" hx-swap="innerHTML show:window:top"> << Previous </button>`,                                                           // We have the pagination next.
 				`<button class="secondary" hx-get="/u/app/services/svc-1?component=slo-list&forward-cursor=test-next-cursor" hx-target="#slo-list" hx-swap="innerHTML show:window:top"> Next >> </button>`, // We have the pagination prev.
 			},

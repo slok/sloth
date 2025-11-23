@@ -30,6 +30,8 @@ func NewFakeRepository() *FakeRepository {
 }
 
 func (f *FakeRepository) genFakeData() {
+	groupedLabelFakeResources := []string{"", "api", "auth", "billing", "checkout", "notification", "order", "payment", "product", "recommendation", "search", "user", "warehouse"}
+
 	f.services = []model.Service{
 		{ID: "api-gateway"},
 		{ID: "auth-service"},
@@ -171,20 +173,7 @@ func (f *FakeRepository) genFakeData() {
 		99.97, 94.5, 96.7, 98.3, 97.5, 99.2, 93.8, 99.8,
 		90, 88.5, 91.2, 94.8, 97.1, 95.6, 99.3, 96.4, 98.7, 92.9,
 		99.6, 97.9, 94.2, 95.3, 98.1, 93.5, 99.4, 96.8, 97.6, 91.7,
-		89.9, 92.5, 94.1, 95.8, 98.9, 99.1, 97.3, 96.2, 93.7,
-		99.85, 98.5, 97.8, 95.4, 94.6, 92.3, 90.7, 88.9, 91.5, 93.2,
-		96.9, 99.7, 98.2, 97.4, 95.1, 94.3, 92.8, 90.5, 89.2,
-		99.88, 98.6, 97.2, 95.5, 94.7, 93.1, 91.9, 90.3, 88.7,
-		99.93, 98.8, 97.0, 95.2, 94.4, 92.6, 91.1, 89.5,
-		99, 95, 97, 98, 96, 99.9, 92, 99.5, 99.99, 80, 85, 99,
-		99.97, 94.5, 96.7, 98.3, 97.5, 99.2, 93.8, 99.8,
-		90, 88.5, 91.2, 94.8, 97.1, 95.6, 99.3, 96.4, 98.7, 92.9,
-		99.6, 97.9, 94.2, 95.3, 98.1, 93.5, 99.4, 96.8, 97.6, 91.7,
-		89.9, 92.5, 94.1, 95.8, 98.9, 99.1, 97.3, 96.2, 93.7,
-		99.85, 98.5, 97.8, 95.4, 94.6, 92.3, 90.7, 88.9, 91.5, 93.2,
-		96.9, 99.7, 98.2, 97.4, 95.1, 94.3, 92.8, 90.5, 89.2,
-		99.88, 98.6, 97.2, 95.5, 94.7, 93.1, 91.9, 90.3, 88.7,
-		99.93, 98.8, 97.0, 95.2, 94.4, 92.6, 91.1, 89.5,
+		89.9, 92.5, 94.1, 95.8, 98.9, 99.1, 97.3, 96.2, 93.7, 99.95, 98.5, 99.999,
 	}
 	for i, svc := range f.services {
 		sloQuantity := i * 456 % len(objectiveValues)
@@ -193,15 +182,39 @@ func (f *FakeRepository) genFakeData() {
 		}
 		for j, obj := range objectiveValues[:sloQuantity] {
 			sloName := fmt.Sprintf("slo-%04d-%04d", i, j)
-			slos = append(slos, model.SLO{
-				ID:             svc.ID + "-" + sloName,
-				Name:           sloName,
-				ServiceID:      svc.ID,
-				Objective:      obj,
-				PeriodDuration: days30,
-			})
+			// Single SLO or grouped SLO.
+			if (j+i)%3 != 0 {
+				slos = append(slos, model.SLO{
+					ID:             svc.ID + "-" + sloName,
+					SlothID:        svc.ID + "-" + sloName,
+					Name:           sloName,
+					ServiceID:      svc.ID,
+					Objective:      obj,
+					PeriodDuration: days30,
+				})
+			} else {
+				for k := 0; k < j; k++ {
+					resource := groupedLabelFakeResources[(j+i+k)%len(groupedLabelFakeResources)]
+					groupedLabels := map[string]string{
+						"handler":  fmt.Sprintf("/api/v1/group-%d%d%d", i, j, k),
+						"resource": resource,
+					}
+					slothID := svc.ID + "-" + sloName
+					slos = append(slos, model.SLO{
+						ID:             model.SLOGroupLabelsIDMarshal(slothID, groupedLabels),
+						SlothID:        slothID,
+						Name:           sloName,
+						ServiceID:      svc.ID,
+						Objective:      obj,
+						PeriodDuration: days30,
+						GroupLabels:    groupedLabels,
+						IsGrouped:      true,
+					})
+				}
+			}
 		}
 	}
+
 	f.slos = slos
 
 	allSLOBudgets := []model.SLOBudgetDetails{}

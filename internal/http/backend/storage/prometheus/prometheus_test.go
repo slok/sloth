@@ -24,7 +24,13 @@ func TestRepositoryListAllServiceAndAlerts(t *testing.T) {
 	}{
 		"Getting SLOs and alerts successfully should return proper service and alerts.": {
 			mock: func(mpc *prometheusmock.PrometheusAPIClient) {
-				mpc.On("Query", mock.Anything, `sloth_slo_info{sloth_id!=""}`, mock.Anything).Times(3).Return(prommodel.Vector{
+				mpc.On("Query", mock.Anything, `max(slo:time_period:days{sloth_id!=""}) by (sloth_id)`, mock.Anything).Once().Return(prommodel.Vector{
+					&prommodel.Sample{Metric: prommodel.Metric{"sloth_id": "slo-1"}, Value: 30},
+					&prommodel.Sample{Metric: prommodel.Metric{"sloth_id": "slo-2"}, Value: 15},
+					&prommodel.Sample{Metric: prommodel.Metric{"sloth_id": "slo-3"}, Value: 7},
+				}, nil, nil)
+
+				mpc.On("Query", mock.Anything, `sloth_slo_info{sloth_id!=""}`, mock.Anything).Twice().Return(prommodel.Vector{
 					&prommodel.Sample{
 						Metric: prommodel.Metric{
 							"sloth_id":        "slo-1",
@@ -49,12 +55,6 @@ func TestRepositoryListAllServiceAndAlerts(t *testing.T) {
 							"sloth_objective": "99.5",
 						},
 					},
-				}, nil, nil)
-
-				mpc.On("Query", mock.Anything, `max(slo:time_period:days{sloth_id!=""}) by (sloth_id)`, mock.Anything).Once().Return(prommodel.Vector{
-					&prommodel.Sample{Metric: prommodel.Metric{"sloth_id": "slo-1"}, Value: 30},
-					&prommodel.Sample{Metric: prommodel.Metric{"sloth_id": "slo-2"}, Value: 15},
-					&prommodel.Sample{Metric: prommodel.Metric{"sloth_id": "slo-3"}, Value: 7},
 				}, nil, nil)
 
 				mpc.On("Query", mock.Anything, `slo:current_burn_rate:ratio{sloth_id!=""}`, mock.Anything).Once().Return(prommodel.Vector{

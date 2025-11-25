@@ -3,6 +3,7 @@ package prometheus
 import (
 	"context"
 	"fmt"
+	"math"
 	"slices"
 	"strconv"
 	"strings"
@@ -361,7 +362,11 @@ func (r *Repository) listSLOBurningCurrentRatio(ctx context.Context, sloGrouping
 			sloID = model.SLOGroupLabelsIDMarshal(slothID, groupedLabels)
 		}
 
-		burnRates[sloID] = float64(sample.Value)
+		v := float64(sample.Value)
+		if math.IsNaN(v) {
+			v = 0
+		}
+		burnRates[sloID] = v
 	}
 
 	return burnRates, nil

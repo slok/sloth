@@ -2,6 +2,7 @@ package app
 
 import (
 	"fmt"
+	"math"
 	"time"
 
 	"github.com/slok/sloth/internal/http/backend/model"
@@ -32,7 +33,8 @@ func sanitizeDataPoints(dps []model.DataPoint, from, to time.Time, step time.Dur
 	sanitizedDPs := []model.DataPoint{}
 	for ts := from; ts.Before(to); ts = ts.Add(step) {
 		unixTS := ts.Unix()
-		if dp, exists := dpMap[unixTS]; exists {
+		dp, exists := dpMap[unixTS]
+		if exists && !math.IsNaN(dp.Value) {
 			sanitizedDPs = append(sanitizedDPs, dp)
 		} else {
 			sanitizedDPs = append(sanitizedDPs, model.DataPoint{
@@ -107,7 +109,7 @@ func endOfPeriod(t time.Time, periodType BudgetRangeType) (time.Time, error) {
 
 func sanitizeDataPointsUntilEndPeriod(dps []model.DataPoint, periodType BudgetRangeType) ([]model.DataPoint, error) {
 	if len(dps) < 2 {
-		return nil, fmt.Errorf("not enough data points to fill time range")
+		return []model.DataPoint{}, nil
 	}
 
 	// Get the step.

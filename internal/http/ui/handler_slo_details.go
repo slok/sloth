@@ -3,7 +3,9 @@ package ui
 import (
 	"encoding/json"
 	"fmt"
+	"math"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/go-chi/chi/v5"
@@ -57,6 +59,7 @@ func (u ui) handlerSLODetails() http.HandlerFunc {
 	const (
 		queryParamSLIRange    = "sli-range"
 		queryParamBudgetRange = "budget-range"
+		queryParamGroupLabels = "group-labels"
 	)
 
 	type tplDataSLOChart struct {
@@ -111,7 +114,7 @@ func (u ui) handlerSLODetails() http.HandlerFunc {
 		x := uPlotSLIChart{SLOObjective: slo.Objective}
 		for _, dp := range dps {
 			x.TSs = append(x.TSs, int(dp.TS.Unix()))
-			if dp.Missing {
+			if dp.Missing || math.IsNaN(dp.Value) {
 				x.SLIs = append(x.SLIs, nil)
 			} else {
 				x.SLIs = append(x.SLIs, float64Ptr(dp.Value))
@@ -121,9 +124,10 @@ func (u ui) handlerSLODetails() http.HandlerFunc {
 		if err != nil {
 			return nil, err
 		}
+
 		plotData, err := json.Marshal(x)
 		if err != nil {
-			return nil, fmt.Errorf("could not marshal plot data")
+			return nil, fmt.Errorf("could not marshal plot data: %w", err)
 		}
 		return &tplDataSLOChart{
 			DataJSON: string(plotData),
@@ -137,7 +141,7 @@ func (u ui) handlerSLODetails() http.HandlerFunc {
 		}
 		for i, dp := range realDPs {
 			x.TSs = append(x.TSs, int(dp.TS.Unix()))
-			if dp.Missing {
+			if dp.Missing || math.IsNaN(dp.Value) {
 				x.RealBurned = append(x.RealBurned, nil)
 			} else {
 				x.RealBurned = append(x.RealBurned, float64Ptr(dp.Value))
@@ -151,7 +155,7 @@ func (u ui) handlerSLODetails() http.HandlerFunc {
 		}
 		plotData, err := json.Marshal(x)
 		if err != nil {
-			return nil, fmt.Errorf("could not marshal plot data")
+			return nil, fmt.Errorf("could not marshal plot data: %w", err)
 		}
 		return &tplDataSLOChart{
 			DataJSON: string(plotData),
@@ -163,11 +167,18 @@ func (u ui) handlerSLODetails() http.HandlerFunc {
 		now := u.timeNowFunc().UTC()
 		isHTMXCall := htmx.NewRequest(r.Header).IsHTMXRequest()
 		component := urls.ComponentFromRequest(r)
-
 		sloID := chi.URLParam(r, URLParamSLOID)
 		data := tplData{
 			SLOID:                    sloID,
 			AutoReloadSLODataSeconds: 30,
+		}
+
+		// If we have group labels in the query params, redirect to this handler but using the correct
+		// SLO ID endpoint that contains the group labels embedded in the ID.
+		groupLabels := r.URL.Query().Get(queryParamGroupLabels)
+		if groupLabels != "" {
+			redirectToCorrectGroupLabelSLOID(w, r, sloID, groupLabels)
+			return
 		}
 
 		sliRange := 1 * time.Hour
@@ -194,6 +205,7 @@ func (u ui) handlerSLODetails() http.HandlerFunc {
 
 			sloDetails, err := u.serviceApp.GetSLO(ctx, app.GetSLORequest{SLOID: sloID})
 			if err != nil {
+				u.logger.Errorf("could not get slo details: %s", err)
 				http.Error(w, "could not get slo details", http.StatusInternalServerError)
 				return
 			}
@@ -209,6 +221,7 @@ func (u ui) handlerSLODetails() http.HandlerFunc {
 			// Get SLO instant data.
 			sloDetails, err := u.serviceApp.GetSLO(ctx, app.GetSLORequest{SLOID: sloID})
 			if err != nil {
+				u.logger.Errorf("could not get slo details: %s", err)
 				http.Error(w, "could not get slo details", http.StatusInternalServerError)
 				return
 			}
@@ -219,12 +232,14 @@ func (u ui) handlerSLODetails() http.HandlerFunc {
 				To:    now,
 			})
 			if err != nil {
+				u.logger.Errorf("could not get SLI availability range: %s", err)
 				http.Error(w, "could not get SLI availability range", http.StatusInternalServerError)
 				return
 			}
 
 			sliChartData, err := mapSLIDatapointsRangeToTPL(sloDetails.SLO.SLO, res.AvailabilityDataPoints)
 			if err != nil {
+				u.logger.Errorf("could not map SLI chart data: %s", err)
 				http.Error(w, "could not map SLI chart data", http.StatusInternalServerError)
 				return
 			}
@@ -242,12 +257,14 @@ func (u ui) handlerSLODetails() http.HandlerFunc {
 				BudgetRangeType: budgetRange,
 			})
 			if err != nil {
+				u.logger.Errorf("could not get burned budget range: %s", err)
 				http.Error(w, "could not get burned budget range", http.StatusInternalServerError)
 				return
 			}
 
 			budgetChartData, err := mapBudgetDatapointsRangeToTPL(budgetRes.RealBurnedDataPoints, budgetRes.PerfectBurnedDataPoints)
 			if err != nil {
+				u.logger.Errorf("could not map budget chart data: %s", err)
 				http.Error(w, "could not map budget chart data", http.StatusInternalServerError)
 				return
 			}
@@ -266,6 +283,7 @@ func (u ui) handlerSLODetails() http.HandlerFunc {
 			// Get SLO instant data.
 			sloDetails, err := u.serviceApp.GetSLO(ctx, app.GetSLORequest{SLOID: sloID})
 			if err != nil {
+				u.logger.Errorf("could not get slo details: %s", err)
 				http.Error(w, "could not get slo details", http.StatusInternalServerError)
 				return
 			}
@@ -281,12 +299,14 @@ func (u ui) handlerSLODetails() http.HandlerFunc {
 				To:    now,
 			})
 			if err != nil {
+				u.logger.Errorf("could not get SLI availability range: %s", err)
 				http.Error(w, "could not get SLI availability range", http.StatusInternalServerError)
 				return
 			}
 
 			sliChartData, err := mapSLIDatapointsRangeToTPL(sloDetails.SLO.SLO, res.AvailabilityDataPoints)
 			if err != nil {
+				u.logger.Errorf("could not map SLI chart data: %s", err)
 				http.Error(w, "could not map SLI chart data", http.StatusInternalServerError)
 				return
 			}
@@ -300,12 +320,14 @@ func (u ui) handlerSLODetails() http.HandlerFunc {
 				BudgetRangeType: budgetRange,
 			})
 			if err != nil {
+				u.logger.Errorf("could not get burned budget range: %s", err)
 				http.Error(w, "could not get burned budget range", http.StatusInternalServerError)
 				return
 			}
 
 			budgetChartData, err := mapBudgetDatapointsRangeToTPL(budgetRes.RealBurnedDataPoints, budgetRes.PerfectBurnedDataPoints)
 			if err != nil {
+				u.logger.Errorf("could not map budget chart data: %s", err)
 				http.Error(w, "could not map budget chart data", http.StatusInternalServerError)
 				return
 			}
@@ -319,4 +341,32 @@ func (u ui) handlerSLODetails() http.HandlerFunc {
 			u.tplRenderer.RenderResponse(ctx, w, r, "app_slo", data)
 		}
 	})
+}
+
+// redirectToCorrectGroupLabelSLOID will to the correct group labels SLO ID endpoint.
+//
+// Normally grouped SLO IDs will have the labels marshalled already in the ID,
+// this is handled automatically within the UI, however, sometimes it may be useful to
+// pass directly the labels in a more human friendly way, so we support that too with a
+// redirect to the proper way.
+//
+// Example:
+// - Unmarshaled grouped SLO ID: etcd-midgard-operation-request-latency:%7Boperation=create,type=authrequests.dex.coreos.com%7D
+// - Marshaled grouped SLO ID: etcd-midgard-operation-request-latency:b3BlcmF0aW9uPWNyZWF0ZSx0eXBlPWF1dGhyZXF1ZXN0cy5kZXguY29yZW9zLmNvbQ==.
+func redirectToCorrectGroupLabelSLOID(w http.ResponseWriter, r *http.Request, slothID string, labels string) {
+	labels = strings.Trim(labels, "{}")
+	ls := map[string]string{}
+	for _, label := range strings.Split(labels, ",") {
+		label := strings.TrimSpace(label)
+		k, v, ok := strings.Cut(label, "=")
+		if !ok {
+			http.Error(w, "could not parse grouped SLO labels", http.StatusBadRequest)
+			return
+		}
+		v = strings.Trim(v, `"`)
+		ls[strings.TrimSpace(k)] = strings.TrimSpace(v)
+	}
+	sloID := model.SLOGroupLabelsIDMarshal(slothID, ls)
+
+	urls.RedirectToURL(w, r, urls.AppURL("/slos/"+sloID))
 }

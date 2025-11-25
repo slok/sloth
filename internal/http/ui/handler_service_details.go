@@ -81,6 +81,7 @@ func (u ui) handlerServiceDetails() http.HandlerFunc {
 				Cursor:          nextCursor,
 			})
 			if err != nil {
+				u.logger.Errorf("could not get service SLOs: %s", err)
 				http.Error(w, "could not get service SLOs", http.StatusInternalServerError)
 				return
 			}
@@ -98,6 +99,7 @@ func (u ui) handlerServiceDetails() http.HandlerFunc {
 				Cursor:          prevCursor,
 			})
 			if err != nil {
+				u.logger.Errorf("could not get service SLOs: %s", err)
 				http.Error(w, "could not get service SLOs", http.StatusInternalServerError)
 				return
 			}
@@ -118,6 +120,7 @@ func (u ui) handlerServiceDetails() http.HandlerFunc {
 				FilterServiceID: data.ServiceID,
 			})
 			if err != nil {
+				u.logger.Errorf("could not get service SLOs: %s", err)
 				http.Error(w, "could not get service SLOs", http.StatusInternalServerError)
 				return
 			}

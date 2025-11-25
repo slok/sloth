@@ -103,6 +103,7 @@ func (u ui) handlerSelectService() http.HandlerFunc {
 				Cursor:            nextCursor,
 			})
 			if err != nil {
+				u.logger.Errorf("could not list services: %s", err)
 				http.Error(w, "could not list services", http.StatusInternalServerError)
 				return
 			}
@@ -119,6 +120,7 @@ func (u ui) handlerSelectService() http.HandlerFunc {
 				Cursor:            prevCursor,
 			})
 			if err != nil {
+				u.logger.Errorf("could not list services: %s", err)
 				http.Error(w, "could not list services", http.StatusInternalServerError)
 				return
 			}
@@ -132,6 +134,7 @@ func (u ui) handlerSelectService() http.HandlerFunc {
 		case isHTMXCall && component == componentServiceList:
 			resp, err := u.serviceApp.ListServices(ctx, app.ListServicesRequest{FilterSearchInput: data.ServiceSearchInput})
 			if err != nil {
+				u.logger.Errorf("could not list services: %s", err)
 				http.Error(w, "could not list services", http.StatusInternalServerError)
 				return
 			}
@@ -149,6 +152,7 @@ func (u ui) handlerSelectService() http.HandlerFunc {
 		default:
 			resp, err := u.serviceApp.ListServices(ctx, app.ListServicesRequest{FilterSearchInput: data.ServiceSearchInput})
 			if err != nil {
+				u.logger.Errorf("could not list services: %s", err)
 				http.Error(w, "could not list services", http.StatusInternalServerError)
 				return
 			}

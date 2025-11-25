@@ -21,6 +21,54 @@ func TestHandlerSLODetails(t *testing.T) {
 		expHeaders http.Header
 		expCode    int
 	}{
+		"Grouped SLO IDs using unmarshaled group labels should be redirected to the marshaled ID endpoint.": {
+			request: func() *http.Request {
+				return httptest.NewRequest(http.MethodGet, "/u/app/slos/etcd-midgard-operation-request-latency?group-labels={operation=create,type=authrequests.dex.coreos.com}", nil)
+			},
+			mock: func(m mocks) {},
+			expHeaders: http.Header{
+				"Content-Type": {"text/html; charset=utf-8"},
+				"Location":     {"/u/app/slos/etcd-midgard-operation-request-latency:b3BlcmF0aW9uPWNyZWF0ZSx0eXBlPWF1dGhyZXF1ZXN0cy5kZXguY29yZW9zLmNvbQ=="},
+			},
+			expCode: 307,
+		},
+
+		"Grouped SLO IDs using unmarshaled group labels should be redirected to the marshaled ID endpoint (unordered labels).": {
+			request: func() *http.Request {
+				return httptest.NewRequest(http.MethodGet, "/u/app/slos/etcd-midgard-operation-request-latency?group-labels={type=authrequests.dex.coreos.com,operation=create}", nil)
+			},
+			mock: func(m mocks) {},
+			expHeaders: http.Header{
+				"Content-Type": {"text/html; charset=utf-8"},
+				"Location":     {"/u/app/slos/etcd-midgard-operation-request-latency:b3BlcmF0aW9uPWNyZWF0ZSx0eXBlPWF1dGhyZXF1ZXN0cy5kZXguY29yZW9zLmNvbQ=="},
+			},
+			expCode: 307,
+		},
+
+		"Grouped SLO IDs using unmarshaled group labels should be redirected to the marshaled ID endpoint (special characters).": {
+			request: func() *http.Request {
+				return httptest.NewRequest(http.MethodGet, "/u/app/slos/etcd-midgard-operation-request-latency?group-labels={path=/something}", nil)
+			},
+			mock: func(m mocks) {},
+			expHeaders: http.Header{
+				"Content-Type": {"text/html; charset=utf-8"},
+				"Location":     {"/u/app/slos/etcd-midgard-operation-request-latency:cGF0aD0vc29tZXRoaW5n"},
+			},
+			expCode: 307,
+		},
+
+		"Grouped SLO IDs using unmarshaled group labels should be redirected to the marshaled ID endpoint (HTTP special characters).": {
+			request: func() *http.Request {
+				return httptest.NewRequest(http.MethodGet, "/u/app/slos/etcd-midgard-operation-request-latency?group-labels=%7Boperation=create,type=authrequests.dex.coreos.com%7D", nil)
+			},
+			mock: func(m mocks) {},
+			expHeaders: http.Header{
+				"Content-Type": {"text/html; charset=utf-8"},
+				"Location":     {"/u/app/slos/etcd-midgard-operation-request-latency:b3BlcmF0aW9uPWNyZWF0ZSx0eXBlPWF1dGhyZXF1ZXN0cy5kZXguY29yZW9zLmNvbQ=="},
+			},
+			expCode: 307,
+		},
+
 		"Listing the SLO details should render the full page.": {
 			request: func() *http.Request {
 				return httptest.NewRequest(http.MethodGet, "/u/app/slos/slo-1", nil)

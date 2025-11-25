@@ -13,6 +13,7 @@
 - UI: SLO listing, searching and filtered by service.
 - UI: SLO details with stats, alerts state, SLI chart and budged burn in period chart.
 - UI: Support SLO grouped by labels.
+- UI: Redirect unmarshaled ID of grouped SLO labels to proper SLO ID.
 
 ### Changed
 

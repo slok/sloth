@@ -89,6 +89,7 @@ func (u ui) handlerSelectSLO() http.HandlerFunc {
 				FilterSearchInput: data.SLOSearchInput,
 			})
 			if err != nil {
+				u.logger.Errorf("could not get SLOs: %s", err)
 				http.Error(w, "could not get SLOs", http.StatusInternalServerError)
 				return
 			}
@@ -106,6 +107,7 @@ func (u ui) handlerSelectSLO() http.HandlerFunc {
 				FilterSearchInput: data.SLOSearchInput,
 			})
 			if err != nil {
+				u.logger.Errorf("could not get SLOs: %s", err)
 				http.Error(w, "could not get SLOs", http.StatusInternalServerError)
 				return
 			}
@@ -122,6 +124,7 @@ func (u ui) handlerSelectSLO() http.HandlerFunc {
 				FilterSearchInput: data.SLOSearchInput,
 			})
 			if err != nil {
+				u.logger.Errorf("could not get SLOs: %s", err)
 				http.Error(w, "could not get SLOs", http.StatusInternalServerError)
 				return
 			}
@@ -142,6 +145,7 @@ func (u ui) handlerSelectSLO() http.HandlerFunc {
 				FilterSearchInput: data.SLOSearchInput,
 			})
 			if err != nil {
+				u.logger.Errorf("could not get SLOs: %s", err)
 				http.Error(w, "could not get SLOs", http.StatusInternalServerError)
 				return
 			}

@@ -28,12 +28,7 @@ type cache struct {
 func (r *Repository) refreshCaches(ctx context.Context) error {
 	r.logger.Debugf("Refreshing background Prometheus caches")
 
-	sloNonGroupingLabels, err := r.listSLOLabelKeysToIgnore(ctx)
-	if err != nil {
-		return fmt.Errorf("could not list slo label keys to ignore: %w", err)
-	}
-
-	sloDetails, err := r.listSLODetails(ctx, sloNonGroupingLabels)
+	sloDetails, err := r.listSLODetails(ctx)
 	if err != nil {
 		return fmt.Errorf("could not list slo details: %w", err)
 	}
@@ -84,7 +79,7 @@ func (r *Repository) refreshCaches(ctx context.Context) error {
 	return nil
 }
 
-func (r *Repository) listSLODetails(ctx context.Context, sloNonGroupingLabels map[string]map[string]struct{}) ([]model.SLO, error) {
+func (r *Repository) listSLODetails(ctx context.Context) ([]model.SLO, error) {
 	// We will need some data first.
 	periodsBySLO, err := r.listSLOPeriods(ctx)
 	if err != nil {
@@ -96,26 +91,48 @@ func (r *Repository) listSLODetails(ctx context.Context, sloNonGroupingLabels ma
 		return nil, fmt.Errorf("could not list slo objectives: %w", err)
 	}
 
-	// With this query we get all SLOs defined in Prometheus and the labels of SLI grouped SLOs.
-	query := fmt.Sprintf(`%s * on (%s) group_right %s`,
-		conventions.PromMetaSLOInfoMetric,
-		conventions.PromSLOIDLabelName,
-		conventions.PromMetaSLOCurrentBurnRateRatioMetric,
-	)
-	result, warnings, err := r.promcli.Query(ctx, query, r.timeNowFunc())
+	// Query the burn rate metric to get all unique SLO instances with their grouping labels.
+	// This works with Thanos/federated setups because we're not joining, just listing.
+	burnRateQuery := fmt.Sprintf(`%s{%s!=""}`, conventions.PromMetaSLOCurrentBurnRateRatioMetric, conventions.PromSLOIDLabelName)
+	burnRateResult, warnings, err := r.promcli.Query(ctx, burnRateQuery, r.timeNowFunc())
 	if err != nil {
-		return nil, fmt.Errorf("could not query prometheus: %w", err)
+		return nil, fmt.Errorf("could not query prometheus for burn rate: %w", err)
 	}
-
 	for _, warning := range warnings {
 		r.logger.Warningf("Prometheus query warning: %v", warning)
 	}
 
-	// Parse the result vector to extract SLO details.
-	vector, ok := result.(prommodel.Vector)
+	burnRateVector, ok := burnRateResult.(prommodel.Vector)
 	if !ok {
-		return nil, fmt.Errorf("unexpected result type: %T", result)
+		return nil, fmt.Errorf("unexpected result type: %T", burnRateResult)
 	}
+
+	// Also query the info metric to get metadata (service name, SLO name, etc.)
+	infoQuery := fmt.Sprintf(`%s{%s!=""}`, conventions.PromMetaSLOInfoMetric, conventions.PromSLOIDLabelName)
+	infoResult, warnings, err := r.promcli.Query(ctx, infoQuery, r.timeNowFunc())
+	if err != nil {
+		return nil, fmt.Errorf("could not query prometheus for slo info: %w", err)
+	}
+	for _, warning := range warnings {
+		r.logger.Warningf("Prometheus query warning: %v", warning)
+	}
+
+	infoVector, ok := infoResult.(prommodel.Vector)
+	if !ok {
+		return nil, fmt.Errorf("unexpected result type: %T", infoResult)
+	}
+
+	// Build a map of sloth_id -> info metric labels for quick lookup
+	infoBySlothID := make(map[string]prommodel.Metric)
+	for _, sample := range infoVector {
+		slothID := string(sample.Metric[conventions.PromSLOIDLabelName])
+		if slothID != "" {
+			infoBySlothID[slothID] = sample.Metric
+		}
+	}
+
+	// Use the burn rate vector as the primary source since it has grouping labels
+	vector := burnRateVector
 
 	// Extract SLO details from labels.
 	slos := make([]model.SLO, 0, len(vector))
@@ -125,8 +142,17 @@ func (r *Repository) listSLODetails(ctx context.Context, sloNonGroupingLabels ma
 			continue
 		}
 
-		serviceName := string(sample.Metric[conventions.PromSLOServiceLabelName])
-		sloName := string(sample.Metric[conventions.PromSLONameLabelName])
+		// Get service name and SLO name from the info metric (they may not be on burn rate metric)
+		infoMetric, hasInfo := infoBySlothID[slothID]
+		var serviceName, sloName string
+		if hasInfo {
+			serviceName = string(infoMetric[conventions.PromSLOServiceLabelName])
+			sloName = string(infoMetric[conventions.PromSLONameLabelName])
+		} else {
+			// Fallback: try to get from burn rate metric itself
+			serviceName = string(sample.Metric[conventions.PromSLOServiceLabelName])
+			sloName = string(sample.Metric[conventions.PromSLONameLabelName])
+		}
 
 		objective, ok := objectivesBySLO[slothID]
 		if !ok {
@@ -148,12 +174,35 @@ func (r *Repository) listSLODetails(ctx context.Context, sloNonGroupingLabels ma
 			PeriodDuration: period,
 		}
 
-		// Infer the group labels by removing the non grouping ones.
-		rmLabels := sloNonGroupingLabels[slothID]
+		// Infer the group labels by removing only the Sloth-specific metadata labels.
+		// User-defined labels like datacenter, component, environment, etc. should be preserved.
+		slothMetadataLabels := map[string]struct{}{
+			"__name__":                            {},
+			conventions.PromSLONameLabelName:      {},
+			conventions.PromSLOIDLabelName:        {},
+			conventions.PromSLOServiceLabelName:   {},
+			conventions.PromSLOWindowLabelName:    {},
+			conventions.PromSLOSeverityLabelName:  {},
+			conventions.PromSLOVersionLabelName:   {},
+			conventions.PromSLOModeLabelName:      {},
+			conventions.PromSLOSpecLabelName:      {},
+			conventions.PromSLOObjectiveLabelName: {},
+			// Common Prometheus/infrastructure labels to exclude
+			"instance":           {},
+			"job":                {},
+			"pod":                {},
+			"namespace":          {},
+			"container":          {},
+			"prometheus":         {},
+			"prometheus_replica": {},
+			"receive":            {},
+			"tenant_id":          {},
+		}
+
 		groupLabels := map[string]string{}
 		for k, v := range sample.Metric {
 			kk := string(k)
-			if _, ok := rmLabels[kk]; ok {
+			if _, ok := slothMetadataLabels[kk]; ok {
 				continue
 			}
 			groupLabels[kk] = string(v)
@@ -318,7 +367,11 @@ func (r *Repository) listSLOBurnedPeriodRollingWindowRatio(ctx context.Context, 
 			sloID = model.SLOGroupLabelsIDMarshal(slothID, groupedLabels)
 		}
 
-		ratioBySLO[sloID] = 1 - float64(sample.Value) // We don't want remaining, we want whats burned.
+		v := float64(sample.Value)
+		if math.IsNaN(v) {
+			v = 0
+		}
+		ratioBySLO[sloID] = 1 - v // We don't want remaining, we want whats burned.
 	}
 
 	return ratioBySLO, nil
@@ -388,6 +441,14 @@ func (r *Repository) listSLOBudgets(ctx context.Context, sloIDs []string, sloGro
 		currentBurnRatio := currentBurnRatioBySLO[sloID]
 		windowBurnRatio := burnedRolledWindowRatioBySLO[sloID]
 
+		// Sanitize NaN values to 0 (can happen if metrics don't exist yet)
+		if math.IsNaN(currentBurnRatio) {
+			currentBurnRatio = 0
+		}
+		if math.IsNaN(windowBurnRatio) {
+			windowBurnRatio = 0
+		}
+
 		budgets[sloID] = model.SLOBudgetDetails{
 			SLOID:                     sloID,
 			BurningBudgetPercent:      currentBurnRatio * 100,
@@ -438,54 +499,6 @@ func (r *Repository) inferSLIWindows(ctx context.Context) (map[string][]time.Dur
 	}
 
 	return sloWindows, nil
-}
-
-// listSLOLabelKeysToIgnore lists the SLO labels to ignore for grouping purposes so we know all the labels
-// that are not used for grouping SLOs by labels.
-//
-// We accomplish this by querying the SLO info meta metric all the labels set on all metrics, this labels
-// will never be used for grouping, so we can use these to ignore the labels retrieved on the SLI recording
-// result rules.
-func (r *Repository) listSLOLabelKeysToIgnore(ctx context.Context) (map[string]map[string]struct{}, error) {
-	query := fmt.Sprintf(`%s{%s!=""}`, conventions.PromMetaSLOInfoMetric, conventions.PromSLOIDLabelName)
-	result, warnings, err := r.promcli.Query(ctx, query, r.timeNowFunc())
-	if err != nil {
-		return nil, fmt.Errorf("could not query prometheus: %w", err)
-	}
-
-	for _, warning := range warnings {
-		r.logger.Warningf("Prometheus query warning: %v", warning)
-	}
-
-	vector, ok := result.(prommodel.Vector)
-	if !ok {
-		return nil, fmt.Errorf("unexpected result type: %T", result)
-	}
-
-	indexedLabelKeysBySlothID := map[string]map[string]struct{}{}
-	for _, sample := range vector {
-		slothID := string(sample.Metric[conventions.PromSLOIDLabelName])
-		if slothID == "" {
-			continue
-		}
-
-		indexedLabelKeysBySlothID[slothID] = map[string]struct{}{
-			conventions.PromSLONameLabelName:      {},
-			conventions.PromSLOIDLabelName:        {},
-			conventions.PromSLOServiceLabelName:   {},
-			conventions.PromSLOWindowLabelName:    {},
-			conventions.PromSLOSeverityLabelName:  {},
-			conventions.PromSLOVersionLabelName:   {},
-			conventions.PromSLOModeLabelName:      {},
-			conventions.PromSLOSpecLabelName:      {},
-			conventions.PromSLOObjectiveLabelName: {},
-		}
-		for labelKey := range sample.Metric {
-			indexedLabelKeysBySlothID[slothID][string(labelKey)] = struct{}{}
-		}
-	}
-
-	return indexedLabelKeysBySlothID, nil
 }
 
 func (r *Repository) listSLOObjectives(ctx context.Context) (map[string]float64, error) {

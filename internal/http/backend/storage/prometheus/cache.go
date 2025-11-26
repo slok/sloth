@@ -398,7 +398,10 @@ func (r *Repository) newSLOsInstantAlertsHydrater() sloInstantsHydrater {
 				sloID = model.SLOGroupLabelsIDMarshal(slothID, groupedLabels)
 			}
 
-			slo = slos.slosBySLOID[sloID]
+			slo, ok = slos.slosBySLOID[sloID]
+			if !ok {
+				continue
+			}
 			if slo.Alerts == nil {
 				slo.Alerts = &model.SLOAlerts{SLOID: sloID}
 			}
@@ -449,7 +452,10 @@ func (r *Repository) newSLOsInstantBurnedPeriodRollingWindowRatioHydrater() sloI
 
 			// Grouped SLO?
 			groupedLabels := map[string]string{}
-			slo := slos.slosBySlothID[slothID]
+			slo, ok := slos.slosBySlothID[slothID]
+			if !ok {
+				continue
+			}
 			if slo.IsGrouped {
 				for k := range slo.GroupLabels {
 					if v, ok := sample.Metric[prommodel.LabelName(k)]; ok {
@@ -462,7 +468,11 @@ func (r *Repository) newSLOsInstantBurnedPeriodRollingWindowRatioHydrater() sloI
 			if len(groupedLabels) > 0 {
 				sloID = model.SLOGroupLabelsIDMarshal(slothID, groupedLabels)
 			}
-			slo = slos.slosBySLOID[sloID]
+
+			slo, ok = slos.slosBySLOID[sloID]
+			if !ok {
+				continue
+			}
 
 			slo.BurnedPeriodRollingWindowRatio = 1 - float64(sample.Value) // We don't want remaining, we want whats burned.
 		}

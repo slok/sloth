@@ -1,7 +1,23 @@
+// --------- THEME ---------.
+function setColorTheme(darkMode) {
+    mode = darkMode ? "dark" : "light";
+
+    // Based on picocoss docs: <html data-theme="light|dark">
+    document.documentElement.setAttribute("data-theme", mode);
+}
+
+function isColorThemeLight() {
+    return document.documentElement.getAttribute("data-theme") === "light";
+}
+
+setColorTheme(false); // Default to light mode.
+
+// --------- PLOTS ---------.
+
 function renderUplotSLIChart(domElID, json) {
     const container = document.getElementById(domElID);
     const sloLine = Array(json.timestamps.length).fill(json.slo_objective);
-    const light = true;
+    const light = isColorThemeLight();
 
     // If width is 0, set it to container width.
     if (json.width === 0) {
@@ -50,7 +66,7 @@ function renderUplotSLIChart(domElID, json) {
 
 function renderUPlotBudgetBurnChart(domElID, json) {
     const container = document.getElementById(domElID);
-    const light = true;
+    const light = isColorThemeLight();
 
     // If width is 0, set it to container width.
     if (json.width === 0) {

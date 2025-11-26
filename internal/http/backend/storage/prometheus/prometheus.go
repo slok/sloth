@@ -217,7 +217,7 @@ func (r *Repository) GetSLIAvailabilityInRange(ctx context.Context, sloID string
 	}
 
 	// Get the SLI shortest window for the SLO.
-	windows, ok := r.cache.SLOSLIWindows[slothID]
+	windows, ok := r.cache.SLOSLIWindowsBySlothID[slothID]
 	if !ok || len(windows) == 0 {
 		// Most probably that does not exist yet.
 		r.logger.Warningf("Could not find SLI windows for SLO ID %q", sloID)
@@ -237,7 +237,7 @@ func (r *Repository) GetSLIAvailabilityInRangeAutoStep(ctx context.Context, sloI
 		return nil, fmt.Errorf("could not unmarshal slo grouping labels id: %w", err)
 	}
 
-	windows, ok := r.cache.SLOSLIWindows[slothID]
+	windows, ok := r.cache.SLOSLIWindowsBySlothID[slothID]
 	if !ok || len(windows) == 0 {
 		// Most probably that does not exist yet.
 		r.logger.Warningf("Could not find SLI windows for SLO ID %q", sloID)

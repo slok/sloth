@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"math"
 	"slices"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -13,7 +14,7 @@ import (
 	"github.com/slok/sloth/internal/http/backend/model"
 	"github.com/slok/sloth/pkg/common/conventions"
 	slothmodel "github.com/slok/sloth/pkg/common/model"
-	utilsprom "github.com/slok/sloth/pkg/common/utils/prometheus"
+	promutils "github.com/slok/sloth/pkg/common/utils/prometheus"
 )
 
 type cache struct {
@@ -21,503 +22,451 @@ type cache struct {
 	SLOAlertsBySLO             map[string]model.SLOAlerts
 	BudgetDetailsBySLO         map[string]model.SLOBudgetDetails
 	SLOIDs                     []string
-	SLOSLIWindows              map[string][]time.Duration
+	SLOSLIWindowsBySlothID     map[string][]time.Duration
 	SLOGroupingLabelsBySlothID map[string]map[string]struct{}
 }
 
 func (r *Repository) refreshCaches(ctx context.Context) error {
 	r.logger.Debugf("Refreshing background Prometheus caches")
 
-	sloNonGroupingLabels, err := r.listSLOLabelKeysToIgnore(ctx)
+	// Get information.
+	chain := newSLOsInstantHydraterChain(
+		// Metadata hydrators.
+		r.newSLOsInstantBaseDataHydrater(), // This must be first to populate base data.
+		r.newSLOsInstantSLIWindowsHydrater(),
+		r.newSLOsInstantSLOPeriodHydrater(),
+
+		// Grouped SLO expansion.
+		r.newSLOsInstantGroupedSLOsAndCurrentBurnRateRatioHydrater(), // From now on we can get instant data.
+
+		// Instant SLO values.
+		r.newSLOsInstantAlertsHydrater(),
+		r.newSLOsInstantBurnedPeriodRollingWindowRatioHydrater(),
+	)
+
+	slos := &slosInstantData{
+		slosBySlothID: make(map[string]*sloInstantData),
+		slosBySLOID:   make(map[string]*sloInstantData),
+	}
+	err := chain.HydrateSLOInstant(ctx, slos)
 	if err != nil {
-		return fmt.Errorf("could not list slo label keys to ignore: %w", err)
+		return fmt.Errorf("could not hydrate slo instant data: %w", err)
 	}
 
-	sloDetails, err := r.listSLODetails(ctx, sloNonGroupingLabels)
-	if err != nil {
-		return fmt.Errorf("could not list slo details: %w", err)
-	}
+	// Build caches.
+	sloDetailsByService := make(map[string][]model.SLO)
+	sloAlertsBySLO := make(map[string]model.SLOAlerts)
+	budgetDetailsBySLO := make(map[string]model.SLOBudgetDetails)
+	sloIDs := make([]string, 0, len(slos.slosBySLOID))
+	sloSLIWindowsBySlothID := make(map[string][]time.Duration)
 
-	sloGroupingLabels := map[string]map[string]struct{}{}
-
-	sloIDs := []string{}
-	sloGroupingLabelsBySlothID := map[string]map[string]struct{}{}
-	sloByService := map[string][]model.SLO{}
-	for _, slo := range sloDetails {
-		sloIDs = append(sloIDs, slo.ID)
-		sloByService[slo.ServiceID] = append(sloByService[slo.ServiceID], slo)
-		sloGroupingLabels[slo.ID] = map[string]struct{}{}
-
-		// If the SLO is grouped we need to store its grouping labels so we can use them later.
-		if _, ok := sloGroupingLabelsBySlothID[slo.SlothID]; !ok {
-			sloGroupingLabelsBySlothID[slo.SlothID] = map[string]struct{}{}
-			for k := range slo.GroupLabels {
-				sloGroupingLabelsBySlothID[slo.SlothID][k] = struct{}{}
-			}
+	// At this point we want SLOs that are grouped and not grouped, so we use the SLOID index and not the SlothID index.
+	for _, slo := range slos.slosBySLOID {
+		sloModel := model.SLO{
+			ID:             slo.SLOID,
+			SlothID:        slo.SlothID,
+			Name:           slo.Name,
+			ServiceID:      slo.ServiceID,
+			Objective:      slo.Objective,
+			IsGrouped:      slo.IsGrouped,
+			GroupLabels:    slo.GroupLabels,
+			PeriodDuration: slo.SLOPeriod,
 		}
+		sloDetailsByService[slo.ServiceID] = append(sloDetailsByService[slo.ServiceID], sloModel)
+		if slo.Alerts != nil {
+			sloAlertsBySLO[slo.SLOID] = *slo.Alerts
+		}
+		budgetDetailsBySLO[slo.SLOID] = model.SLOBudgetDetails{
+			SLOID:                     slo.SLOID,
+			BurnedBudgetWindowPercent: slo.BurnedPeriodRollingWindowRatio * 100,
+			BurningBudgetPercent:      slo.BurningCurrentRatio * 100,
+		}
+		sloIDs = append(sloIDs, slo.SLOID)
+		sloSLIWindowsBySlothID[slo.SlothID] = slo.SLIWindows
 	}
 
-	sloAlerts, err := r.listSLOAlerts(ctx, sloGroupingLabelsBySlothID)
-	if err != nil {
-		return fmt.Errorf("could not list slo alerts: %w", err)
-	}
-
-	sloBudgets, err := r.listSLOBudgets(ctx, sloIDs, sloGroupingLabelsBySlothID)
-	if err != nil {
-		return fmt.Errorf("could not list slo budgets: %w", err)
-	}
-
-	sloSLIWindows, err := r.inferSLIWindows(ctx)
-	if err != nil {
-		return fmt.Errorf("could not infer slo sli windows: %w", err)
+	for sloID := range sloDetailsByService {
+		slices.SortStableFunc(sloDetailsByService[sloID], func(x, y model.SLO) int { return strings.Compare(x.Name, y.Name) })
+		sort.SliceStable(sloSLIWindowsBySlothID[sloID], func(i, j int) bool { return sloSLIWindowsBySlothID[sloID][i] < sloSLIWindowsBySlothID[sloID][j] })
 	}
 
 	// Update cache.
 	r.mu.Lock()
-	r.cache.SLODetailsByService = sloByService
-	r.cache.SLOAlertsBySLO = sloAlerts
-	r.cache.BudgetDetailsBySLO = sloBudgets
+	r.cache.SLODetailsByService = sloDetailsByService
+	r.cache.SLOAlertsBySLO = sloAlertsBySLO
+	r.cache.BudgetDetailsBySLO = budgetDetailsBySLO
 	r.cache.SLOIDs = sloIDs
-	r.cache.SLOSLIWindows = sloSLIWindows
+	r.cache.SLOSLIWindowsBySlothID = sloSLIWindowsBySlothID
 	r.mu.Unlock()
 
 	return nil
 }
 
-func (r *Repository) listSLODetails(ctx context.Context, sloNonGroupingLabels map[string]map[string]struct{}) ([]model.SLO, error) {
-	// We will need some data first.
-	periodsBySLO, err := r.listSLOPeriods(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("could not list slo periods: %w", err)
-	}
+func (r *Repository) newSLOsInstantBaseDataHydrater() sloInstantsHydrater {
+	return sloInstantsHydraterFunc(func(ctx context.Context, slos *slosInstantData) error {
+		query := fmt.Sprintf(`%s{%s!=""}`, conventions.PromMetaSLOInfoMetric, conventions.PromSLOIDLabelName)
+		r.logger.Debugf("Querying Prometheus with instant query=%q", query)
 
-	objectivesBySLO, err := r.listSLOObjectives(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("could not list slo objectives: %w", err)
-	}
-
-	// With this query we get all SLOs defined in Prometheus and the labels of SLI grouped SLOs.
-	query := fmt.Sprintf(`%s * on (%s) group_right %s`,
-		conventions.PromMetaSLOInfoMetric,
-		conventions.PromSLOIDLabelName,
-		conventions.PromMetaSLOCurrentBurnRateRatioMetric,
-	)
-	result, warnings, err := r.promcli.Query(ctx, query, r.timeNowFunc())
-	if err != nil {
-		return nil, fmt.Errorf("could not query prometheus: %w", err)
-	}
-
-	for _, warning := range warnings {
-		r.logger.Warningf("Prometheus query warning: %v", warning)
-	}
-
-	// Parse the result vector to extract SLO details.
-	vector, ok := result.(prommodel.Vector)
-	if !ok {
-		return nil, fmt.Errorf("unexpected result type: %T", result)
-	}
-
-	// Extract SLO details from labels.
-	slos := make([]model.SLO, 0, len(vector))
-	for _, sample := range vector {
-		slothID := string(sample.Metric[conventions.PromSLOIDLabelName])
-		if slothID == "" {
-			continue
+		result, warnings, err := r.promcli.Query(ctx, query, r.timeNowFunc())
+		if err != nil {
+			return fmt.Errorf("could not query prometheus: %w", err)
 		}
 
-		serviceName := string(sample.Metric[conventions.PromSLOServiceLabelName])
-		sloName := string(sample.Metric[conventions.PromSLONameLabelName])
+		for _, warning := range warnings {
+			r.logger.Warningf("Prometheus query warning: %v", warning)
+		}
 
-		objective, ok := objectivesBySLO[slothID]
+		vector, ok := result.(prommodel.Vector)
 		if !ok {
-			return nil, fmt.Errorf("could not find objective for SLO %q", slothID)
+			return fmt.Errorf("unexpected result type: %T", result)
 		}
 
-		period, ok := periodsBySLO[slothID]
-		if !ok {
-			r.logger.Warningf("Could not find period duration for SLO %q, defaulting to 30 days", slothID)
-			period = 30 * 24 * time.Hour
-		}
-
-		slo := model.SLO{
-			ID:             slothID, // For now we use SlothID as unique ID but it may change in grouping.
-			SlothID:        slothID,
-			Name:           sloName,
-			ServiceID:      serviceName,
-			Objective:      objective,
-			PeriodDuration: period,
-		}
-
-		// Infer the group labels by removing the non grouping ones.
-		rmLabels := sloNonGroupingLabels[slothID]
-		groupLabels := map[string]string{}
-		for k, v := range sample.Metric {
-			kk := string(k)
-			if _, ok := rmLabels[kk]; ok {
+		for _, sample := range vector {
+			slothID := string(sample.Metric[conventions.PromSLOIDLabelName])
+			if slothID == "" {
 				continue
 			}
-			groupLabels[kk] = string(v)
-		}
 
-		// If we have non grouping labels for this SLO we need its a grouped SLO.
-		if len(groupLabels) > 0 {
-			slo.ID = model.SLOGroupLabelsIDMarshal(slothID, groupLabels)
-			slo.GroupLabels = groupLabels
-			slo.IsGrouped = true
-		}
+			sloID := slothID // For now wed don't know if these are grouped (the ones that have SLO ID and sloth ID different).
+			sloName := string(sample.Metric[conventions.PromSLONameLabelName])
+			serviceName := string(sample.Metric[conventions.PromSLOServiceLabelName])
+			specName := string(sample.Metric[conventions.PromSLOSpecLabelName])
+			slothVersion := string(sample.Metric[conventions.PromSLOVersionLabelName])
+			slothMode := string(sample.Metric[conventions.PromSLOModeLabelName])
+			objective := string(sample.Metric[conventions.PromSLOObjectiveLabelName])
+			objectiveF, err := strconv.ParseFloat(objective, 64)
+			if err != nil {
+				return fmt.Errorf("failed to parse objective %q", objective)
+			}
 
-		slos = append(slos, slo)
-	}
+			slo, ok := slos.slosBySlothID[slothID]
+			if !ok {
+				slo = &sloInstantData{}
+				slos.slosBySlothID[slothID] = slo
+				slos.slosBySLOID[sloID] = slo
+			}
 
-	return slos, nil
-}
+			slo.SLOID = sloID
+			slo.SlothID = slothID
+			slo.Name = sloName
+			slo.ServiceID = serviceName
+			slo.Objective = objectiveF
+			slo.SpecName = specName
+			slo.SlothVersion = slothVersion
+			slo.SlothMode = slothMode
+			slo.NonGroupingLabels = map[string]struct{}{
+				conventions.PromSLONameLabelName:      {},
+				conventions.PromSLOIDLabelName:        {},
+				conventions.PromSLOServiceLabelName:   {},
+				conventions.PromSLOWindowLabelName:    {},
+				conventions.PromSLOSeverityLabelName:  {},
+				conventions.PromSLOVersionLabelName:   {},
+				conventions.PromSLOModeLabelName:      {},
+				conventions.PromSLOSpecLabelName:      {},
+				conventions.PromSLOObjectiveLabelName: {},
+			}
 
-func (r *Repository) listSLOPeriods(ctx context.Context) (map[string]time.Duration, error) {
-	// These don't need grouping labels so we can just get them directly as all share the same.
-	query := fmt.Sprintf(`max(%s{%[2]s!=""}) by (%[2]s)`, conventions.PromMetaSLOTimePeriodDaysMetric, conventions.PromSLOIDLabelName)
-	result, warnings, err := r.promcli.Query(ctx, query, r.timeNowFunc())
-	if err != nil {
-		return nil, fmt.Errorf("could not query prometheus: %w", err)
-	}
-
-	for _, warning := range warnings {
-		r.logger.Warningf("Prometheus query warning: %v", warning)
-	}
-
-	vector, ok := result.(prommodel.Vector)
-	if !ok {
-		return nil, fmt.Errorf("unexpected result type: %T", result)
-	}
-
-	periods := make(map[string]time.Duration, len(vector))
-	for _, sample := range vector {
-		sloID := string(sample.Metric[conventions.PromSLOIDLabelName])
-		if sloID == "" {
-			continue
-		}
-
-		// The value represents the number of days.
-		days := float64(sample.Value)
-		if days <= 0 {
-			r.logger.Warningf("Invalid time period days value %f for SLO %q", days, sloID)
-			continue
-		}
-
-		// Convert days to time.Duration.
-		periodDuration := time.Duration(days * 24 * float64(time.Hour))
-		periods[sloID] = periodDuration
-	}
-
-	return periods, nil
-}
-
-func (r *Repository) listSLOAlerts(ctx context.Context, sloGroupingLabelsBySlothID map[string]map[string]struct{}) (map[string]model.SLOAlerts, error) {
-	query := fmt.Sprintf(`ALERTS{%s!=""}`, conventions.PromSLOIDLabelName)
-	result, warnings, err := r.promcli.Query(ctx, query, r.timeNowFunc())
-	if err != nil {
-		return nil, fmt.Errorf("could not query prometheus: %w", err)
-	}
-
-	for _, warning := range warnings {
-		r.logger.Warningf("Prometheus query warning: %v", warning)
-	}
-
-	vector, ok := result.(prommodel.Vector)
-	if !ok {
-		return nil, fmt.Errorf("unexpected result type: %T", result)
-	}
-
-	// Group alerts by SLO ID.
-	alertsBySLO := map[string]model.SLOAlerts{}
-	for _, sample := range vector {
-		// Only process firing alerts (non-firing alerts are represented as nil pointers).
-		alertState := string(sample.Metric["alertstate"])
-		if alertState != "firing" {
-			continue
-		}
-
-		slothID := string(sample.Metric[conventions.PromSLOIDLabelName])
-		alertName := string(sample.Metric["alertname"])
-		severity := string(sample.Metric[conventions.PromSLOSeverityLabelName])
-
-		// Grouped SLO?
-		groupedLabels := map[string]string{}
-		if ks, ok := sloGroupingLabelsBySlothID[slothID]; ok {
-			for k := range ks {
-				if v, ok := sample.Metric[prommodel.LabelName(k)]; ok {
-					groupedLabels[k] = string(v)
-				}
+			// This labels will never be used for grouping, so we can use these to ignore the labels retrieved on the SLI recording
+			// result rules.
+			for labelKey := range sample.Metric {
+				slo.NonGroupingLabels[string(labelKey)] = struct{}{}
 			}
 		}
 
-		sloID := slothID
-		if len(groupedLabels) > 0 {
-			sloID = model.SLOGroupLabelsIDMarshal(slothID, groupedLabels)
+		return nil
+	})
+}
+
+// tries to infer the SLI windows of SLOs based on the SLI error recording rules.
+func (r *Repository) newSLOsInstantSLIWindowsHydrater() sloInstantsHydrater {
+	return sloInstantsHydraterFunc(func(ctx context.Context, slos *slosInstantData) error {
+		// These don't need grouping labels so we can just get them directly as all share the same.
+		query := fmt.Sprintf(`count({__name__=~"^%s.*"}) by (__name__, %s)`, conventions.PromSLIErrorMetric, conventions.PromSLOIDLabelName)
+		r.logger.Debugf("Querying Prometheus with instant query=%q", query)
+
+		sloWindows := map[string][]time.Duration{}
+		result, warnings, err := r.promcli.Query(ctx, query, r.timeNowFunc())
+		if err != nil {
+			return fmt.Errorf("could not query prometheus: %w", err)
 		}
 
-		sloAlerts, ok := alertsBySLO[sloID]
+		for _, warning := range warnings {
+			r.logger.Warningf("Prometheus query warning: %v", warning)
+		}
+
+		vector, ok := result.(prommodel.Vector)
 		if !ok {
-			sloAlerts = model.SLOAlerts{SLOID: sloID}
+			return fmt.Errorf("unexpected result type: %T", result)
 		}
 
-		// Assign to appropriate alert field based on severity.
-		alert := &model.Alert{
-			Name: alertName,
+		for _, sample := range vector {
+			slothID := string(sample.Metric[conventions.PromSLOIDLabelName])
+			metricName := string(sample.Metric["__name__"])
+
+			// Extract window from metric name suffix.
+			windowStr := strings.TrimPrefix(metricName, conventions.PromSLIErrorMetric)
+			windowDur, err := promutils.PromStrToTimeDuration(windowStr)
+			if err != nil {
+				r.logger.Warningf("Could not parse SLI window duration from metric name %q: %v", metricName, err)
+				continue
+			}
+
+			sloWindows[slothID] = append(sloWindows[slothID], windowDur)
 		}
 
-		switch severity {
-		case slothmodel.PageAlertSeverity.String():
-			sloAlerts.FiringPage = alert
-		case slothmodel.TicketAlertSeverity.String():
-			sloAlerts.FiringWarning = alert
-		default:
-			continue
+		for _, windows := range sloWindows {
+			slices.Sort(windows)
 		}
 
-		alertsBySLO[sloID] = sloAlerts
-	}
+		// Assign windows to SLOs.
+		for slothID, windows := range sloWindows {
+			slos.slosBySlothID[slothID].SLIWindows = windows
+		}
 
-	return alertsBySLO, nil
+		return nil
+	})
 }
 
-func (r *Repository) listSLOBurnedPeriodRollingWindowRatio(ctx context.Context, sloGroupingLabelsBySlothID map[string]map[string]struct{}) (map[string]float64, error) {
-	query := fmt.Sprintf(`%s{%s!=""}`, conventions.PromMetaSLOPeriodErrorBudgetRemainingRatioMetric, conventions.PromSLOIDLabelName)
-	result, warnings, err := r.promcli.Query(ctx, query, r.timeNowFunc())
-	if err != nil {
-		return nil, fmt.Errorf("could not query prometheus: %w", err)
-	}
+func (r *Repository) newSLOsInstantSLOPeriodHydrater() sloInstantsHydrater {
+	return sloInstantsHydraterFunc(func(ctx context.Context, slos *slosInstantData) error {
+		// These don't need grouping labels so we can just get them directly as all share the same.
+		query := fmt.Sprintf(`max(%s{%[2]s!=""}) by (%[2]s)`, conventions.PromMetaSLOTimePeriodDaysMetric, conventions.PromSLOIDLabelName)
+		r.logger.Debugf("Querying Prometheus with instant query=%q", query)
 
-	for _, warning := range warnings {
-		r.logger.Warningf("Prometheus query warning: %v", warning)
-	}
-
-	vector, ok := result.(prommodel.Vector)
-	if !ok {
-		return nil, fmt.Errorf("unexpected result type: %T", result)
-	}
-
-	ratioBySLO := make(map[string]float64, len(vector))
-	for _, sample := range vector {
-		slothID := string(sample.Metric[conventions.PromSLOIDLabelName])
-		if slothID == "" {
-			continue
+		result, warnings, err := r.promcli.Query(ctx, query, r.timeNowFunc())
+		if err != nil {
+			return fmt.Errorf("could not query prometheus: %w", err)
 		}
 
-		// Grouped SLO?
-		groupedLabels := map[string]string{}
-		if ks, ok := sloGroupingLabelsBySlothID[slothID]; ok {
-			for k := range ks {
-				if v, ok := sample.Metric[prommodel.LabelName(k)]; ok {
-					groupedLabels[k] = string(v)
+		for _, warning := range warnings {
+			r.logger.Warningf("Prometheus query warning: %v", warning)
+		}
+
+		vector, ok := result.(prommodel.Vector)
+		if !ok {
+			return fmt.Errorf("unexpected result type: %T", result)
+		}
+
+		for _, sample := range vector {
+			slothID := string(sample.Metric[conventions.PromSLOIDLabelName])
+			if slothID == "" {
+				continue
+			}
+
+			// The value represents the number of days.
+			days := float64(sample.Value)
+			if days <= 0 {
+				r.logger.Warningf("Invalid time period days value %f for SLO %q", days, slothID)
+				continue
+			}
+
+			// Convert days to time.Duration.
+			periodDuration := time.Duration(days * 24 * float64(time.Hour))
+			slos.slosBySlothID[slothID].SLOPeriod = periodDuration
+		}
+
+		return nil
+	})
+}
+
+func (r *Repository) newSLOsInstantGroupedSLOsAndCurrentBurnRateRatioHydrater() sloInstantsHydrater {
+	return sloInstantsHydraterFunc(func(ctx context.Context, slos *slosInstantData) error {
+		query := fmt.Sprintf(`%s{%s!=""}`,
+			conventions.PromMetaSLOCurrentBurnRateRatioMetric,
+			conventions.PromSLOIDLabelName,
+		)
+		r.logger.Debugf("Querying Prometheus with instant query=%q", query)
+
+		result, warnings, err := r.promcli.Query(ctx, query, r.timeNowFunc())
+		if err != nil {
+			return fmt.Errorf("could not query prometheus: %w", err)
+		}
+
+		for _, warning := range warnings {
+			r.logger.Warningf("Prometheus query warning: %v", warning)
+		}
+
+		// Parse the result vector to extract SLO details.
+		vector, ok := result.(prommodel.Vector)
+		if !ok {
+			return fmt.Errorf("unexpected result type: %T", result)
+		}
+
+		for _, sample := range vector {
+			slothID := string(sample.Metric[conventions.PromSLOIDLabelName])
+			if slothID == "" {
+				continue
+			}
+			slo, ok := slos.slosBySlothID[slothID]
+			if !ok {
+				continue
+			}
+
+			// 2x1, If we get this one here we avoid a query.
+			burningCurrentRatio := float64(sample.Value)
+			if math.IsNaN(burningCurrentRatio) {
+				burningCurrentRatio = 0
+			}
+			slo.BurningCurrentRatio = burningCurrentRatio
+
+			// Infer the group labels by removing the non grouping ones.
+			groupLabels := map[string]string{}
+			for k, v := range sample.Metric {
+				kk := string(k)
+				if _, ok := slo.NonGroupingLabels[kk]; ok {
+					continue
 				}
+				groupLabels[kk] = string(v)
+			}
+
+			// If we have non grouping labels for this SLO we need to expand it.
+			if len(groupLabels) > 0 {
+				// Mark the ungrouped SLO as grouped.
+				ungroupedSLO := slos.slosBySlothID[slothID]
+				ungroupedSLO.IsGrouped = true
+				ungroupedSLO.GroupLabels = groupLabels
+
+				id := model.SLOGroupLabelsIDMarshal(slothID, groupLabels)
+				slos.slosBySLOID[id] = &sloInstantData{
+					SLOID:               id,
+					SlothID:             slo.SlothID,
+					Name:                slo.Name,
+					ServiceID:           slo.ServiceID,
+					Objective:           slo.Objective,
+					SpecName:            slo.SpecName,
+					SlothVersion:        slo.SlothVersion,
+					SlothMode:           slo.SlothMode,
+					SLOPeriod:           slo.SLOPeriod,
+					SLIWindows:          slo.SLIWindows,
+					NonGroupingLabels:   slo.NonGroupingLabels,
+					GroupLabels:         groupLabels,
+					IsGrouped:           true,
+					BurningCurrentRatio: burningCurrentRatio, // The extra we got from the query.
+				}
+				delete(slos.slosBySLOID, slothID) // Remove the ungrouped version.
 			}
 		}
 
-		sloID := slothID
-		if len(groupedLabels) > 0 {
-			sloID = model.SLOGroupLabelsIDMarshal(slothID, groupedLabels)
-		}
-
-		ratioBySLO[sloID] = 1 - float64(sample.Value) // We don't want remaining, we want whats burned.
-	}
-
-	return ratioBySLO, nil
+		return nil
+	})
 }
 
-func (r *Repository) listSLOBurningCurrentRatio(ctx context.Context, sloGroupingLabelsBySlothID map[string]map[string]struct{}) (map[string]float64, error) {
-	query := fmt.Sprintf(`%s{%s!=""}`, conventions.PromMetaSLOCurrentBurnRateRatioMetric, conventions.PromSLOIDLabelName)
-	result, warnings, err := r.promcli.Query(ctx, query, r.timeNowFunc())
-	if err != nil {
-		return nil, fmt.Errorf("could not query prometheus: %w", err)
-	}
+func (r *Repository) newSLOsInstantAlertsHydrater() sloInstantsHydrater {
+	return sloInstantsHydraterFunc(func(ctx context.Context, slos *slosInstantData) error {
+		query := fmt.Sprintf(`ALERTS{%s!=""}`, conventions.PromSLOIDLabelName)
+		r.logger.Debugf("Querying Prometheus with instant query=%q", query)
 
-	for _, warning := range warnings {
-		r.logger.Warningf("Prometheus query warning: %v", warning)
-	}
-
-	vector, ok := result.(prommodel.Vector)
-	if !ok {
-		return nil, fmt.Errorf("unexpected result type: %T", result)
-	}
-
-	burnRates := make(map[string]float64, len(vector))
-	for _, sample := range vector {
-		slothID := string(sample.Metric[conventions.PromSLOIDLabelName])
-		if slothID == "" {
-			continue
+		result, warnings, err := r.promcli.Query(ctx, query, r.timeNowFunc())
+		if err != nil {
+			return fmt.Errorf("could not query prometheus: %w", err)
 		}
 
-		// Grouped SLO?
-		groupedLabels := map[string]string{}
-		if ks, ok := sloGroupingLabelsBySlothID[slothID]; ok {
-			for k := range ks {
-				if v, ok := sample.Metric[prommodel.LabelName(k)]; ok {
-					groupedLabels[k] = string(v)
+		for _, warning := range warnings {
+			r.logger.Warningf("Prometheus query warning: %v", warning)
+		}
+
+		vector, ok := result.(prommodel.Vector)
+		if !ok {
+			return fmt.Errorf("unexpected result type: %T", result)
+		}
+
+		// Group alerts by SLO ID.
+		for _, sample := range vector {
+			// Only process firing alerts (non-firing alerts are represented as nil pointers).
+			alertState := string(sample.Metric["alertstate"])
+			if alertState != "firing" {
+				continue
+			}
+
+			slothID := string(sample.Metric[conventions.PromSLOIDLabelName])
+			alertName := string(sample.Metric["alertname"])
+			severity := string(sample.Metric[conventions.PromSLOSeverityLabelName])
+
+			// Grouped SLO?
+			groupedLabels := map[string]string{}
+			slo := slos.slosBySlothID[slothID]
+			if slo.IsGrouped {
+				for k := range slo.GroupLabels {
+					if v, ok := sample.Metric[prommodel.LabelName(k)]; ok {
+						groupedLabels[k] = string(v)
+					}
 				}
+			}
+
+			sloID := slothID
+			if len(groupedLabels) > 0 {
+				sloID = model.SLOGroupLabelsIDMarshal(slothID, groupedLabels)
+			}
+
+			slo = slos.slosBySLOID[sloID]
+			if slo.Alerts == nil {
+				slo.Alerts = &model.SLOAlerts{SLOID: sloID}
+			}
+
+			// Assign to appropriate alert field based on severity.
+			alert := &model.Alert{
+				Name: alertName,
+			}
+
+			switch severity {
+			case slothmodel.PageAlertSeverity.String():
+				slo.Alerts.FiringPage = alert
+			case slothmodel.TicketAlertSeverity.String():
+				slo.Alerts.FiringWarning = alert
+			default:
+				continue
 			}
 		}
 
-		sloID := slothID
-		if len(groupedLabels) > 0 {
-			sloID = model.SLOGroupLabelsIDMarshal(slothID, groupedLabels)
-		}
-
-		v := float64(sample.Value)
-		if math.IsNaN(v) {
-			v = 0
-		}
-		burnRates[sloID] = v
-	}
-
-	return burnRates, nil
+		return nil
+	})
 }
 
-func (r *Repository) listSLOBudgets(ctx context.Context, sloIDs []string, sloGroupingLabelsBySlothID map[string]map[string]struct{}) (map[string]model.SLOBudgetDetails, error) {
-	burnedRolledWindowRatioBySLO, err := r.listSLOBurnedPeriodRollingWindowRatio(ctx, sloGroupingLabelsBySlothID)
-	if err != nil {
-		return nil, fmt.Errorf("could not list slo burned period rolling window ratio: %w", err)
-	}
+func (r *Repository) newSLOsInstantBurnedPeriodRollingWindowRatioHydrater() sloInstantsHydrater {
+	return sloInstantsHydraterFunc(func(ctx context.Context, slos *slosInstantData) error {
+		query := fmt.Sprintf(`%s{%s!=""}`, conventions.PromMetaSLOPeriodErrorBudgetRemainingRatioMetric, conventions.PromSLOIDLabelName)
+		r.logger.Debugf("Querying Prometheus with instant query=%q", query)
 
-	currentBurnRatioBySLO, err := r.listSLOBurningCurrentRatio(ctx, sloGroupingLabelsBySlothID)
-	if err != nil {
-		return nil, fmt.Errorf("could not list slo current burn ratio: %w", err)
-	}
-
-	budgets := map[string]model.SLOBudgetDetails{}
-	for _, sloID := range sloIDs {
-		currentBurnRatio := currentBurnRatioBySLO[sloID]
-		windowBurnRatio := burnedRolledWindowRatioBySLO[sloID]
-
-		budgets[sloID] = model.SLOBudgetDetails{
-			SLOID:                     sloID,
-			BurningBudgetPercent:      currentBurnRatio * 100,
-			BurnedBudgetWindowPercent: windowBurnRatio * 100,
-		}
-	}
-
-	return budgets, nil
-}
-
-// inferSLIWindows tries to infer the SLI windows of SLOs based on the SLI error recording rules.
-func (r *Repository) inferSLIWindows(ctx context.Context) (map[string][]time.Duration, error) {
-	// These don't need grouping labels so we can just get them directly as all share the same.
-	query := fmt.Sprintf(`count({__name__=~"^%s.*"}) by (__name__, %s)`, conventions.PromSLIErrorMetric, conventions.PromSLOIDLabelName)
-	sloWindows := map[string][]time.Duration{}
-
-	result, warnings, err := r.promcli.Query(ctx, query, r.timeNowFunc())
-	if err != nil {
-		return nil, fmt.Errorf("could not query prometheus: %w", err)
-	}
-
-	for _, warning := range warnings {
-		r.logger.Warningf("Prometheus query warning: %v", warning)
-	}
-
-	vector, ok := result.(prommodel.Vector)
-	if !ok {
-		return nil, fmt.Errorf("unexpected result type: %T", result)
-	}
-
-	for _, sample := range vector {
-		sloID := string(sample.Metric[conventions.PromSLOIDLabelName])
-		metricName := string(sample.Metric["__name__"])
-
-		// Extract window from metric name suffix.
-		windowStr := strings.TrimPrefix(metricName, conventions.PromSLIErrorMetric)
-		windowDur, err := utilsprom.PromStrToTimeDuration(windowStr)
+		result, warnings, err := r.promcli.Query(ctx, query, r.timeNowFunc())
 		if err != nil {
-			r.logger.Warningf("Could not parse SLI window duration from metric name %q: %v", metricName, err)
-			continue
+			return fmt.Errorf("could not query prometheus: %w", err)
 		}
 
-		sloWindows[sloID] = append(sloWindows[sloID], windowDur)
-	}
-
-	for _, windows := range sloWindows {
-		slices.Sort(windows)
-	}
-
-	return sloWindows, nil
-}
-
-// listSLOLabelKeysToIgnore lists the SLO labels to ignore for grouping purposes so we know all the labels
-// that are not used for grouping SLOs by labels.
-//
-// We accomplish this by querying the SLO info meta metric all the labels set on all metrics, this labels
-// will never be used for grouping, so we can use these to ignore the labels retrieved on the SLI recording
-// result rules.
-func (r *Repository) listSLOLabelKeysToIgnore(ctx context.Context) (map[string]map[string]struct{}, error) {
-	query := fmt.Sprintf(`%s{%s!=""}`, conventions.PromMetaSLOInfoMetric, conventions.PromSLOIDLabelName)
-	result, warnings, err := r.promcli.Query(ctx, query, r.timeNowFunc())
-	if err != nil {
-		return nil, fmt.Errorf("could not query prometheus: %w", err)
-	}
-
-	for _, warning := range warnings {
-		r.logger.Warningf("Prometheus query warning: %v", warning)
-	}
-
-	vector, ok := result.(prommodel.Vector)
-	if !ok {
-		return nil, fmt.Errorf("unexpected result type: %T", result)
-	}
-
-	indexedLabelKeysBySlothID := map[string]map[string]struct{}{}
-	for _, sample := range vector {
-		slothID := string(sample.Metric[conventions.PromSLOIDLabelName])
-		if slothID == "" {
-			continue
+		for _, warning := range warnings {
+			r.logger.Warningf("Prometheus query warning: %v", warning)
 		}
 
-		indexedLabelKeysBySlothID[slothID] = map[string]struct{}{
-			conventions.PromSLONameLabelName:      {},
-			conventions.PromSLOIDLabelName:        {},
-			conventions.PromSLOServiceLabelName:   {},
-			conventions.PromSLOWindowLabelName:    {},
-			conventions.PromSLOSeverityLabelName:  {},
-			conventions.PromSLOVersionLabelName:   {},
-			conventions.PromSLOModeLabelName:      {},
-			conventions.PromSLOSpecLabelName:      {},
-			conventions.PromSLOObjectiveLabelName: {},
-		}
-		for labelKey := range sample.Metric {
-			indexedLabelKeysBySlothID[slothID][string(labelKey)] = struct{}{}
-		}
-	}
-
-	return indexedLabelKeysBySlothID, nil
-}
-
-func (r *Repository) listSLOObjectives(ctx context.Context) (map[string]float64, error) {
-	query := fmt.Sprintf(`%s{%s!=""}`, conventions.PromMetaSLOInfoMetric, conventions.PromSLOIDLabelName)
-	result, warnings, err := r.promcli.Query(ctx, query, r.timeNowFunc())
-	if err != nil {
-		return nil, fmt.Errorf("could not query prometheus: %w", err)
-	}
-
-	for _, warning := range warnings {
-		r.logger.Warningf("Prometheus query warning: %v", warning)
-	}
-
-	vector, ok := result.(prommodel.Vector)
-	if !ok {
-		return nil, fmt.Errorf("unexpected result type: %T", result)
-	}
-
-	objs := map[string]float64{}
-	for _, sample := range vector {
-		slothID := string(sample.Metric[conventions.PromSLOIDLabelName])
-		if slothID == "" {
-			continue
+		vector, ok := result.(prommodel.Vector)
+		if !ok {
+			return fmt.Errorf("unexpected result type: %T", result)
 		}
 
-		objective := string(sample.Metric[conventions.PromSLOObjectiveLabelName])
-		objectiveF, err := strconv.ParseFloat(objective, 64)
-		if err != nil {
-			return nil, fmt.Errorf("failed to parse objective %q", objective)
-		}
-		objs[slothID] = objectiveF
-	}
+		for _, sample := range vector {
+			slothID := string(sample.Metric[conventions.PromSLOIDLabelName])
+			if slothID == "" {
+				continue
+			}
 
-	return objs, nil
+			// Grouped SLO?
+			groupedLabels := map[string]string{}
+			slo := slos.slosBySlothID[slothID]
+			if slo.IsGrouped {
+				for k := range slo.GroupLabels {
+					if v, ok := sample.Metric[prommodel.LabelName(k)]; ok {
+						groupedLabels[k] = string(v)
+					}
+				}
+			}
+
+			sloID := slothID
+			if len(groupedLabels) > 0 {
+				sloID = model.SLOGroupLabelsIDMarshal(slothID, groupedLabels)
+			}
+			slo = slos.slosBySLOID[sloID]
+
+			slo.BurnedPeriodRollingWindowRatio = 1 - float64(sample.Value) // We don't want remaining, we want whats burned.
+		}
+
+		return nil
+	})
 }

@@ -24,7 +24,7 @@ func TestRepositoryListAllServiceAndAlerts(t *testing.T) {
 	}{
 		"Getting SLOs and alerts successfully should return proper service and alerts.": {
 			mock: func(mpc *prometheusmock.PrometheusAPIClient) {
-				mpc.On("Query", mock.Anything, `sloth_slo_info{sloth_id!=""}`, mock.Anything).Twice().Return(prommodel.Vector{
+				mpc.On("Query", mock.Anything, `sloth_slo_info{sloth_id!=""}`, mock.Anything).Once().Return(prommodel.Vector{
 					&prommodel.Sample{
 						Metric: prommodel.Metric{
 							"sloth_id":        "slo-1",
@@ -57,7 +57,7 @@ func TestRepositoryListAllServiceAndAlerts(t *testing.T) {
 					&prommodel.Sample{Metric: prommodel.Metric{"sloth_id": "slo-3"}, Value: 7},
 				}, nil, nil)
 
-				mpc.On("Query", mock.Anything, `sloth_slo_info * on (sloth_id) group_right slo:current_burn_rate:ratio`, mock.Anything).Once().Return(prommodel.Vector{
+				mpc.On("Query", mock.Anything, `slo:current_burn_rate:ratio{sloth_id!=""}`, mock.Anything).Once().Return(prommodel.Vector{
 					&prommodel.Sample{
 						Metric: prommodel.Metric{
 							"sloth_id":        "slo-1",
@@ -128,7 +128,6 @@ func TestRepositoryListAllServiceAndAlerts(t *testing.T) {
 				}, nil, nil)
 
 				mpc.On("Query", mock.Anything, `slo:period_error_budget_remaining:ratio{sloth_id!=""}`, mock.Anything).Once().Return(prommodel.Vector{}, nil, nil)
-				mpc.On("Query", mock.Anything, `slo:current_burn_rate:ratio{sloth_id!=""}`, mock.Anything).Once().Return(prommodel.Vector{}, nil, nil)
 				mpc.On("Query", mock.Anything, `count({__name__=~"^slo:sli_error:ratio_rate.*"}) by (__name__, sloth_id)`, mock.Anything).Once().Return(prommodel.Vector{}, nil, nil)
 			},
 			expSvcAls: []storage.ServiceAndAlerts{
@@ -199,7 +198,7 @@ func TestRepositoryListSLOInstantDetailsService(t *testing.T) {
 					&prommodel.Sample{Metric: prommodel.Metric{"sloth_id": "slo-2"}, Value: 15},
 					&prommodel.Sample{Metric: prommodel.Metric{"sloth_id": "slo-3"}, Value: 15},
 				}, nil, nil)
-				mpc.On("Query", mock.Anything, `sloth_slo_info{sloth_id!=""}`, mock.Anything).Twice().Return(prommodel.Vector{
+				mpc.On("Query", mock.Anything, `sloth_slo_info{sloth_id!=""}`, mock.Anything).Once().Return(prommodel.Vector{
 					&prommodel.Sample{
 						Metric: prommodel.Metric{
 							"sloth_id":        "slo-1",
@@ -226,7 +225,7 @@ func TestRepositoryListSLOInstantDetailsService(t *testing.T) {
 					},
 				}, nil, nil)
 
-				mpc.On("Query", mock.Anything, `sloth_slo_info * on (sloth_id) group_right slo:current_burn_rate:ratio`, mock.Anything).Once().Return(prommodel.Vector{
+				mpc.On("Query", mock.Anything, `slo:current_burn_rate:ratio{sloth_id!=""}`, mock.Anything).Once().Return(prommodel.Vector{
 					&prommodel.Sample{
 						Metric: prommodel.Metric{
 							"sloth_id":        "slo-1",
@@ -234,6 +233,7 @@ func TestRepositoryListSLOInstantDetailsService(t *testing.T) {
 							"sloth_slo":       "SLO 1",
 							"sloth_objective": "99.9",
 						},
+						Value: 1,
 					},
 					&prommodel.Sample{
 						Metric: prommodel.Metric{
@@ -242,6 +242,7 @@ func TestRepositoryListSLOInstantDetailsService(t *testing.T) {
 							"sloth_slo":       "SLO 2",
 							"sloth_objective": "99.5",
 						},
+						Value: 0.03,
 					},
 					&prommodel.Sample{
 						Metric: prommodel.Metric{
@@ -250,6 +251,7 @@ func TestRepositoryListSLOInstantDetailsService(t *testing.T) {
 							"sloth_slo":       "SLO 3",
 							"sloth_objective": "99.5",
 						},
+						Value: 0.5,
 					},
 				}, nil, nil)
 
@@ -270,11 +272,6 @@ func TestRepositoryListSLOInstantDetailsService(t *testing.T) {
 					&prommodel.Sample{Metric: prommodel.Metric{"sloth_id": "slo-1"}, Value: 0.5},
 					&prommodel.Sample{Metric: prommodel.Metric{"sloth_id": "slo-2"}, Value: 0.98},
 					&prommodel.Sample{Metric: prommodel.Metric{"sloth_id": "slo-3"}, Value: 0.75},
-				}, nil, nil)
-				mpc.On("Query", mock.Anything, `slo:current_burn_rate:ratio{sloth_id!=""}`, mock.Anything).Once().Return(prommodel.Vector{
-					&prommodel.Sample{Metric: prommodel.Metric{"sloth_id": "slo-1"}, Value: 1},
-					&prommodel.Sample{Metric: prommodel.Metric{"sloth_id": "slo-2"}, Value: 0.03},
-					&prommodel.Sample{Metric: prommodel.Metric{"sloth_id": "slo-3"}, Value: 0.5},
 				}, nil, nil)
 
 				mpc.On("Query", mock.Anything, `count({__name__=~"^slo:sli_error:ratio_rate.*"}) by (__name__, sloth_id)`, mock.Anything).Once().Return(prommodel.Vector{}, nil, nil)
@@ -325,7 +322,7 @@ func TestRepositoryListSLOInstantDetailsService(t *testing.T) {
 					&prommodel.Sample{Metric: prommodel.Metric{"sloth_id": "slo-1"}, Value: 30},
 					&prommodel.Sample{Metric: prommodel.Metric{"sloth_id": "slo-3"}, Value: 15},
 				}, nil, nil)
-				mpc.On("Query", mock.Anything, `sloth_slo_info{sloth_id!=""}`, mock.Anything).Twice().Return(prommodel.Vector{
+				mpc.On("Query", mock.Anything, `sloth_slo_info{sloth_id!=""}`, mock.Anything).Once().Return(prommodel.Vector{
 					&prommodel.Sample{
 						Metric: prommodel.Metric{
 							"sloth_id":        "slo-1",
@@ -344,7 +341,7 @@ func TestRepositoryListSLOInstantDetailsService(t *testing.T) {
 					},
 				}, nil, nil)
 
-				mpc.On("Query", mock.Anything, `sloth_slo_info * on (sloth_id) group_right slo:current_burn_rate:ratio`, mock.Anything).Once().Return(prommodel.Vector{
+				mpc.On("Query", mock.Anything, `slo:current_burn_rate:ratio{sloth_id!=""}`, mock.Anything).Once().Return(prommodel.Vector{
 					&prommodel.Sample{
 						Metric: prommodel.Metric{
 							"sloth_id":        "slo-1",
@@ -353,6 +350,7 @@ func TestRepositoryListSLOInstantDetailsService(t *testing.T) {
 							"sloth_objective": "99.9",
 							"operation":       "create", // We are grouping in these.
 						},
+						Value: 1,
 					},
 					&prommodel.Sample{
 						Metric: prommodel.Metric{
@@ -362,6 +360,7 @@ func TestRepositoryListSLOInstantDetailsService(t *testing.T) {
 							"sloth_objective": "99.9",
 							"operation":       "update", // We are grouping in these.
 						},
+						Value: 0.03,
 					},
 					&prommodel.Sample{
 						Metric: prommodel.Metric{
@@ -370,6 +369,7 @@ func TestRepositoryListSLOInstantDetailsService(t *testing.T) {
 							"sloth_slo":       "SLO 3",
 							"sloth_objective": "99.5",
 						},
+						Value: 0.5,
 					},
 				}, nil, nil)
 
@@ -408,28 +408,6 @@ func TestRepositoryListSLOInstantDetailsService(t *testing.T) {
 						"sloth_slo":       "SLO 3",
 						"sloth_objective": "99.5",
 					}, Value: 0.75},
-				}, nil, nil)
-				mpc.On("Query", mock.Anything, `slo:current_burn_rate:ratio{sloth_id!=""}`, mock.Anything).Once().Return(prommodel.Vector{
-					&prommodel.Sample{Metric: prommodel.Metric{
-						"sloth_id":        "slo-1",
-						"sloth_service":   "svc-1",
-						"sloth_slo":       "SLO 1",
-						"sloth_objective": "99.9",
-						"operation":       "create", // We are grouping in these.
-					}, Value: 1},
-					&prommodel.Sample{Metric: prommodel.Metric{
-						"sloth_id":        "slo-1",
-						"sloth_service":   "svc-1",
-						"sloth_slo":       "SLO 1",
-						"sloth_objective": "99.9",
-						"operation":       "update", // We are grouping in these.
-					}, Value: 0.03},
-					&prommodel.Sample{Metric: prommodel.Metric{
-						"sloth_id":        "slo-3",
-						"sloth_service":   "svc-2",
-						"sloth_slo":       "SLO 3",
-						"sloth_objective": "99.5",
-					}, Value: 0.5},
 				}, nil, nil)
 
 				mpc.On("Query", mock.Anything, `count({__name__=~"^slo:sli_error:ratio_rate.*"}) by (__name__, sloth_id)`, mock.Anything).Once().Return(prommodel.Vector{}, nil, nil)
@@ -520,7 +498,7 @@ func TestRepositoryListSLOInstantDetails(t *testing.T) {
 					&prommodel.Sample{Metric: prommodel.Metric{"sloth_id": "slo-2"}, Value: 15},
 					&prommodel.Sample{Metric: prommodel.Metric{"sloth_id": "slo-3"}, Value: 15},
 				}, nil, nil)
-				mpc.On("Query", mock.Anything, `sloth_slo_info{sloth_id!=""}`, mock.Anything).Twice().Return(prommodel.Vector{
+				mpc.On("Query", mock.Anything, `sloth_slo_info{sloth_id!=""}`, mock.Anything).Once().Return(prommodel.Vector{
 					&prommodel.Sample{
 						Metric: prommodel.Metric{
 							"sloth_id":        "slo-1",
@@ -547,7 +525,7 @@ func TestRepositoryListSLOInstantDetails(t *testing.T) {
 					},
 				}, nil, nil)
 
-				mpc.On("Query", mock.Anything, `sloth_slo_info * on (sloth_id) group_right slo:current_burn_rate:ratio`, mock.Anything).Once().Return(prommodel.Vector{
+				mpc.On("Query", mock.Anything, `slo:current_burn_rate:ratio{sloth_id!=""}`, mock.Anything).Once().Return(prommodel.Vector{
 					&prommodel.Sample{
 						Metric: prommodel.Metric{
 							"sloth_id":        "slo-1",
@@ -555,6 +533,7 @@ func TestRepositoryListSLOInstantDetails(t *testing.T) {
 							"sloth_slo":       "SLO 1",
 							"sloth_objective": "99.9",
 						},
+						Value: 1,
 					},
 					&prommodel.Sample{
 						Metric: prommodel.Metric{
@@ -563,6 +542,7 @@ func TestRepositoryListSLOInstantDetails(t *testing.T) {
 							"sloth_slo":       "SLO 2",
 							"sloth_objective": "99.5",
 						},
+						Value: 0.03,
 					},
 					&prommodel.Sample{
 						Metric: prommodel.Metric{
@@ -571,6 +551,7 @@ func TestRepositoryListSLOInstantDetails(t *testing.T) {
 							"sloth_slo":       "SLO 3",
 							"sloth_objective": "99.5",
 						},
+						Value: 0.5,
 					},
 				}, nil, nil)
 
@@ -591,11 +572,6 @@ func TestRepositoryListSLOInstantDetails(t *testing.T) {
 					&prommodel.Sample{Metric: prommodel.Metric{"sloth_id": "slo-1"}, Value: 0.5},
 					&prommodel.Sample{Metric: prommodel.Metric{"sloth_id": "slo-2"}, Value: 0.98},
 					&prommodel.Sample{Metric: prommodel.Metric{"sloth_id": "slo-3"}, Value: 0.75},
-				}, nil, nil)
-				mpc.On("Query", mock.Anything, `slo:current_burn_rate:ratio{sloth_id!=""}`, mock.Anything).Once().Return(prommodel.Vector{
-					&prommodel.Sample{Metric: prommodel.Metric{"sloth_id": "slo-1"}, Value: 1},
-					&prommodel.Sample{Metric: prommodel.Metric{"sloth_id": "slo-2"}, Value: 0.03},
-					&prommodel.Sample{Metric: prommodel.Metric{"sloth_id": "slo-3"}, Value: 0.5},
 				}, nil, nil)
 
 				mpc.On("Query", mock.Anything, `count({__name__=~"^slo:sli_error:ratio_rate.*"}) by (__name__, sloth_id)`, mock.Anything).Once().Return(prommodel.Vector{}, nil, nil)
@@ -661,7 +637,7 @@ func TestRepositoryListSLOInstantDetails(t *testing.T) {
 					&prommodel.Sample{Metric: prommodel.Metric{"sloth_id": "slo-1"}, Value: 30},
 					&prommodel.Sample{Metric: prommodel.Metric{"sloth_id": "slo-3"}, Value: 15},
 				}, nil, nil)
-				mpc.On("Query", mock.Anything, `sloth_slo_info{sloth_id!=""}`, mock.Anything).Twice().Return(prommodel.Vector{
+				mpc.On("Query", mock.Anything, `sloth_slo_info{sloth_id!=""}`, mock.Anything).Once().Return(prommodel.Vector{
 					&prommodel.Sample{
 						Metric: prommodel.Metric{
 							"sloth_id":        "slo-1",
@@ -680,7 +656,7 @@ func TestRepositoryListSLOInstantDetails(t *testing.T) {
 					},
 				}, nil, nil)
 
-				mpc.On("Query", mock.Anything, `sloth_slo_info * on (sloth_id) group_right slo:current_burn_rate:ratio`, mock.Anything).Once().Return(prommodel.Vector{
+				mpc.On("Query", mock.Anything, `slo:current_burn_rate:ratio{sloth_id!=""}`, mock.Anything).Once().Return(prommodel.Vector{
 					&prommodel.Sample{
 						Metric: prommodel.Metric{
 							"sloth_id":        "slo-1",
@@ -689,6 +665,7 @@ func TestRepositoryListSLOInstantDetails(t *testing.T) {
 							"sloth_objective": "99.9",
 							"operation":       "create", // We are grouping in these.
 						},
+						Value: 1,
 					},
 					&prommodel.Sample{
 						Metric: prommodel.Metric{
@@ -698,6 +675,7 @@ func TestRepositoryListSLOInstantDetails(t *testing.T) {
 							"sloth_objective": "99.9",
 							"operation":       "update", // We are grouping in these.
 						},
+						Value: 0.03,
 					},
 					&prommodel.Sample{
 						Metric: prommodel.Metric{
@@ -707,6 +685,7 @@ func TestRepositoryListSLOInstantDetails(t *testing.T) {
 							"sloth_objective": "99.5",
 							"type":            "abc", // We are grouping in these.
 						},
+						Value: 0.5,
 					},
 					&prommodel.Sample{
 						Metric: prommodel.Metric{
@@ -716,6 +695,7 @@ func TestRepositoryListSLOInstantDetails(t *testing.T) {
 							"sloth_objective": "99.5",
 							"type":            "zzz", // We are grouping in these.
 						},
+						Value: 0.42,
 					},
 				}, nil, nil)
 
@@ -785,37 +765,6 @@ func TestRepositoryListSLOInstantDetails(t *testing.T) {
 						"type":            "zzz", // We are grouping in these.
 					}, Value: 0.44},
 				}, nil, nil)
-				mpc.On("Query", mock.Anything, `slo:current_burn_rate:ratio{sloth_id!=""}`, mock.Anything).Once().Return(prommodel.Vector{
-					&prommodel.Sample{Metric: prommodel.Metric{
-						"sloth_id":        "slo-1",
-						"sloth_service":   "svc-1",
-						"sloth_slo":       "SLO 1",
-						"sloth_objective": "99.9",
-						"operation":       "create", // We are grouping in these.
-					}, Value: 1},
-					&prommodel.Sample{Metric: prommodel.Metric{
-						"sloth_id":        "slo-1",
-						"sloth_service":   "svc-1",
-						"sloth_slo":       "SLO 1",
-						"sloth_objective": "99.9",
-						"operation":       "update", // We are grouping in these.
-					}, Value: 0.03},
-					&prommodel.Sample{Metric: prommodel.Metric{
-						"sloth_id":        "slo-3",
-						"sloth_service":   "svc-2",
-						"sloth_slo":       "SLO 3",
-						"sloth_objective": "99.5",
-						"type":            "abc", // We are grouping in these.
-					}, Value: 0.5},
-					&prommodel.Sample{Metric: prommodel.Metric{
-						"sloth_id":        "slo-3",
-						"sloth_service":   "svc-2",
-						"sloth_slo":       "SLO 3",
-						"sloth_objective": "99.5",
-						"type":            "zzz", // We are grouping in these.
-					}, Value: 0.42},
-				}, nil, nil)
-
 				mpc.On("Query", mock.Anything, `count({__name__=~"^slo:sli_error:ratio_rate.*"}) by (__name__, sloth_id)`, mock.Anything).Once().Return(prommodel.Vector{}, nil, nil)
 			},
 			expSLODet: []storage.SLOInstantDetails{
@@ -952,7 +901,7 @@ func TestRepositoryGetSLOInstantDetails(t *testing.T) {
 					&prommodel.Sample{Metric: prommodel.Metric{"sloth_id": "slo-2"}, Value: 15},
 					&prommodel.Sample{Metric: prommodel.Metric{"sloth_id": "slo-3"}, Value: 15},
 				}, nil, nil)
-				mpc.On("Query", mock.Anything, `sloth_slo_info{sloth_id!=""}`, mock.Anything).Twice().Return(prommodel.Vector{
+				mpc.On("Query", mock.Anything, `sloth_slo_info{sloth_id!=""}`, mock.Anything).Once().Return(prommodel.Vector{
 					&prommodel.Sample{
 						Metric: prommodel.Metric{
 							"sloth_id":        "slo-1",
@@ -979,7 +928,7 @@ func TestRepositoryGetSLOInstantDetails(t *testing.T) {
 					},
 				}, nil, nil)
 
-				mpc.On("Query", mock.Anything, `sloth_slo_info * on (sloth_id) group_right slo:current_burn_rate:ratio`, mock.Anything).Once().Return(prommodel.Vector{
+				mpc.On("Query", mock.Anything, `slo:current_burn_rate:ratio{sloth_id!=""}`, mock.Anything).Once().Return(prommodel.Vector{
 					&prommodel.Sample{
 						Metric: prommodel.Metric{
 							"sloth_id":        "slo-1",
@@ -987,6 +936,7 @@ func TestRepositoryGetSLOInstantDetails(t *testing.T) {
 							"sloth_slo":       "SLO 1",
 							"sloth_objective": "99.9",
 						},
+						Value: 1,
 					},
 					&prommodel.Sample{
 						Metric: prommodel.Metric{
@@ -995,6 +945,7 @@ func TestRepositoryGetSLOInstantDetails(t *testing.T) {
 							"sloth_slo":       "SLO 2",
 							"sloth_objective": "99.5",
 						},
+						Value: 0.03,
 					},
 					&prommodel.Sample{
 						Metric: prommodel.Metric{
@@ -1003,6 +954,7 @@ func TestRepositoryGetSLOInstantDetails(t *testing.T) {
 							"sloth_slo":       "SLO 3",
 							"sloth_objective": "99.5",
 						},
+						Value: 0.5,
 					},
 				}, nil, nil)
 
@@ -1023,11 +975,6 @@ func TestRepositoryGetSLOInstantDetails(t *testing.T) {
 					&prommodel.Sample{Metric: prommodel.Metric{"sloth_id": "slo-1"}, Value: 0.5},
 					&prommodel.Sample{Metric: prommodel.Metric{"sloth_id": "slo-2"}, Value: 0.98},
 					&prommodel.Sample{Metric: prommodel.Metric{"sloth_id": "slo-3"}, Value: 0.75},
-				}, nil, nil)
-				mpc.On("Query", mock.Anything, `slo:current_burn_rate:ratio{sloth_id!=""}`, mock.Anything).Once().Return(prommodel.Vector{
-					&prommodel.Sample{Metric: prommodel.Metric{"sloth_id": "slo-1"}, Value: 1},
-					&prommodel.Sample{Metric: prommodel.Metric{"sloth_id": "slo-2"}, Value: 0.03},
-					&prommodel.Sample{Metric: prommodel.Metric{"sloth_id": "slo-3"}, Value: 0.5},
 				}, nil, nil)
 
 				mpc.On("Query", mock.Anything, `count({__name__=~"^slo:sli_error:ratio_rate.*"}) by (__name__, sloth_id)`, mock.Anything).Once().Return(prommodel.Vector{}, nil, nil)
@@ -1058,10 +1005,10 @@ func TestRepositoryGetSLOInstantDetails(t *testing.T) {
 			mock: func(mpc *prometheusmock.PrometheusAPIClient) {
 				mpc.On("Query", mock.Anything, `max(slo:time_period:days{sloth_id!=""}) by (sloth_id)`, mock.Anything).Once().Return(prommodel.Vector{
 					&prommodel.Sample{Metric: prommodel.Metric{"sloth_id": "slo-1"}, Value: 30},
-					&prommodel.Sample{Metric: prommodel.Metric{"sloth_id": "slo-2"}, Value: 15},
 					&prommodel.Sample{Metric: prommodel.Metric{"sloth_id": "slo-3"}, Value: 15},
 				}, nil, nil)
-				mpc.On("Query", mock.Anything, `sloth_slo_info{sloth_id!=""}`, mock.Anything).Twice().Return(prommodel.Vector{
+
+				mpc.On("Query", mock.Anything, `sloth_slo_info{sloth_id!=""}`, mock.Anything).Once().Return(prommodel.Vector{
 					&prommodel.Sample{
 						Metric: prommodel.Metric{
 							"sloth_id":        "slo-1",
@@ -1080,33 +1027,27 @@ func TestRepositoryGetSLOInstantDetails(t *testing.T) {
 					},
 				}, nil, nil)
 
-				mpc.On("Query", mock.Anything, `sloth_slo_info * on (sloth_id) group_right slo:current_burn_rate:ratio`, mock.Anything).Once().Return(prommodel.Vector{
-					&prommodel.Sample{
-						Metric: prommodel.Metric{
-							"sloth_id":        "slo-1",
-							"sloth_service":   "svc-1",
-							"sloth_slo":       "SLO 1",
-							"sloth_objective": "99.9",
-							"operation":       "create", // We are grouping in these.
-						},
-					},
-					&prommodel.Sample{
-						Metric: prommodel.Metric{
-							"sloth_id":        "slo-1",
-							"sloth_service":   "svc-1",
-							"sloth_slo":       "SLO 1",
-							"sloth_objective": "99.9",
-							"operation":       "update", // We are grouping in these.
-						},
-					},
-					&prommodel.Sample{
-						Metric: prommodel.Metric{
-							"sloth_id":        "slo-3",
-							"sloth_service":   "svc-2",
-							"sloth_slo":       "SLO 3",
-							"sloth_objective": "99.5",
-						},
-					},
+				mpc.On("Query", mock.Anything, `slo:current_burn_rate:ratio{sloth_id!=""}`, mock.Anything).Once().Return(prommodel.Vector{
+					&prommodel.Sample{Metric: prommodel.Metric{
+						"sloth_id":        "slo-1",
+						"sloth_service":   "svc-1",
+						"sloth_slo":       "SLO 1",
+						"sloth_objective": "99.9",
+						"operation":       "create", // We are grouping in these.
+					}, Value: 1},
+					&prommodel.Sample{Metric: prommodel.Metric{
+						"sloth_id":        "slo-1",
+						"sloth_service":   "svc-1",
+						"sloth_slo":       "SLO 1",
+						"sloth_objective": "99.9",
+						"operation":       "update", // We are grouping in these.
+					}, Value: 0.03},
+					&prommodel.Sample{Metric: prommodel.Metric{
+						"sloth_id":        "slo-3",
+						"sloth_service":   "svc-2",
+						"sloth_slo":       "SLO 3",
+						"sloth_objective": "99.5",
+					}, Value: 0.5},
 				}, nil, nil)
 
 				mpc.On("Query", mock.Anything, `ALERTS{sloth_id!=""}`, mock.Anything).Once().Return(prommodel.Vector{
@@ -1144,28 +1085,6 @@ func TestRepositoryGetSLOInstantDetails(t *testing.T) {
 						"sloth_slo":       "SLO 3",
 						"sloth_objective": "99.5",
 					}, Value: 0.75},
-				}, nil, nil)
-				mpc.On("Query", mock.Anything, `slo:current_burn_rate:ratio{sloth_id!=""}`, mock.Anything).Once().Return(prommodel.Vector{
-					&prommodel.Sample{Metric: prommodel.Metric{
-						"sloth_id":        "slo-1",
-						"sloth_service":   "svc-1",
-						"sloth_slo":       "SLO 1",
-						"sloth_objective": "99.9",
-						"operation":       "create", // We are grouping in these.
-					}, Value: 1},
-					&prommodel.Sample{Metric: prommodel.Metric{
-						"sloth_id":        "slo-1",
-						"sloth_service":   "svc-1",
-						"sloth_slo":       "SLO 1",
-						"sloth_objective": "99.9",
-						"operation":       "update", // We are grouping in these.
-					}, Value: 0.03},
-					&prommodel.Sample{Metric: prommodel.Metric{
-						"sloth_id":        "slo-3",
-						"sloth_service":   "svc-2",
-						"sloth_slo":       "SLO 3",
-						"sloth_objective": "99.5",
-					}, Value: 0.5},
 				}, nil, nil)
 
 				mpc.On("Query", mock.Anything, `count({__name__=~"^slo:sli_error:ratio_rate.*"}) by (__name__, sloth_id)`, mock.Anything).Once().Return(prommodel.Vector{}, nil, nil)
@@ -1242,7 +1161,7 @@ func TestRepositoryGetSLIAvailabilityInRange(t *testing.T) {
 				mpc.On("Query", mock.Anything, `max(slo:time_period:days{sloth_id!=""}) by (sloth_id)`, mock.Anything).Once().Return(prommodel.Vector{
 					&prommodel.Sample{Metric: prommodel.Metric{"sloth_id": "slo-1"}, Value: 30},
 				}, nil, nil)
-				mpc.On("Query", mock.Anything, `sloth_slo_info{sloth_id!=""}`, mock.Anything).Twice().Return(prommodel.Vector{
+				mpc.On("Query", mock.Anything, `sloth_slo_info{sloth_id!=""}`, mock.Anything).Once().Return(prommodel.Vector{
 					&prommodel.Sample{
 						Metric: prommodel.Metric{
 							"sloth_id":        "slo-1",
@@ -1251,9 +1170,17 @@ func TestRepositoryGetSLIAvailabilityInRange(t *testing.T) {
 							"sloth_objective": "99.9",
 						},
 					},
+					&prommodel.Sample{
+						Metric: prommodel.Metric{
+							"sloth_id":        "slo-2",
+							"sloth_service":   "svc-1",
+							"sloth_slo":       "SLO 2",
+							"sloth_objective": "99.9",
+						},
+					},
 				}, nil, nil)
 
-				mpc.On("Query", mock.Anything, `sloth_slo_info * on (sloth_id) group_right slo:current_burn_rate:ratio`, mock.Anything).Once().Return(prommodel.Vector{
+				mpc.On("Query", mock.Anything, `slo:current_burn_rate:ratio{sloth_id!=""}`, mock.Anything).Once().Return(prommodel.Vector{
 					&prommodel.Sample{
 						Metric: prommodel.Metric{
 							"sloth_id":        "slo-1",
@@ -1266,13 +1193,12 @@ func TestRepositoryGetSLIAvailabilityInRange(t *testing.T) {
 
 				mpc.On("Query", mock.Anything, `ALERTS{sloth_id!=""}`, mock.Anything).Once().Return(prommodel.Vector{}, nil, nil)
 				mpc.On("Query", mock.Anything, `slo:period_error_budget_remaining:ratio{sloth_id!=""}`, mock.Anything).Once().Return(prommodel.Vector{}, nil, nil)
-				mpc.On("Query", mock.Anything, `slo:current_burn_rate:ratio{sloth_id!=""}`, mock.Anything).Once().Return(prommodel.Vector{}, nil, nil)
-
 				mpc.On("Query", mock.Anything, `count({__name__=~"^slo:sli_error:ratio_rate.*"}) by (__name__, sloth_id)`, mock.Anything).Once().Return(prommodel.Vector{
 					&prommodel.Sample{Metric: prommodel.Metric{"__name__": "slo:sli_error:ratio_rate42m", "sloth_id": "slo-1"}, Value: 0},
 					&prommodel.Sample{Metric: prommodel.Metric{"__name__": "slo:sli_error:ratio_rate31m", "sloth_id": "slo-1"}, Value: 0}, // This is the short window required to infer.
 					&prommodel.Sample{Metric: prommodel.Metric{"__name__": "slo:sli_error:ratio_rate5m", "sloth_id": "slo-2"}, Value: 0},
 				}, nil, nil)
+
 				expRange := prometheusv1.Range{
 					Start: t0,
 					End:   t0.Add(1 * time.Hour),
@@ -1309,7 +1235,7 @@ func TestRepositoryGetSLIAvailabilityInRange(t *testing.T) {
 				mpc.On("Query", mock.Anything, `max(slo:time_period:days{sloth_id!=""}) by (sloth_id)`, mock.Anything).Once().Return(prommodel.Vector{
 					&prommodel.Sample{Metric: prommodel.Metric{"sloth_id": "slo-1"}, Value: 30},
 				}, nil, nil)
-				mpc.On("Query", mock.Anything, `sloth_slo_info{sloth_id!=""}`, mock.Anything).Twice().Return(prommodel.Vector{
+				mpc.On("Query", mock.Anything, `sloth_slo_info{sloth_id!=""}`, mock.Anything).Once().Return(prommodel.Vector{
 					&prommodel.Sample{
 						Metric: prommodel.Metric{
 							"sloth_id":        "slo-1",
@@ -1318,9 +1244,17 @@ func TestRepositoryGetSLIAvailabilityInRange(t *testing.T) {
 							"sloth_objective": "99.9",
 						},
 					},
+					&prommodel.Sample{
+						Metric: prommodel.Metric{
+							"sloth_id":        "slo-2",
+							"sloth_service":   "svc-1",
+							"sloth_slo":       "SLO 2",
+							"sloth_objective": "99.9",
+						},
+					},
 				}, nil, nil)
 
-				mpc.On("Query", mock.Anything, `sloth_slo_info * on (sloth_id) group_right slo:current_burn_rate:ratio`, mock.Anything).Once().Return(prommodel.Vector{
+				mpc.On("Query", mock.Anything, `slo:current_burn_rate:ratio{sloth_id!=""}`, mock.Anything).Once().Return(prommodel.Vector{
 					&prommodel.Sample{
 						Metric: prommodel.Metric{
 							"sloth_id":        "slo-1",
@@ -1333,7 +1267,6 @@ func TestRepositoryGetSLIAvailabilityInRange(t *testing.T) {
 
 				mpc.On("Query", mock.Anything, `ALERTS{sloth_id!=""}`, mock.Anything).Once().Return(prommodel.Vector{}, nil, nil)
 				mpc.On("Query", mock.Anything, `slo:period_error_budget_remaining:ratio{sloth_id!=""}`, mock.Anything).Once().Return(prommodel.Vector{}, nil, nil)
-				mpc.On("Query", mock.Anything, `slo:current_burn_rate:ratio{sloth_id!=""}`, mock.Anything).Once().Return(prommodel.Vector{}, nil, nil)
 
 				mpc.On("Query", mock.Anything, `count({__name__=~"^slo:sli_error:ratio_rate.*"}) by (__name__, sloth_id)`, mock.Anything).Once().Return(prommodel.Vector{
 					&prommodel.Sample{Metric: prommodel.Metric{"__name__": "slo:sli_error:ratio_rate42m", "sloth_id": "slo-1"}, Value: 0},
@@ -1412,7 +1345,7 @@ func TestRepositoryGetSLIAvailabilityInRangeAutoStep(t *testing.T) {
 				mpc.On("Query", mock.Anything, `max(slo:time_period:days{sloth_id!=""}) by (sloth_id)`, mock.Anything).Once().Return(prommodel.Vector{
 					&prommodel.Sample{Metric: prommodel.Metric{"sloth_id": "slo-1"}, Value: 30},
 				}, nil, nil)
-				mpc.On("Query", mock.Anything, `sloth_slo_info{sloth_id!=""}`, mock.Anything).Twice().Return(prommodel.Vector{
+				mpc.On("Query", mock.Anything, `sloth_slo_info{sloth_id!=""}`, mock.Anything).Once().Return(prommodel.Vector{
 					&prommodel.Sample{
 						Metric: prommodel.Metric{
 							"sloth_id":        "slo-1",
@@ -1421,9 +1354,17 @@ func TestRepositoryGetSLIAvailabilityInRangeAutoStep(t *testing.T) {
 							"sloth_objective": "99.9",
 						},
 					},
+					&prommodel.Sample{
+						Metric: prommodel.Metric{
+							"sloth_id":        "slo-2",
+							"sloth_service":   "svc-1",
+							"sloth_slo":       "SLO 2",
+							"sloth_objective": "99.9",
+						},
+					},
 				}, nil, nil)
 
-				mpc.On("Query", mock.Anything, `sloth_slo_info * on (sloth_id) group_right slo:current_burn_rate:ratio`, mock.Anything).Once().Return(prommodel.Vector{
+				mpc.On("Query", mock.Anything, `slo:current_burn_rate:ratio{sloth_id!=""}`, mock.Anything).Once().Return(prommodel.Vector{
 					&prommodel.Sample{
 						Metric: prommodel.Metric{
 							"sloth_id":        "slo-1",
@@ -1436,7 +1377,6 @@ func TestRepositoryGetSLIAvailabilityInRangeAutoStep(t *testing.T) {
 
 				mpc.On("Query", mock.Anything, `ALERTS{sloth_id!=""}`, mock.Anything).Once().Return(prommodel.Vector{}, nil, nil)
 				mpc.On("Query", mock.Anything, `slo:period_error_budget_remaining:ratio{sloth_id!=""}`, mock.Anything).Once().Return(prommodel.Vector{}, nil, nil)
-				mpc.On("Query", mock.Anything, `slo:current_burn_rate:ratio{sloth_id!=""}`, mock.Anything).Once().Return(prommodel.Vector{}, nil, nil)
 
 				mpc.On("Query", mock.Anything, `count({__name__=~"^slo:sli_error:ratio_rate.*"}) by (__name__, sloth_id)`, mock.Anything).Once().Return(prommodel.Vector{
 					&prommodel.Sample{Metric: prommodel.Metric{"__name__": "slo:sli_error:ratio_rate42m", "sloth_id": "slo-1"}, Value: 0},
@@ -1481,7 +1421,7 @@ func TestRepositoryGetSLIAvailabilityInRangeAutoStep(t *testing.T) {
 				mpc.On("Query", mock.Anything, `max(slo:time_period:days{sloth_id!=""}) by (sloth_id)`, mock.Anything).Once().Return(prommodel.Vector{
 					&prommodel.Sample{Metric: prommodel.Metric{"sloth_id": "slo-1"}, Value: 30},
 				}, nil, nil)
-				mpc.On("Query", mock.Anything, `sloth_slo_info{sloth_id!=""}`, mock.Anything).Twice().Return(prommodel.Vector{
+				mpc.On("Query", mock.Anything, `sloth_slo_info{sloth_id!=""}`, mock.Anything).Once().Return(prommodel.Vector{
 					&prommodel.Sample{
 						Metric: prommodel.Metric{
 							"sloth_id":        "slo-1",
@@ -1490,9 +1430,17 @@ func TestRepositoryGetSLIAvailabilityInRangeAutoStep(t *testing.T) {
 							"sloth_objective": "99.9",
 						},
 					},
+					&prommodel.Sample{
+						Metric: prommodel.Metric{
+							"sloth_id":        "slo-2",
+							"sloth_service":   "svc-1",
+							"sloth_slo":       "SLO 2",
+							"sloth_objective": "99.9",
+						},
+					},
 				}, nil, nil)
 
-				mpc.On("Query", mock.Anything, `sloth_slo_info * on (sloth_id) group_right slo:current_burn_rate:ratio`, mock.Anything).Once().Return(prommodel.Vector{
+				mpc.On("Query", mock.Anything, `slo:current_burn_rate:ratio{sloth_id!=""}`, mock.Anything).Once().Return(prommodel.Vector{
 					&prommodel.Sample{
 						Metric: prommodel.Metric{
 							"sloth_id":        "slo-1",
@@ -1505,7 +1453,6 @@ func TestRepositoryGetSLIAvailabilityInRangeAutoStep(t *testing.T) {
 
 				mpc.On("Query", mock.Anything, `ALERTS{sloth_id!=""}`, mock.Anything).Once().Return(prommodel.Vector{}, nil, nil)
 				mpc.On("Query", mock.Anything, `slo:period_error_budget_remaining:ratio{sloth_id!=""}`, mock.Anything).Once().Return(prommodel.Vector{}, nil, nil)
-				mpc.On("Query", mock.Anything, `slo:current_burn_rate:ratio{sloth_id!=""}`, mock.Anything).Once().Return(prommodel.Vector{}, nil, nil)
 
 				mpc.On("Query", mock.Anything, `count({__name__=~"^slo:sli_error:ratio_rate.*"}) by (__name__, sloth_id)`, mock.Anything).Once().Return(prommodel.Vector{
 					&prommodel.Sample{Metric: prommodel.Metric{"__name__": "slo:sli_error:ratio_rate42m", "sloth_id": "slo-1"}, Value: 0},

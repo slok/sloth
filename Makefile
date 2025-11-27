@@ -115,3 +115,8 @@ ci-integration-cli: ## Runs integration test for CLI in CI environment (without 
 .PHONY: ci-integration-k8s
 ci-integration-k8s: ## Runs integration test for K8s in CI environment (without docker).
 	@$(INTEGRATION_TEST_K8S_CMD)
+
+.PHONY: generate-helm-docs
+generate-helm-docs: ## Generates helm documentation for the project
+	go install github.com/norwoodj/helm-docs/cmd/helm-docs@latest
+	helm-docs

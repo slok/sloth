@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/fs"
 	"regexp"
+	"strings"
 	"sync"
 
 	"github.com/slok/sloth/internal/log"
@@ -148,6 +149,9 @@ func (r *FilePluginRepo) loadPlugins(ctx context.Context, fss ...fs.FS) (map[str
 				return err
 			}
 			if d.IsDir() {
+				if strings.HasPrefix(d.Name(), "..") {
+					return fs.SkipDir
+				}
 				return nil
 			}
 

@@ -39,6 +39,7 @@ func TestFilePluginRepoListSLOPlugins(t *testing.T) {
 				m1["m1/pl1/plugin.go"] = &fstest.MapFile{Data: []byte("p1")}
 				m1["m1/pl2/plugin.go"] = &fstest.MapFile{Data: []byte("p2")}
 				m1["m1/plx/pl3/plugin.go"] = &fstest.MapFile{Data: []byte("p3")}
+				m1["m1/..pl4/plugin.go"] = &fstest.MapFile{Data: []byte("p7")} // Ignored.
 
 				m2 := make(fstest.MapFS)
 				m2["m2/pl1/plugin.go"] = &fstest.MapFile{Data: []byte("p4")}
@@ -47,7 +48,7 @@ func TestFilePluginRepoListSLOPlugins(t *testing.T) {
 
 				m3 := make(fstest.MapFS)
 				m3["m3/plx/pl3/plugin.go"] = &fstest.MapFile{Data: []byte("p6")}
-				m3["m3/plx/pl3/plugin.yaml"] = &fstest.MapFile{Data: []byte("p7")} // Ignored.
+				m3["m3/plx/pl3/plugin.yaml"] = &fstest.MapFile{Data: []byte("p9")} // Ignored.
 
 				return []fs.FS{m1, m2, m3}
 			},

@@ -1,6 +1,7 @@
 package app
 
 import (
+	"cmp"
 	"context"
 	"slices"
 	"strings"
@@ -9,8 +10,18 @@ import (
 	"github.com/slok/sloth/internal/http/backend/storage"
 )
 
+type ServiceListSortMode string
+
+const (
+	ServiceListSortModeServiceNameAsc    ServiceListSortMode = "service-name-asc"
+	ServiceListSortModeServiceNameDesc   ServiceListSortMode = "service-name-desc"
+	ServiceListSortModeAlertSeverityAsc  ServiceListSortMode = "alert-severity-asc"
+	ServiceListSortModeAlertSeverityDesc ServiceListSortMode = "alert-severity-desc"
+)
+
 type ListServicesRequest struct {
 	FilterSearchInput string
+	SortMode          ServiceListSortMode
 	Cursor            string
 }
 
@@ -43,9 +54,37 @@ func (a *App) ListServices(ctx context.Context, req ListServicesRequest) (*ListS
 		})
 	}
 
-	slices.SortStableFunc(svcs, func(x, y ServiceAlerts) int {
-		return strings.Compare(x.Service.ID, y.Service.ID)
-	})
+	// Sort results based on request.
+	switch req.SortMode {
+	case ServiceListSortModeServiceNameAsc:
+		slices.SortStableFunc(svcs, func(x, y ServiceAlerts) int {
+			return strings.Compare(x.Service.ID, y.Service.ID)
+		})
+	case ServiceListSortModeServiceNameDesc:
+		slices.SortStableFunc(svcs, func(x, y ServiceAlerts) int {
+			return strings.Compare(y.Service.ID, x.Service.ID)
+		})
+	// Critical lower.
+	case ServiceListSortModeAlertSeverityAsc:
+		slices.SortStableFunc(svcs, func(x, y ServiceAlerts) int {
+			return cmp.Compare(
+				getAlertSeverityScore(x.Alerts),
+				getAlertSeverityScore(y.Alerts),
+			)
+		})
+	// Critical higher.
+	case ServiceListSortModeAlertSeverityDesc:
+		slices.SortStableFunc(svcs, func(x, y ServiceAlerts) int {
+			return cmp.Compare(
+				getAlertSeverityScore(y.Alerts),
+				getAlertSeverityScore(x.Alerts),
+			)
+		})
+	default:
+		slices.SortStableFunc(svcs, func(x, y ServiceAlerts) int {
+			return strings.Compare(x.Service.ID, y.Service.ID)
+		})
+	}
 
 	// Handle pagination here for now, storage returns all.
 	psvcs, cursors := paginateSlice(svcs, req.Cursor)
@@ -58,4 +97,17 @@ func (a *App) ListServices(ctx context.Context, req ListServicesRequest) (*ListS
 type ServiceAlerts struct {
 	Service model.Service
 	Alerts  []model.SLOAlerts
+}
+
+func getAlertSeverityScore(alerts []model.SLOAlerts) int {
+	score := 0
+	for _, a := range alerts {
+		switch {
+		case a.FiringPage != nil:
+			score += 5
+		case a.FiringWarning != nil:
+			score += 1
+		}
+	}
+	return score
 }

@@ -15,6 +15,54 @@ import (
 	"github.com/slok/sloth/internal/http/backend/storage/storagemock"
 )
 
+var testSvcAndAlertsForSorting = []storage.ServiceAndAlerts{
+	{Service: model.Service{ID: "svc-0"}, Alerts: []model.SLOAlerts{
+		{FiringPage: &model.Alert{}},
+	}},
+	{Service: model.Service{ID: "svc-1"}, Alerts: []model.SLOAlerts{
+		{FiringWarning: &model.Alert{}},
+	}},
+	{Service: model.Service{ID: "svc-2"}, Alerts: []model.SLOAlerts{
+		{FiringPage: &model.Alert{}},
+		{FiringWarning: &model.Alert{}},
+	}},
+
+	{Service: model.Service{ID: "svc-3"}, Alerts: []model.SLOAlerts{}},
+	{Service: model.Service{ID: "svc-4"}, Alerts: []model.SLOAlerts{
+		{FiringPage: &model.Alert{}},
+		{FiringPage: &model.Alert{}},
+		{FiringWarning: &model.Alert{}},
+	}},
+	{Service: model.Service{ID: "svc-5"}, Alerts: []model.SLOAlerts{
+		{FiringWarning: &model.Alert{}},
+		{FiringWarning: &model.Alert{}},
+	}},
+}
+
+var testSvcAndAlertsForSortingModel = []app.ServiceAlerts{
+	{Service: model.Service{ID: "svc-0"}, Alerts: []model.SLOAlerts{
+		{FiringPage: &model.Alert{}},
+	}},
+	{Service: model.Service{ID: "svc-1"}, Alerts: []model.SLOAlerts{
+		{FiringWarning: &model.Alert{}},
+	}},
+	{Service: model.Service{ID: "svc-2"}, Alerts: []model.SLOAlerts{
+		{FiringPage: &model.Alert{}},
+		{FiringWarning: &model.Alert{}},
+	}},
+
+	{Service: model.Service{ID: "svc-3"}, Alerts: []model.SLOAlerts{}},
+	{Service: model.Service{ID: "svc-4"}, Alerts: []model.SLOAlerts{
+		{FiringPage: &model.Alert{}},
+		{FiringPage: &model.Alert{}},
+		{FiringWarning: &model.Alert{}},
+	}},
+	{Service: model.Service{ID: "svc-5"}, Alerts: []model.SLOAlerts{
+		{FiringWarning: &model.Alert{}},
+		{FiringWarning: &model.Alert{}},
+	}},
+}
+
 func TestListServices(t *testing.T) {
 	tests := map[string]struct {
 		mock    func(m *storagemock.ServiceGetter)
@@ -64,6 +112,91 @@ func TestListServices(t *testing.T) {
 								},
 							},
 						},
+					},
+				}
+			},
+		},
+
+		"Getting services sorted by name asc should return them properly.": {
+			req: app.ListServicesRequest{
+				SortMode: app.ServiceListSortModeServiceNameAsc,
+			},
+			mock: func(m *storagemock.ServiceGetter) {
+
+				m.On("ListAllServiceAndAlerts", mock.Anything).Return(testSvcAndAlertsForSorting, nil)
+			},
+			expResp: func() *app.ListServicesResponse {
+				return &app.ListServicesResponse{
+					Services: []app.ServiceAlerts{
+						testSvcAndAlertsForSortingModel[0],
+						testSvcAndAlertsForSortingModel[1],
+						testSvcAndAlertsForSortingModel[2],
+						testSvcAndAlertsForSortingModel[3],
+						testSvcAndAlertsForSortingModel[4],
+						testSvcAndAlertsForSortingModel[5],
+					},
+				}
+			},
+		},
+
+		"Getting services sorted by name desc should return them properly.": {
+			req: app.ListServicesRequest{
+				SortMode: app.ServiceListSortModeServiceNameDesc,
+			},
+			mock: func(m *storagemock.ServiceGetter) {
+				m.On("ListAllServiceAndAlerts", mock.Anything).Return(testSvcAndAlertsForSorting, nil)
+			},
+			expResp: func() *app.ListServicesResponse {
+				return &app.ListServicesResponse{
+					Services: []app.ServiceAlerts{
+						testSvcAndAlertsForSortingModel[5],
+						testSvcAndAlertsForSortingModel[4],
+						testSvcAndAlertsForSortingModel[3],
+						testSvcAndAlertsForSortingModel[2],
+						testSvcAndAlertsForSortingModel[1],
+						testSvcAndAlertsForSortingModel[0],
+					},
+				}
+			},
+		},
+
+		"Getting services sorted by alert severity asc should return them properly.": {
+			req: app.ListServicesRequest{
+				SortMode: app.ServiceListSortModeAlertSeverityAsc,
+			},
+			mock: func(m *storagemock.ServiceGetter) {
+				m.On("ListAllServiceAndAlerts", mock.Anything).Return(testSvcAndAlertsForSorting, nil)
+			},
+			expResp: func() *app.ListServicesResponse {
+				return &app.ListServicesResponse{
+					Services: []app.ServiceAlerts{
+						testSvcAndAlertsForSortingModel[3],
+						testSvcAndAlertsForSortingModel[1],
+						testSvcAndAlertsForSortingModel[5],
+						testSvcAndAlertsForSortingModel[0],
+						testSvcAndAlertsForSortingModel[2],
+						testSvcAndAlertsForSortingModel[4],
+					},
+				}
+			},
+		},
+
+		"Getting services sorted by severity desc should return them properly.": {
+			req: app.ListServicesRequest{
+				SortMode: app.ServiceListSortModeAlertSeverityDesc,
+			},
+			mock: func(m *storagemock.ServiceGetter) {
+				m.On("ListAllServiceAndAlerts", mock.Anything).Return(testSvcAndAlertsForSorting, nil)
+			},
+			expResp: func() *app.ListServicesResponse {
+				return &app.ListServicesResponse{
+					Services: []app.ServiceAlerts{
+						testSvcAndAlertsForSortingModel[4],
+						testSvcAndAlertsForSortingModel[2],
+						testSvcAndAlertsForSortingModel[0],
+						testSvcAndAlertsForSortingModel[5],
+						testSvcAndAlertsForSortingModel[1],
+						testSvcAndAlertsForSortingModel[3],
 					},
 				}
 			},

@@ -7,10 +7,18 @@ function setColorTheme(darkMode) {
 }
 
 function isColorThemeLight() {
-    return document.documentElement.getAttribute("data-theme") === "light";
+    let theme = document.documentElement.getAttribute("data-theme");
+    if (theme) {
+        return theme != "dark";
+    }
+
+    if (window.matchMedia) {
+        return !window.matchMedia('(prefers-color-scheme: dark)').matches;
+    }
+
+    return true; // Default to light.
 }
 
-setColorTheme(false); // Default to light mode.
 
 // --------- PLOTS ---------.
 
@@ -175,4 +183,3 @@ function yAxisPercentageUPlotConfig(light) {
         size: 90,
     };
 }
-

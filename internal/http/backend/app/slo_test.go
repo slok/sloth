@@ -16,6 +16,91 @@ import (
 	"github.com/slok/sloth/internal/http/backend/storage/storagemock"
 )
 
+var testSLOInstantDataForSorting = []storage.SLOInstantDetails{
+	{
+		SLO:           model.SLO{ID: "slo-0", ServiceID: "svc-0", Name: "SLO 0"},
+		BudgetDetails: model.SLOBudgetDetails{BurningBudgetPercent: 60.0, BurnedBudgetWindowPercent: 1.1},
+		Alerts:        model.SLOAlerts{FiringWarning: &model.Alert{}},
+	},
+	{
+		SLO:           model.SLO{ID: "slo-1", ServiceID: "svc-1", Name: "SLO 1"},
+		BudgetDetails: model.SLOBudgetDetails{BurningBudgetPercent: 20.0, BurnedBudgetWindowPercent: 20.0},
+		Alerts:        model.SLOAlerts{FiringWarning: &model.Alert{}},
+	},
+	{
+		SLO:           model.SLO{ID: "slo-2", ServiceID: "svc-3", Name: "SLO 2"},
+		BudgetDetails: model.SLOBudgetDetails{BurningBudgetPercent: 41.56, BurnedBudgetWindowPercent: 999.0},
+		Alerts:        model.SLOAlerts{},
+	},
+	{
+		SLO:           model.SLO{ID: "slo-3", ServiceID: "svc-2", Name: "SLO 3"},
+		BudgetDetails: model.SLOBudgetDetails{BurningBudgetPercent: 140.0, BurnedBudgetWindowPercent: 83.0},
+		Alerts:        model.SLOAlerts{FiringPage: &model.Alert{}},
+	},
+	{
+		SLO:           model.SLO{ID: "slo-4", ServiceID: "svc-4", Name: "SLO 4"},
+		BudgetDetails: model.SLOBudgetDetails{BurningBudgetPercent: 41.2, BurnedBudgetWindowPercent: 1.0},
+		Alerts:        model.SLOAlerts{FiringPage: &model.Alert{}, FiringWarning: &model.Alert{}},
+	},
+	{
+		SLO:           model.SLO{ID: "slo-5", ServiceID: "svc-5", Name: "SLO 5"},
+		BudgetDetails: model.SLOBudgetDetails{BurningBudgetPercent: 98.0, BurnedBudgetWindowPercent: 67.34},
+		Alerts:        model.SLOAlerts{FiringPage: &model.Alert{}},
+	},
+	{
+		SLO:           model.SLO{ID: "slo-6", ServiceID: "svc-6", Name: "SLO 6"},
+		BudgetDetails: model.SLOBudgetDetails{BurningBudgetPercent: 2.0, BurnedBudgetWindowPercent: 35.1},
+		Alerts:        model.SLOAlerts{FiringWarning: &model.Alert{}, FiringPage: &model.Alert{}},
+	},
+	{
+		SLO:           model.SLO{ID: "slo-7", ServiceID: "svc-7", Name: "SLO 7"},
+		BudgetDetails: model.SLOBudgetDetails{BurningBudgetPercent: 73.0, BurnedBudgetWindowPercent: 42.0},
+		Alerts:        model.SLOAlerts{FiringWarning: &model.Alert{}, FiringPage: &model.Alert{}},
+	},
+}
+var testSLOInstantDataForSortingModel = []app.RealTimeSLODetails{
+	{
+		SLO:    model.SLO{ID: "slo-0", ServiceID: "svc-0", Name: "SLO 0"},
+		Budget: model.SLOBudgetDetails{BurningBudgetPercent: 60.0, BurnedBudgetWindowPercent: 1.1},
+		Alerts: model.SLOAlerts{FiringWarning: &model.Alert{}},
+	},
+	{
+		SLO:    model.SLO{ID: "slo-1", ServiceID: "svc-1", Name: "SLO 1"},
+		Budget: model.SLOBudgetDetails{BurningBudgetPercent: 20.0, BurnedBudgetWindowPercent: 20.0},
+		Alerts: model.SLOAlerts{FiringWarning: &model.Alert{}},
+	},
+	{
+		SLO:    model.SLO{ID: "slo-2", ServiceID: "svc-3", Name: "SLO 2"},
+		Budget: model.SLOBudgetDetails{BurningBudgetPercent: 41.56, BurnedBudgetWindowPercent: 999.0},
+		Alerts: model.SLOAlerts{},
+	},
+	{
+		SLO:    model.SLO{ID: "slo-3", ServiceID: "svc-2", Name: "SLO 3"},
+		Budget: model.SLOBudgetDetails{BurningBudgetPercent: 140.0, BurnedBudgetWindowPercent: 83.0},
+		Alerts: model.SLOAlerts{FiringPage: &model.Alert{}},
+	},
+	{
+		SLO:    model.SLO{ID: "slo-4", ServiceID: "svc-4", Name: "SLO 4"},
+		Budget: model.SLOBudgetDetails{BurningBudgetPercent: 41.2, BurnedBudgetWindowPercent: 1.0},
+		Alerts: model.SLOAlerts{FiringPage: &model.Alert{}, FiringWarning: &model.Alert{}},
+	},
+	{
+		SLO:    model.SLO{ID: "slo-5", ServiceID: "svc-5", Name: "SLO 5"},
+		Budget: model.SLOBudgetDetails{BurningBudgetPercent: 98.0, BurnedBudgetWindowPercent: 67.34},
+		Alerts: model.SLOAlerts{FiringPage: &model.Alert{}},
+	},
+	{
+		SLO:    model.SLO{ID: "slo-6", ServiceID: "svc-6", Name: "SLO 6"},
+		Budget: model.SLOBudgetDetails{BurningBudgetPercent: 2.0, BurnedBudgetWindowPercent: 35.1},
+		Alerts: model.SLOAlerts{FiringWarning: &model.Alert{}, FiringPage: &model.Alert{}},
+	},
+	{
+		SLO:    model.SLO{ID: "slo-7", ServiceID: "svc-7", Name: "SLO 7"},
+		Budget: model.SLOBudgetDetails{BurningBudgetPercent: 73.0, BurnedBudgetWindowPercent: 42.0},
+		Alerts: model.SLOAlerts{FiringWarning: &model.Alert{}, FiringPage: &model.Alert{}},
+	},
+}
+
 func TestListSLOs(t *testing.T) {
 	tests := map[string]struct {
 		mock    func(m *storagemock.SLOGetter)
@@ -98,6 +183,222 @@ func TestListSLOs(t *testing.T) {
 								FiringPage: &model.Alert{Name: "slo-2-critical"},
 							},
 						},
+					},
+				}
+			},
+		},
+
+		"Listing service SLOs sorted by service ID DESC should return them properly.": {
+			req: app.ListSLOsRequest{
+				FilterServiceID: "svc-1",
+				SortMode:        app.SLOListSortModeSLOIDDesc,
+			},
+			mock: func(m *storagemock.SLOGetter) {
+				m.On("ListSLOInstantDetailsService", mock.Anything, "svc-1").Return(testSLOInstantDataForSorting, nil)
+			},
+			expResp: func() *app.ListSLOsResponse {
+				return &app.ListSLOsResponse{
+					SLOs: []app.RealTimeSLODetails{
+						testSLOInstantDataForSortingModel[7],
+						testSLOInstantDataForSortingModel[6],
+						testSLOInstantDataForSortingModel[5],
+						testSLOInstantDataForSortingModel[4],
+						testSLOInstantDataForSortingModel[3],
+						testSLOInstantDataForSortingModel[2],
+						testSLOInstantDataForSortingModel[1],
+						testSLOInstantDataForSortingModel[0],
+					},
+				}
+			},
+		},
+
+		"Listing service SLOs sorted by service name ASC should return them properly.": {
+			req: app.ListSLOsRequest{
+				FilterServiceID: "svc-1",
+				SortMode:        app.SLOListSortModeServiceNameAsc,
+			},
+			mock: func(m *storagemock.SLOGetter) {
+				m.On("ListSLOInstantDetailsService", mock.Anything, "svc-1").Return(testSLOInstantDataForSorting, nil)
+			},
+			expResp: func() *app.ListSLOsResponse {
+				return &app.ListSLOsResponse{
+					SLOs: []app.RealTimeSLODetails{
+						testSLOInstantDataForSortingModel[0],
+						testSLOInstantDataForSortingModel[1],
+						testSLOInstantDataForSortingModel[3],
+						testSLOInstantDataForSortingModel[2],
+						testSLOInstantDataForSortingModel[4],
+						testSLOInstantDataForSortingModel[5],
+						testSLOInstantDataForSortingModel[6],
+						testSLOInstantDataForSortingModel[7],
+					},
+				}
+			},
+		},
+
+		"Listing service SLOs sorted by service name DESC should return them properly.": {
+			req: app.ListSLOsRequest{
+				FilterServiceID: "svc-1",
+				SortMode:        app.SLOListSortModeServiceNameDesc,
+			},
+			mock: func(m *storagemock.SLOGetter) {
+				m.On("ListSLOInstantDetailsService", mock.Anything, "svc-1").Return(testSLOInstantDataForSorting, nil)
+			},
+			expResp: func() *app.ListSLOsResponse {
+				return &app.ListSLOsResponse{
+					SLOs: []app.RealTimeSLODetails{
+						testSLOInstantDataForSortingModel[7],
+						testSLOInstantDataForSortingModel[6],
+						testSLOInstantDataForSortingModel[5],
+						testSLOInstantDataForSortingModel[4],
+						testSLOInstantDataForSortingModel[2],
+						testSLOInstantDataForSortingModel[3],
+						testSLOInstantDataForSortingModel[1],
+						testSLOInstantDataForSortingModel[0],
+					},
+				}
+			},
+		},
+
+		"Listing service SLOs sorted by current burning budget ASC should return them properly.": {
+			req: app.ListSLOsRequest{
+				FilterServiceID: "svc-1",
+				SortMode:        app.SLOListSortModeCurrentBurningBudgetAsc,
+			},
+			mock: func(m *storagemock.SLOGetter) {
+				m.On("ListSLOInstantDetailsService", mock.Anything, "svc-1").Return(testSLOInstantDataForSorting, nil)
+			},
+			expResp: func() *app.ListSLOsResponse {
+				return &app.ListSLOsResponse{
+					SLOs: []app.RealTimeSLODetails{
+						testSLOInstantDataForSortingModel[6],
+						testSLOInstantDataForSortingModel[1],
+						testSLOInstantDataForSortingModel[4],
+						testSLOInstantDataForSortingModel[2],
+						testSLOInstantDataForSortingModel[0],
+						testSLOInstantDataForSortingModel[7],
+						testSLOInstantDataForSortingModel[5],
+						testSLOInstantDataForSortingModel[3],
+					},
+				}
+			},
+		},
+
+		"Listing service SLOs sorted by current burning budget DESC should return them properly.": {
+			req: app.ListSLOsRequest{
+				FilterServiceID: "svc-1",
+				SortMode:        app.SLOListSortModeCurrentBurningBudgetDesc,
+			},
+			mock: func(m *storagemock.SLOGetter) {
+				m.On("ListSLOInstantDetailsService", mock.Anything, "svc-1").Return(testSLOInstantDataForSorting, nil)
+			},
+			expResp: func() *app.ListSLOsResponse {
+				return &app.ListSLOsResponse{
+					SLOs: []app.RealTimeSLODetails{
+						testSLOInstantDataForSortingModel[3],
+						testSLOInstantDataForSortingModel[5],
+						testSLOInstantDataForSortingModel[7],
+						testSLOInstantDataForSortingModel[0],
+						testSLOInstantDataForSortingModel[2],
+						testSLOInstantDataForSortingModel[4],
+						testSLOInstantDataForSortingModel[1],
+						testSLOInstantDataForSortingModel[6],
+					},
+				}
+			},
+		},
+
+		"Listing service SLOs sorted by budged burned window period ASC should return them properly.": {
+			req: app.ListSLOsRequest{
+				FilterServiceID: "svc-1",
+				SortMode:        app.SLOListSortModeBudgetBurnedWindowPeriodAsc,
+			},
+			mock: func(m *storagemock.SLOGetter) {
+				m.On("ListSLOInstantDetailsService", mock.Anything, "svc-1").Return(testSLOInstantDataForSorting, nil)
+			},
+			expResp: func() *app.ListSLOsResponse {
+				return &app.ListSLOsResponse{
+					SLOs: []app.RealTimeSLODetails{
+						testSLOInstantDataForSortingModel[4],
+						testSLOInstantDataForSortingModel[0],
+						testSLOInstantDataForSortingModel[1],
+						testSLOInstantDataForSortingModel[6],
+						testSLOInstantDataForSortingModel[7],
+						testSLOInstantDataForSortingModel[5],
+						testSLOInstantDataForSortingModel[3],
+						testSLOInstantDataForSortingModel[2],
+					},
+				}
+			},
+		},
+
+		"Listing service SLOs sorted by budged burned window period DESC should return them properly.": {
+			req: app.ListSLOsRequest{
+				FilterServiceID: "svc-1",
+				SortMode:        app.SLOListSortModeBudgetBurnedWindowPeriodDesc,
+			},
+			mock: func(m *storagemock.SLOGetter) {
+				m.On("ListSLOInstantDetailsService", mock.Anything, "svc-1").Return(testSLOInstantDataForSorting, nil)
+			},
+			expResp: func() *app.ListSLOsResponse {
+				return &app.ListSLOsResponse{
+					SLOs: []app.RealTimeSLODetails{
+						testSLOInstantDataForSortingModel[2],
+						testSLOInstantDataForSortingModel[3],
+						testSLOInstantDataForSortingModel[5],
+						testSLOInstantDataForSortingModel[7],
+						testSLOInstantDataForSortingModel[6],
+						testSLOInstantDataForSortingModel[1],
+						testSLOInstantDataForSortingModel[0],
+						testSLOInstantDataForSortingModel[4],
+					},
+				}
+			},
+		},
+
+		"Listing service SLOs sorted by alert severity ASC should return them properly.": {
+			req: app.ListSLOsRequest{
+				FilterServiceID: "svc-1",
+				SortMode:        app.SLOListSortModeAlertSeverityAsc,
+			},
+			mock: func(m *storagemock.SLOGetter) {
+				m.On("ListSLOInstantDetailsService", mock.Anything, "svc-1").Return(testSLOInstantDataForSorting, nil)
+			},
+			expResp: func() *app.ListSLOsResponse {
+				return &app.ListSLOsResponse{
+					SLOs: []app.RealTimeSLODetails{
+						testSLOInstantDataForSortingModel[2],
+						testSLOInstantDataForSortingModel[0],
+						testSLOInstantDataForSortingModel[1],
+						testSLOInstantDataForSortingModel[3],
+						testSLOInstantDataForSortingModel[5],
+						testSLOInstantDataForSortingModel[4],
+						testSLOInstantDataForSortingModel[6],
+						testSLOInstantDataForSortingModel[7],
+					},
+				}
+			},
+		},
+
+		"Listing service SLOs sorted by alert severity DESC should return them properly.": {
+			req: app.ListSLOsRequest{
+				FilterServiceID: "svc-1",
+				SortMode:        app.SLOListSortModeAlertSeverityDesc,
+			},
+			mock: func(m *storagemock.SLOGetter) {
+				m.On("ListSLOInstantDetailsService", mock.Anything, "svc-1").Return(testSLOInstantDataForSorting, nil)
+			},
+			expResp: func() *app.ListSLOsResponse {
+				return &app.ListSLOsResponse{
+					SLOs: []app.RealTimeSLODetails{
+						testSLOInstantDataForSortingModel[4],
+						testSLOInstantDataForSortingModel[6],
+						testSLOInstantDataForSortingModel[7],
+						testSLOInstantDataForSortingModel[3],
+						testSLOInstantDataForSortingModel[5],
+						testSLOInstantDataForSortingModel[0],
+						testSLOInstantDataForSortingModel[1],
+						testSLOInstantDataForSortingModel[2],
 					},
 				}
 			},

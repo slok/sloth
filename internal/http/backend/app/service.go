@@ -102,12 +102,14 @@ type ServiceAlerts struct {
 func getAlertSeverityScore(alerts []model.SLOAlerts) int {
 	score := 0
 	for _, a := range alerts {
-		switch {
-		case a.FiringPage != nil:
+		if a.FiringPage != nil {
 			score += 5
-		case a.FiringWarning != nil:
+		}
+
+		if a.FiringWarning != nil {
 			score += 1
 		}
+
 	}
 	return score
 }

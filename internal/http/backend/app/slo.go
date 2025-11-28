@@ -1,6 +1,7 @@
 package app
 
 import (
+	"cmp"
 	"context"
 	"fmt"
 	"slices"
@@ -11,9 +12,25 @@ import (
 	"github.com/slok/sloth/internal/http/backend/storage"
 )
 
+type SLOListSortMode string
+
+const (
+	SLOListSortModeSLOIDAsc                     SLOListSortMode = "slo-id-asc"
+	SLOListSortModeSLOIDDesc                    SLOListSortMode = "slo-id-desc"
+	SLOListSortModeServiceNameAsc               SLOListSortMode = "service-name-asc"
+	SLOListSortModeServiceNameDesc              SLOListSortMode = "service-name-desc"
+	SLOListSortModeCurrentBurningBudgetAsc      SLOListSortMode = "current-burning-budget-asc"
+	SLOListSortModeCurrentBurningBudgetDesc     SLOListSortMode = "current-burning-budget-desc"
+	SLOListSortModeBudgetBurnedWindowPeriodAsc  SLOListSortMode = "budget-burned-window-period-asc"
+	SLOListSortModeBudgetBurnedWindowPeriodDesc SLOListSortMode = "budget-burned-window-period-desc"
+	SLOListSortModeAlertSeverityAsc             SLOListSortMode = "alert-severity-asc"
+	SLOListSortModeAlertSeverityDesc            SLOListSortMode = "alert-severity-desc"
+)
+
 type ListSLOsRequest struct {
 	FilterServiceID   string // Used for filtering SLOs by service ID.
 	FilterSearchInput string // Used for searching SLOs by name.
+	SortMode          SLOListSortMode
 	Cursor            string
 }
 
@@ -63,6 +80,70 @@ func (a *App) ListSLOs(ctx context.Context, req ListSLOsRequest) (*ListSLOsRespo
 		}
 	}
 
+	// Sort results based on request.
+
+	// Always sort by SLO ID first to have a stable sort.
+	slices.SortStableFunc(slos, func(x, y storage.SLOInstantDetails) int {
+		return strings.Compare(x.SLO.ID, y.SLO.ID)
+	})
+
+	switch req.SortMode {
+	case SLOListSortModeSLOIDDesc:
+		slices.SortStableFunc(slos, func(x, y storage.SLOInstantDetails) int {
+			return strings.Compare(y.SLO.ID, x.SLO.ID)
+		})
+	case SLOListSortModeServiceNameAsc:
+		slices.SortStableFunc(slos, func(x, y storage.SLOInstantDetails) int {
+			return strings.Compare(x.SLO.ServiceID, y.SLO.ServiceID)
+		})
+	case SLOListSortModeServiceNameDesc:
+		slices.SortStableFunc(slos, func(x, y storage.SLOInstantDetails) int {
+			return strings.Compare(y.SLO.ServiceID, x.SLO.ServiceID)
+		})
+	case SLOListSortModeCurrentBurningBudgetAsc:
+		slices.SortStableFunc(slos, func(x, y storage.SLOInstantDetails) int {
+			return cmp.Compare(
+				x.BudgetDetails.BurningBudgetPercent,
+				y.BudgetDetails.BurningBudgetPercent,
+			)
+		})
+	case SLOListSortModeCurrentBurningBudgetDesc:
+		slices.SortStableFunc(slos, func(x, y storage.SLOInstantDetails) int {
+			return cmp.Compare(
+				y.BudgetDetails.BurningBudgetPercent,
+				x.BudgetDetails.BurningBudgetPercent,
+			)
+		})
+	case SLOListSortModeBudgetBurnedWindowPeriodAsc:
+		slices.SortStableFunc(slos, func(x, y storage.SLOInstantDetails) int {
+			return cmp.Compare(
+				x.BudgetDetails.BurnedBudgetWindowPercent,
+				y.BudgetDetails.BurnedBudgetWindowPercent,
+			)
+		})
+	case SLOListSortModeBudgetBurnedWindowPeriodDesc:
+		slices.SortStableFunc(slos, func(x, y storage.SLOInstantDetails) int {
+			return cmp.Compare(
+				y.BudgetDetails.BurnedBudgetWindowPercent,
+				x.BudgetDetails.BurnedBudgetWindowPercent,
+			)
+		})
+	case SLOListSortModeAlertSeverityAsc:
+		slices.SortStableFunc(slos, func(x, y storage.SLOInstantDetails) int {
+			return cmp.Compare(
+				getAlertSeverityScore([]model.SLOAlerts{x.Alerts}),
+				getAlertSeverityScore([]model.SLOAlerts{y.Alerts}),
+			)
+		})
+	case SLOListSortModeAlertSeverityDesc:
+		slices.SortStableFunc(slos, func(x, y storage.SLOInstantDetails) int {
+			return cmp.Compare(
+				getAlertSeverityScore([]model.SLOAlerts{y.Alerts}),
+				getAlertSeverityScore([]model.SLOAlerts{x.Alerts}),
+			)
+		})
+	}
+
 	rtSLOs := make([]RealTimeSLODetails, 0, len(slos))
 	for _, s := range slos {
 		rtSLOs = append(rtSLOs, RealTimeSLODetails{
@@ -72,12 +153,7 @@ func (a *App) ListSLOs(ctx context.Context, req ListSLOsRequest) (*ListSLOsRespo
 		})
 	}
 
-	slices.SortStableFunc(rtSLOs, func(x, y RealTimeSLODetails) int {
-		return strings.Compare(x.SLO.ID, y.SLO.ID)
-	})
-
 	prtSLOs, cursors := paginateSlice(rtSLOs, req.Cursor)
-
 	return &ListSLOsResponse{
 		SLOs:              prtSLOs,
 		PaginationCursors: cursors,

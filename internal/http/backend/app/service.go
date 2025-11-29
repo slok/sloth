@@ -109,7 +109,6 @@ func getAlertSeverityScore(alerts []model.SLOAlerts) int {
 		if a.FiringWarning != nil {
 			score += 1
 		}
-
 	}
 	return score
 }

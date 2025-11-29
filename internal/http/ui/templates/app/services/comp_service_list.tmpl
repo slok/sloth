@@ -8,8 +8,20 @@
     <table>
     <thead>
         <tr>
-        <th scope="col">Service</th>
-        <th scope="col">Status</th>
+        <th scope="col">
+            <div
+                hx-get="{{ .Data.SortServiceNameURL }}"
+                hx-target="#services-list"
+                hx-swap="innerHTML show:window:top">
+            Service {{.Data.SortServiceTitleIcon}}</div>
+        </th>
+        <th scope="col">
+            <div
+                hx-get="{{ .Data.SortStatusURL }}"
+                hx-target="#services-list"
+                hx-swap="innerHTML show:window:top">
+            Status {{.Data.SortStatusTitleIcon}}</div>
+        </th>
         </tr>
     </thead>
     <tbody>

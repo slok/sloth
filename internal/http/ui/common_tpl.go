@@ -72,3 +72,9 @@ func SlothLogoSVG(color string, width int) string {
 
 	return fmt.Sprintf(svgFmt, width, color)
 }
+
+const (
+	iconSortAsc   = `↑`
+	iconSortDesc  = `↓`
+	iconSortUnset = `⇅`
+)

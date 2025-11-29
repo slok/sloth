@@ -12,6 +12,32 @@ import (
 	"github.com/slok/sloth/internal/http/backend/model"
 )
 
+var testAppListSLOsResponse = &app.ListSLOsResponse{
+	PaginationCursors: app.PaginationCursors{
+		PrevCursor:  "test-prev-cursor",
+		NextCursor:  "test-next-cursor",
+		HasNext:     true,
+		HasPrevious: true,
+	},
+	SLOs: []app.RealTimeSLODetails{
+		{
+			SLO: model.SLO{
+				ID:        "test-svc1-slo1",
+				ServiceID: "test-svc1",
+				Name:      "Test SLO 1",
+			},
+			Alerts: model.SLOAlerts{
+				FiringPage:    &model.Alert{Name: "page-1"},
+				FiringWarning: &model.Alert{Name: "warn-2"},
+			},
+			Budget: model.SLOBudgetDetails{
+				SLOID:                     "test-svc1-slo1",
+				BurningBudgetPercent:      75.0,
+				BurnedBudgetWindowPercent: 80.0,
+			},
+		},
+	}}
+
 func TestHandlerSelectSLO(t *testing.T) {
 	tests := map[string]struct {
 		request    func() *http.Request
@@ -25,7 +51,9 @@ func TestHandlerSelectSLO(t *testing.T) {
 				return httptest.NewRequest(http.MethodGet, "/u/app/slos", nil)
 			},
 			mock: func(m mocks) {
-				expReq := app.ListSLOsRequest{}
+				expReq := app.ListSLOsRequest{
+					SortMode: app.SLOListSortModeSLOIDAsc,
+				}
 				m.ServiceApp.On("ListSLOs", mock.Anything, expReq).Once().Return(&app.ListSLOsResponse{
 					PaginationCursors: app.PaginationCursors{
 						PrevCursor:  "test-prev-cursor",
@@ -88,19 +116,23 @@ func TestHandlerSelectSLO(t *testing.T) {
 			},
 			expHeaders: http.Header{
 				"Content-Type": {"text/html; charset=utf-8"},
-				"Hx-Push-Url":  {"/u/app/slos"},
+				"Hx-Push-Url":  {"/u/app/slos?slo-search=&slo-sort-mode=slo-name-asc"},
 			},
 			expCode: 200,
 			expBody: []string{
 				`<!DOCTYPE html>`,               // We rendered a full page.
 				`<div class="container"> <nav>`, // We have the menu.
-				`<input type="search" name="slo-search" value="" placeholder="Search" aria-label="Search" hx-get="/u/app/slos?component=slo-list" hx-trigger="change, keyup changed delay:500ms, search" hx-target="#slo-list" hx-include="this" />`,                                                                                                                                               // We have the search bar with HTMX.
-				`<tr> <th scope="col">SLO</th> <th scope="col">Service</th> <th scope="col">Burning budget</th> <th scope="col">Remaining budget (Window)</th> <th scope="col">Alerts</th> </tr>`,                                                                                                                                                                                                  // We have the slos table.
+				`<input type="search" name="slo-search" value="" placeholder="Search" aria-label="Search" hx-get="/u/app/slos?component=slo-list&slo-sort-mode=slo-name-asc" hx-trigger="change, keyup changed delay:500ms, search" hx-target="#slo-list" hx-include="this" />`,                                                                                                                    // We have the search bar with HTMX.
+				`<th scope="col"> <div hx-get="/u/app/slos?component=slo-list&slo-search=&slo-sort-mode=slo-name-desc" hx-target="#slo-list" hx-swap="innerHTML show:window:top"> SLO ↑</div> </th> `,                                                                                                                                                                                              // We have the SLO name column with HTMX.
+				`<th scope="col"> <div hx-get="/u/app/slos?component=slo-list&slo-search=&slo-sort-mode=slo-service-name-asc" hx-target="#slo-list" hx-swap="innerHTML show:window:top"> Service ⇅</th> `,                                                                                                                                                                                          // We have the SLO service name column with HTMX.
+				`<th scope="col"> <div hx-get="/u/app/slos?component=slo-list&slo-search=&slo-sort-mode=slo-currently-burning-desc" hx-target="#slo-list" hx-swap="innerHTML show:window:top"> Burning budget ⇅</th> `,                                                                                                                                                                             // We have the SLO burning budget column with HTMX.
+				`<th scope="col"> <div hx-get="/u/app/slos?component=slo-list&slo-search=&slo-sort-mode=slo-budget-remaining-window-period-asc" hx-target="#slo-list" hx-swap="innerHTML show:window:top"> Remaining budget (Window) ⇅</th> `,                                                                                                                                                      // We have the SLO remaining budget (window) column with HTMX.
+				`<th scope="col"> <div hx-get="/u/app/slos?component=slo-list&slo-search=&slo-sort-mode=slo-alert-severity-desc" hx-target="#slo-list" hx-swap="innerHTML show:window:top"> Alerts ⇅</th> </tr> </thead> <tbody> <tr> <td>`,                                                                                                                                                        // We have the SLO alerts column with HTMX.
 				`<td> <a href="/u/app/slos/test-svc1-slo1">Test SLO 1</a> </td> <td><a href="/u/app/services/test-svc1">test-svc1</a></td> <td class="is-ok">75%</td> <td class="is-ok">20%</td> <td> <div class="is-critical">Critical</div> </td>`,                                                                                                                                               // SLO1 should be critical.
 				`<td> <a href="/u/app/slos/test-svc2-slo2">Test SLO 2</a> </td> <td><a href="/u/app/services/test-svc2">test-svc2</a></td> <td class="is-ok">45%</td> <td class="is-ok">50%</td> <td> <div class="is-critical">Critical</div> </td>`,                                                                                                                                               // SLO2 should be warning.
 				`<td> <a href="/u/app/slos/test-svc3-slo3:test-grouped">Test SLO 3</a> <div><small><mark>env=<strong>prod</strong></mark></small> <span> </span><small><mark>operation=<strong>create</strong></mark></small> <span> </span></div> </td> <td><a href="/u/app/services/test-svc3">test-svc3</a></td> <td class="is-ok">30%</td> <td class="is-ok">65%</td> <td> <div>-</div> </td>`, // SLO3 should be ok and grouped.
-				`<button class="secondary" hx-get="/u/app/slos?component=slo-list&backward-cursor=test-prev-cursor" hx-target="#slo-list" hx-swap="innerHTML show:window:top"> << Previous </button>`,                                                                                                                                                                                              // We have the pagination prev.
-				`<button class="secondary" hx-get="/u/app/slos?component=slo-list&forward-cursor=test-next-cursor" hx-target="#slo-list" hx-swap="innerHTML show:window:top"> Next >> </button>`,                                                                                                                                                                                                   // We have the pagination next.
+				`<button class="secondary" hx-get="/u/app/slos?slo-search=&slo-sort-mode=slo-name-asc&component=slo-list&backward-cursor=test-prev-cursor" hx-target="#slo-list" hx-swap="innerHTML show:window:top"> << Previous </button>`,                                                                                                                                                       // We have the pagination prev.
+				`<button class="secondary" hx-get="/u/app/slos?slo-search=&slo-sort-mode=slo-name-asc&component=slo-list&forward-cursor=test-next-cursor" hx-target="#slo-list" hx-swap="innerHTML show:window:top"> Next >> </button>`,                                                                                                                                                            // We have the pagination next.
 			},
 		},
 
@@ -114,6 +146,7 @@ func TestHandlerSelectSLO(t *testing.T) {
 				expReq := app.ListSLOsRequest{
 					Cursor:            "eyJzaXplIjozMCwicGFnZSI6Mn0=",
 					FilterSearchInput: "test",
+					SortMode:          app.SLOListSortModeSLOIDAsc,
 				}
 				m.ServiceApp.On("ListSLOs", mock.Anything, expReq).Once().Return(&app.ListSLOsResponse{
 					PaginationCursors: app.PaginationCursors{
@@ -141,12 +174,12 @@ func TestHandlerSelectSLO(t *testing.T) {
 			},
 			expHeaders: http.Header{
 				"Content-Type": {"text/html; charset=utf-8"},
-				"Hx-Push-Url":  {"/u/app/slos?slo-search=test"},
+				"Hx-Push-Url":  {"/u/app/slos?slo-search=test&slo-sort-mode=slo-name-asc"},
 			},
 			expCode: 200,
 			expBody: []string{
 				`<td> <a href="/u/app/slos/test-svc1-slo1">Test SLO 1</a> </td> <td><a href="/u/app/services/test-svc1">test-svc1</a></td> <td class="is-ok">75%</td> <td class="is-ok">20%</td> <td> <div class="is-critical">Critical</div> </td>`, // SLO row should be ok.
-				`<button class="secondary" hx-get="/u/app/slos?slo-search=test&component=slo-list&backward-cursor=test-prev-cursor" hx-target="#slo-list" hx-swap="innerHTML show:window:top"> << Previous </button>`,                                // We have the pagination prev.
+				`<button class="secondary" hx-get="/u/app/slos?slo-search=test&slo-sort-mode=slo-name-asc&component=slo-list&backward-cursor=test-prev-cursor" hx-target="#slo-list" hx-swap="innerHTML show:window:top"> << Previous </button>`,     // We have the pagination prev.
 				`<button class="secondary"  disabled hx-get="" hx-target="#slo-list" hx-swap="innerHTML show:window:top"> Next >> </button>`,                                                                                                         // We have the pagination next.
 			},
 		},
@@ -159,7 +192,8 @@ func TestHandlerSelectSLO(t *testing.T) {
 			},
 			mock: func(m mocks) {
 				expReq := app.ListSLOsRequest{
-					Cursor: "eyJzaXplIjozMCwicGFnZSI6MX0=",
+					Cursor:   "eyJzaXplIjozMCwicGFnZSI6MX0=",
+					SortMode: app.SLOListSortModeSLOIDAsc,
 				}
 				m.ServiceApp.On("ListSLOs", mock.Anything, expReq).Once().Return(&app.ListSLOsResponse{
 					PaginationCursors: app.PaginationCursors{
@@ -187,13 +221,13 @@ func TestHandlerSelectSLO(t *testing.T) {
 			},
 			expHeaders: http.Header{
 				"Content-Type": {"text/html; charset=utf-8"},
-				"Hx-Push-Url":  {"/u/app/slos"},
+				"Hx-Push-Url":  {"/u/app/slos?slo-search=&slo-sort-mode=slo-name-asc"},
 			},
 			expCode: 200,
 			expBody: []string{
 				`<td> <a href="/u/app/slos/test-svc1-slo1">Test SLO 1</a> </td> <td><a href="/u/app/services/test-svc1">test-svc1</a></td> <td class="is-ok">75%</td> <td class="is-ok">20%</td> <td> <div class="is-critical">Critical</div> </td>`, // SLO row should be ok.
 				`<button class="secondary"  disabled hx-get="" hx-target="#slo-list" hx-swap="innerHTML show:window:top"> << Previous </button>`,                                                                                                     // We have the pagination prev.
-				`<button class="secondary" hx-get="/u/app/slos?component=slo-list&forward-cursor=test-next-cursor" hx-target="#slo-list" hx-swap="innerHTML show:window:top"> Next >> </button>`,                                                     // We have the pagination next.
+				`<button class="secondary" hx-get="/u/app/slos?slo-search=&slo-sort-mode=slo-name-asc&component=slo-list&forward-cursor=test-next-cursor" hx-target="#slo-list" hx-swap="innerHTML show:window:top"> Next >> </button>`,              // We have the pagination next.
 			},
 		},
 
@@ -206,6 +240,7 @@ func TestHandlerSelectSLO(t *testing.T) {
 			mock: func(m mocks) {
 				expReq := app.ListSLOsRequest{
 					FilterSearchInput: "test",
+					SortMode:          app.SLOListSortModeSLOIDAsc,
 				}
 				m.ServiceApp.On("ListSLOs", mock.Anything, expReq).Once().Return(&app.ListSLOsResponse{
 					PaginationCursors: app.PaginationCursors{
@@ -235,13 +270,163 @@ func TestHandlerSelectSLO(t *testing.T) {
 			},
 			expHeaders: http.Header{
 				"Content-Type": {"text/html; charset=utf-8"},
-				"Hx-Push-Url":  {"/u/app/slos?slo-search=test"},
+				"Hx-Push-Url":  {"/u/app/slos?slo-search=test&slo-sort-mode=slo-name-asc"},
 			},
 			expCode: 200,
 			expBody: []string{
 				`<td> <a href="/u/app/slos/test-svc1-slo1">Test SLO 1</a> </td> <td><a href="/u/app/services/test-svc1">test-svc1</a></td> <td class="is-ok">75%</td> <td class="is-ok">20%</td> <td> <div class="is-critical">Critical</div> </td>`, // SLO row should be ok.
-				`<button class="secondary" hx-get="/u/app/slos?slo-search=test&component=slo-list&backward-cursor=test-prev-cursor" hx-target="#slo-list" hx-swap="innerHTML show:window:top"> << Previous </button>`,                                // We have the pagination prev.
-				`<button class="secondary" hx-get="/u/app/slos?slo-search=test&component=slo-list&forward-cursor=test-next-cursor" hx-target="#slo-list" hx-swap="innerHTML show:window:top"> Next >> </button>`,                                     // We have the pagination next.
+				`<button class="secondary" hx-get="/u/app/slos?slo-search=test&slo-sort-mode=slo-name-asc&component=slo-list&backward-cursor=test-prev-cursor" hx-target="#slo-list" hx-swap="innerHTML show:window:top"> << Previous </button>`,     // We have the pagination prev.
+				`<button class="secondary" hx-get="/u/app/slos?slo-search=test&slo-sort-mode=slo-name-asc&component=slo-list&forward-cursor=test-next-cursor" hx-target="#slo-list" hx-swap="innerHTML show:window:top"> Next >> </button>`,          // We have the pagination next.
+			},
+		},
+
+		"Sorting the SLOs by SLO name with HTMX should render the snippet.": {
+			request: func() *http.Request {
+				r := httptest.NewRequest(http.MethodGet, "/u/app/slos?component=slo-list&slo-search=test&slo-sort-mode=slo-name-desc", nil)
+				r.Header.Add("HX-Request", "true")
+				return r
+			},
+			mock: func(m mocks) {
+				expReq := app.ListSLOsRequest{
+					FilterSearchInput: "test",
+					SortMode:          app.SLOListSortModeSLOIDDesc,
+				}
+				m.ServiceApp.On("ListSLOs", mock.Anything, expReq).Once().Return(testAppListSLOsResponse, nil)
+			},
+			expHeaders: http.Header{
+				"Content-Type": {"text/html; charset=utf-8"},
+				"Hx-Push-Url":  {"/u/app/slos?slo-search=test&slo-sort-mode=slo-name-desc"},
+			},
+			expCode: 200,
+			expBody: []string{
+				`<th scope="col"> <div hx-get="/u/app/slos?component=slo-list&slo-search=test&slo-sort-mode=slo-name-asc" hx-target="#slo-list" hx-swap="innerHTML show:window:top"> SLO ↓</div> </th> `,                                             // We have the SLO name column with HTMX.
+				`<th scope="col"> <div hx-get="/u/app/slos?component=slo-list&slo-search=test&slo-sort-mode=slo-service-name-asc" hx-target="#slo-list" hx-swap="innerHTML show:window:top"> Service ⇅</th> `,                                        // We have the SLO service name column with HTMX.
+				`<th scope="col"> <div hx-get="/u/app/slos?component=slo-list&slo-search=test&slo-sort-mode=slo-currently-burning-desc" hx-target="#slo-list" hx-swap="innerHTML show:window:top"> Burning budget ⇅</th> `,                           // We have the SLO burning budget column with HTMX.
+				`<th scope="col"> <div hx-get="/u/app/slos?component=slo-list&slo-search=test&slo-sort-mode=slo-budget-remaining-window-period-asc" hx-target="#slo-list" hx-swap="innerHTML show:window:top"> Remaining budget (Window) ⇅</th> `,    // We have the SLO remaining budget (window) column with HTMX.
+				`<th scope="col"> <div hx-get="/u/app/slos?component=slo-list&slo-search=test&slo-sort-mode=slo-alert-severity-desc" hx-target="#slo-list" hx-swap="innerHTML show:window:top"> Alerts ⇅</th> </tr> </thead> <tbody> <tr> <td>`,      // We have the SLO alerts column with HTMX.
+				`<td> <a href="/u/app/slos/test-svc1-slo1">Test SLO 1</a> </td> <td><a href="/u/app/services/test-svc1">test-svc1</a></td> <td class="is-ok">75%</td> <td class="is-ok">20%</td> <td> <div class="is-critical">Critical</div> </td>`, // SLO row should be ok.
+				`<button class="secondary" hx-get="/u/app/slos?slo-search=test&slo-sort-mode=slo-name-desc&component=slo-list&backward-cursor=test-prev-cursor" hx-target="#slo-list" hx-swap="innerHTML show:window:top"> << Previous </button>`,    // We have the pagination prev.
+				`<button class="secondary" hx-get="/u/app/slos?slo-search=test&slo-sort-mode=slo-name-desc&component=slo-list&forward-cursor=test-next-cursor" hx-target="#slo-list" hx-swap="innerHTML show:window:top"> Next >> </button>`,         // We have the pagination next.
+			},
+		},
+
+		"Sorting the SLOs by service name with HTMX should render the snippet.": {
+			request: func() *http.Request {
+				r := httptest.NewRequest(http.MethodGet, "/u/app/slos?component=slo-list&slo-search=test&slo-sort-mode=slo-service-name-desc", nil)
+				r.Header.Add("HX-Request", "true")
+				return r
+			},
+			mock: func(m mocks) {
+				expReq := app.ListSLOsRequest{
+					FilterSearchInput: "test",
+					SortMode:          app.SLOListSortModeServiceNameDesc,
+				}
+				m.ServiceApp.On("ListSLOs", mock.Anything, expReq).Once().Return(testAppListSLOsResponse, nil)
+			},
+			expHeaders: http.Header{
+				"Content-Type": {"text/html; charset=utf-8"},
+				"Hx-Push-Url":  {"/u/app/slos?slo-search=test&slo-sort-mode=slo-service-name-desc"},
+			},
+			expCode: 200,
+			expBody: []string{
+				`<th scope="col"> <div hx-get="/u/app/slos?component=slo-list&slo-search=test&slo-sort-mode=slo-name-asc" hx-target="#slo-list" hx-swap="innerHTML show:window:top"> SLO ⇅</div> </th> `,                                                  // We have the SLO name column with HTMX.
+				`<th scope="col"> <div hx-get="/u/app/slos?component=slo-list&slo-search=test&slo-sort-mode=slo-service-name-asc" hx-target="#slo-list" hx-swap="innerHTML show:window:top"> Service ↓</th> `,                                             // We have the SLO service name column with HTMX.
+				`<th scope="col"> <div hx-get="/u/app/slos?component=slo-list&slo-search=test&slo-sort-mode=slo-currently-burning-desc" hx-target="#slo-list" hx-swap="innerHTML show:window:top"> Burning budget ⇅</th> `,                                // We have the SLO burning budget column with HTMX.
+				`<th scope="col"> <div hx-get="/u/app/slos?component=slo-list&slo-search=test&slo-sort-mode=slo-budget-remaining-window-period-asc" hx-target="#slo-list" hx-swap="innerHTML show:window:top"> Remaining budget (Window) ⇅</th> `,         // We have the SLO remaining budget (window) column with HTMX.
+				`<th scope="col"> <div hx-get="/u/app/slos?component=slo-list&slo-search=test&slo-sort-mode=slo-alert-severity-desc" hx-target="#slo-list" hx-swap="innerHTML show:window:top"> Alerts ⇅</th> </tr> </thead> <tbody> <tr> <td>`,           // We have the SLO alerts column with HTMX.
+				`<td> <a href="/u/app/slos/test-svc1-slo1">Test SLO 1</a> </td> <td><a href="/u/app/services/test-svc1">test-svc1</a></td> <td class="is-ok">75%</td> <td class="is-ok">20%</td> <td> <div class="is-critical">Critical</div> </td>`,      // SLO row should be ok.
+				`<button class="secondary" hx-get="/u/app/slos?slo-search=test&slo-sort-mode=slo-service-name-desc&component=slo-list&backward-cursor=test-prev-cursor" hx-target="#slo-list" hx-swap="innerHTML show:window:top"> << Previous </button>`, // We have the pagination prev.
+				`<button class="secondary" hx-get="/u/app/slos?slo-search=test&slo-sort-mode=slo-service-name-desc&component=slo-list&forward-cursor=test-next-cursor" hx-target="#slo-list" hx-swap="innerHTML show:window:top"> Next >> </button>`,      // We have the pagination next.
+			},
+		},
+
+		"Sorting the SLOs by current burning budget with HTMX should render the snippet.": {
+			request: func() *http.Request {
+				r := httptest.NewRequest(http.MethodGet, "/u/app/slos?component=slo-list&slo-search=test&slo-sort-mode=slo-currently-burning-desc", nil)
+				r.Header.Add("HX-Request", "true")
+				return r
+			},
+			mock: func(m mocks) {
+				expReq := app.ListSLOsRequest{
+					FilterSearchInput: "test",
+					SortMode:          app.SLOListSortModeCurrentBurningBudgetDesc,
+				}
+				m.ServiceApp.On("ListSLOs", mock.Anything, expReq).Once().Return(testAppListSLOsResponse, nil)
+			},
+			expHeaders: http.Header{
+				"Content-Type": {"text/html; charset=utf-8"},
+				"Hx-Push-Url":  {"/u/app/slos?slo-search=test&slo-sort-mode=slo-currently-burning-desc"},
+			},
+			expCode: 200,
+			expBody: []string{
+				`<th scope="col"> <div hx-get="/u/app/slos?component=slo-list&slo-search=test&slo-sort-mode=slo-name-asc" hx-target="#slo-list" hx-swap="innerHTML show:window:top"> SLO ⇅</div> </th> `,                                                       // We have the SLO name column with HTMX.
+				`<th scope="col"> <div hx-get="/u/app/slos?component=slo-list&slo-search=test&slo-sort-mode=slo-service-name-asc" hx-target="#slo-list" hx-swap="innerHTML show:window:top"> Service ⇅</th> `,                                                  // We have the SLO service name column with HTMX.
+				`<th scope="col"> <div hx-get="/u/app/slos?component=slo-list&slo-search=test&slo-sort-mode=slo-currently-burning-asc" hx-target="#slo-list" hx-swap="innerHTML show:window:top"> Burning budget ↓</th> `,                                      // We have the SLO burning budget column with HTMX.
+				`<th scope="col"> <div hx-get="/u/app/slos?component=slo-list&slo-search=test&slo-sort-mode=slo-budget-remaining-window-period-asc" hx-target="#slo-list" hx-swap="innerHTML show:window:top"> Remaining budget (Window) ⇅</th> `,              // We have the SLO remaining budget (window) column with HTMX.
+				`<th scope="col"> <div hx-get="/u/app/slos?component=slo-list&slo-search=test&slo-sort-mode=slo-alert-severity-desc" hx-target="#slo-list" hx-swap="innerHTML show:window:top"> Alerts ⇅</th> </tr> </thead> <tbody> <tr> <td>`,                // We have the SLO alerts column with HTMX.
+				`<td> <a href="/u/app/slos/test-svc1-slo1">Test SLO 1</a> </td> <td><a href="/u/app/services/test-svc1">test-svc1</a></td> <td class="is-ok">75%</td> <td class="is-ok">20%</td> <td> <div class="is-critical">Critical</div> </td>`,           // SLO row should be ok.
+				`<button class="secondary" hx-get="/u/app/slos?slo-search=test&slo-sort-mode=slo-currently-burning-desc&component=slo-list&backward-cursor=test-prev-cursor" hx-target="#slo-list" hx-swap="innerHTML show:window:top"> << Previous </button>`, // We have the pagination prev.
+				`<button class="secondary" hx-get="/u/app/slos?slo-search=test&slo-sort-mode=slo-currently-burning-desc&component=slo-list&forward-cursor=test-next-cursor" hx-target="#slo-list" hx-swap="innerHTML show:window:top"> Next >> </button>`,      // We have the pagination next.
+			},
+		},
+
+		"Sorting the SLOs by remaining budget with HTMX should render the snippet.": {
+			request: func() *http.Request {
+				r := httptest.NewRequest(http.MethodGet, "/u/app/slos?component=slo-list&slo-search=test&slo-sort-mode=slo-budget-remaining-window-period-desc", nil)
+				r.Header.Add("HX-Request", "true")
+				return r
+			},
+			mock: func(m mocks) {
+				expReq := app.ListSLOsRequest{
+					FilterSearchInput: "test",
+					SortMode:          app.SLOListSortModeBudgetBurnedWindowPeriodAsc, // It's inverted.
+				}
+				m.ServiceApp.On("ListSLOs", mock.Anything, expReq).Once().Return(testAppListSLOsResponse, nil)
+			},
+			expHeaders: http.Header{
+				"Content-Type": {"text/html; charset=utf-8"},
+				"Hx-Push-Url":  {"/u/app/slos?slo-search=test&slo-sort-mode=slo-budget-remaining-window-period-desc"},
+			},
+			expCode: 200,
+			expBody: []string{
+				`<th scope="col"> <div hx-get="/u/app/slos?component=slo-list&slo-search=test&slo-sort-mode=slo-name-asc" hx-target="#slo-list" hx-swap="innerHTML show:window:top"> SLO ⇅</div> </th> `,                                                                    // We have the SLO name column with HTMX.
+				`<th scope="col"> <div hx-get="/u/app/slos?component=slo-list&slo-search=test&slo-sort-mode=slo-service-name-asc" hx-target="#slo-list" hx-swap="innerHTML show:window:top"> Service ⇅</th> `,                                                               // We have the SLO service name column with HTMX.
+				`<th scope="col"> <div hx-get="/u/app/slos?component=slo-list&slo-search=test&slo-sort-mode=slo-currently-burning-desc" hx-target="#slo-list" hx-swap="innerHTML show:window:top"> Burning budget ⇅</th> `,                                                  // We have the SLO burning budget column with HTMX.
+				`<th scope="col"> <div hx-get="/u/app/slos?component=slo-list&slo-search=test&slo-sort-mode=slo-budget-remaining-window-period-asc" hx-target="#slo-list" hx-swap="innerHTML show:window:top"> Remaining budget (Window) ↓</th> `,                           // We have the SLO remaining budget (window) column with HTMX.
+				`<th scope="col"> <div hx-get="/u/app/slos?component=slo-list&slo-search=test&slo-sort-mode=slo-alert-severity-desc" hx-target="#slo-list" hx-swap="innerHTML show:window:top"> Alerts ⇅</th> </tr> </thead> <tbody> <tr> <td>`,                             // We have the SLO alerts column with HTMX.
+				`<td> <a href="/u/app/slos/test-svc1-slo1">Test SLO 1</a> </td> <td><a href="/u/app/services/test-svc1">test-svc1</a></td> <td class="is-ok">75%</td> <td class="is-ok">20%</td> <td> <div class="is-critical">Critical</div> </td>`,                        // SLO row should be ok.
+				`<button class="secondary" hx-get="/u/app/slos?slo-search=test&slo-sort-mode=slo-budget-remaining-window-period-desc&component=slo-list&backward-cursor=test-prev-cursor" hx-target="#slo-list" hx-swap="innerHTML show:window:top"> << Previous </button>`, // We have the pagination prev.
+				`<button class="secondary" hx-get="/u/app/slos?slo-search=test&slo-sort-mode=slo-budget-remaining-window-period-desc&component=slo-list&forward-cursor=test-next-cursor" hx-target="#slo-list" hx-swap="innerHTML show:window:top"> Next >> </button>`,      // We have the pagination next.
+			},
+		},
+
+		"Sorting the SLOs by alert serverity with HTMX should render the snippet.": {
+			request: func() *http.Request {
+				r := httptest.NewRequest(http.MethodGet, "/u/app/slos?component=slo-list&slo-search=test&slo-sort-mode=slo-alert-severity-desc", nil)
+				r.Header.Add("HX-Request", "true")
+				return r
+			},
+			mock: func(m mocks) {
+				expReq := app.ListSLOsRequest{
+					FilterSearchInput: "test",
+					SortMode:          app.SLOListSortModeAlertSeverityDesc,
+				}
+				m.ServiceApp.On("ListSLOs", mock.Anything, expReq).Once().Return(testAppListSLOsResponse, nil)
+			},
+			expHeaders: http.Header{
+				"Content-Type": {"text/html; charset=utf-8"},
+				"Hx-Push-Url":  {"/u/app/slos?slo-search=test&slo-sort-mode=slo-alert-severity-desc"},
+			},
+			expCode: 200,
+			expBody: []string{
+				`<th scope="col"> <div hx-get="/u/app/slos?component=slo-list&slo-search=test&slo-sort-mode=slo-name-asc" hx-target="#slo-list" hx-swap="innerHTML show:window:top"> SLO ⇅</div> </th> `,                                                    // We have the SLO name column with HTMX.
+				`<th scope="col"> <div hx-get="/u/app/slos?component=slo-list&slo-search=test&slo-sort-mode=slo-service-name-asc" hx-target="#slo-list" hx-swap="innerHTML show:window:top"> Service ⇅</th> `,                                               // We have the SLO service name column with HTMX.
+				`<th scope="col"> <div hx-get="/u/app/slos?component=slo-list&slo-search=test&slo-sort-mode=slo-currently-burning-desc" hx-target="#slo-list" hx-swap="innerHTML show:window:top"> Burning budget ⇅</th> `,                                  // We have the SLO burning budget column with HTMX.
+				`<th scope="col"> <div hx-get="/u/app/slos?component=slo-list&slo-search=test&slo-sort-mode=slo-budget-remaining-window-period-asc" hx-target="#slo-list" hx-swap="innerHTML show:window:top"> Remaining budget (Window) ⇅</th> `,           // We have the SLO remaining budget (window) column with HTMX.
+				`<th scope="col"> <div hx-get="/u/app/slos?component=slo-list&slo-search=test&slo-sort-mode=slo-alert-severity-asc" hx-target="#slo-list" hx-swap="innerHTML show:window:top"> Alerts ↓</th> </tr> </thead> <tbody> <tr> <td>`,              // We have the SLO alerts column with HTMX.
+				`<td> <a href="/u/app/slos/test-svc1-slo1">Test SLO 1</a> </td> <td><a href="/u/app/services/test-svc1">test-svc1</a></td> <td class="is-ok">75%</td> <td class="is-ok">20%</td> <td> <div class="is-critical">Critical</div> </td>`,        // SLO row should be ok.
+				`<button class="secondary" hx-get="/u/app/slos?slo-search=test&slo-sort-mode=slo-alert-severity-desc&component=slo-list&backward-cursor=test-prev-cursor" hx-target="#slo-list" hx-swap="innerHTML show:window:top"> << Previous </button>`, // We have the pagination prev.
+				`<button class="secondary" hx-get="/u/app/slos?slo-search=test&slo-sort-mode=slo-alert-severity-desc&component=slo-list&forward-cursor=test-next-cursor" hx-target="#slo-list" hx-swap="innerHTML show:window:top"> Next >> </button>`,      // We have the pagination next.
 			},
 		},
 
@@ -255,7 +440,7 @@ func TestHandlerSelectSLO(t *testing.T) {
 			expHeaders: http.Header{
 				"Content-Type":           {"text/plain; charset=utf-8"},
 				"X-Content-Type-Options": {"nosniff"},
-				"Hx-Push-Url":            {"/u/app/slos"},
+				"Hx-Push-Url":            {"/u/app/slos?slo-search=&slo-sort-mode=slo-name-asc"},
 			},
 			expCode: 400,
 		},

@@ -285,8 +285,10 @@ func (r *ListBurnedBudgetRangeRequest) defaults() error {
 }
 
 type ListBurnedBudgetRangeResponse struct {
-	RealBurnedDataPoints    []model.DataPoint
-	PerfectBurnedDataPoints []model.DataPoint
+	RealBurnedDataPoints              []model.DataPoint
+	PerfectBurnedDataPoints           []model.DataPoint
+	CurrentBurnedValuePercent         float64
+	CurrentExpectedBurnedValuePercent float64
 }
 
 func (a *App) ListBurnedBudgetRange(ctx context.Context, req ListBurnedBudgetRangeRequest) (*ListBurnedBudgetRangeResponse, error) {
@@ -335,9 +337,11 @@ func (a *App) ListBurnedBudgetRange(ctx context.Context, req ListBurnedBudgetRan
 		// Only add real values until today.
 		realDP := model.DataPoint{TS: dp.TS, Missing: true}
 		if dp.TS.Before(now) {
+			resp.CurrentBurnedValuePercent = ((totalBudgetInRange - realAggr) / totalBudgetInRange) * 100
+			resp.CurrentExpectedBurnedValuePercent = (perfectAggr / totalBudgetInRange) * 100
 			realDP = model.DataPoint{
 				TS:    dp.TS,
-				Value: ((totalBudgetInRange - realAggr) / totalBudgetInRange) * 100,
+				Value: resp.CurrentBurnedValuePercent,
 			}
 		}
 

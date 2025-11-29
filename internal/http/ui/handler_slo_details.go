@@ -134,12 +134,15 @@ func (u ui) handlerSLODetails() http.HandlerFunc {
 		}, nil
 	}
 
-	mapBudgetDatapointsRangeToTPL := func(realDPs, perfectDPs []model.DataPoint) (*tplDataSLOChart, error) {
-		x := uPlotBudgetBurnChart{}
-		if len(realDPs) != len(perfectDPs) {
+	mapBudgetDatapointsRangeToTPL := func(r app.ListBurnedBudgetRangeResponse) (*tplDataSLOChart, error) {
+		x := uPlotBudgetBurnChart{
+			ColorLineOk: r.CurrentBurnedValuePercent >= r.CurrentExpectedBurnedValuePercent,
+		}
+		if len(r.RealBurnedDataPoints) != len(r.PerfectBurnedDataPoints) {
 			return nil, fmt.Errorf("real and perfect data points must have the same length")
 		}
-		for i, dp := range realDPs {
+
+		for i, dp := range r.RealBurnedDataPoints {
 			x.TSs = append(x.TSs, int(dp.TS.Unix()))
 			if dp.Missing || math.IsNaN(dp.Value) {
 				x.RealBurned = append(x.RealBurned, nil)
@@ -147,7 +150,7 @@ func (u ui) handlerSLODetails() http.HandlerFunc {
 				x.RealBurned = append(x.RealBurned, float64Ptr(dp.Value))
 			}
 
-			x.PerfectBurned = append(x.PerfectBurned, float64Ptr(perfectDPs[i].Value))
+			x.PerfectBurned = append(x.PerfectBurned, float64Ptr(r.PerfectBurnedDataPoints[i].Value))
 		}
 		err := x.defaults()
 		if err != nil {
@@ -262,7 +265,7 @@ func (u ui) handlerSLODetails() http.HandlerFunc {
 				return
 			}
 
-			budgetChartData, err := mapBudgetDatapointsRangeToTPL(budgetRes.RealBurnedDataPoints, budgetRes.PerfectBurnedDataPoints)
+			budgetChartData, err := mapBudgetDatapointsRangeToTPL(*budgetRes)
 			if err != nil {
 				u.logger.Errorf("could not map budget chart data: %s", err)
 				http.Error(w, "could not map budget chart data", http.StatusInternalServerError)
@@ -325,7 +328,7 @@ func (u ui) handlerSLODetails() http.HandlerFunc {
 				return
 			}
 
-			budgetChartData, err := mapBudgetDatapointsRangeToTPL(budgetRes.RealBurnedDataPoints, budgetRes.PerfectBurnedDataPoints)
+			budgetChartData, err := mapBudgetDatapointsRangeToTPL(*budgetRes)
 			if err != nil {
 				u.logger.Errorf("could not map budget chart data: %s", err)
 				http.Error(w, "could not map budget chart data", http.StatusInternalServerError)

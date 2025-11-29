@@ -985,6 +985,8 @@ func TestListBurnedBudgetRange(t *testing.T) {
 				}, nil)
 			},
 			expResp: &app.ListBurnedBudgetRangeResponse{
+				CurrentBurnedValuePercent:         -63.333333333342814,
+				CurrentExpectedBurnedValuePercent: 53.333333333333336,
 				RealBurnedDataPoints: []model.DataPoint{
 					{TS: startT0.Add(0 * 24 * time.Hour), Value: 66.66666666666478},
 					{TS: startT0.Add(1 * 24 * time.Hour), Value: 36.66666666666288},

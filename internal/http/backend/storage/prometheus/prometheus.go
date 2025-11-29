@@ -42,7 +42,7 @@ func (c *RepositoryConfig) defaults() error {
 		c.Logger = log.Noop
 	}
 
-	if c.CacheRefreshInterval <= 0 {
+	if c.CacheRefreshInterval < 1*time.Minute {
 		c.CacheRefreshInterval = 1 * time.Minute
 	}
 

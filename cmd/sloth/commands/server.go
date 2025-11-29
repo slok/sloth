@@ -36,8 +36,9 @@ type serverCommand struct {
 	}
 
 	prometheus struct {
-		fake        bool
-		promAddress string
+		fake                        bool
+		promAddress                 string
+		cacheInstantRefreshInterval time.Duration
 	}
 }
 
@@ -53,6 +54,7 @@ func NewServerCommand(app *kingpin.Application) Command {
 
 	cmd.Flag("fake-prometheus", "Enable fake Prometheus server.").BoolVar(&c.prometheus.fake)
 	cmd.Flag("prometheus-address", "Prometheus server address.").Default("http://localhost:9090").StringVar(&c.prometheus.promAddress)
+	cmd.Flag("prometheus-cache-refresh-interval", "The interval for Prometheus cache instant data refresh refresh.").Default("1m").DurationVar(&c.prometheus.cacheInstantRefreshInterval)
 
 	return c
 }
@@ -157,8 +159,9 @@ func (c serverCommand) Run(ctx context.Context, config RootConfig) error {
 			}
 
 			repo, err = storageprometheus.NewRepository(ctx, storageprometheus.RepositoryConfig{
-				PrometheusClient: promv1.NewAPI(client),
-				Logger:           logger,
+				PrometheusClient:     promv1.NewAPI(client),
+				CacheRefreshInterval: c.prometheus.cacheInstantRefreshInterval,
+				Logger:               logger,
 			})
 			if err != nil {
 				return fmt.Errorf("could not create prometheus storage repository: %w", err)

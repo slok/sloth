@@ -29,13 +29,26 @@ func mapPaginationToTPL(cursors app.PaginationCursors, baseURL string) tplPagina
 }
 
 func (u ui) handlerSelectService() http.HandlerFunc {
-
 	const (
 		componentServiceList = "service-list"
 	)
 
 	const (
-		queryParamServiceSearch = "service-search"
+		queryParamServiceSearch   = "service-search"
+		queryParamServiceSortMode = "service-sort-mode"
+	)
+
+	var (
+		sortModeServiceNameAsc  = "service-name-asc"
+		sortModeServiceNameDesc = "service-name-desc"
+		sortModeStatusAsc       = "status-asc"
+		sortModeStatusDesc      = "status-desc"
+		sortModeToModel         = map[string]app.ServiceListSortMode{
+			sortModeServiceNameAsc:  app.ServiceListSortModeServiceNameAsc,
+			sortModeServiceNameDesc: app.ServiceListSortModeServiceNameDesc,
+			sortModeStatusAsc:       app.ServiceListSortModeAlertSeverityAsc,
+			sortModeStatusDesc:      app.ServiceListSortModeAlertSeverityDesc,
+		}
 	)
 
 	type tplDataService struct {
@@ -49,6 +62,12 @@ func (u ui) handlerSelectService() http.HandlerFunc {
 		ServicePagination  tplPaginationData
 		ServiceSearchURL   string
 		ServiceSearchInput string
+
+		// Sorting info.
+		SortServiceNameURL   string
+		SortServiceTitleIcon string
+		SortStatusURL        string
+		SortStatusTitleIcon  string
 	}
 
 	mapServiceToTPL := func(s []app.ServiceAlerts) []tplDataService {
@@ -81,26 +100,61 @@ func (u ui) handlerSelectService() http.HandlerFunc {
 		ctx := r.Context()
 		isHTMXCall := htmx.NewRequest(r.Header).IsHTMXRequest()
 		component := urls.ComponentFromRequest(r)
+		data := tplData{}
 
-		data := tplData{
-			ServiceSearchURL: urls.URLWithComponent(urls.AppURL("/services"), componentServiceList),
+		// Get all URL data.
+		sortModeS := r.URL.Query().Get(queryParamServiceSortMode)
+		sortMode, ok := sortModeToModel[sortModeS]
+		if !ok {
+			sortModeS = sortModeServiceNameAsc
+			sortMode = app.ServiceListSortModeServiceNameAsc
 		}
-
 		nextCursor := urls.ForwardCursorFromRequest(r)
 		prevCursor := urls.BackwardCursorFromRequest(r)
 		data.ServiceSearchInput = r.URL.Query().Get(queryParamServiceSearch)
-		currentURL := urls.AppURL("/services")
-		if data.ServiceSearchInput != "" {
-			currentURL = urls.AddQueryParm(currentURL, queryParamServiceSearch, data.ServiceSearchInput)
-		}
-		htmx.NewResponse().WithPushURL(currentURL).SetHeaders(w) // Always push URL with search or no search param.
 
+		// Set current URL data.
+		currentURL := urls.AppURL("/services")
+		currentURL = urls.AddQueryParm(currentURL, queryParamServiceSearch, data.ServiceSearchInput)
+		currentURL = urls.AddQueryParm(currentURL, queryParamServiceSortMode, sortModeS)
+		htmx.NewResponse().WithPushURL(currentURL).SetHeaders(w)
+
+		// Searching required data for logic.
+		data.ServiceSearchURL = urls.RemoveQueryParam(urls.URLWithComponent(currentURL, componentServiceList), queryParamServiceSearch)
+
+		// Sorting required data for logic.
+		{
+			currentURLForSort := urls.RemoveQueryParam(urls.URLWithComponent(currentURL, componentServiceList), queryParamServiceSortMode)
+			nextSortServiceMode := sortModeServiceNameAsc
+			nextSortStatusMode := sortModeStatusDesc // Default to desc to show criticals first.
+			data.SortServiceTitleIcon = iconSortUnset
+			data.SortStatusTitleIcon = iconSortUnset
+			switch sortMode {
+			case app.ServiceListSortModeServiceNameAsc:
+				data.SortServiceTitleIcon = iconSortAsc
+				nextSortServiceMode = sortModeServiceNameDesc
+			case app.ServiceListSortModeServiceNameDesc:
+				data.SortServiceTitleIcon = iconSortDesc
+				nextSortServiceMode = sortModeServiceNameAsc
+			case app.ServiceListSortModeAlertSeverityAsc:
+				data.SortStatusTitleIcon = iconSortAsc
+				nextSortStatusMode = sortModeStatusDesc
+			case app.ServiceListSortModeAlertSeverityDesc:
+				data.SortStatusTitleIcon = iconSortDesc
+				nextSortStatusMode = sortModeStatusAsc
+			}
+			data.SortServiceNameURL = urls.AddQueryParm(currentURLForSort, queryParamServiceSortMode, nextSortServiceMode)
+			data.SortStatusURL = urls.AddQueryParm(currentURLForSort, queryParamServiceSortMode, nextSortStatusMode)
+		}
+
+		// HTML rendering logic.
 		switch {
 		// Snippet service list next.
 		case isHTMXCall && component == componentServiceList && nextCursor != "":
 			resp, err := u.serviceApp.ListServices(ctx, app.ListServicesRequest{
 				FilterSearchInput: data.ServiceSearchInput,
 				Cursor:            nextCursor,
+				SortMode:          sortMode,
 			})
 			if err != nil {
 				u.logger.Errorf("could not list services: %s", err)
@@ -118,6 +172,7 @@ func (u ui) handlerSelectService() http.HandlerFunc {
 			resp, err := u.serviceApp.ListServices(ctx, app.ListServicesRequest{
 				FilterSearchInput: data.ServiceSearchInput,
 				Cursor:            prevCursor,
+				SortMode:          sortMode,
 			})
 			if err != nil {
 				u.logger.Errorf("could not list services: %s", err)
@@ -132,7 +187,10 @@ func (u ui) handlerSelectService() http.HandlerFunc {
 
 		// Snippet service list refresh snippet.
 		case isHTMXCall && component == componentServiceList:
-			resp, err := u.serviceApp.ListServices(ctx, app.ListServicesRequest{FilterSearchInput: data.ServiceSearchInput})
+			resp, err := u.serviceApp.ListServices(ctx, app.ListServicesRequest{
+				FilterSearchInput: data.ServiceSearchInput,
+				SortMode:          sortMode,
+			})
 			if err != nil {
 				u.logger.Errorf("could not list services: %s", err)
 				http.Error(w, "could not list services", http.StatusInternalServerError)
@@ -150,7 +208,10 @@ func (u ui) handlerSelectService() http.HandlerFunc {
 
 		// Full page load.
 		default:
-			resp, err := u.serviceApp.ListServices(ctx, app.ListServicesRequest{FilterSearchInput: data.ServiceSearchInput})
+			resp, err := u.serviceApp.ListServices(ctx, app.ListServicesRequest{
+				FilterSearchInput: data.ServiceSearchInput,
+				SortMode:          sortMode,
+			})
 			if err != nil {
 				u.logger.Errorf("could not list services: %s", err)
 				http.Error(w, "could not list services", http.StatusInternalServerError)

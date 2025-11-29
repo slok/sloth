@@ -25,7 +25,7 @@ func TestHandlerSelectService(t *testing.T) {
 				return httptest.NewRequest(http.MethodGet, "/u/app/services", nil)
 			},
 			mock: func(m mocks) {
-				expReq := app.ListServicesRequest{}
+				expReq := app.ListServicesRequest{SortMode: app.ServiceListSortModeServiceNameAsc}
 				m.ServiceApp.On("ListServices", mock.Anything, expReq).Once().Return(&app.ListServicesResponse{
 					PaginationCursors: app.PaginationCursors{
 						PrevCursor:  "test-prev-cursor",
@@ -61,19 +61,20 @@ func TestHandlerSelectService(t *testing.T) {
 			},
 			expHeaders: http.Header{
 				"Content-Type": {"text/html; charset=utf-8"},
-				"Hx-Push-Url":  {"/u/app/services"},
+				"Hx-Push-Url":  {"/u/app/services?service-search=&service-sort-mode=service-name-asc"},
 			},
 			expCode: 200,
 			expBody: []string{
 				`<!DOCTYPE html>`,               // We rendered a full page.
 				`<div class="container"> <nav>`, // We have the menu.
-				`<input type="search" name="service-search" value="" placeholder="Search" aria-label="Search" hx-get="/u/app/services?component=service-list" hx-trigger="change, keyup changed delay:500ms, search" hx-target="#services-list" hx-include="this" />`, // We have the search bar with HTMX.
-				`<tr> <th scope="col">Service</th> <th scope="col">Status</th> </tr>`,                                                                                                                              // We have the services table.
-				`<td><a href="/u/app/services/test-svc1">test-svc1</a></td> <td> <div class="icon-triangle-alert is-critical"></div>`,                                                                              // Svc1 should be critical.
-				`<td><a href="/u/app/services/test-svc2">test-svc2</a></td> <td> <div class="icon-triangle-alert is-warning"></div>`,                                                                               // Svc2 should be warning.
-				`<td><a href="/u/app/services/test-svc3">test-svc3</a></td> <td> <div class="icon-circle-check is-ok"></div>`,                                                                                      // Svc3 should be ok.
-				`<button class="secondary" hx-get="/u/app/services?component=service-list&forward-cursor=test-next-cursor" hx-target="#services-list" hx-swap="innerHTML show:window:top"> Next >> </button>`,      // We have the pagination prev.
-				`<button class="secondary" hx-get="/u/app/services?component=service-list&backward-cursor=test-prev-cursor" hx-target="#services-list" hx-swap="innerHTML show:window:top"> << Previous </button>`, // We have the pagination next.
+				`<input type="search" name="service-search" value="" placeholder="Search" aria-label="Search" hx-get="/u/app/services?component=service-list&service-sort-mode=service-name-asc" hx-trigger="change, keyup changed delay:500ms, search" hx-target="#services-list" hx-include="this" />`, // We have the search bar with HTMX.
+				`<th scope="col"> <div hx-get="/u/app/services?component=service-list&service-search=&service-sort-mode=service-name-desc" hx-target="#services-list" hx-swap="innerHTML show:window:top"> Service ↑</div> </th>`,                                                                        // We have sortable HTMX Service column.
+				`<th scope="col"> <div hx-get="/u/app/services?component=service-list&service-search=&service-sort-mode=status-desc" hx-target="#services-list" hx-swap="innerHTML show:window:top"> Status ⇅</div> </th>`,                                                                               // We have sortable HTMX status column.
+				`<td><a href="/u/app/services/test-svc1">test-svc1</a></td> <td> <div class="icon-triangle-alert is-critical"></div>`,                                                                                                                                                                    // Svc1 should be critical.
+				`<td><a href="/u/app/services/test-svc2">test-svc2</a></td> <td> <div class="icon-triangle-alert is-warning"></div>`,                                                                                                                                                                     // Svc2 should be warning.
+				`<td><a href="/u/app/services/test-svc3">test-svc3</a></td> <td> <div class="icon-circle-check is-ok"></div>`,                                                                                                                                                                            // Svc3 should be ok.
+				`<button class="secondary" hx-get="/u/app/services?service-search=&service-sort-mode=service-name-asc&component=service-list&forward-cursor=test-next-cursor" hx-target="#services-list" hx-swap="innerHTML show:window:top"> Next >> </button>`,                                         // We have the pagination prev.
+				`<button class="secondary" hx-get="/u/app/services?service-search=&service-sort-mode=service-name-asc&component=service-list&backward-cursor=test-prev-cursor" hx-target="#services-list" hx-swap="innerHTML show:window:top"> << Previous </button>`,                                    // We have the pagination next.
 			},
 		},
 
@@ -82,12 +83,12 @@ func TestHandlerSelectService(t *testing.T) {
 				return httptest.NewRequest(http.MethodGet, "/u/app/services", nil)
 			},
 			mock: func(m mocks) {
-				expReq := app.ListServicesRequest{}
+				expReq := app.ListServicesRequest{SortMode: app.ServiceListSortModeServiceNameAsc}
 				m.ServiceApp.On("ListServices", mock.Anything, expReq).Once().Return(&app.ListServicesResponse{}, nil)
 			},
 			expHeaders: http.Header{
 				"Content-Type": {"text/html; charset=utf-8"},
-				"Hx-Push-Url":  {"/u/app/services"},
+				"Hx-Push-Url":  {"/u/app/services?service-search=&service-sort-mode=service-name-asc"},
 			},
 			expCode: 200,
 			expBody: []string{
@@ -105,6 +106,7 @@ func TestHandlerSelectService(t *testing.T) {
 				expReq := app.ListServicesRequest{
 					Cursor:            "eyJzaXplIjozMCwicGFnZSI6Mn0=",
 					FilterSearchInput: "test",
+					SortMode:          app.ServiceListSortModeServiceNameAsc,
 				}
 				m.ServiceApp.On("ListServices", mock.Anything, expReq).Once().Return(&app.ListServicesResponse{
 					PaginationCursors: app.PaginationCursors{
@@ -124,13 +126,13 @@ func TestHandlerSelectService(t *testing.T) {
 			},
 			expHeaders: http.Header{
 				"Content-Type": {"text/html; charset=utf-8"},
-				"Hx-Push-Url":  {"/u/app/services?service-search=test"},
+				"Hx-Push-Url":  {"/u/app/services?service-search=test&service-sort-mode=service-name-asc"},
 			},
 			expCode: 200,
 			expBody: []string{
-				`<td><a href="/u/app/services/test-svc1">test-svc1</a></td> <td> <div class="icon-triangle-alert is-critical"></div>`,                                                                                                  // Svc1 should be critical.
-				`<button class="secondary" hx-get="/u/app/services?service-search=test&component=service-list&backward-cursor=test-prev-cursor" hx-target="#services-list" hx-swap="innerHTML show:window:top"> << Previous </button>`, // We have the pagination prev.
-				`<button class="secondary"  disabled hx-get="" hx-target="#services-list" hx-swap="innerHTML show:window:top"> Next >> </button>`,                                                                                      // We have the pagination next.
+				`<td><a href="/u/app/services/test-svc1">test-svc1</a></td> <td> <div class="icon-triangle-alert is-critical"></div>`,                                                                                                                                     // Svc1 should be critical.
+				`<button class="secondary" hx-get="/u/app/services?service-search=test&service-sort-mode=service-name-asc&component=service-list&backward-cursor=test-prev-cursor" hx-target="#services-list" hx-swap="innerHTML show:window:top"> << Previous </button>`, // We have the pagination prev.
+				`<button class="secondary"  disabled hx-get="" hx-target="#services-list" hx-swap="innerHTML show:window:top"> Next >> </button>`,                                                                                                                         // We have the pagination next.
 			},
 		},
 
@@ -142,7 +144,8 @@ func TestHandlerSelectService(t *testing.T) {
 			},
 			mock: func(m mocks) {
 				expReq := app.ListServicesRequest{
-					Cursor: "eyJzaXplIjozMCwicGFnZSI6MX0=",
+					Cursor:   "eyJzaXplIjozMCwicGFnZSI6MX0=",
+					SortMode: app.ServiceListSortModeServiceNameAsc,
 				}
 				m.ServiceApp.On("ListServices", mock.Anything, expReq).Once().Return(&app.ListServicesResponse{
 					PaginationCursors: app.PaginationCursors{
@@ -162,13 +165,13 @@ func TestHandlerSelectService(t *testing.T) {
 			},
 			expHeaders: http.Header{
 				"Content-Type": {"text/html; charset=utf-8"},
-				"Hx-Push-Url":  {"/u/app/services"},
+				"Hx-Push-Url":  {"/u/app/services?service-search=&service-sort-mode=service-name-asc"},
 			},
 			expCode: 200,
 			expBody: []string{
-				`<td><a href="/u/app/services/test-svc1">test-svc1</a></td> <td> <div class="icon-triangle-alert is-critical"></div>`,                                                                         // Svc1 should be critical.
-				`<button class="secondary"  disabled hx-get="" hx-target="#services-list" hx-swap="innerHTML show:window:top"> << Previous </button>`,                                                         // We have the pagination prev.
-				`<button class="secondary" hx-get="/u/app/services?component=service-list&forward-cursor=test-next-cursor" hx-target="#services-list" hx-swap="innerHTML show:window:top"> Next >> </button>`, // We have the pagination next.
+				`<td><a href="/u/app/services/test-svc1">test-svc1</a></td> <td> <div class="icon-triangle-alert is-critical"></div>`,                                                                                                                            // Svc1 should be critical.
+				`<button class="secondary"  disabled hx-get="" hx-target="#services-list" hx-swap="innerHTML show:window:top"> << Previous </button>`,                                                                                                            // We have the pagination prev.
+				`<button class="secondary" hx-get="/u/app/services?service-search=&service-sort-mode=service-name-asc&component=service-list&forward-cursor=test-next-cursor" hx-target="#services-list" hx-swap="innerHTML show:window:top"> Next >> </button>`, // We have the pagination next.
 			},
 		},
 
@@ -181,6 +184,7 @@ func TestHandlerSelectService(t *testing.T) {
 			mock: func(m mocks) {
 				expReq := app.ListServicesRequest{
 					FilterSearchInput: "test",
+					SortMode:          app.ServiceListSortModeServiceNameAsc,
 				}
 				m.ServiceApp.On("ListServices", mock.Anything, expReq).Once().Return(&app.ListServicesResponse{
 					PaginationCursors: app.PaginationCursors{
@@ -202,13 +206,98 @@ func TestHandlerSelectService(t *testing.T) {
 			},
 			expHeaders: http.Header{
 				"Content-Type": {"text/html; charset=utf-8"},
-				"Hx-Push-Url":  {"/u/app/services?service-search=test"},
+				"Hx-Push-Url":  {"/u/app/services?service-search=test&service-sort-mode=service-name-asc"},
 			},
 			expCode: 200,
 			expBody: []string{
-				`<td><a href="/u/app/services/test-svc1">test-svc1</a></td> <td> <div class="icon-triangle-alert is-critical"></div>`,                                                                                                  // Svc1 should be critical.
-				`<button class="secondary" hx-get="/u/app/services?service-search=test&component=service-list&backward-cursor=test-prev-cursor" hx-target="#services-list" hx-swap="innerHTML show:window:top"> << Previous </button>`, // We have the pagination prev.
-				`<button class="secondary" hx-get="/u/app/services?service-search=test&component=service-list&forward-cursor=test-next-cursor" hx-target="#services-list" hx-swap="innerHTML show:window:top"> Next >> </button>`,      // We have the pagination next.
+				`<td><a href="/u/app/services/test-svc1">test-svc1</a></td> <td> <div class="icon-triangle-alert is-critical"></div>`,                                                                                                                                     // Svc1 should be critical.
+				`<button class="secondary" hx-get="/u/app/services?service-search=test&service-sort-mode=service-name-asc&component=service-list&backward-cursor=test-prev-cursor" hx-target="#services-list" hx-swap="innerHTML show:window:top"> << Previous </button>`, // We have the pagination prev.
+				`<button class="secondary" hx-get="/u/app/services?service-search=test&service-sort-mode=service-name-asc&component=service-list&forward-cursor=test-next-cursor" hx-target="#services-list" hx-swap="innerHTML show:window:top"> Next >> </button>`,      // We have the pagination next.
+			},
+		},
+
+		"Sorting the services by service name with HTMX should render the snippet.": {
+			request: func() *http.Request {
+				r := httptest.NewRequest(http.MethodGet, "/u/app/services?component=service-list&service-sort-mode=service-name-desc&service-search=test", nil)
+				r.Header.Add("HX-Request", "true")
+				return r
+			},
+			mock: func(m mocks) {
+				expReq := app.ListServicesRequest{
+					FilterSearchInput: "test",
+					SortMode:          app.ServiceListSortModeServiceNameDesc,
+				}
+				m.ServiceApp.On("ListServices", mock.Anything, expReq).Once().Return(&app.ListServicesResponse{
+					PaginationCursors: app.PaginationCursors{
+						PrevCursor:  "test-prev-cursor",
+						NextCursor:  "test-next-cursor",
+						HasNext:     true,
+						HasPrevious: true,
+					},
+					Services: []app.ServiceAlerts{
+						{
+							Service: model.Service{ID: "test-svc1"},
+							Alerts: []model.SLOAlerts{
+								{
+									FiringPage: &model.Alert{Name: "page-1"},
+								},
+							},
+						},
+					}}, nil)
+			},
+			expHeaders: http.Header{
+				"Content-Type": {"text/html; charset=utf-8"},
+				"Hx-Push-Url":  {"/u/app/services?service-search=test&service-sort-mode=service-name-desc"},
+			},
+			expCode: 200,
+			expBody: []string{
+				`<th scope="col"> <div hx-get="/u/app/services?component=service-list&service-search=test&service-sort-mode=service-name-asc" hx-target="#services-list" hx-swap="innerHTML show:window:top"> Service ↓</div> </th>`,                                       //We have service name sorting column.
+				`<th scope="col"> <div hx-get="/u/app/services?component=service-list&service-search=test&service-sort-mode=status-desc" hx-target="#services-list" hx-swap="innerHTML show:window:top"> Status ⇅</div> </th>`,                                             //We have status sorting column.
+				`<td><a href="/u/app/services/test-svc1">test-svc1</a></td> <td> <div class="icon-triangle-alert is-critical"></div>`,                                                                                                                                      // Svc1 should be critical.
+				`<button class="secondary" hx-get="/u/app/services?service-search=test&service-sort-mode=service-name-desc&component=service-list&backward-cursor=test-prev-cursor" hx-target="#services-list" hx-swap="innerHTML show:window:top"> << Previous </button>`, // We have the pagination prev.
+				`<button class="secondary" hx-get="/u/app/services?service-search=test&service-sort-mode=service-name-desc&component=service-list&forward-cursor=test-next-cursor" hx-target="#services-list" hx-swap="innerHTML show:window:top"> Next >> </button>`,      // We have the pagination next.
+			},
+		},
+
+		"Sorting the services by status with HTMX should render the snippet.": {
+			request: func() *http.Request {
+				r := httptest.NewRequest(http.MethodGet, "/u/app/services?component=service-list&service-sort-mode=status-asc", nil)
+				r.Header.Add("HX-Request", "true")
+				return r
+			},
+			mock: func(m mocks) {
+				expReq := app.ListServicesRequest{
+					SortMode: app.ServiceListSortModeAlertSeverityAsc,
+				}
+				m.ServiceApp.On("ListServices", mock.Anything, expReq).Once().Return(&app.ListServicesResponse{
+					PaginationCursors: app.PaginationCursors{
+						PrevCursor:  "test-prev-cursor",
+						NextCursor:  "test-next-cursor",
+						HasNext:     true,
+						HasPrevious: true,
+					},
+					Services: []app.ServiceAlerts{
+						{
+							Service: model.Service{ID: "test-svc1"},
+							Alerts: []model.SLOAlerts{
+								{
+									FiringPage: &model.Alert{Name: "page-1"},
+								},
+							},
+						},
+					}}, nil)
+			},
+			expHeaders: http.Header{
+				"Content-Type": {"text/html; charset=utf-8"},
+				"Hx-Push-Url":  {"/u/app/services?service-search=&service-sort-mode=status-asc"},
+			},
+			expCode: 200,
+			expBody: []string{
+				`<th scope="col"> <div hx-get="/u/app/services?component=service-list&service-search=&service-sort-mode=service-name-asc" hx-target="#services-list" hx-swap="innerHTML show:window:top"> Service ⇅</div> </th>`,                                //We have service name sorting column.
+				`<th scope="col"> <div hx-get="/u/app/services?component=service-list&service-search=&service-sort-mode=status-desc" hx-target="#services-list" hx-swap="innerHTML show:window:top"> Status ↑</div> </th>`,                                      //We have status sorting column.
+				`<td><a href="/u/app/services/test-svc1">test-svc1</a></td> <td> <div class="icon-triangle-alert is-critical"></div>`,                                                                                                                           // Svc1 should be critical.
+				`<button class="secondary" hx-get="/u/app/services?service-search=&service-sort-mode=status-asc&component=service-list&backward-cursor=test-prev-cursor" hx-target="#services-list" hx-swap="innerHTML show:window:top"> << Previous </button>`, // We have the pagination prev.
+				`<button class="secondary" hx-get="/u/app/services?service-search=&service-sort-mode=status-asc&component=service-list&forward-cursor=test-next-cursor" hx-target="#services-list" hx-swap="innerHTML show:window:top"> Next >> </button>`,      // We have the pagination next.
 			},
 		},
 
@@ -222,7 +311,7 @@ func TestHandlerSelectService(t *testing.T) {
 			expHeaders: http.Header{
 				"Content-Type":           {"text/plain; charset=utf-8"},
 				"X-Content-Type-Options": {"nosniff"},
-				"Hx-Push-Url":            {"/u/app/services"},
+				"Hx-Push-Url":            {"/u/app/services?service-search=&service-sort-mode=service-name-asc"},
 			},
 			expCode: 400,
 		},

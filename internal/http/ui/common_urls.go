@@ -3,6 +3,7 @@ package ui
 import (
 	"fmt"
 	"net/http"
+	"net/url"
 	"strings"
 
 	"github.com/slok/sloth/internal/http/ui/htmx"
@@ -86,4 +87,16 @@ func (u urlManager) AddQueryParm(url, key, value string) string {
 	}
 
 	return url + fmt.Sprintf(queryParamFmt, key, value)
+}
+
+func (u urlManager) RemoveQueryParam(uri, key string) string {
+	urlParsed, err := url.Parse(uri)
+	if err != nil {
+		return uri
+	}
+
+	q := urlParsed.Query()
+	q.Del(key)
+	urlParsed.RawQuery = q.Encode()
+	return urlParsed.String()
 }

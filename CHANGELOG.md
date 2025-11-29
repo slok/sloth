@@ -14,10 +14,12 @@
 - UI: SLO details with stats, alerts state, SLI chart and budged burn in period chart.
 - UI: Support SLO grouped by labels.
 - UI: Redirect unmarshaled ID of grouped SLO labels to proper SLO ID.
+- UI: Support service list sort by name and alert status.
 
 ### Changed
 
 - Sloth now uses a dynamic `unstructured` plugin (`sloth.dev/k8stransform/prom-operator-prometheus-rule/v1`) to create and manage the prometheus operator Rule K8s CRs.
+- BREAKING: Plugin loader will ignore directories starting with `..`.
 
 ## [v0.15.0] - 2025-10-31
 

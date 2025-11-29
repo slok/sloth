@@ -2,25 +2,17 @@ package ui
 
 // Check: https://github.com/leeoniya/uPlot/tree/master/docs.
 type uPlotSLIChart struct {
-	Title          string     `json:"title"`
-	ColorSLI       string     `json:"color_sli"`
-	ColorObjective string     `json:"color_objective"`
-	Width          int        `json:"width"`
-	Height         int        `json:"height"`
-	TSs            []int      `json:"timestamps"`
-	SLIs           []*float64 `json:"sli_values"`
-	SLOObjective   float64    `json:"slo_objective"`
+	Title        string     `json:"title"`
+	Width        int        `json:"width"`
+	Height       int        `json:"height"`
+	TSs          []int      `json:"timestamps"`
+	SLIs         []*float64 `json:"sli_values"`
+	SLOObjective float64    `json:"slo_objective"`
 }
 
 func (u *uPlotSLIChart) defaults() error {
 	if u.Title == "" {
 		u.Title = "SLI over time"
-	}
-	if u.ColorSLI == "" {
-		u.ColorSLI = "#017FC0"
-	}
-	if u.ColorObjective == "" {
-		u.ColorObjective = "#d63031"
 	}
 
 	if u.Height == 0 {
@@ -32,8 +24,7 @@ func (u *uPlotSLIChart) defaults() error {
 // Check: https://github.com/leeoniya/uPlot/tree/master/docs.
 type uPlotBudgetBurnChart struct {
 	Title         string     `json:"title"`
-	ColorReal     string     `json:"color_real"`
-	ColorPerfect  string     `json:"color_perfect"`
+	ColorLineOk   bool       `json:"color_line_ok"`
 	Width         int        `json:"width"`
 	Height        int        `json:"height"`
 	TSs           []int      `json:"timestamps"`
@@ -44,12 +35,6 @@ type uPlotBudgetBurnChart struct {
 func (u *uPlotBudgetBurnChart) defaults() error {
 	if u.Title == "" {
 		u.Title = "Budget Burn"
-	}
-	if u.ColorReal == "" {
-		u.ColorReal = "#017FC0"
-	}
-	if u.ColorPerfect == "" {
-		u.ColorPerfect = "#d63031"
 	}
 
 	if u.Height == 0 {

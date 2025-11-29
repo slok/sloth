@@ -155,15 +155,15 @@ func TestHandlerSLODetails(t *testing.T) {
 
 				// SLI chart.
 				`<article id="sli-chart-section">`, // SLI chart section.
-				`<select name="sli-range" hx-get="/u/app/slos/slo-1?component=sli-chart" hx-target="#sli-chart-section" hx-swap="outerHTML" hx-include="[name='sli-range']" >`,                                                                                                                                                                                // HTMX selection on time range.
-				`<option selected>1h</option> <option >3h</option> <option >24h</option> <option >72h</option> <option >7d</option> <option >15d</option> <option >30d</option> </select>`,                                                                                                                                                                    // We have all options.
-				`<script> (function() { const chartData = JSON.parse('{"title":"SLI over time","color_sli":"#017FC0","color_objective":"#d63031","width":0,"height":400,"timestamps":[1763172123,1763175723,1763179323,1763182923],"sli_values":[99.99,99.95,null,100],"slo_objective":99.9}'); renderUplotSLIChart('sli-chart', chartData); })(); </script>`, // We have the chart data for the JSON code.
+				`<select name="sli-range" hx-get="/u/app/slos/slo-1?component=sli-chart" hx-target="#sli-chart-section" hx-swap="outerHTML" hx-include="[name='sli-range']" >`,                                                                                                                              // HTMX selection on time range.
+				`<option selected>1h</option> <option >3h</option> <option >24h</option> <option >72h</option> <option >7d</option> <option >15d</option> <option >30d</option> </select>`,                                                                                                                  // We have all options.
+				`<script> (function() { const chartData = JSON.parse('{"title":"SLI over time","width":0,"height":400,"timestamps":[1763172123,1763175723,1763179323,1763182923],"sli_values":[99.99,99.95,null,100],"slo_objective":99.9}'); renderUplotSLIChart('sli-chart', chartData); })(); </script>`, // We have the chart data for the JSON code.
 
 				// Burned budget chart.
 				`<article id="budget-chart-section">`, // Burned budget chart section.
-				`<select name="budget-range" hx-get="/u/app/slos/slo-1?component=budget-chart" hx-target="#budget-chart-section" hx-swap="outerHTML" hx-include="[name='budget-range']" >`,                                                                                                                                                                                  // HTMX selection on burned range.
-				`<option >Weekly</option> <option selected>Monthly</option> <option >Quarterly</option> <option >Yearly</option> </select>`,                                                                                                                                                                                                                                 // We have all the options.
-				`<script> (function() { const chartData = JSON.parse('{"title":"Budget Burn","color_real":"#017FC0","color_perfect":"#d63031","width":0,"height":400,"timestamps":[1763172123,1763175723,1763182923],"real_burned_values":[99.99,98.1,90.42],"perfect_burned_values":[99,98,97]}'); renderUPlotBudgetBurnChart('budget-chart', chartData); })(); </script>`, // We have the chart data for the JSON code.
+				`<select name="budget-range" hx-get="/u/app/slos/slo-1?component=budget-chart" hx-target="#budget-chart-section" hx-swap="outerHTML" hx-include="[name='budget-range']" >`,                                                                                                                                                      // HTMX selection on burned range.
+				`<option >Weekly</option> <option selected>Monthly</option> <option >Quarterly</option> <option >Yearly</option> </select>`,                                                                                                                                                                                                     // We have all the options.
+				`<script> (function() { const chartData = JSON.parse('{"title":"Budget Burn","color_line_ok":true,"width":0,"height":400,"timestamps":[1763172123,1763175723,1763182923],"real_burned_values":[99.99,98.1,90.42],"perfect_burned_values":[99,98,97]}'); renderUPlotBudgetBurnChart('budget-chart', chartData); })(); </script>`, // We have the chart data for the JSON code.
 			},
 		},
 
@@ -261,9 +261,9 @@ func TestHandlerSLODetails(t *testing.T) {
 			expBody: []string{
 				// SLI chart.
 				`<article id="sli-chart-section">`, // SLI chart section.
-				`<select name="sli-range" hx-get="/u/app/slos/slo-1?component=sli-chart" hx-target="#sli-chart-section" hx-swap="outerHTML" hx-include="[name='sli-range']" >`,                                                                                                                                                                                // HTMX selection on time range.
-				`<option >1h</option> <option >3h</option> <option >24h</option> <option >72h</option> <option selected>7d</option> <option >15d</option> <option >30d</option> </select>`,                                                                                                                                                                    // We have all options.
-				`<script> (function() { const chartData = JSON.parse('{"title":"SLI over time","color_sli":"#017FC0","color_objective":"#d63031","width":0,"height":400,"timestamps":[1763172123,1763175723,1763179323,1763182923],"sli_values":[99.99,99.95,null,100],"slo_objective":99.9}'); renderUplotSLIChart('sli-chart', chartData); })(); </script>`, // We have the chart data for the JSON code.
+				`<select name="sli-range" hx-get="/u/app/slos/slo-1?component=sli-chart" hx-target="#sli-chart-section" hx-swap="outerHTML" hx-include="[name='sli-range']" >`,                                                                                                                              // HTMX selection on time range.
+				`<option >1h</option> <option >3h</option> <option >24h</option> <option >72h</option> <option selected>7d</option> <option >15d</option> <option >30d</option> </select>`,                                                                                                                  // We have all options.
+				`<script> (function() { const chartData = JSON.parse('{"title":"SLI over time","width":0,"height":400,"timestamps":[1763172123,1763175723,1763179323,1763182923],"sli_values":[99.99,99.95,null,100],"slo_objective":99.9}'); renderUplotSLIChart('sli-chart', chartData); })(); </script>`, // We have the chart data for the JSON code.
 			},
 		},
 
@@ -299,9 +299,9 @@ func TestHandlerSLODetails(t *testing.T) {
 			expBody: []string{
 				// Burned budget chart.
 				`<article id="budget-chart-section">`, // Burned budget chart section.
-				`<select name="budget-range" hx-get="/u/app/slos/slo-1?component=budget-chart" hx-target="#budget-chart-section" hx-swap="outerHTML" hx-include="[name='budget-range']" >`,                                                                                                                                                                                  // HTMX selection on burned range.
-				`<option >Weekly</option> <option >Monthly</option> <option >Quarterly</option> <option selected>Yearly</option> </select>`,                                                                                                                                                                                                                                 // We have all the options.
-				`<script> (function() { const chartData = JSON.parse('{"title":"Budget Burn","color_real":"#017FC0","color_perfect":"#d63031","width":0,"height":400,"timestamps":[1763172123,1763175723,1763182923],"real_burned_values":[99.99,98.1,90.42],"perfect_burned_values":[99,98,97]}'); renderUPlotBudgetBurnChart('budget-chart', chartData); })(); </script>`, // We have the chart data for the JSON code.
+				`<select name="budget-range" hx-get="/u/app/slos/slo-1?component=budget-chart" hx-target="#budget-chart-section" hx-swap="outerHTML" hx-include="[name='budget-range']" >`,                                                                                                                                                      // HTMX selection on burned range.
+				`<option >Weekly</option> <option >Monthly</option> <option >Quarterly</option> <option selected>Yearly</option> </select>`,                                                                                                                                                                                                     // We have all the options.
+				`<script> (function() { const chartData = JSON.parse('{"title":"Budget Burn","color_line_ok":true,"width":0,"height":400,"timestamps":[1763172123,1763175723,1763182923],"real_burned_values":[99.99,98.1,90.42],"perfect_burned_values":[99,98,97]}'); renderUPlotBudgetBurnChart('budget-chart', chartData); })(); </script>`, // We have the chart data for the JSON code.
 			},
 		},
 

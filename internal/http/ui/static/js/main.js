@@ -19,6 +19,14 @@ function isColorThemeLight() {
     return true; // Default to light.
 }
 
+// CSS utils.
+function getCSSVariableValue(cssVar) {
+    // Sanitize variable name.
+    if (cssVar.startsWith("--")) {
+        cssVar = cssVar.trimStart("--");
+    }
+    return getComputedStyle(document.documentElement).getPropertyValue(cssVar).trim();
+}
 
 // --------- PLOTS ---------.
 
@@ -26,6 +34,8 @@ function renderUplotSLIChart(domElID, json) {
     const container = document.getElementById(domElID);
     const sloLine = Array(json.timestamps.length).fill(json.slo_objective);
     const light = isColorThemeLight();
+    sliColor = getCSSVariableValue("--sloth-neutral");
+    objectiveColor = getCSSVariableValue("--sloth-critical");
 
     // If width is 0, set it to container width.
     if (json.width === 0) {
@@ -50,16 +60,16 @@ function renderUplotSLIChart(domElID, json) {
             {},
             {
                 label: "SLI",
-                stroke: json.color_sli,
+                stroke: sliColor,
                 width: 2,
                 points: { show: false },
                 lineInterpolation: 3,
-                fill: json.color_sli + "1A",
+                fill: sliColor + "1A",
                 value: (u, v) => v == null ? "-" : v.toFixed(2) + "%",
             },
             {
                 label: `Objective`,
-                stroke: json.color_objective,
+                stroke: objectiveColor,
                 width: 1,
                 dash: [10, 5],
                 points: { show: false },
@@ -75,6 +85,11 @@ function renderUplotSLIChart(domElID, json) {
 function renderUPlotBudgetBurnChart(domElID, json) {
     const container = document.getElementById(domElID);
     const light = isColorThemeLight();
+    let realBurnColor = getCSSVariableValue("--sloth-ok");
+    const perfectBurnColor = getCSSVariableValue("--sloth-neutral");
+    if (!json.color_line_ok) {
+        realBurnColor = getCSSVariableValue("--sloth-critical");
+    }
 
     // If width is 0, set it to container width.
     if (json.width === 0) {
@@ -100,16 +115,16 @@ function renderUPlotBudgetBurnChart(domElID, json) {
             {},
             {
                 label: "Budget Burn",
-                stroke: json.color_real,
+                stroke: realBurnColor,
                 width: 2,
                 points: { show: false },
                 lineInterpolation: 3,
-                fill: json.color_real + "1A",
+                fill: rgbColorWithAlpha(realBurnColor, 0.1),
                 value: (u, v) => v == null ? "-" : v.toFixed(2) + "%",
             },
             {
                 label: `Perfect Budget Burn`,
-                stroke: json.color_perfect,
+                stroke: perfectBurnColor,
                 width: 1,
                 dash: [10, 5],
                 points: { show: false },
@@ -182,4 +197,12 @@ function yAxisPercentageUPlotConfig(light) {
         values: (u, vals) => vals.map(v => v.toFixed(2) + '%'),
         size: 90,
     };
+}
+
+function rgbColorWithAlpha(c, alpha) {
+    if(c.indexOf('a') == -1){
+        return c.replace(')', `, ${alpha})`).replace('rgb', 'rgba');
+    }
+    
+    return c;
 }

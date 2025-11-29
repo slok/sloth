@@ -17,15 +17,46 @@
     font-weight: bold;
 }
 
+
+/* Light color scheme (Default) */
+/* Can be forced with data-theme="light" */
+[data-theme="light"],
+:root:not([data-theme="dark"]) {
+    --sloth-neutral: var(--pico-primary);
+    --sloth-ok: var(--pico-ins-color);
+    --sloth-warning: #ff9500;
+    --sloth-critical: var(--pico-del-color);
+}
+
+/* Dark color scheme (Auto) */
+/* Automatically enabled if user has Dark mode enabled */
+@media only screen and (prefers-color-scheme: dark) {
+    :root:not([data-theme]) {
+        --sloth-neutral: var(--pico-primary);
+        --sloth-ok: var(--pico-ins-color);
+        --sloth-warning: #ff9500;
+        --sloth-critical: var(--pico-del-color);
+    }
+}
+
+/* Dark color scheme (Forced) */
+/* Enabled if forced with data-theme="dark" */
+[data-theme="dark"] {
+    --sloth-neutral: var(--pico-primary);
+    --sloth-ok: var(--pico-ins-color);
+    --sloth-warning: #ff9500;
+    --sloth-critical: var(--pico-del-color);
+}
+
 .is-ok {
-    color: #45a861;
+    color: var(--sloth-ok);
 }
 
 .is-warning {
-    color: #FF9500;
+    color: var(--sloth-warning);
 }
 
 .is-critical {
-    color: #d43e30;
+    color: var(--sloth-critical);
 }
 

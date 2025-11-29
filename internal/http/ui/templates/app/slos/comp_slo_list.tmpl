@@ -8,11 +8,37 @@
     <table>
     <thead>
         <tr>
-        <th scope="col">SLO</th>
-        <th scope="col">Service</th>
-        <th scope="col">Burning budget</th>
-        <th scope="col">Remaining budget (Window)</th>
-        <th scope="col">Alerts</th>
+        <th scope="col">
+            <div
+                hx-get="{{ .Data.SortSLONameURL }}"
+                hx-target="#slo-list"
+                hx-swap="innerHTML show:window:top">
+            SLO {{.Data.SortSLONameTitleIcon}}</div>
+        </th>
+        <th scope="col">
+            <div
+                hx-get="{{ .Data.SortSLOServiceNameURL }}"
+                hx-target="#slo-list"
+                hx-swap="innerHTML show:window:top">
+            Service {{.Data.SortSLOServiceNameTitleIcon}}</th>
+        <th scope="col">
+            <div
+                hx-get="{{ .Data.SortSLOCurrentlyBurningURL }}"
+                hx-target="#slo-list"
+                hx-swap="innerHTML show:window:top">
+            Burning budget {{.Data.SortSLOCurrentlyBurningTitleIcon}}</th>
+        <th scope="col">
+            <div
+                hx-get="{{ .Data.SortSLOBudgetRemainingWindowPeriodURL }}"
+                hx-target="#slo-list"
+                hx-swap="innerHTML show:window:top">
+            Remaining budget (Window) {{.Data.SortSLOBudgetRemainingWindowPeriodTitleIcon}}</th>
+        <th scope="col">
+            <div
+                hx-get="{{ .Data.SortSLOAlertSeverityURL }}"
+                hx-target="#slo-list"
+                hx-swap="innerHTML show:window:top">
+            Alerts {{.Data.SortSLOAlertSeverityTitleIcon}}</th>
         </tr>
     </thead>
     <tbody>

@@ -14,7 +14,33 @@ func (u ui) handlerSelectSLO() http.HandlerFunc {
 	)
 
 	const (
-		queryParamSLOSearch = "slo-search"
+		queryParamSLOSearch   = "slo-search"
+		queryParamSLOSortMode = "slo-sort-mode"
+	)
+
+	var (
+		sortModeSLONameAsc                         = "slo-name-asc"
+		sortModeSLONameDesc                        = "slo-name-desc"
+		sortModeSLOServiceNameAsc                  = "slo-service-name-asc"
+		sortModeSLOServiceNameDesc                 = "slo-service-name-desc"
+		sortModeSLOCurrentlyBurningAsc             = "slo-currently-burning-asc"
+		sortModeSLOCurrentlyBurningDesc            = "slo-currently-burning-desc"
+		sortModeSLOBudgetRemainingWindowPeriodAsc  = "slo-budget-remaining-window-period-asc"
+		sortModeSLOBudgetRemainingWindowPeriodDesc = "slo-budget-remaining-window-period-desc"
+		sortModeSLOAlertSeverityAsc                = "slo-alert-severity-asc"
+		sortModeSLOAlertSeverityDesc               = "slo-alert-severity-desc"
+		sortModeToModel                            = map[string]app.SLOListSortMode{
+			sortModeSLONameAsc:                         app.SLOListSortModeSLOIDAsc,
+			sortModeSLONameDesc:                        app.SLOListSortModeSLOIDDesc,
+			sortModeSLOServiceNameAsc:                  app.SLOListSortModeServiceNameAsc,
+			sortModeSLOServiceNameDesc:                 app.SLOListSortModeServiceNameDesc,
+			sortModeSLOCurrentlyBurningAsc:             app.SLOListSortModeCurrentBurningBudgetAsc,
+			sortModeSLOCurrentlyBurningDesc:            app.SLOListSortModeCurrentBurningBudgetDesc,
+			sortModeSLOBudgetRemainingWindowPeriodAsc:  app.SLOListSortModeBudgetBurnedWindowPeriodDesc, // Inverted as model has burned not remaining.
+			sortModeSLOBudgetRemainingWindowPeriodDesc: app.SLOListSortModeBudgetBurnedWindowPeriodAsc,
+			sortModeSLOAlertSeverityAsc:                app.SLOListSortModeAlertSeverityAsc,
+			sortModeSLOAlertSeverityDesc:               app.SLOListSortModeAlertSeverityDesc,
+		}
 	)
 
 	type tplDataSLO struct {
@@ -34,6 +60,18 @@ func (u ui) handlerSelectSLO() http.HandlerFunc {
 		SLOPagination  tplPaginationData
 		SLOSearchURL   string
 		SLOSearchInput string
+
+		// Sorting info.
+		SortSLONameURL                              string
+		SortSLONameTitleIcon                        string
+		SortSLOServiceNameURL                       string
+		SortSLOServiceNameTitleIcon                 string
+		SortSLOCurrentlyBurningURL                  string
+		SortSLOCurrentlyBurningTitleIcon            string
+		SortSLOBudgetRemainingWindowPeriodURL       string
+		SortSLOBudgetRemainingWindowPeriodTitleIcon string
+		SortSLOAlertSeverityURL                     string
+		SortSLOAlertSeverityTitleIcon               string
 	}
 
 	mapSLOsToTPL := func(s []app.RealTimeSLODetails) []tplDataSLO {
@@ -66,19 +104,79 @@ func (u ui) handlerSelectSLO() http.HandlerFunc {
 		ctx := r.Context()
 		isHTMXCall := htmx.NewRequest(r.Header).IsHTMXRequest()
 		component := urls.ComponentFromRequest(r)
+		data := tplData{}
 
-		data := tplData{
-			SLOSearchURL: urls.URLWithComponent(urls.AppURL("/slos"), componentSLOList),
+		// Get all URL data.
+		sortModeS := r.URL.Query().Get(queryParamSLOSortMode)
+		sortMode, ok := sortModeToModel[sortModeS]
+		if !ok {
+			sortModeS = sortModeSLONameAsc
+			sortMode = sortModeToModel[sortModeS]
 		}
-
 		nextCursor := urls.ForwardCursorFromRequest(r)
 		prevCursor := urls.BackwardCursorFromRequest(r)
 		data.SLOSearchInput = r.URL.Query().Get(queryParamSLOSearch)
+
 		currentURL := urls.AppURL("/slos")
-		if data.SLOSearchInput != "" {
-			currentURL = urls.AddQueryParm(currentURL, queryParamSLOSearch, data.SLOSearchInput)
-		}
+		currentURL = urls.AddQueryParm(currentURL, queryParamSLOSearch, data.SLOSearchInput)
+		currentURL = urls.AddQueryParm(currentURL, queryParamSLOSortMode, sortModeS)
 		htmx.NewResponse().WithPushURL(currentURL).SetHeaders(w) // Always push URL with search or no search param.
+
+		// Searching required data for logic.
+		data.SLOSearchURL = urls.RemoveQueryParam(urls.URLWithComponent(currentURL, componentSLOList), queryParamSLOSearch)
+
+		// Sorting required data for logic.
+		{
+			currentURLForSort := urls.RemoveQueryParam(urls.URLWithComponent(currentURL, componentSLOList), queryParamSLOSortMode)
+			nextSortSLONameMode := sortModeSLONameAsc
+			nextSortSLOServiceNameMode := sortModeSLOServiceNameAsc
+			nextSortSLOCurrentlyBurningMode := sortModeSLOCurrentlyBurningDesc
+			nextSortSLOBudgetRemainingWindowPeriodMode := sortModeSLOBudgetRemainingWindowPeriodAsc
+			nextSortSLOAlertSeverityMode := sortModeSLOAlertSeverityDesc
+			data.SortSLONameTitleIcon = iconSortUnset
+			data.SortSLOServiceNameTitleIcon = iconSortUnset
+			data.SortSLOCurrentlyBurningTitleIcon = iconSortUnset
+			data.SortSLOBudgetRemainingWindowPeriodTitleIcon = iconSortUnset
+			data.SortSLOAlertSeverityTitleIcon = iconSortUnset
+
+			switch sortMode {
+			case app.SLOListSortModeSLOIDAsc:
+				data.SortSLONameTitleIcon = iconSortAsc
+				nextSortSLONameMode = sortModeSLONameDesc
+			case app.SLOListSortModeSLOIDDesc:
+				data.SortSLONameTitleIcon = iconSortDesc
+				nextSortSLONameMode = sortModeSLONameAsc
+			case app.SLOListSortModeServiceNameAsc:
+				data.SortSLOServiceNameTitleIcon = iconSortAsc
+				nextSortSLOServiceNameMode = sortModeSLOServiceNameDesc
+			case app.SLOListSortModeServiceNameDesc:
+				data.SortSLOServiceNameTitleIcon = iconSortDesc
+				nextSortSLOServiceNameMode = sortModeSLOServiceNameAsc
+			case app.SLOListSortModeCurrentBurningBudgetAsc:
+				data.SortSLOCurrentlyBurningTitleIcon = iconSortAsc
+				nextSortSLOCurrentlyBurningMode = sortModeSLOCurrentlyBurningDesc
+			case app.SLOListSortModeCurrentBurningBudgetDesc:
+				data.SortSLOCurrentlyBurningTitleIcon = iconSortDesc
+				nextSortSLOCurrentlyBurningMode = sortModeSLOCurrentlyBurningAsc
+			case app.SLOListSortModeBudgetBurnedWindowPeriodAsc:
+				data.SortSLOBudgetRemainingWindowPeriodTitleIcon = iconSortDesc // Inverted as model has burned not remaining.
+				nextSortSLOBudgetRemainingWindowPeriodMode = sortModeSLOBudgetRemainingWindowPeriodAsc
+			case app.SLOListSortModeBudgetBurnedWindowPeriodDesc:
+				data.SortSLOBudgetRemainingWindowPeriodTitleIcon = iconSortAsc // Inverted as model has burned not remaining.
+				nextSortSLOBudgetRemainingWindowPeriodMode = sortModeSLOBudgetRemainingWindowPeriodDesc
+			case app.SLOListSortModeAlertSeverityAsc:
+				data.SortSLOAlertSeverityTitleIcon = iconSortAsc
+				nextSortSLOAlertSeverityMode = sortModeSLOAlertSeverityDesc
+			case app.SLOListSortModeAlertSeverityDesc:
+				data.SortSLOAlertSeverityTitleIcon = iconSortDesc
+				nextSortSLOAlertSeverityMode = sortModeSLOAlertSeverityAsc
+			}
+			data.SortSLONameURL = urls.AddQueryParm(currentURLForSort, queryParamSLOSortMode, nextSortSLONameMode)
+			data.SortSLOServiceNameURL = urls.AddQueryParm(currentURLForSort, queryParamSLOSortMode, nextSortSLOServiceNameMode)
+			data.SortSLOCurrentlyBurningURL = urls.AddQueryParm(currentURLForSort, queryParamSLOSortMode, nextSortSLOCurrentlyBurningMode)
+			data.SortSLOBudgetRemainingWindowPeriodURL = urls.AddQueryParm(currentURLForSort, queryParamSLOSortMode, nextSortSLOBudgetRemainingWindowPeriodMode)
+			data.SortSLOAlertSeverityURL = urls.AddQueryParm(currentURLForSort, queryParamSLOSortMode, nextSortSLOAlertSeverityMode)
+		}
 
 		switch {
 		// Snippet SLO list next.
@@ -87,6 +185,7 @@ func (u ui) handlerSelectSLO() http.HandlerFunc {
 			slosResp, err := u.serviceApp.ListSLOs(ctx, app.ListSLOsRequest{
 				Cursor:            nextCursor,
 				FilterSearchInput: data.SLOSearchInput,
+				SortMode:          sortMode,
 			})
 			if err != nil {
 				u.logger.Errorf("could not get SLOs: %s", err)
@@ -105,6 +204,7 @@ func (u ui) handlerSelectSLO() http.HandlerFunc {
 			slosResp, err := u.serviceApp.ListSLOs(ctx, app.ListSLOsRequest{
 				Cursor:            prevCursor,
 				FilterSearchInput: data.SLOSearchInput,
+				SortMode:          sortMode,
 			})
 			if err != nil {
 				u.logger.Errorf("could not get SLOs: %s", err)
@@ -122,6 +222,7 @@ func (u ui) handlerSelectSLO() http.HandlerFunc {
 			// Get SLOs for service.
 			slosResp, err := u.serviceApp.ListSLOs(ctx, app.ListSLOsRequest{
 				FilterSearchInput: data.SLOSearchInput,
+				SortMode:          sortMode,
 			})
 			if err != nil {
 				u.logger.Errorf("could not get SLOs: %s", err)
@@ -143,6 +244,7 @@ func (u ui) handlerSelectSLO() http.HandlerFunc {
 			// Get SLOs for service.
 			slosResp, err := u.serviceApp.ListSLOs(ctx, app.ListSLOsRequest{
 				FilterSearchInput: data.SLOSearchInput,
+				SortMode:          sortMode,
 			})
 			if err != nil {
 				u.logger.Errorf("could not get SLOs: %s", err)

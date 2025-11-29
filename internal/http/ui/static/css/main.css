@@ -23,9 +23,9 @@
 [data-theme="light"],
 :root:not([data-theme="dark"]) {
     --sloth-neutral: var(--pico-primary);
-    --sloth-ok: var(--pico-ins-color);
-    --sloth-warning: #ff9500;
-    --sloth-critical: var(--pico-del-color);
+    --sloth-ok: rgb(58, 135, 19);
+    --sloth-warning: rgb(253, 147, 3);
+    --sloth-critical: rgb(197, 47, 33);
 }
 
 /* Dark color scheme (Auto) */
@@ -33,9 +33,9 @@
 @media only screen and (prefers-color-scheme: dark) {
     :root:not([data-theme]) {
         --sloth-neutral: var(--pico-primary);
-        --sloth-ok: var(--pico-ins-color);
-        --sloth-warning: #ff9500;
-        --sloth-critical: var(--pico-del-color);
+        --sloth-ok: rgb(58, 135, 19);
+        --sloth-warning: rgb(253, 147, 3);
+        --sloth-critical: rgb(197, 47, 33);
     }
 }
 
@@ -43,9 +43,9 @@
 /* Enabled if forced with data-theme="dark" */
 [data-theme="dark"] {
     --sloth-neutral: var(--pico-primary);
-    --sloth-ok: var(--pico-ins-color);
-    --sloth-warning: #ff9500;
-    --sloth-critical: var(--pico-del-color);
+    --sloth-ok: rgb(58, 135, 19);
+    --sloth-warning: rgb(253, 147, 3);
+    --sloth-critical: rgb(197, 47, 33);
 }
 
 .is-ok {

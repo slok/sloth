@@ -19,7 +19,7 @@ function isColorThemeLight() {
     return true; // Default to light.
 }
 
-// CSS utils.
+// --------- CSS  ---------.
 function getCSSVariableValue(cssVar) {
     // Sanitize variable name.
     if (cssVar.startsWith("--")) {
@@ -27,6 +27,11 @@ function getCSSVariableValue(cssVar) {
     }
     return getComputedStyle(document.documentElement).getPropertyValue(cssVar).trim();
 }
+
+// Re-create lucide icons after htmx content swap.
+document.body.addEventListener('htmx:afterSwap', function(evt) {
+    lucide.createIcons();
+});
 
 // --------- PLOTS ---------.
 

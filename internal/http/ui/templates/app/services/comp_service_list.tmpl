@@ -30,11 +30,11 @@
         <td><a href="{{.DetailsURL}}">{{.Name}}</a></td>
         <td>
         {{ if .HasCritical }}
-        <div class="icon-triangle-alert is-critical"></div>
+            <div class="is-critical"> <i data-lucide="triangle-alert"></i> Firing {{.TotalAlertsFiring}} alerts</div>
         {{ else if .HasWarning }}
-        <div class="icon-triangle-alert is-warning"></div>
+            <div class="is-warning"> <i data-lucide="triangle-alert"></i> Firing {{.TotalAlertsFiring}} alerts</div>
         {{ else }}
-        <div class="icon-circle-check is-ok"></div>
+            <div class="is-ok"> <i data-lucide="circle-check"></i> No alerts firing</div>
         {{ end }}
         </td>
         </tr>

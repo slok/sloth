@@ -147,11 +147,11 @@ func TestHandlerSLODetails(t *testing.T) {
 				`<div><mark>operation: <strong>create</strong></mark> <span> </span><mark>type: <strong>something</strong></mark> <span> </span></div>`,
 
 				// Stats.
-				`<div class="grid stats" hx-trigger="every 30s" hx-get="/u/app/slos/slo-1?component=slo-stats" hx-swap="outerHTML">`,                                                           // Autoreload status with HTMX.
-				`<article><header data-tooltip="The % of error budget being consumed right now">Current Burning budget</header> <div class="is-critical">101.5%</div> </article>`,              // Burning budget stat.
-				`<article><header data-tooltip="The % of error budget remaining in the period as a rolling window">Remaining budget (Window)</header> <div class="is-ok">90%</div> </article>`, // Remaining budget stat.
-				`<article><header>Warning Alert</header> <div class="is-warning">FIRING</div> </article>`,                                                                                      // Warning alert stat.
-				`<article><header>Critical Alert</header> <div class="is-critical">FIRING</div> </article>`,                                                                                    // Critical alert stat.
+				`<div class="grid stats" hx-trigger="every 30s" hx-get="/u/app/slos/slo-1?component=slo-stats" hx-swap="outerHTML">`,                                                                                                                                                                  // Autoreload status with HTMX.
+				`<article> <header> Current Burning budget <span data-tooltip="The % of error budget being consumed now (0% means none, 100% means all, >100% more than available budget)."> <i data-lucide="info"></i> </span> </header> <div class="is-critical">101.5%</div> </article> <article>`, // Burning budget stat.
+				`<article> <header> Remaining budget on period (Window) <span data-tooltip="The % of error budget remaining in the period as a rolling window."> <i data-lucide="info"></i> </span> </header> <div class="is-ok">90%</div> </article> <article>`,                                      // Remaining budget stat.
+				`<article><header>Warning Alert</header> <div class="is-warning"><i data-lucide="triangle-alert"></i>FIRING</div> </article>`,                                                                                                                                                         // Warning alert stat.
+				`<article><header>Critical Alert</header> <div class="is-critical"><i data-lucide="triangle-alert"></i>FIRING</div> </article>`,                                                                                                                                                       // Critical alert stat.
 
 				// SLI chart.
 				`<article id="sli-chart-section">`, // SLI chart section.
@@ -202,12 +202,11 @@ func TestHandlerSLODetails(t *testing.T) {
 			expCode: 200,
 			expBody: []string{
 				// Stats.
-				`<div class="grid stats" hx-trigger="every 30s" hx-get="/u/app/slos/slo-1?component=slo-stats" hx-swap="outerHTML">`,                                                           // Autoreload status with HTMX.
-				`<article><header data-tooltip="The % of error budget being consumed right now">Current Burning budget</header> <div class="is-critical">101.5%</div> </article>`,              // Burning budget stat.
-				`<article><header data-tooltip="The % of error budget remaining in the period as a rolling window">Remaining budget (Window)</header> <div class="is-ok">90%</div> </article>`, // Remaining budget stat.
-				`<article><header>Warning Alert</header> <div class="is-warning">FIRING</div> </article>`,                                                                                      // Warning alert stat.
-				`<article><header>Critical Alert</header> <div class="is-critical">FIRING</div> </article>`,                                                                                    // Critical alert stat.
-
+				`<div class="grid stats" hx-trigger="every 30s" hx-get="/u/app/slos/slo-1?component=slo-stats" hx-swap="outerHTML">`,                                                                                                                                                                  // Autoreload status with HTMX.
+				`<article> <header> Current Burning budget <span data-tooltip="The % of error budget being consumed now (0% means none, 100% means all, >100% more than available budget)."> <i data-lucide="info"></i> </span> </header> <div class="is-critical">101.5%</div> </article> <article>`, // Burning budget stat.
+				`<article> <header> Remaining budget on period (Window) <span data-tooltip="The % of error budget remaining in the period as a rolling window."> <i data-lucide="info"></i> </span> </header> <div class="is-ok">90%</div> </article> <article>`,                                      // Remaining budget stat.
+				`<article><header>Warning Alert</header> <div class="is-warning"><i data-lucide="triangle-alert"></i>FIRING</div> </article>`,                                                                                                                                                         // Warning alert stat.
+				`<article><header>Critical Alert</header> <div class="is-critical"><i data-lucide="triangle-alert"></i>FIRING</div> </article>`,                                                                                                                                                       // Critical alert stat.
 			},
 		},
 

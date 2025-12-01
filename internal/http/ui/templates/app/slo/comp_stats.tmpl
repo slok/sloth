@@ -5,24 +5,36 @@
     hx-get="{{ .Data.SLOData.RefreshURL }}"
     hx-swap="outerHTML">
 
-    <article><header data-tooltip="The % of error budget being consumed right now">Current Burning budget</header>
+    <article>
+    <header>
+        Current Burning budget
+        <span data-tooltip="The % of error budget being consumed now (0% means none, 100% means all, >100% more than available budget).">
+            <i data-lucide="info"></i>
+        </span>
+    </header>
     <div class="{{ .Data.SLOData.BurningBudgetPercent | percentUpColorCSSClass }}">{{.Data.SLOData.BurningBudgetPercent | prettyPercent}}</div>
     </article>
-    <article><header data-tooltip="The % of error budget remaining in the period as a rolling window">Remaining budget (Window)</header>
+    <article>
+    <header>
+        Remaining budget on period (Window)
+        <span data-tooltip="The % of error budget remaining in the period as a rolling window.">
+            <i data-lucide="info"></i>
+        </span>
+    </header>
     <div class="{{ .Data.SLOData.RemainingBudgetWindowPercent | percentDownColorCSSClass }}">{{.Data.SLOData.RemainingBudgetWindowPercent | prettyPercent}}</div>
     </article>
     <article><header>Warning Alert</header>
     {{ if .Data.SLOData.WarningAlertName }}
-        <div class="is-warning">FIRING</div>
+        <div class="is-warning"><i data-lucide="triangle-alert"></i>FIRING</div>
     {{ else }}
-        <div class="is-ok">OK</div>
+        <div class="is-ok"><i data-lucide="circle-check"></i>OK</div>
     {{ end }}
     </article>
     <article><header>Critical Alert</header>
     {{ if .Data.SLOData.CriticalAlertName }}
-        <div class="is-critical">FIRING</div>
+        <div class="is-critical"><i data-lucide="triangle-alert"></i>FIRING</div>
     {{ else }}
-        <div class="is-ok">OK</div>
+        <div class="is-ok"><i data-lucide="circle-check"></i>OK</div>
     {{ end }}
     </article>
 </div>

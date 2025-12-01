@@ -26,6 +26,7 @@
     --sloth-ok: rgb(58, 135, 19);
     --sloth-warning: rgb(253, 147, 3);
     --sloth-critical: rgb(197, 47, 33);
+    --pico-mark-background-color: rgb(223, 227, 235);
 }
 
 /* Dark color scheme (Auto) */
@@ -60,3 +61,20 @@
     color: var(--sloth-critical);
 }
 
+
+svg.lucide {
+    display: inline-block;
+    vertical-align: middle;
+    margin-left: 0.25em;
+    margin-right: 0.25em;
+    margin-bottom: 0.15em;
+}
+
+header svg.lucide {
+    width: 1em;
+    height: 1em;
+}
+
+span[data-tooltip] {
+    border-bottom: none !important;
+}

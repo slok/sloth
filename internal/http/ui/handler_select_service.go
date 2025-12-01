@@ -52,10 +52,11 @@ func (u ui) handlerSelectService() http.HandlerFunc {
 	)
 
 	type tplDataService struct {
-		Name        string
-		HasWarning  bool
-		HasCritical bool
-		DetailsURL  string
+		Name              string
+		HasWarning        bool
+		HasCritical       bool
+		DetailsURL        string
+		TotalAlertsFiring int
 	}
 	type tplData struct {
 		Services           []tplDataService
@@ -75,22 +76,23 @@ func (u ui) handlerSelectService() http.HandlerFunc {
 		for _, svc := range s {
 			hasCritical := false
 			hasWarning := false
+			totalAlertsFiring := 0
 			for _, sloAlert := range svc.Alerts {
 				if sloAlert.FiringPage != nil {
 					hasCritical = true
+					totalAlertsFiring++
 				}
 				if sloAlert.FiringWarning != nil {
 					hasWarning = true
-				}
-				if hasCritical && hasWarning {
-					break
+					totalAlertsFiring++
 				}
 			}
 			tplServices = append(tplServices, tplDataService{
-				Name:        svc.Service.ID,
-				HasWarning:  hasWarning,
-				HasCritical: hasCritical,
-				DetailsURL:  urls.AppURL("/services/" + svc.Service.ID),
+				Name:              svc.Service.ID,
+				HasWarning:        hasWarning,
+				HasCritical:       hasCritical,
+				DetailsURL:        urls.AppURL("/services/" + svc.Service.ID),
+				TotalAlertsFiring: totalAlertsFiring,
 			})
 		}
 		return tplServices

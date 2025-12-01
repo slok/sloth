@@ -53,6 +53,7 @@ func (u ui) handlerSelectSLO() http.HandlerFunc {
 		CriticalAlertName            string
 		WarningAlertName             string
 		GroupLabels                  map[string]string
+		IsGrouped                    bool
 	}
 
 	type tplData struct {
@@ -95,6 +96,7 @@ func (u ui) handlerSelectSLO() http.HandlerFunc {
 				WarningAlertName:             warnAlert,
 				ServiceURL:                   urls.AppURL("/services/" + slo.SLO.ServiceID),
 				GroupLabels:                  slo.SLO.GroupLabels,
+				IsGrouped:                    slo.SLO.IsGrouped,
 			})
 		}
 		return slos

@@ -9,11 +9,17 @@
     <thead>
         <tr>
         <th scope="col">
+            Type
+        </th>
+        <th scope="col">
             <div
                 hx-get="{{ .Data.SortSLONameURL }}"
                 hx-target="#slo-list"
                 hx-swap="innerHTML show:window:top">
             SLO {{.Data.SortSLONameTitleIcon}}</div>
+        </th>
+        <th scope="col">
+            Grouped labels
         </th>
         <th scope="col">
             <div
@@ -45,7 +51,16 @@
         {{range .Data.SLOs}}
         <tr>
         <td>
+            {{ if .IsGrouped }}
+                <span data-tooltip="Grouped SLO"><i data-lucide="group"></i></span>
+            {{ else }}
+                <span data-tooltip="Individual SLO"><i data-lucide="goal"></i></span>
+            {{ end }}
+        </td>
+        <td>
             <a href="{{.DetailsURL}}">{{.Name}}</a>
+        </td>
+        <td>
             {{ if .GroupLabels }}
             <div>
                 {{- range $key, $value := .GroupLabels -}}

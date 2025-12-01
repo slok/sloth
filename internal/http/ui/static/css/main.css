@@ -75,6 +75,20 @@ header svg.lucide {
     height: 1em;
 }
 
+td span svg.lucide {
+    width: 1.3em;
+    height: 1.3em;
+}
+
 span[data-tooltip] {
     border-bottom: none !important;
 }
+
+mark {
+    border-radius: 3px;
+    padding-left: 0.5em;
+    padding-right: 0.5em;
+    padding-top: 0.25em;
+    padding-bottom: 0.25em;
+}
+

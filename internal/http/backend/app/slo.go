@@ -28,10 +28,13 @@ const (
 )
 
 type ListSLOsRequest struct {
-	FilterServiceID   string // Used for filtering SLOs by service ID.
-	FilterSearchInput string // Used for searching SLOs by name.
-	SortMode          SLOListSortMode
-	Cursor            string
+	FilterServiceID                   string // Used for filtering SLOs by service ID.
+	FilterSearchInput                 string // Used for searching SLOs by name.
+	FilterAlertFiring                 bool   // Used for filtering SLOs that have firing alerts.
+	FilterPeriodBudgetConsumed        bool   // Used for filtering SLOs that have burned budget above threshold.
+	FilterCurrentBurningBudgetOver100 bool   // Used for filtering SLOs that are currently burning budget over 100%.
+	SortMode                          SLOListSortMode
+	Cursor                            string
 }
 
 func (r *ListSLOsRequest) defaults() error {
@@ -80,63 +83,90 @@ func (a *App) ListSLOs(ctx context.Context, req ListSLOsRequest) (*ListSLOsRespo
 		}
 	}
 
+	// Filter SLOs if required.
+	filters := []sloFilter{}
+	if req.FilterAlertFiring {
+		filters = append(filters, filterIncludeSLOWithAlerts(true, true))
+	}
+	if req.FilterPeriodBudgetConsumed {
+		filters = append(filters, filterIncludeSLOsWithWindowBudgetConsumed(100))
+	}
+	if req.FilterCurrentBurningBudgetOver100 {
+		filters = append(filters, filterIncludeSLOsCurrentBurningBudgetOverThreshold(100))
+	}
+
+	filteredSLOs := slos
+	if len(filters) > 0 {
+		filterChain := newSLOFilterChain(filters...)
+		filteredSLOs = []storage.SLOInstantDetails{}
+		for _, slo := range slos {
+			include, err := filterChain.IncludeSLO(ctx, &slo)
+			if err != nil {
+				return nil, fmt.Errorf("could not filter SLOs: %w", err)
+			}
+			if include {
+				filteredSLOs = append(filteredSLOs, slo)
+			}
+		}
+	}
+
 	// Sort results based on request.
 
 	// Always sort by SLO ID first to have a stable sort.
-	slices.SortStableFunc(slos, func(x, y storage.SLOInstantDetails) int {
+	slices.SortStableFunc(filteredSLOs, func(x, y storage.SLOInstantDetails) int {
 		return strings.Compare(x.SLO.ID, y.SLO.ID)
 	})
 
 	switch req.SortMode {
 	case SLOListSortModeSLOIDDesc:
-		slices.SortStableFunc(slos, func(x, y storage.SLOInstantDetails) int {
+		slices.SortStableFunc(filteredSLOs, func(x, y storage.SLOInstantDetails) int {
 			return strings.Compare(y.SLO.ID, x.SLO.ID)
 		})
 	case SLOListSortModeServiceNameAsc:
-		slices.SortStableFunc(slos, func(x, y storage.SLOInstantDetails) int {
+		slices.SortStableFunc(filteredSLOs, func(x, y storage.SLOInstantDetails) int {
 			return strings.Compare(x.SLO.ServiceID, y.SLO.ServiceID)
 		})
 	case SLOListSortModeServiceNameDesc:
-		slices.SortStableFunc(slos, func(x, y storage.SLOInstantDetails) int {
+		slices.SortStableFunc(filteredSLOs, func(x, y storage.SLOInstantDetails) int {
 			return strings.Compare(y.SLO.ServiceID, x.SLO.ServiceID)
 		})
 	case SLOListSortModeCurrentBurningBudgetAsc:
-		slices.SortStableFunc(slos, func(x, y storage.SLOInstantDetails) int {
+		slices.SortStableFunc(filteredSLOs, func(x, y storage.SLOInstantDetails) int {
 			return cmp.Compare(
 				x.BudgetDetails.BurningBudgetPercent,
 				y.BudgetDetails.BurningBudgetPercent,
 			)
 		})
 	case SLOListSortModeCurrentBurningBudgetDesc:
-		slices.SortStableFunc(slos, func(x, y storage.SLOInstantDetails) int {
+		slices.SortStableFunc(filteredSLOs, func(x, y storage.SLOInstantDetails) int {
 			return cmp.Compare(
 				y.BudgetDetails.BurningBudgetPercent,
 				x.BudgetDetails.BurningBudgetPercent,
 			)
 		})
 	case SLOListSortModeBudgetBurnedWindowPeriodAsc:
-		slices.SortStableFunc(slos, func(x, y storage.SLOInstantDetails) int {
+		slices.SortStableFunc(filteredSLOs, func(x, y storage.SLOInstantDetails) int {
 			return cmp.Compare(
 				x.BudgetDetails.BurnedBudgetWindowPercent,
 				y.BudgetDetails.BurnedBudgetWindowPercent,
 			)
 		})
 	case SLOListSortModeBudgetBurnedWindowPeriodDesc:
-		slices.SortStableFunc(slos, func(x, y storage.SLOInstantDetails) int {
+		slices.SortStableFunc(filteredSLOs, func(x, y storage.SLOInstantDetails) int {
 			return cmp.Compare(
 				y.BudgetDetails.BurnedBudgetWindowPercent,
 				x.BudgetDetails.BurnedBudgetWindowPercent,
 			)
 		})
 	case SLOListSortModeAlertSeverityAsc:
-		slices.SortStableFunc(slos, func(x, y storage.SLOInstantDetails) int {
+		slices.SortStableFunc(filteredSLOs, func(x, y storage.SLOInstantDetails) int {
 			return cmp.Compare(
 				getAlertSeverityScore([]model.SLOAlerts{x.Alerts}),
 				getAlertSeverityScore([]model.SLOAlerts{y.Alerts}),
 			)
 		})
 	case SLOListSortModeAlertSeverityDesc:
-		slices.SortStableFunc(slos, func(x, y storage.SLOInstantDetails) int {
+		slices.SortStableFunc(filteredSLOs, func(x, y storage.SLOInstantDetails) int {
 			return cmp.Compare(
 				getAlertSeverityScore([]model.SLOAlerts{y.Alerts}),
 				getAlertSeverityScore([]model.SLOAlerts{x.Alerts}),
@@ -144,8 +174,8 @@ func (a *App) ListSLOs(ctx context.Context, req ListSLOsRequest) (*ListSLOsRespo
 		})
 	}
 
-	rtSLOs := make([]RealTimeSLODetails, 0, len(slos))
-	for _, s := range slos {
+	rtSLOs := make([]RealTimeSLODetails, 0, len(filteredSLOs))
+	for _, s := range filteredSLOs {
 		rtSLOs = append(rtSLOs, RealTimeSLODetails{
 			SLO:    s.SLO,
 			Alerts: s.Alerts,

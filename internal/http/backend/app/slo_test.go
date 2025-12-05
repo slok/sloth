@@ -677,6 +677,127 @@ func TestListSLOs(t *testing.T) {
 				}
 			},
 		},
+
+		"Filtering SLOS with firing alerts should return only those with firing alerts.": {
+			req: app.ListSLOsRequest{
+				FilterAlertFiring: true,
+			},
+			mock: func(m *storagemock.SLOGetter) {
+				m.On("ListSLOInstantDetails", mock.Anything).Return([]storage.SLOInstantDetails{
+					{
+						SLO:           model.SLO{ID: "slo-1"},
+						BudgetDetails: model.SLOBudgetDetails{},
+						Alerts:        model.SLOAlerts{FiringWarning: &model.Alert{Name: "slo-1-warning"}},
+					},
+					{
+						SLO:           model.SLO{ID: "slo-2"},
+						BudgetDetails: model.SLOBudgetDetails{},
+						Alerts:        model.SLOAlerts{},
+					},
+					{
+						SLO:           model.SLO{ID: "slo-3"},
+						BudgetDetails: model.SLOBudgetDetails{},
+						Alerts:        model.SLOAlerts{FiringPage: &model.Alert{Name: "slo-3-critical"}},
+					},
+				}, nil)
+			},
+			expResp: func() *app.ListSLOsResponse {
+				return &app.ListSLOsResponse{
+					SLOs: []app.RealTimeSLODetails{
+						{
+							SLO:    model.SLO{ID: "slo-1"},
+							Budget: model.SLOBudgetDetails{},
+							Alerts: model.SLOAlerts{FiringWarning: &model.Alert{Name: "slo-1-warning"}},
+						},
+						{
+							SLO:    model.SLO{ID: "slo-3"},
+							Budget: model.SLOBudgetDetails{},
+							Alerts: model.SLOAlerts{FiringPage: &model.Alert{Name: "slo-3-critical"}},
+						},
+					},
+				}
+			},
+		},
+
+		"Filtering SLOS with window budget consumed should return only those with window budget consumed above threshold.": {
+			req: app.ListSLOsRequest{
+				FilterPeriodBudgetConsumed: true,
+			},
+			mock: func(m *storagemock.SLOGetter) {
+				m.On("ListSLOInstantDetails", mock.Anything).Return([]storage.SLOInstantDetails{
+					{
+						SLO: model.SLO{ID: "slo-1"},
+						BudgetDetails: model.SLOBudgetDetails{
+							BurnedBudgetWindowPercent: 75.0,
+						},
+					},
+					{
+						SLO: model.SLO{ID: "slo-2"},
+						BudgetDetails: model.SLOBudgetDetails{
+							BurnedBudgetWindowPercent: 101.0,
+						},
+					},
+					{
+						SLO: model.SLO{ID: "slo-3"},
+						BudgetDetails: model.SLOBudgetDetails{
+							BurnedBudgetWindowPercent: 90.0,
+						},
+					},
+				}, nil)
+			},
+			expResp: func() *app.ListSLOsResponse {
+				return &app.ListSLOsResponse{
+					SLOs: []app.RealTimeSLODetails{
+						{
+							SLO:    model.SLO{ID: "slo-2"},
+							Budget: model.SLOBudgetDetails{BurnedBudgetWindowPercent: 101},
+						},
+					},
+				}
+			},
+		},
+
+		"Filtering SLOS with current burning budget over 100% should return only those with current burning budget over threshold.": {
+			req: app.ListSLOsRequest{
+				FilterCurrentBurningBudgetOver100: true,
+			},
+			mock: func(m *storagemock.SLOGetter) {
+				m.On("ListSLOInstantDetails", mock.Anything).Return([]storage.SLOInstantDetails{
+					{
+						SLO: model.SLO{ID: "slo-1"},
+						BudgetDetails: model.SLOBudgetDetails{
+							BurningBudgetPercent: 75.0,
+						},
+					},
+					{
+						SLO: model.SLO{ID: "slo-2"},
+						BudgetDetails: model.SLOBudgetDetails{
+							BurningBudgetPercent: 121.0,
+						},
+					},
+					{
+						SLO: model.SLO{ID: "slo-3"},
+						BudgetDetails: model.SLOBudgetDetails{
+							BurningBudgetPercent: 100.1,
+						},
+					},
+				}, nil)
+			},
+			expResp: func() *app.ListSLOsResponse {
+				return &app.ListSLOsResponse{
+					SLOs: []app.RealTimeSLODetails{
+						{
+							SLO:    model.SLO{ID: "slo-2"},
+							Budget: model.SLOBudgetDetails{BurningBudgetPercent: 121},
+						},
+						{
+							SLO:    model.SLO{ID: "slo-3"},
+							Budget: model.SLOBudgetDetails{BurningBudgetPercent: 100.1},
+						},
+					},
+				}
+			},
+		},
 	}
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {

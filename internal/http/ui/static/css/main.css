@@ -59,6 +59,7 @@
 
 .is-critical {
     color: var(--sloth-critical);
+    font-weight: bold;
 }
 
 

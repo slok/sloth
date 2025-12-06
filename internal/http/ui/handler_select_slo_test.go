@@ -123,6 +123,10 @@ func TestHandlerSelectSLO(t *testing.T) {
 				`<!DOCTYPE html>`,               // We rendered a full page.
 				`<div class="container"> <nav>`, // We have the menu.
 				`<input type="search" name="slo-search" value="" placeholder="Search" aria-label="Search" hx-get="/u/app/slos?component=slo-list&slo-sort-mode=slo-name-asc" hx-trigger="change, keyup changed delay:500ms, search" hx-target="#slo-list" hx-include="this" />`, // We have the search bar with HTMX.
+				`<form hx-get="/u/app/slos?component=slo-list&slo-search=&slo-sort-mode=slo-name-asc" hx-include="this" hx-trigger="change" hx-target="#slo-list"> <details class="dropdown"> <summary> <i data-lucide="list-filter"></i> Filter </summary>`,                    // We have the filters.
+				`<li> <label><input type="checkbox" name="slo-filter-alerts-firing" /> <i data-lucide="megaphone"></i> Alerts firing</label> </li>`,                                                                                                                             // We have the firing alerts filter.
+				`<li> <label><input type="checkbox" name="slo-filter-burning-over-threshold" /> <i data-lucide="flame"></i> Burning over threshold</label> </li>`,                                                                                                               // We have the burning over threshold filter.
+				`<li> <label><input type="checkbox" name="slo-filter-period-budget-consumed" /> <i data-lucide="circle-slash-2"></i> Period Budget consumed</label> </li>`,                                                                                                      // We have the period budget consumed filter.
 				`<th scope="col"> Type </th>`, // We have the icon column.
 				`<th scope="col"> <div hx-get="/u/app/slos?component=slo-list&slo-search=&slo-sort-mode=slo-name-desc" hx-target="#slo-list" hx-swap="innerHTML show:window:top"> SLO ↑</div> </th> `, // We have the SLO name column with HTMX.
 				`<th scope="col"> Grouped labels </th>`, // We have the grouped labels column.
@@ -439,6 +443,50 @@ func TestHandlerSelectSLO(t *testing.T) {
 				`<tr> <td> <span data-tooltip="Individual SLO"><i data-lucide="goal"></i></span> </td> <td> <a href="/u/app/slos/test-svc1-slo1">Test SLO 1</a> </td> <td> </td> <td><a href="/u/app/services/test-svc1">test-svc1</a></td> <td class="is-ok">75%</td> <td class="is-ok">20%</td> <td> <div class="is-critical">Critical</div> </td> </tr>`, // SLO row should be ok.
 				`<button class="secondary" hx-get="/u/app/slos?slo-search=test&slo-sort-mode=slo-alert-severity-desc&component=slo-list&backward-cursor=test-prev-cursor" hx-target="#slo-list" hx-swap="innerHTML show:window:top"> << Previous </button>`,                                                                                                 // We have the pagination prev.
 				`<button class="secondary" hx-get="/u/app/slos?slo-search=test&slo-sort-mode=slo-alert-severity-desc&component=slo-list&forward-cursor=test-next-cursor" hx-target="#slo-list" hx-swap="innerHTML show:window:top"> Next >> </button>`,                                                                                                      // We have the pagination next.
+			},
+		},
+
+		"Filtering the SLOs with HTMX should render the snippet.": {
+			request: func() *http.Request {
+				r := httptest.NewRequest(http.MethodGet, "/u/app/slos?component=slo-list&slo-filter-alerts-firing=on&slo-filter-burning-over-threshold=on&slo-filter-period-budget-consumed=on", nil)
+				r.Header.Add("HX-Request", "true")
+				return r
+			},
+			mock: func(m mocks) {
+				expReq := app.ListSLOsRequest{
+					SortMode:                          app.SLOListSortModeSLOIDAsc,
+					FilterAlertFiring:                 true,
+					FilterCurrentBurningBudgetOver100: true,
+					FilterPeriodBudgetConsumed:        true,
+				}
+				m.ServiceApp.On("ListSLOs", mock.Anything, expReq).Once().Return(&app.ListSLOsResponse{
+					PaginationCursors: app.PaginationCursors{},
+					SLOs: []app.RealTimeSLODetails{
+						{
+							SLO: model.SLO{
+								ID:        "test-svc1-slo1",
+								ServiceID: "test-svc1",
+								Name:      "Test SLO 1",
+							},
+							Alerts: model.SLOAlerts{
+								FiringPage:    &model.Alert{Name: "page-1"},
+								FiringWarning: &model.Alert{Name: "warn-2"},
+							},
+							Budget: model.SLOBudgetDetails{
+								SLOID:                     "test-svc1-slo1",
+								BurningBudgetPercent:      75.0,
+								BurnedBudgetWindowPercent: 80.0,
+							},
+						},
+					}}, nil)
+			},
+			expHeaders: http.Header{
+				"Content-Type": {"text/html; charset=utf-8"},
+				"Hx-Push-Url":  {"/u/app/slos?slo-search=&slo-sort-mode=slo-name-asc&slo-filter-alerts-firing=on&slo-filter-burning-over-threshold=on&slo-filter-period-budget-consumed=on"},
+			},
+			expCode: 200,
+			expBody: []string{
+				`<tr> <td> <span data-tooltip="Individual SLO"><i data-lucide="goal"></i></span> </td> <td> <a href="/u/app/slos/test-svc1-slo1">Test SLO 1</a> </td> <td> </td> <td><a href="/u/app/services/test-svc1">test-svc1</a></td> <td class="is-ok">75%</td> <td class="is-ok">20%</td> <td> <div class="is-critical">Critical</div> </td> </tr>`, // SLO row should be ok.
 			},
 		},
 

@@ -100,3 +100,10 @@ func (u urlManager) RemoveQueryParam(uri, key string) string {
 	urlParsed.RawQuery = q.Encode()
 	return urlParsed.String()
 }
+
+func (u urlManager) RemoveQueryParams(uri string, keys ...string) string {
+	for _, key := range keys {
+		uri = u.RemoveQueryParam(uri, key)
+	}
+	return uri
+}

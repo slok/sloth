@@ -15,6 +15,7 @@
 - UI: Support SLO grouped by labels.
 - UI: Redirect unmarshaled ID of grouped SLO labels to proper SLO ID.
 - UI: Support service list sort by name and alert status.
+- UI: Support alert firing, burning over budget and budget consumed in period SLO filtering on SLO listing.
 
 ### Changed
 

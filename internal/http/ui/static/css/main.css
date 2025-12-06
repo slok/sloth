@@ -26,7 +26,7 @@
     --sloth-ok: rgb(58, 135, 19);
     --sloth-warning: rgb(253, 147, 3);
     --sloth-critical: rgb(197, 47, 33);
-    --pico-mark-background-color: rgb(223, 227, 235);
+    /*--pico-mark-background-color: rgb(223, 227, 235);*/
 }
 
 /* Dark color scheme (Auto) */
@@ -76,6 +76,11 @@ header svg.lucide {
 }
 
 td span svg.lucide {
+    width: 1.3em;
+    height: 1.3em;
+}
+
+li label svg.lucide {
     width: 1.3em;
     height: 1.3em;
 }

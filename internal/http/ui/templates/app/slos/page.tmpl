@@ -19,7 +19,39 @@
     hx-target="#slo-list"
     hx-include="this"
     />
-    <div></div>
+    <div>
+        <div class="grid">
+            <form
+                hx-get="{{ .Data.SLOFilterURL }}"
+                hx-include="this"
+                hx-trigger="change"
+                hx-target="#slo-list">
+                <details class="dropdown">
+                    <summary>
+                        <i data-lucide="list-filter"></i> Filter
+                    </summary>
+                    <ul>
+                        <li>
+                            <label><input type="checkbox" name="slo-filter-alerts-firing" 
+                                {{if .Data.SLOFilterFiringAlerts}}checked{{end}}
+                            /> <i data-lucide="megaphone"></i> Alerts firing</label>
+                        </li>
+                        <li>
+                            <label><input type="checkbox" name="slo-filter-burning-over-threshold" 
+                                {{if .Data.SLOFilterBurningOverThreshold}}checked{{end}}
+                            /> <i data-lucide="flame"></i> Burning over threshold</label>
+                        </li>
+                        <li>
+                            <label><input type="checkbox" name="slo-filter-period-budget-consumed" 
+                                {{if .Data.SLOFilterPeriodBudgetConsumed}}checked{{end}}
+                            /> <i data-lucide="circle-slash-2"></i> Period Budget consumed</label>
+                        </li>
+                    </ul>
+                </details>
+            </form>
+            <div></div>
+        </div>
+    </div>
     <div></div>
 </div>
 {{template "app_slos_comp_slo_list" .}}

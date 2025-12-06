@@ -14,8 +14,11 @@ func (u ui) handlerSelectSLO() http.HandlerFunc {
 	)
 
 	const (
-		queryParamSLOSearch   = "slo-search"
-		queryParamSLOSortMode = "slo-sort-mode"
+		queryParamSLOSearch                  = "slo-search"
+		queryParamSLOSortMode                = "slo-sort-mode"
+		queryParamFilterAlertsFiring         = "slo-filter-alerts-firing"
+		queryParamFilterBurningOverThreshold = "slo-filter-burning-over-threshold"
+		queryParamFilterPeriodBudgetConsumed = "slo-filter-period-budget-consumed"
 	)
 
 	var (
@@ -57,10 +60,18 @@ func (u ui) handlerSelectSLO() http.HandlerFunc {
 	}
 
 	type tplData struct {
-		SLOs           []tplDataSLO
-		SLOPagination  tplPaginationData
+		SLOs          []tplDataSLO
+		SLOPagination tplPaginationData
+
+		// Search.
 		SLOSearchURL   string
 		SLOSearchInput string
+
+		// Filter.
+		SLOFilterURL                  string
+		SLOFilterFiringAlerts         bool
+		SLOFilterBurningOverThreshold bool
+		SLOFilterPeriodBudgetConsumed bool
 
 		// Sorting info.
 		SortSLONameURL                              string
@@ -118,14 +129,33 @@ func (u ui) handlerSelectSLO() http.HandlerFunc {
 		nextCursor := urls.ForwardCursorFromRequest(r)
 		prevCursor := urls.BackwardCursorFromRequest(r)
 		data.SLOSearchInput = r.URL.Query().Get(queryParamSLOSearch)
+		data.SLOFilterFiringAlerts = r.URL.Query().Get(queryParamFilterAlertsFiring) == "on"
+		data.SLOFilterBurningOverThreshold = r.URL.Query().Get(queryParamFilterBurningOverThreshold) == "on"
+		data.SLOFilterPeriodBudgetConsumed = r.URL.Query().Get(queryParamFilterPeriodBudgetConsumed) == "on"
 
 		currentURL := urls.AppURL("/slos")
 		currentURL = urls.AddQueryParm(currentURL, queryParamSLOSearch, data.SLOSearchInput)
 		currentURL = urls.AddQueryParm(currentURL, queryParamSLOSortMode, sortModeS)
+		if data.SLOFilterFiringAlerts {
+			currentURL = urls.AddQueryParm(currentURL, queryParamFilterAlertsFiring, "on")
+		}
+		if data.SLOFilterBurningOverThreshold {
+			currentURL = urls.AddQueryParm(currentURL, queryParamFilterBurningOverThreshold, "on")
+		}
+		if data.SLOFilterPeriodBudgetConsumed {
+			currentURL = urls.AddQueryParm(currentURL, queryParamFilterPeriodBudgetConsumed, "on")
+		}
+
 		htmx.NewResponse().WithPushURL(currentURL).SetHeaders(w) // Always push URL with search or no search param.
 
 		// Searching required data for logic.
 		data.SLOSearchURL = urls.RemoveQueryParam(urls.URLWithComponent(currentURL, componentSLOList), queryParamSLOSearch)
+
+		// Filtering required data for logic.
+		data.SLOFilterURL = urls.RemoveQueryParams(urls.URLWithComponent(currentURL, componentSLOList),
+			queryParamFilterAlertsFiring,
+			queryParamFilterBurningOverThreshold,
+			queryParamFilterPeriodBudgetConsumed)
 
 		// Sorting required data for logic.
 		{
@@ -181,50 +211,22 @@ func (u ui) handlerSelectSLO() http.HandlerFunc {
 		}
 
 		switch {
-		// Snippet SLO list next.
-		case isHTMXCall && component == componentSLOList && nextCursor != "":
-			// Get SLOs for service.
-			slosResp, err := u.serviceApp.ListSLOs(ctx, app.ListSLOsRequest{
-				Cursor:            nextCursor,
-				FilterSearchInput: data.SLOSearchInput,
-				SortMode:          sortMode,
-			})
-			if err != nil {
-				u.logger.Errorf("could not get SLOs: %s", err)
-				http.Error(w, "could not get SLOs", http.StatusInternalServerError)
-				return
-			}
-
-			data.SLOs = mapSLOsToTPL(slosResp.SLOs)
-			data.SLOPagination = mapPaginationToTPL(slosResp.PaginationCursors, urls.URLWithComponent(currentURL, componentSLOList))
-
-			u.tplRenderer.RenderResponse(ctx, w, r, "app_slos_comp_slo_list", data)
-
-		// Snippet SLO list previous.
-		case isHTMXCall && component == componentSLOList && prevCursor != "":
-			// Get SLOs for service.
-			slosResp, err := u.serviceApp.ListSLOs(ctx, app.ListSLOsRequest{
-				Cursor:            prevCursor,
-				FilterSearchInput: data.SLOSearchInput,
-				SortMode:          sortMode,
-			})
-			if err != nil {
-				u.logger.Errorf("could not get SLOs: %s", err)
-				http.Error(w, "could not get SLOs", http.StatusInternalServerError)
-				return
-			}
-
-			data.SLOs = mapSLOsToTPL(slosResp.SLOs)
-			data.SLOPagination = mapPaginationToTPL(slosResp.PaginationCursors, urls.URLWithComponent(currentURL, componentSLOList))
-
-			u.tplRenderer.RenderResponse(ctx, w, r, "app_slos_comp_slo_list", data)
-
 		// Snippet SLO list.
 		case isHTMXCall && component == componentSLOList:
-			// Get SLOs for service.
+			cursor := ""
+			if nextCursor != "" {
+				cursor = nextCursor
+			} else if prevCursor != "" {
+				cursor = prevCursor
+			}
+
 			slosResp, err := u.serviceApp.ListSLOs(ctx, app.ListSLOsRequest{
-				FilterSearchInput: data.SLOSearchInput,
-				SortMode:          sortMode,
+				Cursor:                            cursor,
+				FilterSearchInput:                 data.SLOSearchInput,
+				SortMode:                          sortMode,
+				FilterAlertFiring:                 data.SLOFilterFiringAlerts,
+				FilterCurrentBurningBudgetOver100: data.SLOFilterBurningOverThreshold,
+				FilterPeriodBudgetConsumed:        data.SLOFilterPeriodBudgetConsumed,
 			})
 			if err != nil {
 				u.logger.Errorf("could not get SLOs: %s", err)
@@ -245,8 +247,11 @@ func (u ui) handlerSelectSLO() http.HandlerFunc {
 		default:
 			// Get SLOs for service.
 			slosResp, err := u.serviceApp.ListSLOs(ctx, app.ListSLOsRequest{
-				FilterSearchInput: data.SLOSearchInput,
-				SortMode:          sortMode,
+				FilterSearchInput:                 data.SLOSearchInput,
+				SortMode:                          sortMode,
+				FilterAlertFiring:                 data.SLOFilterFiringAlerts,
+				FilterCurrentBurningBudgetOver100: data.SLOFilterBurningOverThreshold,
+				FilterPeriodBudgetConsumed:        data.SLOFilterPeriodBudgetConsumed,
 			})
 			if err != nil {
 				u.logger.Errorf("could not get SLOs: %s", err)

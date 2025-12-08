@@ -12,6 +12,7 @@ import (
 	prometheusv1 "github.com/prometheus/client_golang/api/prometheus/v1"
 	prommodel "github.com/prometheus/common/model"
 
+	"github.com/slok/sloth/internal/http/backend/metrics"
 	"github.com/slok/sloth/internal/http/backend/model"
 	"github.com/slok/sloth/internal/http/backend/storage"
 	"github.com/slok/sloth/internal/log"
@@ -20,16 +21,11 @@ import (
 	"github.com/slok/sloth/pkg/common/utils/prometheus"
 )
 
-// PrometheusAPIClient is an interface that defines the methods we use from the Prometheus client.
-// We define it so we can add flexibility like easily mocking in tests or wrap it for functionality.
-type PrometheusAPIClient interface {
-	prometheusv1.API
-}
-
 type RepositoryConfig struct {
 	PrometheusClient     PrometheusAPIClient
 	CacheRefreshInterval time.Duration
 	TimeNowFunc          func() time.Time // Used for faking time in testing.
+	MetricsRecorder      metrics.Recorder
 	Logger               log.Logger
 }
 
@@ -41,6 +37,7 @@ func (c *RepositoryConfig) defaults() error {
 	if c.Logger == nil {
 		c.Logger = log.Noop
 	}
+	c.Logger = c.Logger.WithValues(log.Kv{"svc": "storage.prometheus.repository"})
 
 	if c.CacheRefreshInterval < 1*time.Minute {
 		c.CacheRefreshInterval = 1 * time.Minute
@@ -50,7 +47,9 @@ func (c *RepositoryConfig) defaults() error {
 		c.TimeNowFunc = time.Now
 	}
 
-	c.Logger = c.Logger.WithValues(log.Kv{"svc": "storage.prometheus.repository"})
+	if c.MetricsRecorder == nil {
+		c.MetricsRecorder = metrics.NoopRecorder
+	}
 
 	return nil
 }
@@ -60,6 +59,7 @@ type Repository struct {
 	CacheRefreshInterval time.Duration
 	logger               log.Logger
 	timeNowFunc          func() time.Time
+	metricsRecorder      metrics.Recorder
 
 	cache cache
 	mu    sync.RWMutex
@@ -74,6 +74,7 @@ func NewRepository(ctx context.Context, config RepositoryConfig) (*Repository, e
 		promcli:              config.PrometheusClient,
 		CacheRefreshInterval: config.CacheRefreshInterval,
 		timeNowFunc:          config.TimeNowFunc,
+		metricsRecorder:      config.MetricsRecorder,
 		logger:               config.Logger,
 	}
 

@@ -13,13 +13,17 @@ import (
 	"github.com/oklog/run"
 	promapi "github.com/prometheus/client_golang/api"
 	promv1 "github.com/prometheus/client_golang/api/prometheus/v1"
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+	gohttpmetricsprometheus "github.com/slok/go-http-metrics/metrics/prometheus"
 
 	backendapp "github.com/slok/sloth/internal/http/backend/app"
+	httpbackendmetricsprometheus "github.com/slok/sloth/internal/http/backend/metrics/prometheus"
 	"github.com/slok/sloth/internal/http/backend/storage"
 	storagefake "github.com/slok/sloth/internal/http/backend/storage/fake"
 	storageprometheus "github.com/slok/sloth/internal/http/backend/storage/prometheus"
 	storagesearch "github.com/slok/sloth/internal/http/backend/storage/search"
+	storagewrappers "github.com/slok/sloth/internal/http/backend/storage/wrappers"
 	"github.com/slok/sloth/internal/http/ui"
 	"github.com/slok/sloth/internal/log"
 )
@@ -65,6 +69,7 @@ func (c serverCommand) Run(ctx context.Context, config RootConfig) error {
 	defer cancel()
 
 	logger := config.Logger.WithValues(log.Kv{"command": c.Name()})
+	promReg := prometheus.DefaultRegisterer
 
 	// Prepare vault refresh
 	var g run.Group
@@ -143,6 +148,9 @@ func (c serverCommand) Run(ctx context.Context, config RootConfig) error {
 
 	// Application server.
 	{
+		// Metrics for UI backend.
+		uiBackendMetricsRecorder := httpbackendmetricsprometheus.NewRecorder(promReg)
+
 		var repo unifiedRepository
 
 		switch {
@@ -159,8 +167,9 @@ func (c serverCommand) Run(ctx context.Context, config RootConfig) error {
 			}
 
 			repo, err = storageprometheus.NewRepository(ctx, storageprometheus.RepositoryConfig{
-				PrometheusClient:     promv1.NewAPI(client),
+				PrometheusClient:     storageprometheus.NewMeasuredPrometheusAPIClient(uiBackendMetricsRecorder, promv1.NewAPI(client)),
 				CacheRefreshInterval: c.prometheus.cacheInstantRefreshInterval,
+				MetricsRecorder:      uiBackendMetricsRecorder,
 				Logger:               logger,
 			})
 			if err != nil {
@@ -169,6 +178,8 @@ func (c serverCommand) Run(ctx context.Context, config RootConfig) error {
 		default:
 			return fmt.Errorf("no storage backend configured")
 		}
+
+		repo = newMeasuredUnifiedRepository(repo, uiBackendMetricsRecorder)
 
 		// Wrap repo with search capabilities.
 		repo, err := storagesearch.NewSearchRepositoryWrapper(repo, repo)
@@ -188,6 +199,10 @@ func (c serverCommand) Run(ctx context.Context, config RootConfig) error {
 		uiHandler, err := ui.NewUI(ui.UIConfig{
 			Logger:     logger,
 			ServiceApp: app,
+			MetricsRecorder: gohttpmetricsprometheus.NewRecorder(gohttpmetricsprometheus.Config{
+				Prefix:   httpbackendmetricsprometheus.Prefix,
+				Registry: promReg,
+			}),
 		})
 		if err != nil {
 			return fmt.Errorf("could not create ui handler: %w", err)
@@ -236,4 +251,14 @@ func (c serverCommand) Run(ctx context.Context, config RootConfig) error {
 type unifiedRepository interface {
 	storage.SLOGetter
 	storage.ServiceGetter
+}
+
+func newMeasuredUnifiedRepository(orig unifiedRepository, metricsRecorder httpbackendmetricsprometheus.Recorder) unifiedRepository {
+	return struct {
+		storage.SLOGetter
+		storage.ServiceGetter
+	}{
+		SLOGetter:     storagewrappers.NewMeasuredSLOGetter(orig, metricsRecorder),
+		ServiceGetter: storagewrappers.NewMeasuredServiceGetter(orig, metricsRecorder),
+	}
 }

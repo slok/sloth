@@ -29,9 +29,12 @@ function getCSSVariableValue(cssVar) {
 }
 
 // Re-create lucide icons after htmx content swap.
-document.body.addEventListener('htmx:afterSwap', function(evt) {
-    lucide.createIcons();
-});
+window.addEventListener('load', function () {
+    document.body.addEventListener('htmx:afterSwap', function(evt) {
+        lucide.createIcons();
+    });
+})
+
 
 // --------- PLOTS ---------.
 

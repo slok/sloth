@@ -6,7 +6,11 @@
 <body>
 {{template "shared_nav" .}}
 <main class="container">
-<h1>SLOs</h1>
+{{ if .Data.FilterServiceID }}
+    <h1><u>{{ .Data.FilterServiceID }}</u> SLO list</h1>
+{{ else }}
+    <h1>All SLO list</h1>
+{{ end }}
 <div class="grid">
     <input
     type="search"

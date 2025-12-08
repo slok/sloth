@@ -26,8 +26,13 @@ type cache struct {
 	SLOGroupingLabelsBySlothID map[string]map[string]struct{}
 }
 
-func (r *Repository) refreshCaches(ctx context.Context) error {
+func (r *Repository) refreshCaches(ctx context.Context) (err error) {
 	r.logger.Debugf("Refreshing background Prometheus caches")
+	start := time.Now()
+	defer func() {
+		duration := time.Since(start)
+		r.metricsRecorder.MeasurePrometheusStorageBackgroundCacheRefresh(ctx, duration, err)
+	}()
 
 	// Get information.
 	chain := newSLOsInstantHydraterChain(
@@ -48,7 +53,7 @@ func (r *Repository) refreshCaches(ctx context.Context) error {
 		slosBySlothID: make(map[string]*sloInstantData),
 		slosBySLOID:   make(map[string]*sloInstantData),
 	}
-	err := chain.HydrateSLOInstant(ctx, slos)
+	err = chain.HydrateSLOInstant(ctx, slos)
 	if err != nil {
 		return fmt.Errorf("could not hydrate slo instant data: %w", err)
 	}

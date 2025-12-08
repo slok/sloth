@@ -142,6 +142,47 @@ func TestHandlerSelectSLO(t *testing.T) {
 			},
 		},
 
+		"Listing the slos filtered by a service should render the full page.": {
+			request: func() *http.Request {
+				return httptest.NewRequest(http.MethodGet, "/u/app/slos?slo-service-id=test-svc1", nil)
+			},
+			mock: func(m mocks) {
+				expReq := app.ListSLOsRequest{
+					FilterServiceID: "test-svc1",
+					SortMode:        app.SLOListSortModeSLOIDAsc,
+				}
+				m.ServiceApp.On("ListSLOs", mock.Anything, expReq).Once().Return(&app.ListSLOsResponse{
+					PaginationCursors: app.PaginationCursors{},
+					SLOs: []app.RealTimeSLODetails{
+						{
+							SLO: model.SLO{
+								ID:        "test-svc1-slo1",
+								ServiceID: "test-svc1",
+								Name:      "Test SLO 1",
+							},
+							Alerts: model.SLOAlerts{
+								FiringPage:    &model.Alert{Name: "page-1"},
+								FiringWarning: &model.Alert{Name: "warn-2"},
+							},
+							Budget: model.SLOBudgetDetails{
+								SLOID:                     "test-svc1-slo1",
+								BurningBudgetPercent:      75.0,
+								BurnedBudgetWindowPercent: 80.0,
+							},
+						},
+					}}, nil)
+			},
+			expHeaders: http.Header{
+				"Content-Type": {"text/html; charset=utf-8"},
+				"Hx-Push-Url":  {"/u/app/slos?slo-search=&slo-sort-mode=slo-name-asc&slo-service-id=test-svc1"},
+			},
+			expCode: 200,
+			expBody: []string{
+				`<h1><u>test-svc1</u> SLO list</h1>`, // We have the service ID in the title.
+				`<tr> <td> <span data-tooltip="Individual SLO"><i data-lucide="goal"></i></span> </td> <td> <a href="/u/app/slos/test-svc1-slo1">Test SLO 1</a> </td> <td> </td> <td><a href="/u/app/services/test-svc1">test-svc1</a></td> <td class="is-ok">75%</td> <td class="is-ok">20%</td> <td> <div class="is-critical">Critical</div> </td> </tr>`, // SLO1 should be critical.
+			},
+		},
+
 		"Listing the SLOs with HTMX on the SLOs list component and forward pagination should render the snippet.": {
 			request: func() *http.Request {
 				r := httptest.NewRequest(http.MethodGet, "/u/app/slos?component=slo-list&forward-cursor=eyJzaXplIjozMCwicGFnZSI6Mn0=&slo-search=test", nil)

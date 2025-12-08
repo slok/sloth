@@ -7,6 +7,10 @@ import (
 	"github.com/slok/sloth/internal/http/ui/htmx"
 )
 
+const (
+	queryParamSLOServiceID = "slo-service-id"
+)
+
 func (u ui) handlerSelectSLO() http.HandlerFunc {
 	// Available components
 	const (
@@ -68,6 +72,7 @@ func (u ui) handlerSelectSLO() http.HandlerFunc {
 		SLOSearchInput string
 
 		// Filter.
+		FilterServiceID               string
 		SLOFilterURL                  string
 		SLOFilterFiringAlerts         bool
 		SLOFilterBurningOverThreshold bool
@@ -132,6 +137,7 @@ func (u ui) handlerSelectSLO() http.HandlerFunc {
 		data.SLOFilterFiringAlerts = r.URL.Query().Get(queryParamFilterAlertsFiring) == "on"
 		data.SLOFilterBurningOverThreshold = r.URL.Query().Get(queryParamFilterBurningOverThreshold) == "on"
 		data.SLOFilterPeriodBudgetConsumed = r.URL.Query().Get(queryParamFilterPeriodBudgetConsumed) == "on"
+		data.FilterServiceID = r.URL.Query().Get(queryParamSLOServiceID)
 
 		currentURL := urls.AppURL("/slos")
 		currentURL = urls.AddQueryParm(currentURL, queryParamSLOSearch, data.SLOSearchInput)
@@ -144,6 +150,9 @@ func (u ui) handlerSelectSLO() http.HandlerFunc {
 		}
 		if data.SLOFilterPeriodBudgetConsumed {
 			currentURL = urls.AddQueryParm(currentURL, queryParamFilterPeriodBudgetConsumed, "on")
+		}
+		if data.FilterServiceID != "" {
+			currentURL = urls.AddQueryParm(currentURL, queryParamSLOServiceID, data.FilterServiceID)
 		}
 
 		htmx.NewResponse().WithPushURL(currentURL).SetHeaders(w) // Always push URL with search or no search param.
@@ -221,6 +230,7 @@ func (u ui) handlerSelectSLO() http.HandlerFunc {
 			}
 
 			slosResp, err := u.serviceApp.ListSLOs(ctx, app.ListSLOsRequest{
+				FilterServiceID:                   data.FilterServiceID,
 				Cursor:                            cursor,
 				FilterSearchInput:                 data.SLOSearchInput,
 				SortMode:                          sortMode,
@@ -247,6 +257,7 @@ func (u ui) handlerSelectSLO() http.HandlerFunc {
 		default:
 			// Get SLOs for service.
 			slosResp, err := u.serviceApp.ListSLOs(ctx, app.ListSLOsRequest{
+				FilterServiceID:                   data.FilterServiceID,
 				FilterSearchInput:                 data.SLOSearchInput,
 				SortMode:                          sortMode,
 				FilterAlertFiring:                 data.SLOFilterFiringAlerts,

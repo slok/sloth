@@ -12,6 +12,7 @@ import (
 	"strings"
 	"text/template"
 
+	"github.com/slok/sloth/internal/info"
 	"github.com/slok/sloth/internal/log"
 )
 
@@ -75,12 +76,13 @@ func newTplRenderer(logger log.Logger) (*tplRenderer, error) {
 		logger: logger,
 		tpls:   templates,
 		CommonData: map[string]any{
-			"CSSPath":     urls.NonAppURL(staticPrefix + "/css"),
-			"JSPath":      urls.NonAppURL(staticPrefix + "/js"),
-			"ImagePath":   urls.NonAppURL(staticPrefix + "/img"),
-			"HomeURL":     urls.AppURL("/"),
-			"ServicesURL": urls.AppURL("/services"),
-			"SLOsURL":     urls.AppURL("/slos"),
+			"CSSPath":      urls.NonAppURL(staticPrefix + "/css"),
+			"JSPath":       urls.NonAppURL(staticPrefix + "/js"),
+			"ImagePath":    urls.NonAppURL(staticPrefix + "/img"),
+			"HomeURL":      urls.AppURL("/"),
+			"ServicesURL":  urls.AppURL("/services"),
+			"SLOsURL":      urls.AppURL("/slos"),
+			"SlothVersion": info.Version,
 		},
 	}, nil
 }

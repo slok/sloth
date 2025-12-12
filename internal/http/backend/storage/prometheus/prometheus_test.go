@@ -65,6 +65,7 @@ func TestRepositoryListAllServiceAndAlerts(t *testing.T) {
 							"sloth_slo":       "SLO 1",
 							"sloth_objective": "99.9",
 						},
+						Value: 1.1, // Over budget.
 					},
 					&prommodel.Sample{
 						Metric: prommodel.Metric{
@@ -73,6 +74,7 @@ func TestRepositoryListAllServiceAndAlerts(t *testing.T) {
 							"sloth_slo":       "SLO 2",
 							"sloth_objective": "99.5",
 						},
+						Value: 0.03,
 					},
 					&prommodel.Sample{
 						Metric: prommodel.Metric{
@@ -81,6 +83,7 @@ func TestRepositoryListAllServiceAndAlerts(t *testing.T) {
 							"sloth_slo":       "SLO 3",
 							"sloth_objective": "99.5",
 						},
+						Value: 0.5,
 					},
 				}, nil, nil)
 
@@ -127,12 +130,22 @@ func TestRepositoryListAllServiceAndAlerts(t *testing.T) {
 					},
 				}, nil, nil)
 
-				mpc.On("Query", mock.Anything, `slo:period_error_budget_remaining:ratio{sloth_id!=""}`, mock.Anything).Once().Return(prommodel.Vector{}, nil, nil)
+				mpc.On("Query", mock.Anything, `slo:period_error_budget_remaining:ratio{sloth_id!=""}`, mock.Anything).Once().Return(prommodel.Vector{
+					&prommodel.Sample{Metric: prommodel.Metric{"sloth_id": "slo-1"}, Value: -1}, // Already consumed.
+					&prommodel.Sample{Metric: prommodel.Metric{"sloth_id": "slo-2"}, Value: 0.98},
+					&prommodel.Sample{Metric: prommodel.Metric{"sloth_id": "slo-3"}, Value: 0.75},
+				}, nil, nil)
 				mpc.On("Query", mock.Anything, `count({__name__=~"^slo:sli_error:ratio_rate.*"}) by (__name__, sloth_id)`, mock.Anything).Once().Return(prommodel.Vector{}, nil, nil)
 			},
 			expSvcAls: []storage.ServiceAndAlerts{
 				{
 					Service: model.Service{ID: "svc-1"},
+					ServiceStats: model.ServiceStats{
+						ServiceID:                         "svc-1",
+						TotalSLOs:                         2,
+						SLOsCurrentlyBurningOverBudget:    1,
+						SLOsAlreadyConsumedBudgetOnPeriod: 1,
+					},
 					Alerts: []model.SLOAlerts{
 						{
 							SLOID:         "slo-1",
@@ -146,7 +159,8 @@ func TestRepositoryListAllServiceAndAlerts(t *testing.T) {
 					},
 				},
 				{
-					Service: model.Service{ID: "svc-2"},
+					Service:      model.Service{ID: "svc-2"},
+					ServiceStats: model.ServiceStats{ServiceID: "svc-2", TotalSLOs: 1},
 					Alerts: []model.SLOAlerts{
 						{
 							SLOID:         "slo-2",

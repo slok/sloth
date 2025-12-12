@@ -50,6 +50,7 @@ func (a *App) ListServices(ctx context.Context, req ListServicesRequest) (*ListS
 	for _, sa := range services {
 		svcs = append(svcs, ServiceAlerts{
 			Service: sa.Service,
+			Stats:   sa.ServiceStats,
 			Alerts:  sa.Alerts,
 		})
 	}
@@ -96,6 +97,7 @@ func (a *App) ListServices(ctx context.Context, req ListServicesRequest) (*ListS
 
 type ServiceAlerts struct {
 	Service model.Service
+	Stats   model.ServiceStats
 	Alerts  []model.SLOAlerts
 }
 

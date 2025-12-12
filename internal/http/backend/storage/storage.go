@@ -9,8 +9,9 @@ import (
 
 // ServiceAndAlerts groups a service with its SLO alerts.
 type ServiceAndAlerts struct {
-	Service model.Service
-	Alerts  []model.SLOAlerts
+	Service      model.Service
+	ServiceStats model.ServiceStats
+	Alerts       []model.SLOAlerts
 }
 
 type ServiceGetter interface {

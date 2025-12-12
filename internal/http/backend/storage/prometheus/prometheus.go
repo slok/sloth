@@ -110,12 +110,27 @@ func (r *Repository) ListAllServiceAndAlerts(ctx context.Context) ([]storage.Ser
 	result := []storage.ServiceAndAlerts{}
 	for serviceID, slos := range r.cache.SLODetailsByService {
 		sloAlertsList := []model.SLOAlerts{}
+		stats := model.ServiceStats{ServiceID: serviceID}
 		for _, slo := range slos {
 			// Skip SLOs without budget details (probably invalid SLOs).
 			bd := r.cache.BudgetDetailsBySLO[slo.ID]
 			if math.IsNaN(bd.BurnedBudgetWindowPercent) {
 				continue
 			}
+
+			budgetDetails, ok := r.cache.BudgetDetailsBySLO[slo.ID]
+			if !ok {
+				r.logger.Warningf("Could not find budget details for SLO ID %q", slo.ID)
+				continue
+			}
+			if budgetDetails.BurningBudgetPercent > 100 {
+				stats.SLOsCurrentlyBurningOverBudget++
+			}
+			if budgetDetails.BurnedBudgetWindowPercent > 100 {
+				stats.SLOsAlreadyConsumedBudgetOnPeriod++
+			}
+
+			stats.TotalSLOs++
 
 			alerts, ok := r.cache.SLOAlertsBySLO[slo.ID]
 			if ok {
@@ -128,7 +143,8 @@ func (r *Repository) ListAllServiceAndAlerts(ctx context.Context) ([]storage.Ser
 			Service: model.Service{
 				ID: serviceID,
 			},
-			Alerts: sloAlertsList,
+			ServiceStats: stats,
+			Alerts:       sloAlertsList,
 		})
 	}
 

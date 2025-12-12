@@ -75,6 +75,12 @@ func TestListServices(t *testing.T) {
 				m.On("ListAllServiceAndAlerts", mock.Anything).Return([]storage.ServiceAndAlerts{
 					{
 						Service: model.Service{ID: "svc-2"},
+						ServiceStats: model.ServiceStats{
+							ServiceID:                         "svc-2",
+							TotalSLOs:                         42,
+							SLOsCurrentlyBurningOverBudget:    5,
+							SLOsAlreadyConsumedBudgetOnPeriod: 1,
+						},
 						Alerts: []model.SLOAlerts{
 							{
 								FiringWarning: &model.Alert{Name: "warn-2"},
@@ -106,6 +112,12 @@ func TestListServices(t *testing.T) {
 						},
 						{
 							Service: model.Service{ID: "svc-2"},
+							Stats: model.ServiceStats{
+								ServiceID:                         "svc-2",
+								TotalSLOs:                         42,
+								SLOsCurrentlyBurningOverBudget:    5,
+								SLOsAlreadyConsumedBudgetOnPeriod: 1,
+							},
 							Alerts: []model.SLOAlerts{
 								{
 									FiringWarning: &model.Alert{Name: "warn-2"},

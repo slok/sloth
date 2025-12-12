@@ -12,6 +12,13 @@ type Service struct {
 	ID string
 }
 
+type ServiceStats struct {
+	ServiceID                         string
+	TotalSLOs                         int
+	SLOsCurrentlyBurningOverBudget    int
+	SLOsAlreadyConsumedBudgetOnPeriod int
+}
+
 type SLO struct {
 	ID             string // ID is unique for an SLO and grouped SLOs.
 	SlothID        string // SlothID is the ID set by Sloth on Prometheus (if grouped by labels SLO they will share this ID).

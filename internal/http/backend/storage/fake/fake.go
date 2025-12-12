@@ -277,12 +277,32 @@ func (f *FakeRepository) genFakeData() {
 
 func (f FakeRepository) ListAllServiceAndAlerts(ctx context.Context) ([]storage.ServiceAndAlerts, error) {
 	data := make([]storage.ServiceAndAlerts, 0, len(f.services))
+	indexedSLOBudgets := make(map[string]model.SLOBudgetDetails)
+	for _, bd := range f.sloBudgetDetails {
+		indexedSLOBudgets[bd.SLOID] = bd
+	}
+
 	for _, svc := range f.services {
 		svcAlerts := make([]model.SLOAlerts, 0)
+		stats := model.ServiceStats{ServiceID: svc.ID}
 		for _, slo := range f.slos {
 			if slo.ServiceID != svc.ID {
 				continue
 			}
+
+			budgetDetails, ok := indexedSLOBudgets[slo.ID]
+			if !ok {
+				continue
+			}
+			if budgetDetails.BurningBudgetPercent > 100 {
+				stats.SLOsCurrentlyBurningOverBudget++
+			}
+			if budgetDetails.BurnedBudgetWindowPercent > 100 {
+				stats.SLOsAlreadyConsumedBudgetOnPeriod++
+			}
+
+			stats.TotalSLOs++
+
 			for _, sloAlert := range f.sloAlerts {
 				if sloAlert.SLOID != slo.ID {
 					continue
@@ -291,8 +311,9 @@ func (f FakeRepository) ListAllServiceAndAlerts(ctx context.Context) ([]storage.
 			}
 		}
 		data = append(data, storage.ServiceAndAlerts{
-			Service: svc,
-			Alerts:  svcAlerts,
+			Service:      svc,
+			ServiceStats: stats,
+			Alerts:       svcAlerts,
 		})
 	}
 

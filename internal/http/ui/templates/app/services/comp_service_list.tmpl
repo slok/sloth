@@ -16,6 +16,13 @@
             Service {{.Data.SortServiceTitleIcon}}</div>
         </th>
         <th scope="col">
+            Total SLOs
+        </th>
+
+        <th scope="col">
+            SLOs burning over budget
+        </th>
+        <th scope="col">
             <div
                 hx-get="{{ .Data.SortStatusURL }}"
                 hx-target="#services-list"
@@ -28,6 +35,11 @@
         {{range .Data.Services}}
         <tr>
         <td><a href="{{.DetailsURL}}">{{.Name}}</a></td>
+        <td>{{.TotalSLOs}}</td>
+        <td>
+                <span>{{.SLOsCurrentlyBurningOverBudget}}</span>
+                <span class="percent-badge {{percentColorCSSClassCustom .SLOsCurrentlyBurningOverBudgetPercent 2 30}}">{{prettyPercent .SLOsCurrentlyBurningOverBudgetPercent}}</span>
+        </td>
         <td>
         {{ if .HasCritical }}
             <div class="is-critical"> <i data-lucide="triangle-alert"></i> Firing {{.TotalAlertsFiring}} alerts</div>

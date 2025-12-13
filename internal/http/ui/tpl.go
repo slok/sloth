@@ -67,6 +67,7 @@ func newTplRenderer(logger log.Logger) (*tplRenderer, error) {
 		"percentDownColorCSSClass":   PercentDownColorCSSClass,
 		"percentColorCSSClassCustom": PercentColorCSSClassCustom,
 		"slothLogoSVG":               SlothLogoSVG,
+		"percentBarSVG":              PercentBarSVG,
 	}).ParseFS(templatesFS, templatePaths...)
 	if err != nil {
 		return nil, fmt.Errorf("could not parse templates: %w", err)

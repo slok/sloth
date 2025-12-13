@@ -21,31 +21,34 @@ func roundFloat(val float64, precision uint) float64 {
 }
 
 func PercentUpColorCSSClass(f float64) string {
-	return PercentColorCSSClassCustom(f, 90.0, false)
+	return PercentColorCSSClassCustom(f, 90, 100)
 }
 
 func PercentDownColorCSSClass(f float64) string {
-	return PercentColorCSSClassCustom(f, 10.0, true)
+	return PercentColorCSSClassCustom(f, 10, 00)
 }
 
 // PercentColorCSSClassCustom returns a CSS class based on the given percent value (f).
 // If inverse is true, lower values are considered worse.
 // warningThreshold defines the threshold for warning state.
-func PercentColorCSSClassCustom(f float64, warningThreshold float64, inverse bool) string {
+// criticalThreshold defines the threshold for critical state.
+func PercentColorCSSClassCustom(f float64, warningThreshold, criticalThreshold float64) string {
 	const (
 		cssClassOK      = "is-ok"
 		cssClassWarning = "is-warning"
 		cssClassDanger  = "is-critical"
 	)
+
+	inverse := warningThreshold > criticalThreshold
+
 	if inverse {
-		if f < 0 {
+		if f <= criticalThreshold {
 			return cssClassDanger
-		} else if f < warningThreshold {
+		} else if f <= warningThreshold {
 			return cssClassWarning
 		}
-
 	} else {
-		if f > 100 {
+		if f >= criticalThreshold {
 			return cssClassDanger
 		} else if f >= warningThreshold {
 			return cssClassWarning
@@ -78,3 +81,13 @@ const (
 	iconSortDesc  = `↓`
 	iconSortUnset = `⇅`
 )
+
+func PercentBarSVG(percent float64) string {
+	const color = "currentcolor"
+	svg := fmt.Sprintf(`<svg width="100%%" height="100%%" viewBox="0 0 100 20" xmlns="http://www.w3.org/2000/svg">
+	<rect x="0" y="1" width="100" height="16" fill="none" stroke="currentcolor" stroke-width="1" rx="3"/>
+	<rect x="0" y="1" width="%.1f" height="16" fill="%s" rx="3"/>
+	</svg>`, percent, color)
+
+	return svg
+}

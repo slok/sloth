@@ -36,6 +36,12 @@ func TestHandlerSelectService(t *testing.T) {
 					Services: []app.ServiceAlerts{
 						{
 							Service: model.Service{ID: "test-svc1"},
+							Stats: model.ServiceStats{
+								ServiceID:                         "test-svc1",
+								TotalSLOs:                         42,
+								SLOsCurrentlyBurningOverBudget:    32,
+								SLOsAlreadyConsumedBudgetOnPeriod: 12,
+							},
 							Alerts: []model.SLOAlerts{
 								{
 									FiringPage: &model.Alert{Name: "page-1"},
@@ -47,6 +53,10 @@ func TestHandlerSelectService(t *testing.T) {
 						},
 						{
 							Service: model.Service{ID: "test-svc2"},
+							Stats: model.ServiceStats{
+								ServiceID: "test-svc2",
+								TotalSLOs: 2,
+							},
 							Alerts: []model.SLOAlerts{
 								{
 									FiringWarning: &model.Alert{Name: "warn-4"},
@@ -55,7 +65,12 @@ func TestHandlerSelectService(t *testing.T) {
 						},
 						{
 							Service: model.Service{ID: "test-svc3"},
-							Alerts:  []model.SLOAlerts{},
+							Stats: model.ServiceStats{
+								ServiceID:                      "test-svc3",
+								TotalSLOs:                      5,
+								SLOsCurrentlyBurningOverBudget: 1,
+							},
+							Alerts: []model.SLOAlerts{},
 						},
 					}}, nil)
 			},
@@ -68,13 +83,15 @@ func TestHandlerSelectService(t *testing.T) {
 				`<!DOCTYPE html>`,               // We rendered a full page.
 				`<div class="container"> <nav>`, // We have the menu.
 				`<input type="search" name="service-search" value="" placeholder="Search" aria-label="Search" hx-get="/u/app/services?component=service-list&service-sort-mode=service-name-asc" hx-trigger="change, keyup changed delay:500ms, search" hx-target="#services-list" hx-include="this" />`, // We have the search bar with HTMX.
-				`<th scope="col"> <div hx-get="/u/app/services?component=service-list&service-search=&service-sort-mode=service-name-desc" hx-target="#services-list" hx-swap="innerHTML show:window:top"> Service ↑</div> </th>`,                                                                        // We have sortable HTMX Service column.
-				`<th scope="col"> <div hx-get="/u/app/services?component=service-list&service-search=&service-sort-mode=status-desc" hx-target="#services-list" hx-swap="innerHTML show:window:top"> Status ⇅</div> </th>`,                                                                               // We have sortable HTMX status column.
-				`<td><a href="/u/app/services/test-svc1">test-svc1</a></td> <td> <div class="is-critical"> <i data-lucide="triangle-alert"></i> Firing 2 alerts</div>`,                                                                                                                                   // Svc1 should be critical.
-				`<td><a href="/u/app/services/test-svc2">test-svc2</a></td> <td> <div class="is-warning"> <i data-lucide="triangle-alert"></i> Firing 1 alerts</div>`,                                                                                                                                    // Svc2 should be warning.
-				`<td><a href="/u/app/services/test-svc3">test-svc3</a></td> <td> <div class="is-ok"> <i data-lucide="circle-check"></i> No alerts firing</div>`,                                                                                                                                          // Svc3 should be ok.
-				`<button class="secondary" hx-get="/u/app/services?service-search=&service-sort-mode=service-name-asc&component=service-list&forward-cursor=test-next-cursor" hx-target="#services-list" hx-swap="innerHTML show:window:top"> Next >> </button>`,                                         // We have the pagination prev.
-				`<button class="secondary" hx-get="/u/app/services?service-search=&service-sort-mode=service-name-asc&component=service-list&backward-cursor=test-prev-cursor" hx-target="#services-list" hx-swap="innerHTML show:window:top"> << Previous </button>`,                                    // We have the pagination next.
+				`<th scope="col"> Total SLOs </th>`,               // We have the total SLOs column.
+				`<th scope="col"> SLOs burning over budget </th>`, // We have the SLOs burning over budget column.
+				`<th scope="col"> <div hx-get="/u/app/services?component=service-list&service-search=&service-sort-mode=service-name-desc" hx-target="#services-list" hx-swap="innerHTML show:window:top"> Service ↑</div> </th>`,                                         // We have sortable HTMX Service column.
+				`<th scope="col"> <div hx-get="/u/app/services?component=service-list&service-search=&service-sort-mode=status-desc" hx-target="#services-list" hx-swap="innerHTML show:window:top"> Status ⇅</div> </th>`,                                                // We have sortable HTMX status column.
+				`<td><a href="/u/app/services/test-svc1">test-svc1</a></td> <td>42</td> <td> <span>32</span> <span class="percent-badge is-critical">76.19%</span> </td> <td> <div class="is-critical"> <i data-lucide="triangle-alert"></i> Firing 2 alerts</div> </td>`, // We have the SVC.
+				`<td><a href="/u/app/services/test-svc2">test-svc2</a></td> <td>2</td> <td> <span>0</span> <span class="percent-badge is-ok">0%</span> </td> <td> <div class="is-warning"> <i data-lucide="triangle-alert"></i> Firing 1 alerts</div> </td>`,              // We have the SVC.
+				`<td><a href="/u/app/services/test-svc3">test-svc3</a></td> <td>5</td> <td> <span>1</span> <span class="percent-badge is-warning">20%</span> </td> <td> <div class="is-ok"> <i data-lucide="circle-check"></i> No alerts firing</div> </td>`,              // We have the SVC.
+				`<button class="secondary" hx-get="/u/app/services?service-search=&service-sort-mode=service-name-asc&component=service-list&forward-cursor=test-next-cursor" hx-target="#services-list" hx-swap="innerHTML show:window:top"> Next >> </button>`,          // We have the pagination prev.
+				`<button class="secondary" hx-get="/u/app/services?service-search=&service-sort-mode=service-name-asc&component=service-list&backward-cursor=test-prev-cursor" hx-target="#services-list" hx-swap="innerHTML show:window:top"> << Previous </button>`,     // We have the pagination next.
 			},
 		},
 
@@ -116,6 +133,12 @@ func TestHandlerSelectService(t *testing.T) {
 					Services: []app.ServiceAlerts{
 						{
 							Service: model.Service{ID: "test-svc1"},
+							Stats: model.ServiceStats{
+								ServiceID:                         "test-svc1",
+								TotalSLOs:                         42,
+								SLOsCurrentlyBurningOverBudget:    32,
+								SLOsAlreadyConsumedBudgetOnPeriod: 12,
+							},
 							Alerts: []model.SLOAlerts{
 								{
 									FiringPage: &model.Alert{Name: "page-1"},
@@ -130,7 +153,7 @@ func TestHandlerSelectService(t *testing.T) {
 			},
 			expCode: 200,
 			expBody: []string{
-				`<td><a href="/u/app/services/test-svc1">test-svc1</a></td> <td> <div class="is-critical"> <i data-lucide="triangle-alert"></i> Firing 1 alerts</div>`,                                                                                                    // Svc1 should be critical.
+				`<td><a href="/u/app/services/test-svc1">test-svc1</a></td> <td>42</td> <td> <span>32</span> <span class="percent-badge is-critical">76.19%</span> </td> <td> <div class="is-critical"> <i data-lucide="triangle-alert"></i> Firing 1 alerts</div> </td>`, // We have the service.
 				`<button class="secondary" hx-get="/u/app/services?service-search=test&service-sort-mode=service-name-asc&component=service-list&backward-cursor=test-prev-cursor" hx-target="#services-list" hx-swap="innerHTML show:window:top"> << Previous </button>`, // We have the pagination prev.
 				`<button class="secondary"  disabled hx-get="" hx-target="#services-list" hx-swap="innerHTML show:window:top"> Next >> </button>`,                                                                                                                         // We have the pagination next.
 			},
@@ -155,6 +178,12 @@ func TestHandlerSelectService(t *testing.T) {
 					Services: []app.ServiceAlerts{
 						{
 							Service: model.Service{ID: "test-svc1"},
+							Stats: model.ServiceStats{
+								ServiceID:                         "test-svc1",
+								TotalSLOs:                         42,
+								SLOsCurrentlyBurningOverBudget:    32,
+								SLOsAlreadyConsumedBudgetOnPeriod: 12,
+							},
 							Alerts: []model.SLOAlerts{
 								{
 									FiringPage: &model.Alert{Name: "page-1"},
@@ -169,9 +198,9 @@ func TestHandlerSelectService(t *testing.T) {
 			},
 			expCode: 200,
 			expBody: []string{
-				`<td><a href="/u/app/services/test-svc1">test-svc1</a></td> <td> <div class="is-critical"> <i data-lucide="triangle-alert"></i> Firing 1 alerts</div>`,                                                                                           // Svc1 should be critical.
-				`<button class="secondary"  disabled hx-get="" hx-target="#services-list" hx-swap="innerHTML show:window:top"> << Previous </button>`,                                                                                                            // We have the pagination prev.
-				`<button class="secondary" hx-get="/u/app/services?service-search=&service-sort-mode=service-name-asc&component=service-list&forward-cursor=test-next-cursor" hx-target="#services-list" hx-swap="innerHTML show:window:top"> Next >> </button>`, // We have the pagination next.
+				`<td><a href="/u/app/services/test-svc1">test-svc1</a></td> <td>42</td> <td> <span>32</span> <span class="percent-badge is-critical">76.19%</span> </td> <td> <div class="is-critical"> <i data-lucide="triangle-alert"></i> Firing 1 alerts</div> </td>`, // We have the service.
+				`<button class="secondary"  disabled hx-get="" hx-target="#services-list" hx-swap="innerHTML show:window:top"> << Previous </button>`,                                                                                                                     // We have the pagination prev.
+				`<button class="secondary" hx-get="/u/app/services?service-search=&service-sort-mode=service-name-asc&component=service-list&forward-cursor=test-next-cursor" hx-target="#services-list" hx-swap="innerHTML show:window:top"> Next >> </button>`,          // We have the pagination next.
 			},
 		},
 
@@ -196,6 +225,12 @@ func TestHandlerSelectService(t *testing.T) {
 					Services: []app.ServiceAlerts{
 						{
 							Service: model.Service{ID: "test-svc1"},
+							Stats: model.ServiceStats{
+								ServiceID:                         "test-svc1",
+								TotalSLOs:                         42,
+								SLOsCurrentlyBurningOverBudget:    32,
+								SLOsAlreadyConsumedBudgetOnPeriod: 12,
+							},
 							Alerts: []model.SLOAlerts{
 								{
 									FiringPage: &model.Alert{Name: "page-1"},
@@ -210,7 +245,7 @@ func TestHandlerSelectService(t *testing.T) {
 			},
 			expCode: 200,
 			expBody: []string{
-				`<td><a href="/u/app/services/test-svc1">test-svc1</a></td> <td> <div class="is-critical"> <i data-lucide="triangle-alert"></i> Firing 1 alerts</div>`,                                                                                                    // Svc1 should be critical.
+				`<td><a href="/u/app/services/test-svc1">test-svc1</a></td> <td>42</td> <td> <span>32</span> <span class="percent-badge is-critical">76.19%</span> </td> <td> <div class="is-critical"> <i data-lucide="triangle-alert"></i> Firing 1 alerts</div> </td>`, // We have the service.
 				`<button class="secondary" hx-get="/u/app/services?service-search=test&service-sort-mode=service-name-asc&component=service-list&backward-cursor=test-prev-cursor" hx-target="#services-list" hx-swap="innerHTML show:window:top"> << Previous </button>`, // We have the pagination prev.
 				`<button class="secondary" hx-get="/u/app/services?service-search=test&service-sort-mode=service-name-asc&component=service-list&forward-cursor=test-next-cursor" hx-target="#services-list" hx-swap="innerHTML show:window:top"> Next >> </button>`,      // We have the pagination next.
 			},
@@ -237,6 +272,12 @@ func TestHandlerSelectService(t *testing.T) {
 					Services: []app.ServiceAlerts{
 						{
 							Service: model.Service{ID: "test-svc1"},
+							Stats: model.ServiceStats{
+								ServiceID:                         "test-svc1",
+								TotalSLOs:                         42,
+								SLOsCurrentlyBurningOverBudget:    32,
+								SLOsAlreadyConsumedBudgetOnPeriod: 12,
+							},
 							Alerts: []model.SLOAlerts{
 								{
 									FiringPage: &model.Alert{Name: "page-1"},
@@ -253,7 +294,7 @@ func TestHandlerSelectService(t *testing.T) {
 			expBody: []string{
 				`<th scope="col"> <div hx-get="/u/app/services?component=service-list&service-search=test&service-sort-mode=service-name-asc" hx-target="#services-list" hx-swap="innerHTML show:window:top"> Service ↓</div> </th>`,                                       //We have service name sorting column.
 				`<th scope="col"> <div hx-get="/u/app/services?component=service-list&service-search=test&service-sort-mode=status-desc" hx-target="#services-list" hx-swap="innerHTML show:window:top"> Status ⇅</div> </th>`,                                             //We have status sorting column.
-				`<td><a href="/u/app/services/test-svc1">test-svc1</a></td> <td> <div class="is-critical"> <i data-lucide="triangle-alert"></i> Firing 1 alerts</div>`,                                                                                                     // Svc1 should be critical.
+				`<td><a href="/u/app/services/test-svc1">test-svc1</a></td> <td>42</td> <td> <span>32</span> <span class="percent-badge is-critical">76.19%</span> </td> <td> <div class="is-critical"> <i data-lucide="triangle-alert"></i> Firing 1 alerts</div> </td>`,  // We have the service.
 				`<button class="secondary" hx-get="/u/app/services?service-search=test&service-sort-mode=service-name-desc&component=service-list&backward-cursor=test-prev-cursor" hx-target="#services-list" hx-swap="innerHTML show:window:top"> << Previous </button>`, // We have the pagination prev.
 				`<button class="secondary" hx-get="/u/app/services?service-search=test&service-sort-mode=service-name-desc&component=service-list&forward-cursor=test-next-cursor" hx-target="#services-list" hx-swap="innerHTML show:window:top"> Next >> </button>`,      // We have the pagination next.
 			},
@@ -279,6 +320,12 @@ func TestHandlerSelectService(t *testing.T) {
 					Services: []app.ServiceAlerts{
 						{
 							Service: model.Service{ID: "test-svc1"},
+							Stats: model.ServiceStats{
+								ServiceID:                         "test-svc1",
+								TotalSLOs:                         42,
+								SLOsCurrentlyBurningOverBudget:    32,
+								SLOsAlreadyConsumedBudgetOnPeriod: 12,
+							},
 							Alerts: []model.SLOAlerts{
 								{
 									FiringPage: &model.Alert{Name: "page-1"},
@@ -293,11 +340,11 @@ func TestHandlerSelectService(t *testing.T) {
 			},
 			expCode: 200,
 			expBody: []string{
-				`<th scope="col"> <div hx-get="/u/app/services?component=service-list&service-search=&service-sort-mode=service-name-asc" hx-target="#services-list" hx-swap="innerHTML show:window:top"> Service ⇅</div> </th>`,                                //We have service name sorting column.
-				`<th scope="col"> <div hx-get="/u/app/services?component=service-list&service-search=&service-sort-mode=status-desc" hx-target="#services-list" hx-swap="innerHTML show:window:top"> Status ↑</div> </th>`,                                      //We have status sorting column.
-				`<td><a href="/u/app/services/test-svc1">test-svc1</a></td> <td> <div class="is-critical"> <i data-lucide="triangle-alert"></i> Firing 1 alerts</div>`,                                                                                          // Svc1 should be critical.
-				`<button class="secondary" hx-get="/u/app/services?service-search=&service-sort-mode=status-asc&component=service-list&backward-cursor=test-prev-cursor" hx-target="#services-list" hx-swap="innerHTML show:window:top"> << Previous </button>`, // We have the pagination prev.
-				`<button class="secondary" hx-get="/u/app/services?service-search=&service-sort-mode=status-asc&component=service-list&forward-cursor=test-next-cursor" hx-target="#services-list" hx-swap="innerHTML show:window:top"> Next >> </button>`,      // We have the pagination next.
+				`<th scope="col"> <div hx-get="/u/app/services?component=service-list&service-search=&service-sort-mode=service-name-asc" hx-target="#services-list" hx-swap="innerHTML show:window:top"> Service ⇅</div> </th>`,                                          //We have service name sorting column.
+				`<th scope="col"> <div hx-get="/u/app/services?component=service-list&service-search=&service-sort-mode=status-desc" hx-target="#services-list" hx-swap="innerHTML show:window:top"> Status ↑</div> </th>`,                                                //We have status sorting column.
+				`<td><a href="/u/app/services/test-svc1">test-svc1</a></td> <td>42</td> <td> <span>32</span> <span class="percent-badge is-critical">76.19%</span> </td> <td> <div class="is-critical"> <i data-lucide="triangle-alert"></i> Firing 1 alerts</div> </td>`, // We have the service.
+				`<button class="secondary" hx-get="/u/app/services?service-search=&service-sort-mode=status-asc&component=service-list&backward-cursor=test-prev-cursor" hx-target="#services-list" hx-swap="innerHTML show:window:top"> << Previous </button>`,           // We have the pagination prev.
+				`<button class="secondary" hx-get="/u/app/services?service-search=&service-sort-mode=status-asc&component=service-list&forward-cursor=test-next-cursor" hx-target="#services-list" hx-swap="innerHTML show:window:top"> Next >> </button>`,                // We have the pagination next.
 			},
 		},
 

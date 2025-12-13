@@ -71,8 +71,13 @@
             {{ end }}
         </td>
         <td><a href="{{.ServiceURL}}">{{.ServiceID}}</a></td>
-        <td class="{{.BurningBudgetPercent | percentUpColorCSSClass}}">{{.BurningBudgetPercent | prettyPercent}}</td>
-        <td class="{{.RemainingBudgetWindowPercent | percentDownColorCSSClass}}">{{.RemainingBudgetWindowPercent | prettyPercent}}</td>
+        <td>
+            <span class="percent-badge {{.BurningBudgetPercent | percentUpColorCSSClass}}">{{.BurningBudgetPercent | prettyPercent}} </span>
+        </td>
+        <td>
+            <span class="percent-bar {{.RemainingBudgetWindowPercent | percentDownColorCSSClass}}">{{ percentBarSVG .RemainingBudgetWindowPercent }}</span>
+            <span class="percent-badge {{.RemainingBudgetWindowPercent | percentDownColorCSSClass}}">{{.RemainingBudgetWindowPercent | prettyPercent}}</span>
+        </td>
         <td>
         {{ if .CriticalAlertName }}
         <div class="is-critical">Critical</div>

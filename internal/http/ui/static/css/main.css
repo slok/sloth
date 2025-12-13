@@ -102,3 +102,31 @@ mark {
 footer li {
     font-size: 0.9rem;
 }
+
+td .percent-bar {
+    width: 120px;
+    height: 16px;
+    display: inline-block;
+}
+
+.percent-badge {
+    display: inline-block;
+    padding: 0.125rem 0.5rem;
+    border-radius: 2px;
+    font-size: 0.875rem;
+}
+
+.percent-badge.is-critical {
+    color: var(--sloth-critical);
+    background-color: color-mix(in srgb, var(--sloth-critical) 10%, transparent);
+}
+
+.percent-badge.is-warning {
+    color: var(--sloth-warning);
+    background-color: color-mix(in srgb, var(--sloth-warning) 10%, transparent);
+}
+
+.percent-badge.is-ok {
+    color: var(--sloth-ok);
+    background-color: color-mix(in srgb, var(--sloth-ok) 10%, transparent);
+}

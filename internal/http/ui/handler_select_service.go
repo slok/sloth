@@ -52,11 +52,14 @@ func (u ui) handlerSelectService() http.HandlerFunc {
 	)
 
 	type tplDataService struct {
-		Name              string
-		HasWarning        bool
-		HasCritical       bool
-		DetailsURL        string
-		TotalAlertsFiring int
+		Name                                  string
+		HasWarning                            bool
+		HasCritical                           bool
+		DetailsURL                            string
+		TotalAlertsFiring                     int
+		TotalSLOs                             int
+		SLOsCurrentlyBurningOverBudget        int
+		SLOsCurrentlyBurningOverBudgetPercent float64
 	}
 	type tplData struct {
 		Services           []tplDataService
@@ -88,11 +91,14 @@ func (u ui) handlerSelectService() http.HandlerFunc {
 				}
 			}
 			tplServices = append(tplServices, tplDataService{
-				Name:              svc.Service.ID,
-				HasWarning:        hasWarning,
-				HasCritical:       hasCritical,
-				DetailsURL:        urls.AppURL("/services/" + svc.Service.ID),
-				TotalAlertsFiring: totalAlertsFiring,
+				Name:                                  svc.Service.ID,
+				HasWarning:                            hasWarning,
+				HasCritical:                           hasCritical,
+				DetailsURL:                            urls.AppURL("/services/" + svc.Service.ID),
+				TotalAlertsFiring:                     totalAlertsFiring,
+				TotalSLOs:                             svc.Stats.TotalSLOs,
+				SLOsCurrentlyBurningOverBudget:        svc.Stats.SLOsCurrentlyBurningOverBudget,
+				SLOsCurrentlyBurningOverBudgetPercent: (float64(svc.Stats.SLOsCurrentlyBurningOverBudget) / float64(svc.Stats.TotalSLOs)) * 100,
 			})
 		}
 		return tplServices

@@ -19,7 +19,7 @@ jobs:
           ./sloth-linux-amd64 generate -i ./examples/getting-started.yml -o ./examples/_gen/getting-started.yml
           ./sloth-linux-amd64 generate -i ./examples/no-alerts.yml -o ./examples/_gen/no-alerts.yml
       - name: "Upload directory with generated SLOs"
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: SLOs
           path: examples/_gen/

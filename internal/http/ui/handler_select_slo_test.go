@@ -179,7 +179,7 @@ func TestHandlerSelectSLO(t *testing.T) {
 			expCode: 200,
 			expBody: []string{
 				`<h1><u>test-svc1</u> SLO list</h1>`, // We have the service ID in the title.
-				`<tr> <td> <span data-tooltip="Individual SLO"><i data-lucide="goal"></i></span> </td> <td> <a href="/u/app/slos/test-svc1-slo1">Test SLO 1</a> </td> <td> </td> <td><a href="/u/app/services/test-svc1">test-svc1</a></td> <td> <span class="percent-badge is-ok">75% </span> </td> <td> <span class="percent-bar is-ok"><svg width="100%" height="100%" viewBox="0 0 100 20" xmlns="http://www.w3.org/2000/svg"> <rect x="0" y="1" width="100" height="16" fill="none" stroke="currentcolor" stroke-width="1" rx="3"/> <rect x="0" y="1" width="20.0" height="16" fill="currentcolor" rx="3"/> </svg></span> <span class="percent-badge is-ok">20%</span> </td> <td> <div class="is-critical">Critical</div> </td> </tr>`, // SLO row should be ok.
+				`<tr> <td> <span data-tooltip="Individual SLO"><i data-lucide="goal"></i></span> </td> <td> <a href="/u/app/slos/test-svc1-slo1">Test SLO 1</a> </td> <td> </td> <td> <span class="percent-badge is-ok">75% </span> </td> <td> <span class="percent-bar is-ok"><svg width="100%" height="100%" viewBox="0 0 100 20" xmlns="http://www.w3.org/2000/svg"> <rect x="0" y="1" width="100" height="16" fill="none" stroke="currentcolor" stroke-width="1" rx="3"/> <rect x="0" y="1" width="20.0" height="16" fill="currentcolor" rx="3"/> </svg></span> <span class="percent-badge is-ok">20%</span> </td> <td> <div class="is-critical">Critical</div> </td> </tr>`, // SLO row should be ok.
 			},
 		},
 

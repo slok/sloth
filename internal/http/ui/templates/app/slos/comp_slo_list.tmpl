@@ -21,12 +21,14 @@
         <th scope="col">
             Grouped labels
         </th>
+        {{ if not .Data.FilterServiceID }}
         <th scope="col">
             <div
                 hx-get="{{ .Data.SortSLOServiceNameURL }}"
                 hx-target="#slo-list"
                 hx-swap="innerHTML show:window:top">
             Service {{.Data.SortSLOServiceNameTitleIcon}}</th>
+        {{ end }}
         <th scope="col">
             <div
                 hx-get="{{ .Data.SortSLOCurrentlyBurningURL }}"
@@ -70,7 +72,9 @@
             </div>
             {{ end }}
         </td>
+        {{ if not $.Data.FilterServiceID }}
         <td><a href="{{.ServiceURL}}">{{.ServiceID}}</a></td>
+        {{ end }}
         <td>
             <span class="percent-badge {{.BurningBudgetPercent | percentUpColorCSSClass}}">{{.BurningBudgetPercent | prettyPercent}} </span>
         </td>

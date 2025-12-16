@@ -84,6 +84,7 @@ func newTplRenderer(logger log.Logger) (*tplRenderer, error) {
 			"ServicesURL":  urls.AppURL("/services"),
 			"SLOsURL":      urls.AppURL("/slos"),
 			"SlothVersion": info.Version,
+			"Title":        "Sloth",
 		},
 	}, nil
 }
@@ -101,6 +102,16 @@ func (t *tplRenderer) withCtxData(ctx context.Context) *tplRenderer {
 func (t *tplRenderer) WithRequestData(r *http.Request) *tplRenderer {
 	c := maps.Clone(t.CommonData)
 
+	return &tplRenderer{
+		logger:     t.logger,
+		tpls:       t.tpls,
+		CommonData: c,
+	}
+}
+
+func (t *tplRenderer) WithTitle(title string) *tplRenderer {
+	c := maps.Clone(t.CommonData)
+	c["Title"] = title
 	return &tplRenderer{
 		logger:     t.logger,
 		tpls:       t.tpls,

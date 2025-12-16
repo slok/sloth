@@ -109,6 +109,7 @@ func (u ui) handlerSelectService() http.HandlerFunc {
 		isHTMXCall := htmx.NewRequest(r.Header).IsHTMXRequest()
 		component := urls.ComponentFromRequest(r)
 		data := tplData{}
+		tplRenderer := u.tplRenderer.WithTitle("Services - Sloth")
 
 		// Get all URL data.
 		sortModeS := r.URL.Query().Get(queryParamServiceSortMode)
@@ -173,7 +174,7 @@ func (u ui) handlerSelectService() http.HandlerFunc {
 			data.Services = mapServiceToTPL(resp.Services)
 			data.ServicePagination = mapPaginationToTPL(resp.PaginationCursors, urls.URLWithComponent(currentURL, componentServiceList))
 
-			u.tplRenderer.RenderResponse(ctx, w, r, "app_services_comp_service_list", data)
+			tplRenderer.RenderResponse(ctx, w, r, "app_services_comp_service_list", data)
 
 		// Snippet service list previous.
 		case isHTMXCall && component == componentServiceList && prevCursor != "":
@@ -191,7 +192,7 @@ func (u ui) handlerSelectService() http.HandlerFunc {
 			data.Services = mapServiceToTPL(resp.Services)
 			data.ServicePagination = mapPaginationToTPL(resp.PaginationCursors, urls.URLWithComponent(currentURL, componentServiceList))
 
-			u.tplRenderer.RenderResponse(ctx, w, r, "app_services_comp_service_list", data)
+			tplRenderer.RenderResponse(ctx, w, r, "app_services_comp_service_list", data)
 
 		// Snippet service list refresh snippet.
 		case isHTMXCall && component == componentServiceList:
@@ -208,7 +209,7 @@ func (u ui) handlerSelectService() http.HandlerFunc {
 			data.Services = mapServiceToTPL(resp.Services)
 			data.ServicePagination = mapPaginationToTPL(resp.PaginationCursors, urls.URLWithComponent(currentURL, componentServiceList))
 
-			u.tplRenderer.RenderResponse(ctx, w, r, "app_services_comp_service_list", data)
+			tplRenderer.RenderResponse(ctx, w, r, "app_services_comp_service_list", data)
 
 		// Unknown snippet.
 		case isHTMXCall:
@@ -229,7 +230,7 @@ func (u ui) handlerSelectService() http.HandlerFunc {
 			data.Services = mapServiceToTPL(resp.Services)
 			data.ServicePagination = mapPaginationToTPL(resp.PaginationCursors, urls.URLWithComponent(currentURL, componentServiceList))
 
-			u.tplRenderer.RenderResponse(ctx, w, r, "app_services", data)
+			tplRenderer.RenderResponse(ctx, w, r, "app_services", data)
 		}
 	})
 }

@@ -175,6 +175,7 @@ func (u ui) handlerSLODetails() http.HandlerFunc {
 			SLOID:                    sloID,
 			AutoReloadSLODataSeconds: 30,
 		}
+		tplRenderer := u.tplRenderer.WithTitle(fmt.Sprintf("SLO Details for %s - Sloth", sloID))
 
 		// If we have group labels in the query params, redirect to this handler but using the correct
 		// SLO ID endpoint that contains the group labels embedded in the ID.
@@ -217,7 +218,7 @@ func (u ui) handlerSLODetails() http.HandlerFunc {
 			data.SLOData = sloStats
 			data.SLOData.RefreshURL = urls.URLWithComponent(currentURL, componentSLOStats)
 
-			u.tplRenderer.RenderResponse(ctx, w, r, "app_slo_comp_stats", data)
+			tplRenderer.RenderResponse(ctx, w, r, "app_slo_comp_stats", data)
 
 		// Get SLI availability range data.
 		case isHTMXCall && component == componentSLIChart:
@@ -250,7 +251,7 @@ func (u ui) handlerSLODetails() http.HandlerFunc {
 			data.SLIChartData.RefreshURL = urls.URLWithComponent(currentURL, componentSLIChart)
 			data.SLIChartData.Range = validSLIRangesS[sliRange]
 
-			u.tplRenderer.RenderResponse(ctx, w, r, "app_slo_comp_sli_chart", data)
+			tplRenderer.RenderResponse(ctx, w, r, "app_slo_comp_sli_chart", data)
 
 		// Get Burned budget range data.
 		case isHTMXCall && component == componentBudgetChart:
@@ -275,7 +276,7 @@ func (u ui) handlerSLODetails() http.HandlerFunc {
 			data.BudgetChartData.RefreshURL = urls.URLWithComponent(currentURL, componentBudgetChart)
 			data.BudgetChartData.Range = validBudgetRangesS[budgetRange]
 
-			u.tplRenderer.RenderResponse(ctx, w, r, "app_slo_comp_budget_chart", data)
+			tplRenderer.RenderResponse(ctx, w, r, "app_slo_comp_budget_chart", data)
 
 		// Unknown snippet.
 		case isHTMXCall:
@@ -341,7 +342,7 @@ func (u ui) handlerSLODetails() http.HandlerFunc {
 			data.SLOData.ServiceID = sloDetails.SLO.SLO.ServiceID
 			data.SLOData.ServiceURL = urls.AppURL("/services/" + sloDetails.SLO.SLO.ServiceID)
 
-			u.tplRenderer.RenderResponse(ctx, w, r, "app_slo", data)
+			tplRenderer.RenderResponse(ctx, w, r, "app_slo", data)
 		}
 	})
 }

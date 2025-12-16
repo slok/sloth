@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/slok/sloth/internal/http/backend/app"
@@ -123,6 +124,7 @@ func (u ui) handlerSelectSLO() http.HandlerFunc {
 		isHTMXCall := htmx.NewRequest(r.Header).IsHTMXRequest()
 		component := urls.ComponentFromRequest(r)
 		data := tplData{}
+		tplRenderer := u.tplRenderer.WithTitle("SLOs - Sloth")
 
 		// Get all URL data.
 		sortModeS := r.URL.Query().Get(queryParamSLOSortMode)
@@ -138,6 +140,10 @@ func (u ui) handlerSelectSLO() http.HandlerFunc {
 		data.SLOFilterBurningOverThreshold = r.URL.Query().Get(queryParamFilterBurningOverThreshold) == "on"
 		data.SLOFilterPeriodBudgetConsumed = r.URL.Query().Get(queryParamFilterPeriodBudgetConsumed) == "on"
 		data.FilterServiceID = r.URL.Query().Get(queryParamSLOServiceID)
+
+		if data.FilterServiceID != "" {
+			tplRenderer = u.tplRenderer.WithTitle(fmt.Sprintf("SLOs for %s - Sloth", data.FilterServiceID))
+		}
 
 		currentURL := urls.AppURL("/slos")
 		currentURL = urls.AddQueryParm(currentURL, queryParamSLOSearch, data.SLOSearchInput)
@@ -247,7 +253,7 @@ func (u ui) handlerSelectSLO() http.HandlerFunc {
 			data.SLOs = mapSLOsToTPL(slosResp.SLOs)
 			data.SLOPagination = mapPaginationToTPL(slosResp.PaginationCursors, urls.URLWithComponent(currentURL, componentSLOList))
 
-			u.tplRenderer.RenderResponse(ctx, w, r, "app_slos_comp_slo_list", data)
+			tplRenderer.RenderResponse(ctx, w, r, "app_slos_comp_slo_list", data)
 
 		// Unknown snippet.
 		case isHTMXCall:
@@ -273,7 +279,7 @@ func (u ui) handlerSelectSLO() http.HandlerFunc {
 			data.SLOs = mapSLOsToTPL(slosResp.SLOs)
 			data.SLOPagination = mapPaginationToTPL(slosResp.PaginationCursors, urls.URLWithComponent(currentURL, componentSLOList))
 
-			u.tplRenderer.RenderResponse(ctx, w, r, "app_slos", data)
+			tplRenderer.RenderResponse(ctx, w, r, "app_slos", data)
 		}
 	})
 }

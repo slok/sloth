@@ -130,3 +130,15 @@ td .percent-bar {
     color: var(--sloth-ok);
     background-color: color-mix(in srgb, var(--sloth-ok) 10%, transparent);
 }
+
+tr td.is-critical {
+    border-left: 4px solid var(--sloth-critical);
+}
+
+tr td.is-warning {
+    border-left: 4px solid var(--sloth-warning);
+}
+
+tr td.is-ok {
+    border-left: 4px solid var(--sloth-ok);
+}

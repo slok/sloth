@@ -52,7 +52,13 @@
     <tbody>
         {{range .Data.SLOs}}
         <tr>
+        {{ if .CriticalAlertName }}
+        <td class="is-critical">
+        {{ else if .WarningAlertName }}
+        <td class="is-warning">
+        {{ else }}
         <td>
+        {{ end }}
             {{ if .IsGrouped }}
                 <span data-tooltip="Grouped SLO"><i data-lucide="group"></i></span>
             {{ else }}
@@ -78,9 +84,9 @@
         <td>
             <span class="percent-badge {{.BurningBudgetPercent | percentUpColorCSSClass}}">{{.BurningBudgetPercent | prettyPercent}} </span>
         </td>
-        <td>
+        <td style="text-align: right;">
+            <span class="{{.RemainingBudgetWindowPercent | percentDownColorCSSClass}}">{{.RemainingBudgetWindowPercent | prettyPercent}}</span>
             <span class="percent-bar {{.RemainingBudgetWindowPercent | percentDownColorCSSClass}}">{{ percentBarSVG .RemainingBudgetWindowPercent }}</span>
-            <span class="percent-badge {{.RemainingBudgetWindowPercent | percentDownColorCSSClass}}">{{.RemainingBudgetWindowPercent | prettyPercent}}</span>
         </td>
         <td>
         {{ if .CriticalAlertName }}

@@ -85,9 +85,9 @@ const (
 func PercentBarSVG(percent float64) string {
 	const color = "currentcolor"
 	svg := fmt.Sprintf(`<svg width="100%%" height="100%%" viewBox="0 0 100 20" xmlns="http://www.w3.org/2000/svg">
-	<rect x="0" y="1" width="100" height="16" fill="none" stroke="currentcolor" stroke-width="1" rx="3"/>
-	<rect x="0" y="1" width="%.1f" height="16" fill="%s" rx="3"/>
-	</svg>`, percent, color)
+	<rect x="0" y="1" width="100" height="16" fill="%s" fill-opacity="0.05" stroke="currentcolor" stroke-width="1" rx="1"/>
+	<rect x="0" y="1" width="%.1f" height="16" fill="%s" rx="1"/>
+	</svg>`, color, percent, color)
 
 	return svg
 }

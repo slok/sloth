@@ -140,7 +140,6 @@ func (u ui) handlerSelectSLO() http.HandlerFunc {
 		data.SLOFilterBurningOverThreshold = r.URL.Query().Get(queryParamFilterBurningOverThreshold) == "on"
 		data.SLOFilterPeriodBudgetConsumed = r.URL.Query().Get(queryParamFilterPeriodBudgetConsumed) == "on"
 		data.FilterServiceID = r.URL.Query().Get(queryParamSLOServiceID)
-
 		if data.FilterServiceID != "" {
 			tplRenderer = u.tplRenderer.WithTitle(fmt.Sprintf("SLOs for %s - Sloth", data.FilterServiceID))
 		}

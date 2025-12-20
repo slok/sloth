@@ -60,18 +60,20 @@
                     <div></div>
                     <div></div>
                     <div></div>
-                    <button class="secondary" {{ if not .Data.ServicePagination.HasPrevious }} disabled {{ end }}
+                    <a {{ if not .Data.ServicePagination.HasPrevious }}aria-disabled="true"{{ end }}
+                       href="{{ .Data.ServicePagination.PrevURL }}"
                        hx-get="{{ .Data.ServicePagination.PrevURL }}"
                        hx-target="#services-list"
                        hx-swap="innerHTML show:window:top">
                     << Previous
-                    </button>
-                    <button class="secondary" {{ if not .Data.ServicePagination.HasNext }} disabled {{ end }}
+                    </a>
+                    <a {{ if not .Data.ServicePagination.HasNext }}aria-disabled="true"{{ end }}
+                       href="{{ .Data.ServicePagination.NextURL }}"
                        hx-get="{{ .Data.ServicePagination.NextURL }}"
                        hx-target="#services-list"
                        hx-swap="innerHTML show:window:top">
                     Next >>
-                    </button>
+                    </a>
                     <div></div>
                     <div></div>
                     <div></div>

@@ -142,3 +142,11 @@ tr td.is-warning {
 tr td.is-ok {
     border-left: 4px solid var(--sloth-ok);
 }
+
+a[aria-disabled="true"] {
+    pointer-events: none;
+    opacity: 0.5;
+    cursor: not-allowed;
+    text-decoration: none;
+    color: var(--muted-color);
+}

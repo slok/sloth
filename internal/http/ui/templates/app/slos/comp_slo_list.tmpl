@@ -109,18 +109,20 @@
                     <div></div>
                     <div></div>
                     <div></div>
-                    <button class="secondary" {{ if not .Data.SLOPagination.HasPrevious }} disabled {{ end }}
+                    <a {{ if not .Data.SLOPagination.HasPrevious }}aria-disabled="true"{{ end }}
+                       href="{{ .Data.SLOPagination.PrevURL }}"
                        hx-get="{{ .Data.SLOPagination.PrevURL }}"
                        hx-target="#slo-list"
                        hx-swap="innerHTML show:window:top">
                     << Previous
-                    </button>
-                    <button class="secondary" {{ if not .Data.SLOPagination.HasNext }} disabled {{ end }}
+                    </a>
+                    <a {{ if not .Data.SLOPagination.HasNext }}aria-disabled="true"{{ end }}
+                       href="{{ .Data.SLOPagination.NextURL }}"
                        hx-get="{{ .Data.SLOPagination.NextURL }}"
                        hx-target="#slo-list"
                        hx-swap="innerHTML show:window:top">
                     Next >>
-                    </button>
+                    </a>
                     <div></div>
                     <div></div>
                     <div></div>

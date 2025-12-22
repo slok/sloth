@@ -4,7 +4,11 @@ package v1
 
 // SLIRawApplyConfiguration represents a declarative configuration of the SLIRaw type for use
 // with apply.
+//
+// SLIRaw is a error ratio SLI already calculated. Normally this will be used when the SLI
+// is already calculated by other recording rule, system...
 type SLIRawApplyConfiguration struct {
+	// ErrorRatioQuery is a Prometheus query that will get the raw error ratio (0-1) for the SLO.
 	ErrorRatioQuery *string `json:"errorRatioQuery,omitempty"`
 }
 

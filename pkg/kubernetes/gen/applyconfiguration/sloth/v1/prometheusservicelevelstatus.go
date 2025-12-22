@@ -9,11 +9,18 @@ import (
 // PrometheusServiceLevelStatusApplyConfiguration represents a declarative configuration of the PrometheusServiceLevelStatus type for use
 // with apply.
 type PrometheusServiceLevelStatusApplyConfiguration struct {
-	PromOpRulesGeneratedSLOs           *int         `json:"promOpRulesGeneratedSLOs,omitempty"`
-	ProcessedSLOs                      *int         `json:"processedSLOs,omitempty"`
-	PromOpRulesGenerated               *bool        `json:"promOpRulesGenerated,omitempty"`
+	// PromOpRulesGeneratedSLOs tells how many SLOs have been processed and generated for Prometheus operator successfully.
+	PromOpRulesGeneratedSLOs *int `json:"promOpRulesGeneratedSLOs,omitempty"`
+	// ProcessedSLOs tells how many SLOs haven been processed for Prometheus operator.
+	ProcessedSLOs *int `json:"processedSLOs,omitempty"`
+	// PromOpRulesGenerated tells if the rules for prometheus operator CRD have been generated.
+	PromOpRulesGenerated *bool `json:"promOpRulesGenerated,omitempty"`
+	// LastPromOpRulesGeneration tells the last atemp made for a successful SLO rules generate.
 	LastPromOpRulesSuccessfulGenerated *metav1.Time `json:"lastPromOpRulesSuccessfulGenerated,omitempty"`
-	ObservedGeneration                 *int64       `json:"observedGeneration,omitempty"`
+	// ObservedGeneration tells the generation was acted on, normally this is required to stop an
+	// infinite loop when the status is updated because it sends a watch updated event to the watchers
+	// of the K8s object.
+	ObservedGeneration *int64 `json:"observedGeneration,omitempty"`
 }
 
 // PrometheusServiceLevelStatusApplyConfiguration constructs a declarative configuration of the PrometheusServiceLevelStatus type for use with

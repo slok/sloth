@@ -307,7 +307,7 @@ func (testPlugin) TransformK8sObjects(ctx context.Context, kmeta model.K8sMeta, 
 			require.NoError(err)
 
 			// Create fake clients.
-			slothCLI := slothclientsetfake.NewSimpleClientset()
+			slothCLI := slothclientsetfake.NewClientset()
 
 			// Setup fake dynamic client with ConfigMap scheme.
 			scheme := runtime.NewScheme()

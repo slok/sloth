@@ -4,14 +4,28 @@ package v1
 
 // SLOApplyConfiguration represents a declarative configuration of the SLO type for use
 // with apply.
+//
+// SLO is the configuration/declaration of the service level objective of
+// a service.
 type SLOApplyConfiguration struct {
-	Name        *string                       `json:"name,omitempty"`
-	Description *string                       `json:"description,omitempty"`
-	Objective   *float64                      `json:"objective,omitempty"`
-	Plugins     *SLOPluginsApplyConfiguration `json:"plugins,omitempty"`
-	Labels      map[string]string             `json:"labels,omitempty"`
-	SLI         *SLIApplyConfiguration        `json:"sli,omitempty"`
-	Alerting    *AlertingApplyConfiguration   `json:"alerting,omitempty"`
+	// Name is the name of the SLO.
+	Name *string `json:"name,omitempty"`
+	// Description is the description of the SLO.
+	Description *string `json:"description,omitempty"`
+	// Objective is target of the SLO the percentage (0, 100] (e.g 99.9).
+	Objective *float64 `json:"objective,omitempty"`
+	// Plugins will be added along the group SLO plugins declared in the spec root level
+	// and Sloth default plugins.
+	Plugins *SLOPluginsApplyConfiguration `json:"plugins,omitempty"`
+	// Labels are the Prometheus labels that will have all the recording and
+	// alerting rules for this specific SLO. These labels are merged with the
+	// previous level labels.
+	Labels map[string]string `json:"labels,omitempty"`
+	// SLI is the indicator (service level indicator) for this specific SLO.
+	SLI *SLIApplyConfiguration `json:"sli,omitempty"`
+	// Alerting is the configuration with all the things related with the SLO
+	// alerts.
+	Alerting *AlertingApplyConfiguration `json:"alerting,omitempty"`
 }
 
 // SLOApplyConfiguration constructs a declarative configuration of the SLO type for use with

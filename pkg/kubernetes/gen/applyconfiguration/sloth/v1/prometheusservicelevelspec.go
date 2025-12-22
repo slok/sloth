@@ -4,11 +4,18 @@ package v1
 
 // PrometheusServiceLevelSpecApplyConfiguration represents a declarative configuration of the PrometheusServiceLevelSpec type for use
 // with apply.
+//
+// ServiceLevelSpec is the spec for a PrometheusServiceLevel.
 type PrometheusServiceLevelSpecApplyConfiguration struct {
-	Service    *string                       `json:"service,omitempty"`
-	Labels     map[string]string             `json:"labels,omitempty"`
+	// Service is the application of the SLOs.
+	Service *string `json:"service,omitempty"`
+	// Labels are the Prometheus labels that will have all the recording
+	// and alerting rules generated for the service SLOs.
+	Labels map[string]string `json:"labels,omitempty"`
+	// SLOPlugins will be added to the SLO generation plugin chain of all SLOs.
 	SLOPlugins *SLOPluginsApplyConfiguration `json:"sloPlugins,omitempty"`
-	SLOs       []SLOApplyConfiguration       `json:"slos,omitempty"`
+	// SLOs are the SLOs of the service.
+	SLOs []SLOApplyConfiguration `json:"slos,omitempty"`
 }
 
 // PrometheusServiceLevelSpecApplyConfiguration constructs a declarative configuration of the PrometheusServiceLevelSpec type for use with

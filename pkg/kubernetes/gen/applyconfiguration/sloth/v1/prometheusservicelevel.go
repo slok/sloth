@@ -10,6 +10,9 @@ import (
 
 // PrometheusServiceLevelApplyConfiguration represents a declarative configuration of the PrometheusServiceLevel type for use
 // with apply.
+//
+// PrometheusServiceLevel is the expected service quality level using Prometheus
+// as the backend used by Sloth.
 type PrometheusServiceLevelApplyConfiguration struct {
 	metav1.TypeMetaApplyConfiguration    `json:",inline"`
 	*metav1.ObjectMetaApplyConfiguration `json:"metadata,omitempty"`
@@ -27,6 +30,7 @@ func PrometheusServiceLevel(name, namespace string) *PrometheusServiceLevelApply
 	b.WithAPIVersion("sloth.slok.dev/v1")
 	return b
 }
+
 func (b PrometheusServiceLevelApplyConfiguration) IsApplyConfiguration() {}
 
 // WithKind sets the Kind field in the declarative configuration to the given value

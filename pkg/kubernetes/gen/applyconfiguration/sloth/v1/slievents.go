@@ -4,8 +4,17 @@ package v1
 
 // SLIEventsApplyConfiguration represents a declarative configuration of the SLIEvents type for use
 // with apply.
+//
+// SLIEvents is an SLI that is calculated as the division of bad events and total events, giving
+// a ratio SLI. Normally this is the most common ratio type.
 type SLIEventsApplyConfiguration struct {
+	// ErrorQuery is a Prometheus query that will get the number/count of events
+	// that we consider that are bad for the SLO (e.g "http 5xx", "latency > 250ms"...).
+	// Requires the usage of `{{.window}}` template variable.
 	ErrorQuery *string `json:"errorQuery,omitempty"`
+	// TotalQuery is a Prometheus query that will get the total number/count of events
+	// for the SLO (e.g "all http requests"...).
+	// Requires the usage of `{{.window}}` template variable.
 	TotalQuery *string `json:"totalQuery,omitempty"`
 }
 

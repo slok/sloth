@@ -3,7 +3,7 @@
 set -o errexit
 set -o nounset
 
-IMAGE_GEN=ghcr.io/slok/kube-code-generator:v0.8.0
+IMAGE_GEN=ghcr.io/slok/kube-code-generator:v0.9.0
 GEN_DIRECTORY="pkg/kubernetes/gen"
 
 echo "Cleaning gen directory"

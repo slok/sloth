@@ -4,9 +4,16 @@ package v1
 
 // AlertApplyConfiguration represents a declarative configuration of the Alert type for use
 // with apply.
+//
+// Alert configures specific SLO alert.
 type AlertApplyConfiguration struct {
-	Disable     *bool             `json:"disable,omitempty"`
-	Labels      map[string]string `json:"labels,omitempty"`
+	// Disable disables the alert and makes Sloth not generating this alert. This
+	// can be helpful for example to disable ticket(warning) alerts.
+	Disable *bool `json:"disable,omitempty"`
+	// Labels are the Prometheus labels for the specific alert. For example can be
+	// useful to route the Page alert to specific Slack channel.
+	Labels map[string]string `json:"labels,omitempty"`
+	// Annotations are the Prometheus annotations for the specific alert.
 	Annotations map[string]string `json:"annotations,omitempty"`
 }
 

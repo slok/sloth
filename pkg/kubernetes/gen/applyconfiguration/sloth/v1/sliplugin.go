@@ -4,8 +4,12 @@ package v1
 
 // SLIPluginApplyConfiguration represents a declarative configuration of the SLIPlugin type for use
 // with apply.
+//
+// SLIPlugin will use the SLI returned by the SLI plugin selected along with the options.
 type SLIPluginApplyConfiguration struct {
-	ID      *string           `json:"id,omitempty"`
+	// Name is the name of the plugin that needs to load.
+	ID *string `json:"id,omitempty"`
+	// Options are the options used for the plugin.
 	Options map[string]string `json:"options,omitempty"`
 }
 

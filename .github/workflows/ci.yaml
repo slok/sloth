@@ -7,7 +7,7 @@ jobs:
     name: Check
     runs-on: ubuntu-latest
     # Execute the checks inside the container instead the VM.
-    container: golangci/golangci-lint:v2.4.0-alpine
+    container: golangci/golangci-lint:v2.7.2-alpine
     steps:
       - uses: actions/checkout@v6
       - run: |
@@ -72,7 +72,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        kubernetes: [1.31.12, 1.32.8, 1.33.4, 1.34.0]
+        kubernetes: [1.31.14, 1.32.11, 1.33.7, 1.34.3, 1.35.0]
     steps:
       - uses: actions/checkout@v6
       - uses: actions/setup-go@v6
@@ -80,7 +80,7 @@ jobs:
           go-version-file: go.mod
       - name: Execute tests
         env:
-          KIND_VERSION: v0.30.0
+          KIND_VERSION: v0.31.0
         run: |
           # Get dependencies.
           echo "Getting dependencies..."

@@ -45,7 +45,7 @@ func NewFakeApiserverRepository(logger log.Logger, k8sTransformPlugin plugink8st
 	}}}
 
 	c, err := NewApiserverRepository(ApiserverRepositoryConfig{
-		SlothCli:           slothclientsetfake.NewSimpleClientset(prometheusServiceLevelFakes...),
+		SlothCli:           slothclientsetfake.NewClientset(prometheusServiceLevelFakes...),
 		DynamicCli:         dynamicCli,
 		DiscoveryCli:       fakeDiscovery,
 		K8sTransformPlugin: k8sTransformPlugin,

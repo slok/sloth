@@ -41,7 +41,7 @@ func NewPrometheusServiceLevelInformer(client versioned.Interface, namespace str
 // one. This reduces memory footprint and number of connections to the server.
 func NewFilteredPrometheusServiceLevelInformer(client versioned.Interface, namespace string, resyncPeriod time.Duration, indexers cache.Indexers, tweakListOptions internalinterfaces.TweakListOptionsFunc) cache.SharedIndexInformer {
 	return cache.NewSharedIndexInformer(
-		&cache.ListWatch{
+		cache.ToListWatcherWithWatchListSemantics(&cache.ListWatch{
 			ListFunc: func(options metav1.ListOptions) (runtime.Object, error) {
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
@@ -66,7 +66,7 @@ func NewFilteredPrometheusServiceLevelInformer(client versioned.Interface, names
 				}
 				return client.SlothV1().PrometheusServiceLevels(namespace).Watch(ctx, options)
 			},
-		},
+		}, client),
 		&apislothv1.PrometheusServiceLevel{},
 		resyncPeriod,
 		indexers,

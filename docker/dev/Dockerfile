@@ -2,7 +2,7 @@ FROM golang:1.25.5
 
 LABEL org.opencontainers.image.source=https://github.com/slok/sloth
 
-ARG GOLANGCI_LINT_VERSION="2.4.0"
+ARG GOLANGCI_LINT_VERSION="2.7.2"
 ARG MOCKERY_VERSION="3.5.4"
 ARG GOMARKDOC_VERSION="1.1.0"
 ARG HELM_VERSION="3.17.0"

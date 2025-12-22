@@ -4,9 +4,18 @@ package v1
 
 // SLIApplyConfiguration represents a declarative configuration of the SLI type for use
 // with apply.
+//
+// SLI will tell what is good or bad for the SLO.
+// All SLIs will be get based on time windows, that's why Sloth needs the queries to
+// use `{{.window}}` template variable.
+//
+// Only one of the SLI types can be used.
 type SLIApplyConfiguration struct {
-	Raw    *SLIRawApplyConfiguration    `json:"raw,omitempty"`
+	// Raw is the raw SLI type.
+	Raw *SLIRawApplyConfiguration `json:"raw,omitempty"`
+	// Events is the events SLI type.
 	Events *SLIEventsApplyConfiguration `json:"events,omitempty"`
+	// Plugin is the pluggable SLI type.
 	Plugin *SLIPluginApplyConfiguration `json:"plugin,omitempty"`
 }
 

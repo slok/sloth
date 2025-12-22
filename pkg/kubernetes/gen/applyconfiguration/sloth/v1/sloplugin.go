@@ -8,10 +8,20 @@ import (
 
 // SLOPluginApplyConfiguration represents a declarative configuration of the SLOPlugin type for use
 // with apply.
+//
+// SLOPlugin is a plugin that will be used on the chain of plugins for the SLO generation.
 type SLOPluginApplyConfiguration struct {
-	ID       *string          `json:"id,omitempty"`
-	Config   *json.RawMessage `json:"config,omitempty"`
-	Priority *int             `json:"priority,omitempty"`
+	// ID is the ID of the plugin to load .
+	ID *string `json:"id,omitempty"`
+	// Config is the configuration used on the plugin instance creation.
+	Config *json.RawMessage `json:"config,omitempty"`
+	// Priority is the priority of the plugin in the chain. The lower the number
+	// the higher the priority. The first plugin will be the one with the lowest
+	// priority.
+	// The default plugins loaded by Sloth use `0` priority. If you want to
+	// execute plugins before the default ones, you can use negative priority.
+	// It is recommended to use round gaps of numbers like 10, 100, 1000, -200, -1000...
+	Priority *int `json:"priority,omitempty"`
 }
 
 // SLOPluginApplyConfiguration constructs a declarative configuration of the SLOPlugin type for use with

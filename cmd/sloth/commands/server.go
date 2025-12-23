@@ -43,6 +43,10 @@ type serverCommand struct {
 		fake                        bool
 		promAddress                 string
 		cacheInstantRefreshInterval time.Duration
+		auth                        struct {
+			basicUser     string
+			basicPassword string
+		}
 	}
 }
 
@@ -59,6 +63,8 @@ func NewServerCommand(app *kingpin.Application) Command {
 	cmd.Flag("fake-prometheus", "Enable fake Prometheus server.").BoolVar(&c.prometheus.fake)
 	cmd.Flag("prometheus-address", "Prometheus server address.").Default("http://localhost:9090").StringVar(&c.prometheus.promAddress)
 	cmd.Flag("prometheus-cache-refresh-interval", "The interval for Prometheus cache instant data refresh refresh.").Default("1m").DurationVar(&c.prometheus.cacheInstantRefreshInterval)
+	cmd.Flag("prometheus-auth-basic-user", "Basic auth user for Prometheus.").StringVar(&c.prometheus.auth.basicUser)
+	cmd.Flag("prometheus-auth-basic-password", "Basic auth password for Prometheus.").StringVar(&c.prometheus.auth.basicPassword)
 
 	return c
 }
@@ -158,9 +164,28 @@ func (c serverCommand) Run(ctx context.Context, config RootConfig) error {
 			logger.Warningf("Using fake Prometheus storage backend")
 			repo = storagefake.NewFakeRepository()
 		case c.prometheus.promAddress != "":
+			var roundTripper http.RoundTripper = http.DefaultTransport
+
+			// Add basic auth if configured.
+			if c.prometheus.auth.basicUser != "" || c.prometheus.auth.basicPassword != "" {
+				logger.Infof("Basic auth enabled for Prometheus client")
+				roundTripper = &basicAuthRoundTripper{
+					username: c.prometheus.auth.basicUser,
+					password: c.prometheus.auth.basicPassword,
+					next:     roundTripper,
+				}
+			}
+
+			httpClient := &http.Client{
+				Timeout:   1 * time.Minute, // At least we end at some point
+				Transport: roundTripper,
+			}
+
 			logger.Infof("Using Prometheus storage backend at %s", c.prometheus.promAddress)
+
 			client, err := promapi.NewClient(promapi.Config{
 				Address: c.prometheus.promAddress,
+				Client:  httpClient,
 			})
 			if err != nil {
 				return fmt.Errorf("could not create prometheus api client: %w", err)
@@ -261,4 +286,15 @@ func newMeasuredUnifiedRepository(orig unifiedRepository, metricsRecorder httpba
 		SLOGetter:     storagewrappers.NewMeasuredSLOGetter(orig, metricsRecorder),
 		ServiceGetter: storagewrappers.NewMeasuredServiceGetter(orig, metricsRecorder),
 	}
+}
+
+type basicAuthRoundTripper struct {
+	username string
+	password string
+	next     http.RoundTripper
+}
+
+func (rt *basicAuthRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
+	req.SetBasicAuth(rt.username, rt.password)
+	return rt.next.RoundTrip(req)
 }

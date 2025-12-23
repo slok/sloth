@@ -56,6 +56,7 @@ type serverCommand struct {
 			certFile           string
 			keyFile            string
 		}
+		headers map[string]string
 	}
 }
 
@@ -74,10 +75,11 @@ func NewServerCommand(app *kingpin.Application) Command {
 	cmd.Flag("prometheus-cache-refresh-interval", "The interval for Prometheus cache instant data refresh refresh.").Default("1m").DurationVar(&c.prometheus.cacheInstantRefreshInterval)
 	cmd.Flag("prometheus-auth-basic-user", "Basic auth user for Prometheus.").StringVar(&c.prometheus.auth.basicUser)
 	cmd.Flag("prometheus-auth-basic-password", "Basic auth password for Prometheus.").StringVar(&c.prometheus.auth.basicPassword)
-	cmd.Flag("prometheus-tls-insecure-skip-verify", "Skip TLS certificate verification for Prometheus.").BoolVar(&c.prometheus.tls.insecureSkipVerify)
-	cmd.Flag("prometheus-tls-ca-file", "CA certificate file for Prometheus TLS.").StringVar(&c.prometheus.tls.caFile)
-	cmd.Flag("prometheus-tls-cert-file", "Client certificate file for Prometheus mTLS.").StringVar(&c.prometheus.tls.certFile)
-	cmd.Flag("prometheus-tls-key-file", "Client key file for Prometheus mTLS.").StringVar(&c.prometheus.tls.keyFile)
+	cmd.Flag("prometheus-tls-insecure-skip-verify", "Skip TLS certificate verification for Prometheus client.").BoolVar(&c.prometheus.tls.insecureSkipVerify)
+	cmd.Flag("prometheus-tls-ca-file", "CA certificate file for Prometheus client TLS.").StringVar(&c.prometheus.tls.caFile)
+	cmd.Flag("prometheus-tls-cert-file", "Client certificate file for Prometheus client mTLS.").StringVar(&c.prometheus.tls.certFile)
+	cmd.Flag("prometheus-tls-key-file", "Client key file for Prometheus client mTLS.").StringVar(&c.prometheus.tls.keyFile)
+	cmd.Flag("prometheus-header", "Custom header for Prometheus client (format: 'key=value'). Can be repeated for multiple headers.").Short('h').StringMapVar(&c.prometheus.headers)
 
 	return c
 }
@@ -192,13 +194,13 @@ func (c serverCommand) Run(ctx context.Context, config RootConfig) error {
 
 			var roundTripper http.RoundTripper = transport
 
-			// Add basic auth if configured.
-			if c.prometheus.auth.basicUser != "" || c.prometheus.auth.basicPassword != "" {
-				logger.Infof("Basic auth enabled for Prometheus client")
-				roundTripper = &basicAuthRoundTripper{
-					username: c.prometheus.auth.basicUser,
-					password: c.prometheus.auth.basicPassword,
-					next:     roundTripper,
+			// Add auth and custom headers if configured.
+			if c.prometheus.auth.basicUser != "" || c.prometheus.auth.basicPassword != "" || len(c.prometheus.headers) > 0 {
+				roundTripper = &authHeadersRoundTripper{
+					basicAuthUser: c.prometheus.auth.basicUser,
+					basicAuthPass: c.prometheus.auth.basicPassword,
+					headers:       c.prometheus.headers,
+					next:          roundTripper,
 				}
 			}
 
@@ -347,13 +349,24 @@ func newMeasuredUnifiedRepository(orig unifiedRepository, metricsRecorder httpba
 	}
 }
 
-type basicAuthRoundTripper struct {
-	username string
-	password string
-	next     http.RoundTripper
+// authHeadersRoundTripper adds basic auth and custom headers to HTTP requests.
+type authHeadersRoundTripper struct {
+	basicAuthUser string
+	basicAuthPass string
+	headers       map[string]string
+	next          http.RoundTripper
 }
 
-func (rt *basicAuthRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
-	req.SetBasicAuth(rt.username, rt.password)
+func (rt *authHeadersRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
+	// Add basic auth if configured.
+	if rt.basicAuthUser != "" || rt.basicAuthPass != "" {
+		req.SetBasicAuth(rt.basicAuthUser, rt.basicAuthPass)
+	}
+
+	// Add custom headers.
+	for key, value := range rt.headers {
+		req.Header.Set(key, value)
+	}
+
 	return rt.next.RoundTrip(req)
 }

@@ -2,9 +2,12 @@ package commands
 
 import (
 	"context"
+	"crypto/tls"
+	"crypto/x509"
 	"fmt"
 	"net/http"
 	"net/http/pprof"
+	"os"
 	"os/signal"
 	"syscall"
 	"time"
@@ -43,6 +46,17 @@ type serverCommand struct {
 		fake                        bool
 		promAddress                 string
 		cacheInstantRefreshInterval time.Duration
+		auth                        struct {
+			basicUser     string
+			basicPassword string
+		}
+		tls struct {
+			insecureSkipVerify bool
+			caFile             string
+			certFile           string
+			keyFile            string
+		}
+		headers map[string]string
 	}
 }
 
@@ -59,6 +73,13 @@ func NewServerCommand(app *kingpin.Application) Command {
 	cmd.Flag("fake-prometheus", "Enable fake Prometheus server.").BoolVar(&c.prometheus.fake)
 	cmd.Flag("prometheus-address", "Prometheus server address.").Default("http://localhost:9090").StringVar(&c.prometheus.promAddress)
 	cmd.Flag("prometheus-cache-refresh-interval", "The interval for Prometheus cache instant data refresh refresh.").Default("1m").DurationVar(&c.prometheus.cacheInstantRefreshInterval)
+	cmd.Flag("prometheus-auth-basic-user", "Basic auth user for Prometheus.").StringVar(&c.prometheus.auth.basicUser)
+	cmd.Flag("prometheus-auth-basic-password", "Basic auth password for Prometheus.").StringVar(&c.prometheus.auth.basicPassword)
+	cmd.Flag("prometheus-tls-insecure-skip-verify", "Skip TLS certificate verification for Prometheus client.").BoolVar(&c.prometheus.tls.insecureSkipVerify)
+	cmd.Flag("prometheus-tls-ca-file", "CA certificate file for Prometheus client TLS.").StringVar(&c.prometheus.tls.caFile)
+	cmd.Flag("prometheus-tls-cert-file", "Client certificate file for Prometheus client mTLS.").StringVar(&c.prometheus.tls.certFile)
+	cmd.Flag("prometheus-tls-key-file", "Client key file for Prometheus client mTLS.").StringVar(&c.prometheus.tls.keyFile)
+	cmd.Flag("prometheus-header", "Custom header for Prometheus client (format: 'key=value'). Can be repeated for multiple headers.").Short('h').StringMapVar(&c.prometheus.headers)
 
 	return c
 }
@@ -158,9 +179,40 @@ func (c serverCommand) Run(ctx context.Context, config RootConfig) error {
 			logger.Warningf("Using fake Prometheus storage backend")
 			repo = storagefake.NewFakeRepository()
 		case c.prometheus.promAddress != "":
+			// Create HTTP transport with optional TLS configuration.
+			transport := http.DefaultTransport.(*http.Transport).Clone()
+
+			// Configure TLS if any TLS options are set.
+			if c.prometheus.tls.insecureSkipVerify || c.prometheus.tls.caFile != "" || c.prometheus.tls.certFile != "" {
+				tlsConfig, err := c.buildPrometheusTLSConfig()
+				if err != nil {
+					return fmt.Errorf("could not build TLS config: %w", err)
+				}
+				transport.TLSClientConfig = tlsConfig
+			}
+
+			var roundTripper http.RoundTripper = transport
+
+			// Add auth and custom headers if configured.
+			if c.prometheus.auth.basicUser != "" || c.prometheus.auth.basicPassword != "" || len(c.prometheus.headers) > 0 {
+				roundTripper = &authHeadersRoundTripper{
+					basicAuthUser: c.prometheus.auth.basicUser,
+					basicAuthPass: c.prometheus.auth.basicPassword,
+					headers:       c.prometheus.headers,
+					next:          roundTripper,
+				}
+			}
+
+			httpClient := &http.Client{
+				Timeout:   1 * time.Minute, // At least we end at some point.
+				Transport: roundTripper,
+			}
+
 			logger.Infof("Using Prometheus storage backend at %s", c.prometheus.promAddress)
+
 			client, err := promapi.NewClient(promapi.Config{
 				Address: c.prometheus.promAddress,
+				Client:  httpClient,
 			})
 			if err != nil {
 				return fmt.Errorf("could not create prometheus api client: %w", err)
@@ -248,6 +300,39 @@ func (c serverCommand) Run(ctx context.Context, config RootConfig) error {
 	return nil
 }
 
+func (c *serverCommand) buildPrometheusTLSConfig() (*tls.Config, error) {
+	tlsConfig := &tls.Config{
+		InsecureSkipVerify: c.prometheus.tls.insecureSkipVerify,
+	}
+
+	// Load CA certificate if provided.
+	if c.prometheus.tls.caFile != "" {
+		caCert, err := os.ReadFile(c.prometheus.tls.caFile)
+		if err != nil {
+			return nil, fmt.Errorf("could not read CA file: %w", err)
+		}
+
+		caCertPool := x509.NewCertPool()
+		if !caCertPool.AppendCertsFromPEM(caCert) {
+			return nil, fmt.Errorf("failed to parse CA certificate")
+		}
+		tlsConfig.RootCAs = caCertPool
+	}
+
+	// Load client certificate and key for mTLS if provided.
+	if c.prometheus.tls.certFile != "" && c.prometheus.tls.keyFile != "" {
+		cert, err := tls.LoadX509KeyPair(c.prometheus.tls.certFile, c.prometheus.tls.keyFile)
+		if err != nil {
+			return nil, fmt.Errorf("could not load client certificate: %w", err)
+		}
+		tlsConfig.Certificates = []tls.Certificate{cert}
+	} else if c.prometheus.tls.certFile != "" || c.prometheus.tls.keyFile != "" {
+		return nil, fmt.Errorf("both cert-file and key-file must be provided for mTLS")
+	}
+
+	return tlsConfig, nil
+}
+
 type unifiedRepository interface {
 	storage.SLOGetter
 	storage.ServiceGetter
@@ -261,4 +346,26 @@ func newMeasuredUnifiedRepository(orig unifiedRepository, metricsRecorder httpba
 		SLOGetter:     storagewrappers.NewMeasuredSLOGetter(orig, metricsRecorder),
 		ServiceGetter: storagewrappers.NewMeasuredServiceGetter(orig, metricsRecorder),
 	}
+}
+
+// authHeadersRoundTripper adds basic auth and custom headers to HTTP requests.
+type authHeadersRoundTripper struct {
+	basicAuthUser string
+	basicAuthPass string
+	headers       map[string]string
+	next          http.RoundTripper
+}
+
+func (rt *authHeadersRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
+	// Add basic auth if configured.
+	if rt.basicAuthUser != "" || rt.basicAuthPass != "" {
+		req.SetBasicAuth(rt.basicAuthUser, rt.basicAuthPass)
+	}
+
+	// Add custom headers.
+	for key, value := range rt.headers {
+		req.Header.Set(key, value)
+	}
+
+	return rt.next.RoundTrip(req)
 }

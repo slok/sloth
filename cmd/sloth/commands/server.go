@@ -189,7 +189,6 @@ func (c serverCommand) Run(ctx context.Context, config RootConfig) error {
 					return fmt.Errorf("could not build TLS config: %w", err)
 				}
 				transport.TLSClientConfig = tlsConfig
-				logger.Infof("TLS enabled for Prometheus client")
 			}
 
 			var roundTripper http.RoundTripper = transport
@@ -205,7 +204,7 @@ func (c serverCommand) Run(ctx context.Context, config RootConfig) error {
 			}
 
 			httpClient := &http.Client{
-				Timeout:   1 * time.Minute, // At least we end at some point
+				Timeout:   1 * time.Minute, // At least we end at some point.
 				Transport: roundTripper,
 			}
 

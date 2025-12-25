@@ -22,8 +22,10 @@ func baseAlertGroup() model.MWMBAlertGroup {
 	}
 }
 
-func baseSLO() model.PromSLO {
-	return model.PromSLO{
+type SLOOption func(*model.PromSLO)
+
+func baseSLO(opts ...SLOOption) model.PromSLO {
+	slo := model.PromSLO{
 		ID:         "svc01-slo1",
 		Name:       "slo1",
 		Service:    "svc01",
@@ -31,7 +33,6 @@ func baseSLO() model.PromSLO {
 		SLI: model.PromSLI{
 			Events: &model.PromSLIEvents{
 				ErrorQuery: `sum(rate(http_requests_total{job="api",status=~"5.."}[{{.window}}]))`,
-				TotalQuery: `sum(rate(http_requests_total{job="api"}[{{.window}}]))`,
 			},
 		},
 		Labels: map[string]string{
@@ -39,6 +40,38 @@ func baseSLO() model.PromSLO {
 			"global02k1": "global02v1",
 		},
 	}
+
+	for _, opt := range opts {
+		opt(&slo)
+	}
+
+	return slo
+}
+
+func withTotalQuery() SLOOption {
+	return func(slo *model.PromSLO) {
+		slo.SLI.Events.TotalQuery = `sum(rate(http_requests_total{job="api"}[{{.window}}]))`
+	}
+}
+
+func TestProcessSLO_NoRules(t *testing.T) {
+	cfgBytes, err := json.Marshal(plugin.PluginConfig{})
+	require.NoError(t, err)
+
+	plug, err := plugin.NewPlugin(cfgBytes, pluginslov1.AppUtils{})
+	require.NoError(t, err)
+
+	req := &pluginslov1.Request{
+		SLO:            baseSLO(),
+		MWMBAlertGroup: baseAlertGroup(),
+	}
+	result := &pluginslov1.Result{}
+
+	err = plug.ProcessSLO(t.Context(), req, result)
+	require.Error(t, err)
+
+	myAssert := assert.New(t)
+	myAssert.Empty(result.SLORules.ExtraRules, "expected at least one rule group in ExtraRules")
 }
 
 func TestProcessSLO_AppendsCustomRuleGroup(t *testing.T) {
@@ -49,7 +82,7 @@ func TestProcessSLO_AppendsCustomRuleGroup(t *testing.T) {
 	require.NoError(t, err)
 
 	req := &pluginslov1.Request{
-		SLO:            baseSLO(),
+		SLO:            baseSLO(withTotalQuery()),
 		MWMBAlertGroup: baseAlertGroup(),
 	}
 	result := &pluginslov1.Result{}

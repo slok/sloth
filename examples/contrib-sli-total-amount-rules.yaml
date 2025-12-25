@@ -1,0 +1,34 @@
+apiVersion: sloth.slok.dev/v1
+kind: PrometheusServiceLevel
+metadata:
+  name: svc
+  namespace: test-ns
+spec:
+  service: "svc01"
+  labels:
+    global01k1: global01v1
+  sloPlugins:
+    chain:
+      - id: "sloth.dev/contrib/sli_total_amount/v1"
+  slos:
+    - name: "slo1"
+      objective: 99.9
+      description: "This is SLO 01."
+      labels:
+        global02k1: global02v1
+      sli:
+        events:
+          errorQuery: sum(rate(http_request_duration_seconds_count{job="myservice",code=~"(5..|429)"}[{{.window}}]))
+          totalQuery: sum(rate(http_request_duration_seconds_count{job="myservice"}[{{.window}}]))
+      alerting:
+        name: myServiceAlert
+        labels:
+          alert01k1: "alert01v1"
+        annotations:
+          alert02k1: "alert02k2"
+        pageAlert:
+          labels:
+            alert03k1: "alert03v1"
+        ticketAlert:
+          labels:
+            alert04k1: "alert04v1"

@@ -10,8 +10,8 @@ require (
 	github.com/go-chi/chi/v5 v5.2.3
 	github.com/lithammer/fuzzysearch v1.1.8
 	github.com/oklog/run v1.2.0
-	github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring v0.87.1
-	github.com/prometheus-operator/prometheus-operator/pkg/client v0.87.1
+	github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring v0.88.0
+	github.com/prometheus-operator/prometheus-operator/pkg/client v0.88.0
 	github.com/prometheus/client_golang v1.23.2
 	github.com/prometheus/common v0.67.5
 	github.com/prometheus/prometheus v0.308.1

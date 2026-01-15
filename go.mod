@@ -7,7 +7,7 @@ require (
 	github.com/VictoriaMetrics/metricsql v0.84.8
 	github.com/alecthomas/kingpin/v2 v2.4.0
 	github.com/caarlos0/env/v11 v11.3.1
-	github.com/go-chi/chi/v5 v5.2.3
+	github.com/go-chi/chi/v5 v5.2.4
 	github.com/lithammer/fuzzysearch v1.1.8
 	github.com/oklog/run v1.2.0
 	github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring v0.87.1

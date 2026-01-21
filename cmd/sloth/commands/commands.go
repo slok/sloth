@@ -9,13 +9,6 @@ import (
 	"github.com/slok/sloth/internal/log"
 )
 
-const (
-	// LoggerTypeDefault is the logger default type.
-	LoggerTypeDefault = "default"
-	// LoggerTypeJSON is the logger json type.
-	LoggerTypeJSON = "json"
-)
-
 // Command represents an application command, all commands that want to be executed
 // should implement and setup on main.
 type Command interface {
@@ -27,10 +20,8 @@ type Command interface {
 // for all the commands.
 type RootConfig struct {
 	// Global flags.
-	LogLevel   string
-	NoLog      bool
-	NoColor    bool
-	LoggerType string
+	LogLevel string
+	NoLog    bool
 
 	// Global instances.
 	Stdin  io.Reader
@@ -46,8 +37,6 @@ func NewRootConfig(app *kingpin.Application) *RootConfig {
 	// Register.
 	app.Flag("log-level", "Log level.").Default("info").EnumVar(&c.LogLevel, "debug", "info", "warn", "error")
 	app.Flag("no-log", "Disable logger.").BoolVar(&c.NoLog)
-	app.Flag("no-color", "Disable logger color.").BoolVar(&c.NoColor)
-	app.Flag("logger", "Selects the logger type.").Default(LoggerTypeDefault).EnumVar(&c.LoggerType, LoggerTypeDefault, LoggerTypeJSON)
 
 	return c
 }

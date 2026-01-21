@@ -76,17 +76,7 @@ func getLogger(config commands.RootConfig) log.Logger {
 	}
 
 	opts := &slog.HandlerOptions{Level: level}
-
-	// Log format.
-	var handler slog.Handler
-	switch config.LoggerType {
-	case commands.LoggerTypeJSON:
-		handler = slog.NewJSONHandler(config.Stderr, opts)
-	default:
-		handler = slog.NewTextHandler(config.Stderr, opts)
-	}
-
-	slogLogger := slog.New(handler)
+	slogLogger := slog.New(slog.NewTextHandler(config.Stderr, opts))
 	logger := log.NewSlog(slogLogger).WithValues(log.Kv{
 		"version": info.Version,
 	})

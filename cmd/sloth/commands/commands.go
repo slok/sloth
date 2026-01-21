@@ -27,7 +27,7 @@ type Command interface {
 // for all the commands.
 type RootConfig struct {
 	// Global flags.
-	Debug      bool
+	LogLevel   string
 	NoLog      bool
 	NoColor    bool
 	LoggerType string
@@ -44,7 +44,7 @@ func NewRootConfig(app *kingpin.Application) *RootConfig {
 	c := &RootConfig{}
 
 	// Register.
-	app.Flag("debug", "Enable debug mode.").BoolVar(&c.Debug)
+	app.Flag("log-level", "Log level.").Default("info").EnumVar(&c.LogLevel, "debug", "info", "warn", "error")
 	app.Flag("no-log", "Disable logger.").BoolVar(&c.NoLog)
 	app.Flag("no-color", "Disable logger color.").BoolVar(&c.NoColor)
 	app.Flag("logger", "Selects the logger type.").Default(LoggerTypeDefault).EnumVar(&c.LoggerType, LoggerTypeDefault, LoggerTypeJSON)

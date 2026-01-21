@@ -4,15 +4,14 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"log/slog"
 	"os"
 
 	"github.com/alecthomas/kingpin/v2"
-	"github.com/sirupsen/logrus"
 
 	"github.com/slok/sloth/cmd/sloth/commands"
 	"github.com/slok/sloth/internal/info"
 	"github.com/slok/sloth/internal/log"
-	loglogrus "github.com/slok/sloth/internal/log/logrus"
 )
 
 // Run runs the main application.
@@ -63,27 +62,32 @@ func getLogger(config commands.RootConfig) log.Logger {
 		return log.Noop
 	}
 
-	// If not logger disabled use logrus logger.
-	logrusLog := logrus.New()
-	logrusLog.Out = config.Stderr // By default logger goes to stderr (so it can split stdout prints).
-	logrusLogEntry := logrus.NewEntry(logrusLog)
-
-	if config.Debug {
-		logrusLogEntry.Logger.SetLevel(logrus.DebugLevel)
+	// Parse log level.
+	var level slog.Level
+	switch config.LogLevel {
+	case "debug":
+		level = slog.LevelDebug
+	case "warn":
+		level = slog.LevelWarn
+	case "error":
+		level = slog.LevelError
+	default:
+		level = slog.LevelInfo
 	}
+
+	opts := &slog.HandlerOptions{Level: level}
 
 	// Log format.
+	var handler slog.Handler
 	switch config.LoggerType {
-	case commands.LoggerTypeDefault:
-		logrusLogEntry.Logger.SetFormatter(&logrus.TextFormatter{
-			ForceColors:   !config.NoColor,
-			DisableColors: config.NoColor,
-		})
 	case commands.LoggerTypeJSON:
-		logrusLogEntry.Logger.SetFormatter(&logrus.JSONFormatter{})
+		handler = slog.NewJSONHandler(config.Stderr, opts)
+	default:
+		handler = slog.NewTextHandler(config.Stderr, opts)
 	}
 
-	logger := loglogrus.NewLogrus(logrusLogEntry).WithValues(log.Kv{
+	slogLogger := slog.New(handler)
+	logger := log.NewSlog(slogLogger).WithValues(log.Kv{
 		"version": info.Version,
 	})
 

@@ -54,7 +54,11 @@
 //	          disable: true
 package v1
 
-import "encoding/json"
+import (
+	"encoding/json"
+
+	prommodel "github.com/prometheus/common/model"
+)
 
 const Version = "prometheus/v1"
 
@@ -160,6 +164,12 @@ type Alert struct {
 	// Disable disables the alert and makes Sloth not generating this alert. This
 	// can be helpful for example to disable ticket(warning) alerts.
 	Disable bool `json:"disable,omitempty"`
+	// For is the alerting time window that a rule must be active before firing.
+	// Default is 0m, which means no pending time.
+	//
+	// Sloth core plugins ignore this field. Use an output plugin (SLO plugin) that applies
+	// it on the generated Prometheus rules, like the `custom_alert_for.go` example.
+	For prommodel.Duration `json:"for,omitempty"`
 	// Labels are the Prometheus labels for the specific alert. For example can be
 	// useful to route the Page alert to specific Slack channel.
 	Labels map[string]string `json:"labels,omitempty"`

@@ -54,7 +54,7 @@ https://sloth.dev
 Release the Sloth!
 
 ```bash
-sloth generate -i ./examples/getting-started.yml
+sloth generate --slo-plugins-path=./examples/plugins -i ./examples/getting-started.yml
 ```
 
 ```yaml
@@ -64,6 +64,9 @@ labels:
   owner: "myteam"
   repo: "myorg/myservice"
   tier: "2"
+slo_plugins:
+  chain:
+    - id: "sloth.dev/contrib/alert_for/v1"
 slos:
   # We allow failing (5xx and 429) 1 request every 1000 requests (99.9%).
   - name: "requests-availability"
@@ -83,10 +86,14 @@ slos:
         # Overwrite default Sloth SLO alert summmary on ticket and page alerts.
         summary: "High error rate on 'myservice' requests responses"
       page_alert:
+        # Requires `sloth.dev/contrib/alert_for/v1` from `--slo-plugins-path`.
+        for: 5m
         labels:
           severity: "pageteam"
           routing_key: "myteam"
       ticket_alert:
+        # Requires `sloth.dev/contrib/alert_for/v1` from `--slo-plugins-path`.
+        for: 10m
         labels:
           severity: "slack"
           slack_channel: "#alerts-myteam"

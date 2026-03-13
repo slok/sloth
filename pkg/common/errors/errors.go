@@ -12,4 +12,7 @@ var (
 
 	// ErrRequired will be used when a required field is not set.
 	ErrRequired = fmt.Errorf("required")
+
+	// ErrAlreadyExists will be used when a resource already exists.
+	ErrAlreadyExists = fmt.Errorf("already exists")
 )

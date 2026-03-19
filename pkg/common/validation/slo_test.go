@@ -308,7 +308,7 @@ func TestModelValidationSpecForPrometheusBackend(t *testing.T) {
 				s.Objective = -1
 				return s
 			},
-			expErrMessage: `objective must >0 and <=100`,
+			expErrMessage: `objective must >0 and <100`,
 		},
 
 		"SLO Objective shouldn't be 0.": {
@@ -317,7 +317,16 @@ func TestModelValidationSpecForPrometheusBackend(t *testing.T) {
 				s.Objective = 0
 				return s
 			},
-			expErrMessage: `objective must >0 and <=100`,
+			expErrMessage: `objective must >0 and <100`,
+		},
+
+		"SLO Objective shouldn't be 100 because error budget would be zero causing infinite burn rates.": {
+			slo: func() model.PromSLO {
+				s := getGoodSLO()
+				s.Objective = 100
+				return s
+			},
+			expErrMessage: `objective must >0 and <100`,
 		},
 
 		"SLO Objective shouldn't be greater than 100.": {
@@ -326,7 +335,7 @@ func TestModelValidationSpecForPrometheusBackend(t *testing.T) {
 				s.Objective = 100.0001
 				return s
 			},
-			expErrMessage: `objective must >0 and <=100`,
+			expErrMessage: `objective must >0 and <100`,
 		},
 
 		"SLO Labels should be valid prometheus keys.": {

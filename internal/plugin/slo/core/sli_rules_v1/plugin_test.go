@@ -111,7 +111,7 @@ func TestGenerateSLIRecordingRules(t *testing.T) {
 			expRules: []rulefmt.Rule{
 				{
 					Record: "slo:sli_error:ratio_rate5m",
-					Expr:   "(rate(my_metric[5m]{error=\"true\"}))\n/\n(rate(my_metric[5m]))\n",
+					Expr:   "(rate(my_metric[5m]{error=\"true\"}))\n/\n((rate(my_metric[5m])) > 0)\n",
 					Labels: map[string]string{
 						"kind":          "test",
 						"sloth_service": "test-svc",
@@ -122,7 +122,7 @@ func TestGenerateSLIRecordingRules(t *testing.T) {
 				},
 				{
 					Record: "slo:sli_error:ratio_rate30m",
-					Expr:   "(rate(my_metric[30m]{error=\"true\"}))\n/\n(rate(my_metric[30m]))\n",
+					Expr:   "(rate(my_metric[30m]{error=\"true\"}))\n/\n((rate(my_metric[30m])) > 0)\n",
 					Labels: map[string]string{
 						"kind":          "test",
 						"sloth_service": "test-svc",
@@ -133,7 +133,7 @@ func TestGenerateSLIRecordingRules(t *testing.T) {
 				},
 				{
 					Record: "slo:sli_error:ratio_rate1h",
-					Expr:   "(rate(my_metric[1h]{error=\"true\"}))\n/\n(rate(my_metric[1h]))\n",
+					Expr:   "(rate(my_metric[1h]{error=\"true\"}))\n/\n((rate(my_metric[1h])) > 0)\n",
 					Labels: map[string]string{
 						"kind":          "test",
 						"sloth_service": "test-svc",
@@ -144,7 +144,7 @@ func TestGenerateSLIRecordingRules(t *testing.T) {
 				},
 				{
 					Record: "slo:sli_error:ratio_rate2h",
-					Expr:   "(rate(my_metric[2h]{error=\"true\"}))\n/\n(rate(my_metric[2h]))\n",
+					Expr:   "(rate(my_metric[2h]{error=\"true\"}))\n/\n((rate(my_metric[2h])) > 0)\n",
 					Labels: map[string]string{
 						"kind":          "test",
 						"sloth_service": "test-svc",
@@ -155,7 +155,7 @@ func TestGenerateSLIRecordingRules(t *testing.T) {
 				},
 				{
 					Record: "slo:sli_error:ratio_rate6h",
-					Expr:   "(rate(my_metric[6h]{error=\"true\"}))\n/\n(rate(my_metric[6h]))\n",
+					Expr:   "(rate(my_metric[6h]{error=\"true\"}))\n/\n((rate(my_metric[6h])) > 0)\n",
 					Labels: map[string]string{
 						"kind":          "test",
 						"sloth_service": "test-svc",
@@ -166,7 +166,7 @@ func TestGenerateSLIRecordingRules(t *testing.T) {
 				},
 				{
 					Record: "slo:sli_error:ratio_rate1d",
-					Expr:   "(rate(my_metric[1d]{error=\"true\"}))\n/\n(rate(my_metric[1d]))\n",
+					Expr:   "(rate(my_metric[1d]{error=\"true\"}))\n/\n((rate(my_metric[1d])) > 0)\n",
 					Labels: map[string]string{
 						"kind":          "test",
 						"sloth_service": "test-svc",
@@ -177,7 +177,7 @@ func TestGenerateSLIRecordingRules(t *testing.T) {
 				},
 				{
 					Record: "slo:sli_error:ratio_rate3d",
-					Expr:   "(rate(my_metric[3d]{error=\"true\"}))\n/\n(rate(my_metric[3d]))\n",
+					Expr:   "(rate(my_metric[3d]{error=\"true\"}))\n/\n((rate(my_metric[3d])) > 0)\n",
 					Labels: map[string]string{
 						"kind":          "test",
 						"sloth_service": "test-svc",
@@ -221,7 +221,7 @@ func TestGenerateSLIRecordingRules(t *testing.T) {
 			expRules: []rulefmt.Rule{
 				{
 					Record: "slo:sli_error:ratio_rate5m",
-					Expr:   "(rate(my_metric[5m]{error=\"true\"}))\n/\n(rate(my_metric[5m]))\n",
+					Expr:   "(rate(my_metric[5m]{error=\"true\"}))\n/\n((rate(my_metric[5m])) > 0)\n",
 					Labels: map[string]string{
 						"kind":          "test",
 						"sloth_service": "test-svc",
@@ -232,7 +232,7 @@ func TestGenerateSLIRecordingRules(t *testing.T) {
 				},
 				{
 					Record: "slo:sli_error:ratio_rate30m",
-					Expr:   "(rate(my_metric[30m]{error=\"true\"}))\n/\n(rate(my_metric[30m]))\n",
+					Expr:   "(rate(my_metric[30m]{error=\"true\"}))\n/\n((rate(my_metric[30m])) > 0)\n",
 					Labels: map[string]string{
 						"kind":          "test",
 						"sloth_service": "test-svc",
@@ -243,7 +243,7 @@ func TestGenerateSLIRecordingRules(t *testing.T) {
 				},
 				{
 					Record: "slo:sli_error:ratio_rate1h",
-					Expr:   "(rate(my_metric[1h]{error=\"true\"}))\n/\n(rate(my_metric[1h]))\n",
+					Expr:   "(rate(my_metric[1h]{error=\"true\"}))\n/\n((rate(my_metric[1h])) > 0)\n",
 					Labels: map[string]string{
 						"kind":          "test",
 						"sloth_service": "test-svc",
@@ -254,7 +254,7 @@ func TestGenerateSLIRecordingRules(t *testing.T) {
 				},
 				{
 					Record: "slo:sli_error:ratio_rate2h",
-					Expr:   "(rate(my_metric[2h]{error=\"true\"}))\n/\n(rate(my_metric[2h]))\n",
+					Expr:   "(rate(my_metric[2h]{error=\"true\"}))\n/\n((rate(my_metric[2h])) > 0)\n",
 					Labels: map[string]string{
 						"kind":          "test",
 						"sloth_service": "test-svc",
@@ -265,7 +265,7 @@ func TestGenerateSLIRecordingRules(t *testing.T) {
 				},
 				{
 					Record: "slo:sli_error:ratio_rate6h",
-					Expr:   "(rate(my_metric[6h]{error=\"true\"}))\n/\n(rate(my_metric[6h]))\n",
+					Expr:   "(rate(my_metric[6h]{error=\"true\"}))\n/\n((rate(my_metric[6h])) > 0)\n",
 					Labels: map[string]string{
 						"kind":          "test",
 						"sloth_service": "test-svc",
@@ -276,7 +276,7 @@ func TestGenerateSLIRecordingRules(t *testing.T) {
 				},
 				{
 					Record: "slo:sli_error:ratio_rate1d",
-					Expr:   "(rate(my_metric[1d]{error=\"true\"}))\n/\n(rate(my_metric[1d]))\n",
+					Expr:   "(rate(my_metric[1d]{error=\"true\"}))\n/\n((rate(my_metric[1d])) > 0)\n",
 					Labels: map[string]string{
 						"kind":          "test",
 						"sloth_service": "test-svc",
@@ -287,7 +287,7 @@ func TestGenerateSLIRecordingRules(t *testing.T) {
 				},
 				{
 					Record: "slo:sli_error:ratio_rate3d",
-					Expr:   "(rate(my_metric[3d]{error=\"true\"}))\n/\n(rate(my_metric[3d]))\n",
+					Expr:   "(rate(my_metric[3d]{error=\"true\"}))\n/\n((rate(my_metric[3d])) > 0)\n",
 					Labels: map[string]string{
 						"kind":          "test",
 						"sloth_service": "test-svc",
@@ -298,7 +298,7 @@ func TestGenerateSLIRecordingRules(t *testing.T) {
 				},
 				{
 					Record: "slo:sli_error:ratio_rate30d",
-					Expr:   "(rate(my_metric[30d]{error=\"true\"}))\n/\n(rate(my_metric[30d]))\n",
+					Expr:   "(rate(my_metric[30d]{error=\"true\"}))\n/\n((rate(my_metric[30d])) > 0)\n",
 					Labels: map[string]string{
 						"kind":          "test",
 						"sloth_service": "test-svc",
@@ -445,7 +445,7 @@ func TestGenerateSLIRecordingRules(t *testing.T) {
 			expRules: []rulefmt.Rule{
 				{
 					Record: "slo:sli_error:ratio_rate1h",
-					Expr:   "(rate(my_metric[1h]{error=\"true\"}))\n/\n(rate(my_metric[1h]))\n",
+					Expr:   "(rate(my_metric[1h]{error=\"true\"}))\n/\n((rate(my_metric[1h])) > 0)\n",
 					Labels: map[string]string{
 						"kind":          "test",
 						"sloth_service": "test-svc",
@@ -456,7 +456,7 @@ func TestGenerateSLIRecordingRules(t *testing.T) {
 				},
 				{
 					Record: "slo:sli_error:ratio_rate2h",
-					Expr:   "(rate(my_metric[2h]{error=\"true\"}))\n/\n(rate(my_metric[2h]))\n",
+					Expr:   "(rate(my_metric[2h]{error=\"true\"}))\n/\n((rate(my_metric[2h])) > 0)\n",
 					Labels: map[string]string{
 						"kind":          "test",
 						"sloth_service": "test-svc",
@@ -467,7 +467,7 @@ func TestGenerateSLIRecordingRules(t *testing.T) {
 				},
 				{
 					Record: "slo:sli_error:ratio_rate3h",
-					Expr:   "(rate(my_metric[3h]{error=\"true\"}))\n/\n(rate(my_metric[3h]))\n",
+					Expr:   "(rate(my_metric[3h]{error=\"true\"}))\n/\n((rate(my_metric[3h])) > 0)\n",
 					Labels: map[string]string{
 						"kind":          "test",
 						"sloth_service": "test-svc",

@@ -7,7 +7,7 @@ jobs:
     name: Check
     runs-on: ubuntu-latest
     # Execute the checks inside the container instead the VM.
-    container: golangci/golangci-lint:v2.7.2-alpine
+    container: golangci/golangci-lint:v2.11.4-alpine
     steps:
       - uses: actions/checkout@v6
       - run: |
@@ -41,7 +41,7 @@ jobs:
           go-version-file: go.mod
       - name: Execute tests
         env:
-          HELM_VERSION: v3.17.0
+          HELM_VERSION: v4.1.3
         run: |
           # Get dependencies.
           echo "Getting dependencies..."

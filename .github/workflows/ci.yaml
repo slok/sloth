@@ -25,7 +25,7 @@ jobs:
         with:
           go-version-file: go.mod
       - run: make ci-test
-      - uses: codecov/codecov-action@v5
+      - uses: codecov/codecov-action@v6
         with:
           token: ${{ secrets.CODECOV_UPLOAD_TOKEN }}
           file: ./.test_coverage.txt

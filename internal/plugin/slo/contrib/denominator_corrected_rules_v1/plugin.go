@@ -102,7 +102,7 @@ func (p plugin) denominatorCorrectedSLIRecordGenerator(slo model.PromSLO, window
 		sliExprTplFmt = `(
 {{.numeratorCorrectionMetric}}{{.window}}{{.filter}}
 * on()
-%s
+(%s)
 )
 /
 (%s)

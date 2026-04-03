@@ -4,7 +4,7 @@ go 1.26.0
 
 require (
 	github.com/OpenSLO/oslo v0.12.0
-	github.com/VictoriaMetrics/metricsql v0.85.0
+	github.com/VictoriaMetrics/metricsql v0.86.0
 	github.com/alecthomas/kingpin/v2 v2.4.0
 	github.com/caarlos0/env/v11 v11.4.0
 	github.com/go-chi/chi/v5 v5.2.5

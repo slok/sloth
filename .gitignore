@@ -22,3 +22,6 @@ vendor/
 
 # mise/asdf
 .tool-versions
+
+# VSCode
+.vscode/

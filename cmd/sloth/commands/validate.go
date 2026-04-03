@@ -14,6 +14,7 @@ import (
 
 	"github.com/slok/sloth/internal/log"
 	"github.com/slok/sloth/internal/plugin"
+	commonerrors "github.com/slok/sloth/pkg/common/errors"
 	utilsdata "github.com/slok/sloth/pkg/common/utils/data"
 	slothlib "github.com/slok/sloth/pkg/lib"
 )
@@ -28,6 +29,7 @@ type validateCommand struct {
 	sloPeriod                string
 	sloPlugins               []string
 	disableDefaultSLOPlugins bool
+	ignoreSloDuplicates      bool
 }
 
 // NewValidateCommand returns the validate command.
@@ -43,6 +45,7 @@ func NewValidateCommand(app *kingpin.Application) Command {
 	cmd.Flag("default-slo-period", "The default SLO period windows to be used for the SLOs.").Default("30d").StringVar(&c.sloPeriod)
 	cmd.Flag("slo-plugins", `SLO plugins chain declaration in JSON format '{"id": "foo","priority": 0,"config": "{}"}' (Can be repeated).`).Short('s').StringsVar(&c.sloPlugins)
 	cmd.Flag("disable-default-slo-plugins", `Disables the default SLO plugins, normally used along with custom SLO plugins to fully customize Sloth behavior`).BoolVar(&c.disableDefaultSLOPlugins)
+	cmd.Flag("ignore-slo-duplicates", "Flag to ignore SLO duplicates in specs (service and name used as an SLO/SLI identifier).").Default("false").BoolVar(&c.ignoreSloDuplicates)
 
 	return c
 }
@@ -117,6 +120,7 @@ func (v validateCommand) Run(ctx context.Context, config RootConfig) error {
 	// For every file load the data and start the validation process:
 	validations := []*fileValidation{}
 	totalValidations := 0
+	sloIDs := make(map[string]string)
 	for _, input := range sloPaths {
 		// Get SLO spec data.
 		slxData, err := os.ReadFile(input)
@@ -140,9 +144,25 @@ func (v validateCommand) Run(ctx context.Context, config RootConfig) error {
 			}
 
 			// Generate SLOs.
-			_, err := genService.GenerateFromRaw(ctx, []byte(genTarget.SLOData))
+			sloGroupResult, err := genService.GenerateFromRaw(ctx, []byte(genTarget.SLOData))
 			if err != nil {
 				validation.Errs = append(validation.Errs, fmt.Errorf("invalid SLO: %w", err))
+			} else {
+				// Check for SLO duplicates
+				if !v.ignoreSloDuplicates {
+					for _, sloResult := range sloGroupResult.SLOResults {
+						slo := sloResult.SLO
+						if sloFile, exists := sloIDs[slo.ID]; !exists {
+							sloIDs[slo.ID] = validation.File
+						} else {
+							err := fmt.Errorf(
+								"SLO duplicated. SLO{service=%s, name=%s}, ID=%s already exists in a file: %s: %w",
+								slo.Service, slo.Name, slo.ID, sloFile, commonerrors.ErrAlreadyExists,
+							)
+							validation.Errs = append(validation.Errs, err)
+						}
+					}
+				}
 			}
 		}
 

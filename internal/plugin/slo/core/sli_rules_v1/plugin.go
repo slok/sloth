@@ -134,9 +134,11 @@ func rawSLIRecordGenerator(slo model.PromSLO, window time.Duration, alerts model
 }
 
 func eventsSLIRecordGenerator(slo model.PromSLO, window time.Duration, alerts model.MWMBAlertGroup) (*rulefmt.Rule, error) {
+	// Wrap the denominator with ((...) > 0) so a zero total produces an absent result
+	// rather than +Inf, which would otherwise poison sum_over_time for up to 30 days.
 	const sliExprTplFmt = `(%s)
 /
-(%s)
+((%s) > 0)
 `
 	// Generate our first level of template by assembling the error and total expressions.
 	sliExprTpl := fmt.Sprintf(sliExprTplFmt, slo.SLI.Events.ErrorQuery, slo.SLI.Events.TotalQuery)

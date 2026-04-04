@@ -10,7 +10,7 @@ groups:
     expr: |
       (sum(rate(http_request_duration_seconds_count{job="myservice",code=~"(5..|429)"}[5m])))
       /
-      (sum(rate(http_request_duration_seconds_count{job="myservice"}[5m])))
+      ((sum(rate(http_request_duration_seconds_count{job="myservice"}[5m]))) > 0)
     labels:
       exk1: exv1
       exk2: exv2
@@ -24,7 +24,7 @@ groups:
     expr: |
       (sum(rate(http_request_duration_seconds_count{job="myservice",code=~"(5..|429)"}[30m])))
       /
-      (sum(rate(http_request_duration_seconds_count{job="myservice"}[30m])))
+      ((sum(rate(http_request_duration_seconds_count{job="myservice"}[30m]))) > 0)
     labels:
       exk1: exv1
       exk2: exv2
@@ -38,7 +38,7 @@ groups:
     expr: |
       (sum(rate(http_request_duration_seconds_count{job="myservice",code=~"(5..|429)"}[1h])))
       /
-      (sum(rate(http_request_duration_seconds_count{job="myservice"}[1h])))
+      ((sum(rate(http_request_duration_seconds_count{job="myservice"}[1h]))) > 0)
     labels:
       exk1: exv1
       exk2: exv2
@@ -52,7 +52,7 @@ groups:
     expr: |
       (sum(rate(http_request_duration_seconds_count{job="myservice",code=~"(5..|429)"}[2h])))
       /
-      (sum(rate(http_request_duration_seconds_count{job="myservice"}[2h])))
+      ((sum(rate(http_request_duration_seconds_count{job="myservice"}[2h]))) > 0)
     labels:
       exk1: exv1
       exk2: exv2
@@ -66,7 +66,7 @@ groups:
     expr: |
       (sum(rate(http_request_duration_seconds_count{job="myservice",code=~"(5..|429)"}[6h])))
       /
-      (sum(rate(http_request_duration_seconds_count{job="myservice"}[6h])))
+      ((sum(rate(http_request_duration_seconds_count{job="myservice"}[6h]))) > 0)
     labels:
       exk1: exv1
       exk2: exv2
@@ -80,7 +80,7 @@ groups:
     expr: |
       (sum(rate(http_request_duration_seconds_count{job="myservice",code=~"(5..|429)"}[1d])))
       /
-      (sum(rate(http_request_duration_seconds_count{job="myservice"}[1d])))
+      ((sum(rate(http_request_duration_seconds_count{job="myservice"}[1d]))) > 0)
     labels:
       exk1: exv1
       exk2: exv2
@@ -94,7 +94,7 @@ groups:
     expr: |
       (sum(rate(http_request_duration_seconds_count{job="myservice",code=~"(5..|429)"}[3d])))
       /
-      (sum(rate(http_request_duration_seconds_count{job="myservice"}[3d])))
+      ((sum(rate(http_request_duration_seconds_count{job="myservice"}[3d]))) > 0)
     labels:
       exk1: exv1
       exk2: exv2

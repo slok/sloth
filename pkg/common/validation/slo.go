@@ -162,8 +162,9 @@ func ValidateSLO(slo model.PromSLO, dialect SLODialectValidator) error {
 		return fmt.Errorf("time window is required")
 	}
 
-	if slo.Objective <= 0 || slo.Objective > 100 {
-		return fmt.Errorf("objective must >0 and <=100")
+	// Objective=100 yields a zero error budget, causing division by zero in burn rate calculations.
+	if slo.Objective <= 0 || slo.Objective >= 100 {
+		return fmt.Errorf("objective must >0 and <100")
 	}
 
 	for k, v := range slo.Labels {

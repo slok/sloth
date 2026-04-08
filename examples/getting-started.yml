@@ -4,6 +4,9 @@ labels:
   owner: "myteam"
   repo: "myorg/myservice"
   tier: "2"
+slo_plugins:
+  chain:
+    - id: "sloth.dev/contrib/alert_for/v1"
 slos:
   # We allow failing (5xx and 429) 1 request every 1000 requests (99.9%).
   - name: "requests-availability"
@@ -21,10 +24,12 @@ slos:
         # Overwrite default Sloth SLO alert summmary on ticket and page alerts.
         summary: "High error rate on 'myservice' requests responses"
       page_alert:
+        for: 5m
         labels:
           severity: pageteam
           routing_key: myteam
       ticket_alert:
+        for: 10m
         labels:
           severity: "slack"
           slack_channel: "#alerts-myteam"

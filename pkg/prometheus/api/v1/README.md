@@ -87,7 +87,7 @@ const Version = "prometheus/v1"
 ```
 
 <a name="Alert"></a>
-## type [Alert](<https://github.com/slok/sloth/blob/main/pkg/prometheus/api/v1/v1.go#L159-L168>)
+## type [Alert](<https://github.com/slok/sloth/blob/main/pkg/prometheus/api/v1/v1.go#L163-L178>)
 
 Alert configures specific SLO alert.
 
@@ -96,6 +96,12 @@ type Alert struct {
     // Disable disables the alert and makes Sloth not generating this alert. This
     // can be helpful for example to disable ticket(warning) alerts.
     Disable bool `json:"disable,omitempty"`
+    // For is the alerting time window that a rule must be active before firing.
+    // Default is 0m, which means no pending time.
+    //
+    // Sloth core plugins ignore this field. Use an output plugin (SLO plugin) that applies
+    // it on the generated Prometheus rules, like the `custom_alert_for.go` example.
+    For prommodel.Duration `json:"for,omitempty"`
     // Labels are the Prometheus labels for the specific alert. For example can be
     // useful to route the Page alert to specific Slack channel.
     Labels map[string]string `json:"labels,omitempty"`
@@ -105,7 +111,7 @@ type Alert struct {
 ```
 
 <a name="Alerting"></a>
-## type [Alerting](<https://github.com/slok/sloth/blob/main/pkg/prometheus/api/v1/v1.go#L144-L156>)
+## type [Alerting](<https://github.com/slok/sloth/blob/main/pkg/prometheus/api/v1/v1.go#L148-L160>)
 
 Alerting wraps all the configuration required by the SLO alerts.
 
@@ -126,7 +132,7 @@ type Alerting struct {
 ```
 
 <a name="SLI"></a>
-## type [SLI](<https://github.com/slok/sloth/blob/main/pkg/prometheus/api/v1/v1.go#L106-L113>)
+## type [SLI](<https://github.com/slok/sloth/blob/main/pkg/prometheus/api/v1/v1.go#L110-L117>)
 
 SLI will tell what is good or bad for the SLO. All SLIs will be get based on time windows, that's why Sloth needs the queries to use \`\{\{.window\}\}\` template variable.
 
@@ -144,7 +150,7 @@ type SLI struct {
 ```
 
 <a name="SLIEvents"></a>
-## type [SLIEvents](<https://github.com/slok/sloth/blob/main/pkg/prometheus/api/v1/v1.go#L124-L133>)
+## type [SLIEvents](<https://github.com/slok/sloth/blob/main/pkg/prometheus/api/v1/v1.go#L128-L137>)
 
 SLIEvents is an SLI that is calculated as the division of bad events and total events, giving a ratio SLI. Normally this is the most common ratio type.
 
@@ -162,7 +168,7 @@ type SLIEvents struct {
 ```
 
 <a name="SLIPlugin"></a>
-## type [SLIPlugin](<https://github.com/slok/sloth/blob/main/pkg/prometheus/api/v1/v1.go#L136-L141>)
+## type [SLIPlugin](<https://github.com/slok/sloth/blob/main/pkg/prometheus/api/v1/v1.go#L140-L145>)
 
 SLIPlugin will use the SLI returned by the SLI plugin selected along with the options.
 
@@ -176,7 +182,7 @@ type SLIPlugin struct {
 ```
 
 <a name="SLIRaw"></a>
-## type [SLIRaw](<https://github.com/slok/sloth/blob/main/pkg/prometheus/api/v1/v1.go#L117-L120>)
+## type [SLIRaw](<https://github.com/slok/sloth/blob/main/pkg/prometheus/api/v1/v1.go#L121-L124>)
 
 SLIRaw is a error ratio SLI already calculated. Normally this will be used when the SLI is already calculated by other recording rule, system...
 
@@ -188,7 +194,7 @@ type SLIRaw struct {
 ```
 
 <a name="SLO"></a>
-## type [SLO](<https://github.com/slok/sloth/blob/main/pkg/prometheus/api/v1/v1.go#L80-L99>)
+## type [SLO](<https://github.com/slok/sloth/blob/main/pkg/prometheus/api/v1/v1.go#L84-L103>)
 
 SLO is the configuration/declaration of the service level objective of a service.
 
@@ -216,7 +222,7 @@ type SLO struct {
 ```
 
 <a name="SLOPlugin"></a>
-## type [SLOPlugin](<https://github.com/slok/sloth/blob/main/pkg/prometheus/api/v1/v1.go#L184-L196>)
+## type [SLOPlugin](<https://github.com/slok/sloth/blob/main/pkg/prometheus/api/v1/v1.go#L194-L206>)
 
 SLOPlugin is a plugin that will be used on the chain of plugins for the SLO generation.
 
@@ -237,7 +243,7 @@ type SLOPlugin struct {
 ```
 
 <a name="SLOPlugins"></a>
-## type [SLOPlugins](<https://github.com/slok/sloth/blob/main/pkg/prometheus/api/v1/v1.go#L172-L181>)
+## type [SLOPlugins](<https://github.com/slok/sloth/blob/main/pkg/prometheus/api/v1/v1.go#L182-L191>)
 
 SLOPlugins are the list plugins that will be used on the process of SLOs for the rules generation.
 
@@ -255,7 +261,7 @@ type SLOPlugins struct {
 ```
 
 <a name="Spec"></a>
-## type [Spec](<https://github.com/slok/sloth/blob/main/pkg/prometheus/api/v1/v1.go#L64-L76>)
+## type [Spec](<https://github.com/slok/sloth/blob/main/pkg/prometheus/api/v1/v1.go#L68-L80>)
 
 Spec represents the root type of the SLOs declaration specification.
 

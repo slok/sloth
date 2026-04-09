@@ -187,7 +187,7 @@ func TestGenerateSLIRecordingRules(t *testing.T) {
 				},
 				{
 					Record: "slo:sli_error:ratio_rate30d",
-					Expr:   "sum_over_time(slo:sli_error:ratio_rate5m{sloth_id=\"test\", sloth_service=\"test-svc\", sloth_slo=\"test-name\"}[30d])\n/ ignoring (sloth_window)\ncount_over_time(slo:sli_error:ratio_rate5m{sloth_id=\"test\", sloth_service=\"test-svc\", sloth_slo=\"test-name\"}[30d])\n",
+					Expr:   "sum_over_time((slo:sli_error:ratio_rate5m{sloth_id=\"test\", sloth_service=\"test-svc\", sloth_slo=\"test-name\"} >= 0)[30d:1m])/43200",
 					Labels: map[string]string{
 						"kind":          "test",
 						"sloth_service": "test-svc",
@@ -297,7 +297,7 @@ func TestGenerateSLIRecordingRules(t *testing.T) {
 				},
 				{
 					Record: "slo:sli_error:ratio_rate30d",
-					Expr:   "sum by (sloth_id) (sum_over_time(slo:sli_error:ratio_rate5m{sloth_id=\"test\"}[30d]))\n/\nsum by (sloth_id) (count_over_time(slo:sli_error:ratio_rate5m{sloth_id=\"test\"}[30d]))\n",
+					Expr:   "sum by (sloth_id) (sum_over_time((slo:sli_error:ratio_rate5m{sloth_id=\"test\"} >= 0)[30d:1m]))/43200",
 					Labels: map[string]string{
 						"kind":          "test",
 						"sloth_service": "test-svc",
@@ -516,7 +516,7 @@ func TestGenerateSLIRecordingRules(t *testing.T) {
 				},
 				{
 					Record: "slo:sli_error:ratio_rate30d",
-					Expr:   "sum_over_time(slo:sli_error:ratio_rate5m{sloth_id=\"test\", sloth_service=\"test-svc\", sloth_slo=\"test-name\"}[30d])\n/ ignoring (sloth_window)\ncount_over_time(slo:sli_error:ratio_rate5m{sloth_id=\"test\", sloth_service=\"test-svc\", sloth_slo=\"test-name\"}[30d])\n",
+					Expr:   "sum_over_time((slo:sli_error:ratio_rate5m{sloth_id=\"test\", sloth_service=\"test-svc\", sloth_slo=\"test-name\"} >= 0)[30d:1m])/43200",
 					Labels: map[string]string{
 						"kind":          "test",
 						"sloth_service": "test-svc",
@@ -587,7 +587,7 @@ func TestGenerateSLIRecordingRules(t *testing.T) {
 				},
 				{
 					Record: "slo:sli_error:ratio_rate30d",
-					Expr:   "sum_over_time(slo:sli_error:ratio_rate3h{sloth_id=\"test\", sloth_service=\"test-svc\", sloth_slo=\"test-name\"}[30d])\n/ ignoring (sloth_window)\ncount_over_time(slo:sli_error:ratio_rate3h{sloth_id=\"test\", sloth_service=\"test-svc\", sloth_slo=\"test-name\"}[30d])\n",
+					Expr:   "sum_over_time((slo:sli_error:ratio_rate3h{sloth_id=\"test\", sloth_service=\"test-svc\", sloth_slo=\"test-name\"} >= 0)[30d:1m])/43200",
 					Labels: map[string]string{
 						"kind":          "test",
 						"sloth_service": "test-svc",

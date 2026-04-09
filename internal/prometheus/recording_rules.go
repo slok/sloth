@@ -166,7 +166,7 @@ func optimizedSLIRecordGenerator(slo SLO, window, shortWindow time.Duration) (*r
 	// that is 1 (thats why we can use `count`), giving use a correct ratio of ratios:
 	// - https://prometheus.io/docs/practices/rules/
 	// - https://math.stackexchange.com/questions/95909/why-is-an-average-of-an-average-usually-incorrect
-	const sliExprTplFmt = `sum_over_time({{.metric}}{{.filter}}[{{.window}}])/43200`
+	const sliExprTplFmt = `sum_over_time(({{.metric}}{{.filter}} >= 0)[{{.window}}:1m])/43200`
 
 	if window == shortWindow {
 		return nil, fmt.Errorf("can't optimize using the same shortwindow as the window to optimize")
@@ -213,7 +213,7 @@ func optimizedBySlothIDSLIRecordGenerator(slo SLO, window, shortWindow time.Dura
 	// that is 1 (thats why we can use `count`), giving use a correct ratio of ratios:
 	// - https://prometheus.io/docs/practices/rules/
 	// - https://math.stackexchange.com/questions/95909/why-is-an-average-of-an-average-usually-incorrect
-	const sliExprTplFmt = `sum by (sloth_id) (sum_over_time({{.metric}}{{.filter}}[{{.window}}]))/43200`
+	const sliExprTplFmt = `sum by (sloth_id) (sum_over_time(({{.metric}}{{.filter}} >= 0)[{{.window}}:1m]))/43200`
 
 	if window == shortWindow {
 		return nil, fmt.Errorf("can't optimize using the same shortwindow as the window to optimize")

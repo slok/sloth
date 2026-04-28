@@ -14,7 +14,7 @@ require (
 	github.com/prometheus-operator/prometheus-operator/pkg/client v0.90.1
 	github.com/prometheus/client_golang v1.23.2
 	github.com/prometheus/common v0.67.5
-	github.com/prometheus/prometheus v0.310.0
+	github.com/prometheus/prometheus v0.311.3
 	github.com/sirupsen/logrus v1.9.4
 	github.com/slok/go-http-metrics v0.13.0
 	github.com/slok/reload v0.2.0
@@ -55,7 +55,6 @@ require (
 	github.com/go-openapi/swag/stringutils v0.25.5 // indirect
 	github.com/go-openapi/swag/typeutils v0.25.5 // indirect
 	github.com/go-openapi/swag/yamlutils v0.25.5 // indirect
-	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/google/gnostic-models v0.7.1 // indirect
 	github.com/google/go-cmp v0.7.0 // indirect
 	github.com/google/uuid v1.6.0 // indirect

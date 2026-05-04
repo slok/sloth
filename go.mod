@@ -6,7 +6,7 @@ require (
 	github.com/OpenSLO/oslo v0.12.0
 	github.com/VictoriaMetrics/metricsql v0.86.0
 	github.com/alecthomas/kingpin/v2 v2.4.0
-	github.com/caarlos0/env/v11 v11.4.0
+	github.com/caarlos0/env/v11 v11.4.1
 	github.com/go-chi/chi/v5 v5.2.5
 	github.com/lithammer/fuzzysearch v1.1.8
 	github.com/oklog/run v1.2.0

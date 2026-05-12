@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Fixed
+
+- `server --prometheus-header` no longer panics with "assignment to entry in nil map".
+
 ## [v0.16.0] - 2026-04-04
 
 ### Added

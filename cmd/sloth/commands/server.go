@@ -63,6 +63,7 @@ type serverCommand struct {
 // NewServerCommand returns the UI command.
 func NewServerCommand(app *kingpin.Application) Command {
 	c := &serverCommand{}
+	c.prometheus.headers = map[string]string{}
 	cmd := app.Command("server", "Starts the Sloth web server.")
 	cmd.Flag("app-listen-address", "Application listen address.").Default(":8080").StringVar(&c.appServer.address)
 	cmd.Flag("status-listen-address", "Status (health check, metrics, pprof...) listen address.").Default(":8081").StringVar(&c.statusServer.address)

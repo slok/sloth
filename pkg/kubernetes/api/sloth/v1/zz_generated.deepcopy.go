@@ -60,6 +60,8 @@ func (in *Alerting) DeepCopyInto(out *Alerting) {
 	}
 	in.PageAlert.DeepCopyInto(&out.PageAlert)
 	in.TicketAlert.DeepCopyInto(&out.TicketAlert)
+	in.FastBurn.DeepCopyInto(&out.FastBurn)
+	in.SlowBurn.DeepCopyInto(&out.SlowBurn)
 	return
 }
 

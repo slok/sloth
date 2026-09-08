@@ -156,11 +156,23 @@ type Alerting struct {
 	// +optional
 	Annotations map[string]string `json:"annotations,omitempty"`
 
-	// Page alert refers to the critical alert (check multiwindow-multiburn alerts).
+	// PageAlert is the high-burn MWMB alert class (JSON/YAML key "pageAlert").
+	// fastBurn is an accepted alias of this key; pageAlert and fastBurn must not both be set.
 	PageAlert Alert `json:"pageAlert,omitempty"`
 
-	// TicketAlert alert refers to the warning alert (check multiwindow-multiburn alerts).
+	// TicketAlert is the low-burn MWMB alert class (JSON/YAML key "ticketAlert").
+	// slowBurn is an accepted alias of this key; ticketAlert and slowBurn must not both be set.
 	TicketAlert Alert `json:"ticketAlert,omitempty"`
+
+	// FastBurn is an optional alias of PageAlert (JSON/YAML key "fastBurn").
+	// Mutually exclusive with pageAlert.
+	// +optional
+	FastBurn Alert `json:"fastBurn,omitempty"`
+
+	// SlowBurn is an optional alias of TicketAlert (JSON/YAML key "slowBurn").
+	// Mutually exclusive with ticketAlert.
+	// +optional
+	SlowBurn Alert `json:"slowBurn,omitempty"`
 }
 
 // Alert configures specific SLO alert.

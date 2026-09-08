@@ -188,19 +188,28 @@ func mapSpecToModel(ctx context.Context, defaultWindowPeriod time.Duration, plug
 		}
 
 		// Set alerts.
-		if !specSLO.Alerting.PageAlert.Disable {
+		pageAlert, err := specSLO.Alerting.ResolvedPageAlert()
+		if err != nil {
+			return nil, fmt.Errorf("invalid alerting on SLO %q: %w", specSLO.Name, err)
+		}
+		ticketAlert, err := specSLO.Alerting.ResolvedTicketAlert()
+		if err != nil {
+			return nil, fmt.Errorf("invalid alerting on SLO %q: %w", specSLO.Name, err)
+		}
+
+		if !pageAlert.Disable {
 			slo.PageAlertMeta = model.PromAlertMeta{
 				Name:        specSLO.Alerting.Name,
-				Labels:      utilsdata.MergeLabels(specSLO.Alerting.Labels, specSLO.Alerting.PageAlert.Labels),
-				Annotations: utilsdata.MergeLabels(specSLO.Alerting.Annotations, specSLO.Alerting.PageAlert.Annotations),
+				Labels:      utilsdata.MergeLabels(specSLO.Alerting.Labels, pageAlert.Labels),
+				Annotations: utilsdata.MergeLabels(specSLO.Alerting.Annotations, pageAlert.Annotations),
 			}
 		}
 
-		if !specSLO.Alerting.TicketAlert.Disable {
+		if !ticketAlert.Disable {
 			slo.TicketAlertMeta = model.PromAlertMeta{
 				Name:        specSLO.Alerting.Name,
-				Labels:      utilsdata.MergeLabels(specSLO.Alerting.Labels, specSLO.Alerting.TicketAlert.Labels),
-				Annotations: utilsdata.MergeLabels(specSLO.Alerting.Annotations, specSLO.Alerting.TicketAlert.Annotations),
+				Labels:      utilsdata.MergeLabels(specSLO.Alerting.Labels, ticketAlert.Labels),
+				Annotations: utilsdata.MergeLabels(specSLO.Alerting.Annotations, ticketAlert.Annotations),
 			}
 		}
 

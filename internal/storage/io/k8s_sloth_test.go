@@ -648,7 +648,7 @@ spec:
 			expErrContains: []string{"ticketAlert", "slowBurn"},
 		},
 
-		"Spec with empty pageAlert object and fastBurn should fail.": {
+		"Spec with empty pageAlert object and fastBurn should use fastBurn.": {
 			specYaml: `
 apiVersion: sloth.slok.dev/v1
 kind: PrometheusServiceLevel
@@ -664,13 +664,53 @@ spec:
         raw:
           errorRatioQuery: test_expr_ratio
       alerting:
+        name: testAlert
         pageAlert: {}
         fastBurn:
           labels:
             severity: critical
 `,
-			expErr:         true,
-			expErrContains: []string{"pageAlert", "fastBurn"},
+			expModel: &model.PromSLOGroup{SLOs: []model.PromSLO{
+				{
+					ID:         "test-svc-slo1",
+					Name:       "slo1",
+					Service:    "test-svc",
+					TimeWindow: 30 * 24 * time.Hour,
+					SLI:        model.PromSLI{Raw: &model.PromSLIRaw{ErrorRatioQuery: "test_expr_ratio"}},
+					Objective:  99.9,
+					Labels:     map[string]string{},
+					PageAlertMeta: model.PromAlertMeta{
+						Name:        "testAlert",
+						Labels:      map[string]string{"severity": "critical"},
+						Annotations: map[string]string{},
+					},
+					TicketAlertMeta: model.PromAlertMeta{
+						Name:        "testAlert",
+						Labels:      map[string]string{},
+						Annotations: map[string]string{},
+					},
+					Plugins: model.SLOPlugins{Plugins: []model.PromSLOPluginMetadata{}},
+				},
+			},
+				OriginalSource: model.PromSLOGroupSource{K8sSlothV1: &kubeslothv1.PrometheusServiceLevel{
+					TypeMeta:   metav1.TypeMeta{Kind: "PrometheusServiceLevel", APIVersion: "sloth.slok.dev/v1"},
+					ObjectMeta: metav1.ObjectMeta{Name: "k8s-test-svc", Namespace: "test-ns"},
+					Spec: kubeslothv1.PrometheusServiceLevelSpec{
+						Service: "test-svc",
+						SLOs: []kubeslothv1.SLO{
+							{
+								Name:      "slo1",
+								Objective: 99.9,
+								SLI:       kubeslothv1.SLI{Raw: &kubeslothv1.SLIRaw{ErrorRatioQuery: "test_expr_ratio"}},
+								Alerting: kubeslothv1.Alerting{
+									Name:     "testAlert",
+									FastBurn: kubeslothv1.Alert{Labels: map[string]string{"severity": "critical"}},
+								},
+							},
+						},
+					},
+				}},
+			},
 		},
 
 		"Spec mixing fastBurn with ticketAlert should succeed.": {

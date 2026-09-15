@@ -233,7 +233,7 @@ func (a *Alerting) UnmarshalJSON(data []byte) error
 
 UnmarshalJSON implements json.Unmarshaler.
 
-It rejects documents that set both a canonical MWMB class key and a non\-empty alias \(pageAlert and fastBurn, or ticketAlert and slowBurn\). Empty alias objects are ignored because the Kubernetes unstructured converter always emits zero\-value structs \(omitempty does not apply to struct kinds\), which would otherwise look like pageAlert and fastBurn both being set.
+It rejects documents that set both a canonical MWMB class key and its alias \(pageAlert and fastBurn, or ticketAlert and slowBurn\) when both objects are non\-empty. Empty objects on either key are ignored because the Kubernetes unstructured converter always emits zero\-value structs \(omitempty does not apply to struct kinds\), which would otherwise look like pageAlert and fastBurn both being set.
 
 <a name="PrometheusServiceLevel"></a>
 ## type [PrometheusServiceLevel](<https://github.com/slok/sloth/blob/main/pkg/kubernetes/api/sloth/v1/types.go#L24-L30>)

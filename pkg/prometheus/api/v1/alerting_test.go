@@ -23,7 +23,7 @@ func TestAlertingUnmarshalJSONExclusiveKeys(t *testing.T) {
 			wantPageSev: "critical",
 		},
 		"page_alert and fast_burn": {
-			raw:          `{"name":"a","page_alert":{},"fast_burn":{"labels":{"severity":"critical"}}}`,
+			raw:          `{"name":"a","page_alert":{"labels":{"severity":"page"}},"fast_burn":{"labels":{"severity":"critical"}}}`,
 			wantErr:      true,
 			wantContains: []string{"page_alert", "fast_burn"},
 		},
@@ -39,6 +39,10 @@ func TestAlertingUnmarshalJSONExclusiveKeys(t *testing.T) {
 		},
 		"empty fast_burn with page_alert is ignored": {
 			raw:         `{"name":"a","page_alert":{"labels":{"severity":"critical"}},"fast_burn":{}}`,
+			wantPageSev: "critical",
+		},
+		"empty page_alert with fast_burn is ignored": {
+			raw:         `{"name":"a","page_alert":{},"fast_burn":{"labels":{"severity":"critical"}}}`,
 			wantPageSev: "critical",
 		},
 	}

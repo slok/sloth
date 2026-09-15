@@ -24,17 +24,21 @@ func TestAlertingUnmarshalJSONExclusiveKeys(t *testing.T) {
 			wantPageSev: "critical",
 		},
 		"pageAlert and fastBurn": {
-			raw:          `{"name":"a","pageAlert":{},"fastBurn":{"labels":{"severity":"critical"}}}`,
+			raw:          `{"name":"a","pageAlert":{"labels":{"severity":"page"}},"fastBurn":{"labels":{"severity":"critical"}}}`,
 			wantErr:      true,
 			wantContains: []string{"pageAlert", "fastBurn"},
 		},
 		"ticketAlert and slowBurn": {
-			raw:          `{"name":"a","ticketAlert":{},"slowBurn":{"disable":true}}`,
+			raw:          `{"name":"a","ticketAlert":{"disable":true},"slowBurn":{"labels":{"severity":"warning"}}}`,
 			wantErr:      true,
 			wantContains: []string{"ticketAlert", "slowBurn"},
 		},
 		"empty fastBurn with pageAlert is ignored": {
 			raw:         `{"name":"a","pageAlert":{"labels":{"severity":"critical"}},"fastBurn":{}}`,
+			wantPageSev: "critical",
+		},
+		"empty pageAlert with fastBurn is ignored": {
+			raw:         `{"name":"a","pageAlert":{},"fastBurn":{"labels":{"severity":"critical"}}}`,
 			wantPageSev: "critical",
 		},
 		"empty fastBurn and slowBurn with empty pageAlert and ticketAlert": {
@@ -78,6 +82,44 @@ func TestAlertingUnstructuredRoundTripKeepsPageAlert(t *testing.T) {
 			Labels: map[string]string{"severity": "critical"},
 		},
 		TicketAlert: Alert{Disable: true},
+	}
+
+	u, err := runtime.DefaultUnstructuredConverter.ToUnstructured(&in)
+	if err != nil {
+		t.Fatalf("ToUnstructured() error = %v, want nil", err)
+	}
+	raw, err := json.Marshal(u)
+	if err != nil {
+		t.Fatalf("json.Marshal() error = %v, want nil", err)
+	}
+
+	var got Alerting
+	if err := json.Unmarshal(raw, &got); err != nil {
+		t.Fatalf("UnmarshalJSON(%s) error = %v, want nil", raw, err)
+	}
+	page, err := got.ResolvedPageAlert()
+	if err != nil {
+		t.Fatalf("ResolvedPageAlert() error = %v, want nil", err)
+	}
+	if page.Labels["severity"] != "critical" {
+		t.Errorf("ResolvedPageAlert().Labels[severity] = %q, want %q", page.Labels["severity"], "critical")
+	}
+	ticket, err := got.ResolvedTicketAlert()
+	if err != nil {
+		t.Fatalf("ResolvedTicketAlert() error = %v, want nil", err)
+	}
+	if !ticket.Disable {
+		t.Errorf("ResolvedTicketAlert().Disable = %v, want true", ticket.Disable)
+	}
+}
+
+func TestAlertingUnstructuredRoundTripKeepsFastBurn(t *testing.T) {
+	in := Alerting{
+		Name: "myServiceAlert",
+		FastBurn: Alert{
+			Labels: map[string]string{"severity": "critical"},
+		},
+		SlowBurn: Alert{Disable: true},
 	}
 
 	u, err := runtime.DefaultUnstructuredConverter.ToUnstructured(&in)

@@ -650,7 +650,7 @@ slos:
 			expErrContains: []string{"ticket_alert", "slow_burn"},
 		},
 
-		"Spec with empty page_alert object and fast_burn should fail.": {
+		"Spec with empty page_alert object and fast_burn should use fast_burn.": {
 			windowPeriod: 30 * 24 * time.Hour,
 			specYaml: `
 version: "prometheus/v1"
@@ -662,13 +662,50 @@ slos:
       raw:
         error_ratio_query: test_expr_ratio
     alerting:
+      name: testAlert
       page_alert: {}
       fast_burn:
         labels:
           severity: critical
 `,
-			expErr:         true,
-			expErrContains: []string{"page_alert", "fast_burn"},
+			expModel: &model.PromSLOGroup{SLOs: []model.PromSLO{
+				{
+					ID:         "test-svc-slo1",
+					Name:       "slo1",
+					Service:    "test-svc",
+					TimeWindow: 30 * 24 * time.Hour,
+					SLI:        model.PromSLI{Raw: &model.PromSLIRaw{ErrorRatioQuery: "test_expr_ratio"}},
+					Objective:  99.9,
+					Labels:     map[string]string{},
+					PageAlertMeta: model.PromAlertMeta{
+						Name:        "testAlert",
+						Labels:      map[string]string{"severity": "critical"},
+						Annotations: map[string]string{},
+					},
+					TicketAlertMeta: model.PromAlertMeta{
+						Name:        "testAlert",
+						Labels:      map[string]string{},
+						Annotations: map[string]string{},
+					},
+					Plugins: model.SLOPlugins{Plugins: []model.PromSLOPluginMetadata{}},
+				},
+			},
+				OriginalSource: model.PromSLOGroupSource{SlothV1: &v1.Spec{
+					Version: "prometheus/v1",
+					Service: "test-svc",
+					SLOs: []v1.SLO{
+						{
+							Name:      "slo1",
+							Objective: 99.9,
+							SLI:       v1.SLI{Raw: &v1.SLIRaw{ErrorRatioQuery: "test_expr_ratio"}},
+							Alerting: v1.Alerting{
+								Name:     "testAlert",
+								FastBurn: v1.Alert{Labels: map[string]string{"severity": "critical"}},
+							},
+						},
+					},
+				}},
+			},
 		},
 
 		"Spec mixing fast_burn with ticket_alert should succeed.": {

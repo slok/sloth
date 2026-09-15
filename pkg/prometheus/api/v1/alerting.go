@@ -8,10 +8,11 @@ import (
 
 // UnmarshalJSON implements json.Unmarshaler.
 //
-// It rejects documents that set both a canonical MWMB class key and a non-empty
-// alias (page_alert and fast_burn, or ticket_alert and slow_burn). Empty alias
-// objects are ignored so Kubernetes unstructured round-trips of zero-value
-// structs do not look like both keys being set.
+// It rejects documents that set both a canonical MWMB class key and its alias
+// (page_alert and fast_burn, or ticket_alert and slow_burn) when both objects
+// are non-empty. Empty objects on either key are ignored so Kubernetes
+// unstructured round-trips of zero-value structs do not look like both keys
+// being set.
 func (a *Alerting) UnmarshalJSON(data []byte) error {
 	if err := rejectExclusiveKeys(data, "page_alert", "fast_burn"); err != nil {
 		return err
@@ -42,9 +43,9 @@ func rejectExclusiveKeys(data []byte, canonical, alias string) error {
 	if err := json.Unmarshal(data, &raw); err != nil {
 		return err
 	}
-	_, hasCanonical := raw[canonical]
+	canonicalRaw, hasCanonical := raw[canonical]
 	aliasRaw, hasAlias := raw[alias]
-	if hasCanonical && hasAlias && !isEmptyAlertJSON(aliasRaw) {
+	if hasCanonical && hasAlias && !isEmptyAlertJSON(canonicalRaw) && !isEmptyAlertJSON(aliasRaw) {
 		return fmt.Errorf("%s and %s are mutually exclusive", canonical, alias)
 	}
 	return nil

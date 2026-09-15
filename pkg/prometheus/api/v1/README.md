@@ -167,7 +167,7 @@ func (a *Alerting) UnmarshalJSON(data []byte) error
 
 UnmarshalJSON implements json.Unmarshaler.
 
-It rejects documents that set both a canonical MWMB class key and a non\-empty alias \(page\_alert and fast\_burn, or ticket\_alert and slow\_burn\). Empty alias objects are ignored so Kubernetes unstructured round\-trips of zero\-value structs do not look like both keys being set.
+It rejects documents that set both a canonical MWMB class key and its alias \(page\_alert and fast\_burn, or ticket\_alert and slow\_burn\) when both objects are non\-empty. Empty objects on either key are ignored so Kubernetes unstructured round\-trips of zero\-value structs do not look like both keys being set.
 
 <a name="SLI"></a>
 ## type [SLI](<https://github.com/slok/sloth/blob/main/pkg/prometheus/api/v1/v1.go#L106-L113>)

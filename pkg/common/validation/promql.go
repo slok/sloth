@@ -75,7 +75,7 @@ func (promQLDialectValidator) ValidateQueryExpression(queryExpression string) er
 		return err
 	}
 
-	_, err = promqlparser.ParseExpr(tplB.String())
+	_, err = promqlparser.NewParser(promqlparser.Options{}).ParseExpr(tplB.String())
 
 	return err
 }

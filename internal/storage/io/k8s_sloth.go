@@ -6,6 +6,7 @@ import (
 	"regexp"
 	"time"
 
+	prommodel "github.com/prometheus/common/model"
 	"k8s.io/apimachinery/pkg/runtime"
 
 	"github.com/slok/sloth/pkg/common/model"
@@ -187,20 +188,35 @@ func mapSpecToModel(ctx context.Context, defaultWindowPeriod time.Duration, plug
 			}
 		}
 
-		// Set alerts.
+		// Set alerts. Durations are parsed for both alerts even if disabled, so an
+		// invalid one is rejected now instead of when someone enables the alert.
+		pageFor, pageKeepFiringFor, err := alertDurations(specSLO.Alerting.PageAlert)
+		if err != nil {
+			return nil, fmt.Errorf("invalid page alert on SLO %q: %w", specSLO.Name, err)
+		}
+
+		ticketFor, ticketKeepFiringFor, err := alertDurations(specSLO.Alerting.TicketAlert)
+		if err != nil {
+			return nil, fmt.Errorf("invalid ticket alert on SLO %q: %w", specSLO.Name, err)
+		}
+
 		if !specSLO.Alerting.PageAlert.Disable {
 			slo.PageAlertMeta = model.PromAlertMeta{
-				Name:        specSLO.Alerting.Name,
-				Labels:      utilsdata.MergeLabels(specSLO.Alerting.Labels, specSLO.Alerting.PageAlert.Labels),
-				Annotations: utilsdata.MergeLabels(specSLO.Alerting.Annotations, specSLO.Alerting.PageAlert.Annotations),
+				Name:          specSLO.Alerting.Name,
+				For:           pageFor,
+				KeepFiringFor: pageKeepFiringFor,
+				Labels:        utilsdata.MergeLabels(specSLO.Alerting.Labels, specSLO.Alerting.PageAlert.Labels),
+				Annotations:   utilsdata.MergeLabels(specSLO.Alerting.Annotations, specSLO.Alerting.PageAlert.Annotations),
 			}
 		}
 
 		if !specSLO.Alerting.TicketAlert.Disable {
 			slo.TicketAlertMeta = model.PromAlertMeta{
-				Name:        specSLO.Alerting.Name,
-				Labels:      utilsdata.MergeLabels(specSLO.Alerting.Labels, specSLO.Alerting.TicketAlert.Labels),
-				Annotations: utilsdata.MergeLabels(specSLO.Alerting.Annotations, specSLO.Alerting.TicketAlert.Annotations),
+				Name:          specSLO.Alerting.Name,
+				For:           ticketFor,
+				KeepFiringFor: ticketKeepFiringFor,
+				Labels:        utilsdata.MergeLabels(specSLO.Alerting.Labels, specSLO.Alerting.TicketAlert.Labels),
+				Annotations:   utilsdata.MergeLabels(specSLO.Alerting.Annotations, specSLO.Alerting.TicketAlert.Annotations),
 			}
 		}
 
@@ -215,4 +231,24 @@ func mapSpecToModel(ctx context.Context, defaultWindowPeriod time.Duration, plug
 	}
 
 	return res, nil
+}
+
+// alertDurations parses the optional `for` and `keepFiringFor` fields of a CRD alert.
+// The CRD carries them as strings, the rules need Prometheus durations.
+func alertDurations(alert k8sprometheusv1.Alert) (forDuration, keepFiringFor prommodel.Duration, err error) {
+	if alert.For != "" {
+		forDuration, err = prommodel.ParseDuration(alert.For)
+		if err != nil {
+			return 0, 0, fmt.Errorf("invalid `for` %q: %w", alert.For, err)
+		}
+	}
+
+	if alert.KeepFiringFor != "" {
+		keepFiringFor, err = prommodel.ParseDuration(alert.KeepFiringFor)
+		if err != nil {
+			return 0, 0, fmt.Errorf("invalid `keepFiringFor` %q: %w", alert.KeepFiringFor, err)
+		}
+	}
+
+	return forDuration, keepFiringFor, nil
 }

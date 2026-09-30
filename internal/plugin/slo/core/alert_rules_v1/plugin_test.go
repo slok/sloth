@@ -4,6 +4,7 @@ import (
 	"testing"
 	"time"
 
+	prommodel "github.com/prometheus/common/model"
 	"github.com/prometheus/prometheus/model/rulefmt"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -126,6 +127,49 @@ or
 						"custom-annot": "test2",
 						"summary":      "{{$labels.sloth_service}} {{$labels.sloth_slo}} SLO error budget burn rate is over expected.",
 						"title":        "(ticket) {{$labels.sloth_service}} {{$labels.sloth_slo}} SLO error budget burn rate is too fast.",
+					},
+				},
+			},
+		},
+
+		"Having an SLO with alert for and keep firing for should set them on the rules.": {
+			slo: model.PromSLO{
+				ID:      "test-svc-test",
+				Name:    "test",
+				Service: "test-svc",
+				PageAlertMeta: model.PromAlertMeta{
+					Name:          "something1",
+					For:           prommodel.Duration(5 * time.Minute),
+					KeepFiringFor: prommodel.Duration(2 * time.Hour),
+				},
+				TicketAlertMeta: model.PromAlertMeta{
+					Disable: true,
+				},
+			},
+			alertGroup: baseSLOAlertGroup,
+			expRules: []rulefmt.Rule{
+				{
+					Alert: "something1",
+					Expr: `(
+    max(slo:sli_error:ratio_rate11m{sloth_id="test-svc-test", sloth_service="test-svc", sloth_slo="test"} > (13 * 0.01)) without (sloth_window)
+    and
+    max(slo:sli_error:ratio_rate12m{sloth_id="test-svc-test", sloth_service="test-svc", sloth_slo="test"} > (13 * 0.01)) without (sloth_window)
+)
+or
+(
+    max(slo:sli_error:ratio_rate21m{sloth_id="test-svc-test", sloth_service="test-svc", sloth_slo="test"} > (23 * 0.01)) without (sloth_window)
+    and
+    max(slo:sli_error:ratio_rate22m{sloth_id="test-svc-test", sloth_service="test-svc", sloth_slo="test"} > (23 * 0.01)) without (sloth_window)
+)
+`,
+					For:           prommodel.Duration(5 * time.Minute),
+					KeepFiringFor: prommodel.Duration(2 * time.Hour),
+					Labels: map[string]string{
+						"sloth_severity": "page",
+					},
+					Annotations: map[string]string{
+						"summary": "{{$labels.sloth_service}} {{$labels.sloth_slo}} SLO error budget burn rate is over expected.",
+						"title":   "(page) {{$labels.sloth_service}} {{$labels.sloth_slo}} SLO error budget burn rate is too fast.",
 					},
 				},
 			},

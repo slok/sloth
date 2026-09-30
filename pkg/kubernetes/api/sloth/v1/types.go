@@ -169,6 +169,21 @@ type Alert struct {
 	// can be helpful for example to disable ticket(warning) alerts.
 	Disable bool `json:"disable,omitempty"`
 
+	// For is the time the alert expression must be true before the alert fires,
+	// the Prometheus rule `for` field (e.g `5m`). Without it the alert fires on
+	// the first evaluation that matches.
+	// +optional
+	For string `json:"for,omitempty"`
+
+	// KeepFiringFor is the time the alert keeps firing after its expression stops
+	// being true, the Prometheus rule `keep_firing_for` field (e.g `2h`). Useful
+	// for burn rate alerts, that resolve and fire again while an incident is
+	// still ongoing.
+	// Requires Prometheus operator v0.63 or above, older ones prune the field
+	// from the generated rule without failing.
+	// +optional
+	KeepFiringFor string `json:"keepFiringFor,omitempty"`
+
 	// Labels are the Prometheus labels for the specific alert. For example can be
 	// useful to route the Page alert to specific Slack channel.
 	// +optional

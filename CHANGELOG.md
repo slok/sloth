@@ -4,6 +4,7 @@
 
 ### Added
 
+- Alerting: `for` and `keep_firing_for` on page and ticket alerts, on the `prometheus/v1` spec and the Kubernetes CRD.
 - `server`: Support HTTP request/response MCP with the `--mcp-enabled` and `--mcp-path` flags.
 - MCP: Add the `context`, `list_slos` and `get_slo` tools.
 

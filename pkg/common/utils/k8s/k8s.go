@@ -2,6 +2,7 @@ package k8s
 
 import (
 	"fmt"
+	"time"
 
 	"gopkg.in/yaml.v2"
 
@@ -33,6 +34,14 @@ func PromRuleGroupToUnstructuredPromOperator(p model.PromRuleGroup) map[string]a
 
 		if rule.Alert != "" {
 			r["alert"] = rule.Alert
+		}
+
+		if rule.For != 0 {
+			r["for"] = promutils.TimeDurationToPromStr(time.Duration(rule.For))
+		}
+
+		if rule.KeepFiringFor != 0 {
+			r["keep_firing_for"] = promutils.TimeDurationToPromStr(time.Duration(rule.KeepFiringFor))
 		}
 
 		if len(rule.Labels) > 0 {

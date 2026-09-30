@@ -7,7 +7,9 @@ import (
 	"testing"
 	"time"
 
+	prommodel "github.com/prometheus/common/model"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	pluginenginesli "github.com/slok/sloth/internal/pluginengine/sli"
@@ -26,6 +28,79 @@ func TestK8sSlothPrometheusYAMLSpecLoader(t *testing.T) {
 		"Empty spec should fail.": {
 			specYaml: ``,
 			expErr:   true,
+		},
+
+		"An SLO with an invalid alert for should fail.": {
+			specYaml: `
+apiVersion: sloth.slok.dev/v1
+kind: PrometheusServiceLevel
+metadata:
+  name: test
+  namespace: test-ns
+spec:
+  service: "test-svc"
+  slos:
+    - name: "slo1"
+      objective: 99.9
+      sli:
+        events:
+          errorQuery: test_expr_error_1
+          totalQuery: test_expr_total_1
+      alerting:
+        name: testAlert
+        pageAlert:
+          for: 5 minutes
+`,
+			expErr: true,
+		},
+
+		"An SLO with an invalid alert keepFiringFor should fail.": {
+			specYaml: `
+apiVersion: sloth.slok.dev/v1
+kind: PrometheusServiceLevel
+metadata:
+  name: test
+  namespace: test-ns
+spec:
+  service: "test-svc"
+  slos:
+    - name: "slo1"
+      objective: 99.9
+      sli:
+        events:
+          errorQuery: test_expr_error_1
+          totalQuery: test_expr_total_1
+      alerting:
+        name: testAlert
+        pageAlert:
+          keepFiringFor: forever
+`,
+			expErr: true,
+		},
+
+		"An SLO with an invalid duration on a disabled alert should still fail.": {
+			specYaml: `
+apiVersion: sloth.slok.dev/v1
+kind: PrometheusServiceLevel
+metadata:
+  name: test
+  namespace: test-ns
+spec:
+  service: "test-svc"
+  slos:
+    - name: "slo1"
+      objective: 99.9
+      sli:
+        events:
+          errorQuery: test_expr_error_1
+          totalQuery: test_expr_total_1
+      alerting:
+        name: testAlert
+        ticketAlert:
+          disable: true
+          for: 5 minutes
+`,
+			expErr: true,
 		},
 
 		"Wrong spec YAML should fail.": {
@@ -528,4 +603,44 @@ kind:               PrometheusServiceLevel
 			assert.Equal(test.exp, got)
 		})
 	}
+}
+
+func TestK8sSlothPrometheusYAMLSpecLoaderAlertDurations(t *testing.T) {
+	specYAML := `
+apiVersion: sloth.slok.dev/v1
+kind: PrometheusServiceLevel
+metadata:
+  name: test
+  namespace: test-ns
+spec:
+  service: "test-svc"
+  slos:
+    - name: "slo1"
+      objective: 99.9
+      sli:
+        events:
+          errorQuery: test_expr_error_1
+          totalQuery: test_expr_total_1
+      alerting:
+        name: testAlert
+        pageAlert:
+          for: 5m
+          keepFiringFor: 2h
+        ticketAlert:
+          for: 10m
+`
+
+	assert := assert.New(t)
+	require := require.New(t)
+
+	loader := io.NewK8sSlothPrometheusYAMLSpecLoader(testMemPluginsRepo(map[string]pluginenginesli.SLIPlugin{}), 30*24*time.Hour)
+	gotModel, err := loader.LoadSpec(context.TODO(), []byte(specYAML))
+	require.NoError(err)
+	require.Len(gotModel.SLOs, 1)
+
+	slo := gotModel.SLOs[0]
+	assert.Equal(prommodel.Duration(5*time.Minute), slo.PageAlertMeta.For)
+	assert.Equal(prommodel.Duration(2*time.Hour), slo.PageAlertMeta.KeepFiringFor)
+	assert.Equal(prommodel.Duration(10*time.Minute), slo.TicketAlertMeta.For)
+	assert.Equal(prommodel.Duration(0), slo.TicketAlertMeta.KeepFiringFor)
 }

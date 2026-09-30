@@ -164,17 +164,21 @@ func (l SlothPrometheusYAMLSpecLoader) MapSpecToModel(ctx context.Context, spec 
 		// Set alerts.
 		if !specSLO.Alerting.PageAlert.Disable {
 			slo.PageAlertMeta = model.PromAlertMeta{
-				Name:        specSLO.Alerting.Name,
-				Labels:      utilsdata.MergeLabels(specSLO.Alerting.Labels, specSLO.Alerting.PageAlert.Labels),
-				Annotations: utilsdata.MergeLabels(specSLO.Alerting.Annotations, specSLO.Alerting.PageAlert.Annotations),
+				Name:          specSLO.Alerting.Name,
+				For:           specSLO.Alerting.PageAlert.For,
+				KeepFiringFor: specSLO.Alerting.PageAlert.KeepFiringFor,
+				Labels:        utilsdata.MergeLabels(specSLO.Alerting.Labels, specSLO.Alerting.PageAlert.Labels),
+				Annotations:   utilsdata.MergeLabels(specSLO.Alerting.Annotations, specSLO.Alerting.PageAlert.Annotations),
 			}
 		}
 
 		if !specSLO.Alerting.TicketAlert.Disable {
 			slo.TicketAlertMeta = model.PromAlertMeta{
-				Name:        specSLO.Alerting.Name,
-				Labels:      utilsdata.MergeLabels(specSLO.Alerting.Labels, specSLO.Alerting.TicketAlert.Labels),
-				Annotations: utilsdata.MergeLabels(specSLO.Alerting.Annotations, specSLO.Alerting.TicketAlert.Annotations),
+				Name:          specSLO.Alerting.Name,
+				For:           specSLO.Alerting.TicketAlert.For,
+				KeepFiringFor: specSLO.Alerting.TicketAlert.KeepFiringFor,
+				Labels:        utilsdata.MergeLabels(specSLO.Alerting.Labels, specSLO.Alerting.TicketAlert.Labels),
+				Annotations:   utilsdata.MergeLabels(specSLO.Alerting.Annotations, specSLO.Alerting.TicketAlert.Annotations),
 			}
 		}
 

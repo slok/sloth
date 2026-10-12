@@ -4,11 +4,12 @@ go 1.26.0
 
 require (
 	github.com/OpenSLO/oslo v0.12.0
-	github.com/VictoriaMetrics/metricsql v0.86.0
+	github.com/VictoriaMetrics/metricsql v0.87.5
 	github.com/alecthomas/kingpin/v2 v2.4.0
 	github.com/caarlos0/env/v11 v11.4.0
 	github.com/go-chi/chi/v5 v5.2.5
 	github.com/lithammer/fuzzysearch v1.1.8
+	github.com/modelcontextprotocol/go-sdk v1.6.1
 	github.com/oklog/run v1.2.0
 	github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring v0.90.1
 	github.com/prometheus-operator/prometheus-operator/pkg/client v0.90.1
@@ -63,7 +64,6 @@ require (
 	github.com/grafana/regexp v0.0.0-20250905093917-f7b3be9d1853 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/kylelemons/godebug v1.1.0 // indirect
-	github.com/modelcontextprotocol/go-sdk v1.6.1 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.3-0.20250322232337-35a7c28c31ee // indirect
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect

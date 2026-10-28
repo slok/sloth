@@ -38,6 +38,7 @@ spec:
       containers:
         - name: sloth
           image: {{ coalesce .Values.global.imageRegistry .Values.image.registry }}/{{ .Values.image.repository }}:{{ .Values.image.tag }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
           args:
             - kubernetes-controller
             {{- if .Values.sloth.resyncInterval }}
@@ -94,6 +95,7 @@ spec:
         {{- if .Values.commonPlugins.enabled }}
         - name: git-sync-plugins
           image: {{ .Values.commonPlugins.image.repository }}:{{ .Values.commonPlugins.image.tag }}
+          imagePullPolicy: {{ .Values.commonPlugins.image.pullPolicy }}
           args:
             - --repo={{.Values.commonPlugins.gitRepo.url}}
             - --ref={{.Values.commonPlugins.gitRepo.branch}}

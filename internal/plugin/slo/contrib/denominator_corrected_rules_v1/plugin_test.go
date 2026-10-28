@@ -139,7 +139,7 @@ func TestProcessSLO(t *testing.T) {
 					SLIErrorRecRules: model.PromRuleGroup{Rules: []rulefmt.Rule{
 						{
 							Record: "slo:sli_error:ratio_rate5m",
-							Expr:   "(\nslo:numerator_correction:ratio5m{sloth_id=\"svc01-slo1\", sloth_service=\"svc01\", sloth_slo=\"slo1\"}\n* on()\nsum(rate(http_request_duration_seconds_count{job=\"myservice\",code=~\"(5..|429)\"}[5m]))\n)\n/\n(sum(rate(http_request_duration_seconds_count{job=\"myservice\"}[5m])))\n",
+							Expr:   "(\nslo:numerator_correction:ratio5m{sloth_id=\"svc01-slo1\", sloth_service=\"svc01\", sloth_slo=\"slo1\"}\n* on()\n(sum(rate(http_request_duration_seconds_count{job=\"myservice\",code=~\"(5..|429)\"}[5m])))\n)\n/\n(sum(rate(http_request_duration_seconds_count{job=\"myservice\"}[5m])))\n",
 							Labels: map[string]string{
 								"global01k1":    "global01v1",
 								"global02k1":    "global02v1",
@@ -151,7 +151,7 @@ func TestProcessSLO(t *testing.T) {
 						},
 						{
 							Record: "slo:sli_error:ratio_rate30m",
-							Expr:   "(\nslo:numerator_correction:ratio30m{sloth_id=\"svc01-slo1\", sloth_service=\"svc01\", sloth_slo=\"slo1\"}\n* on()\nsum(rate(http_request_duration_seconds_count{job=\"myservice\",code=~\"(5..|429)\"}[30m]))\n)\n/\n(sum(rate(http_request_duration_seconds_count{job=\"myservice\"}[30m])))\n",
+							Expr:   "(\nslo:numerator_correction:ratio30m{sloth_id=\"svc01-slo1\", sloth_service=\"svc01\", sloth_slo=\"slo1\"}\n* on()\n(sum(rate(http_request_duration_seconds_count{job=\"myservice\",code=~\"(5..|429)\"}[30m])))\n)\n/\n(sum(rate(http_request_duration_seconds_count{job=\"myservice\"}[30m])))\n",
 							Labels: map[string]string{
 								"global01k1":    "global01v1",
 								"global02k1":    "global02v1",
@@ -163,7 +163,7 @@ func TestProcessSLO(t *testing.T) {
 						},
 						{
 							Record: "slo:sli_error:ratio_rate1h",
-							Expr:   "(\nslo:numerator_correction:ratio1h{sloth_id=\"svc01-slo1\", sloth_service=\"svc01\", sloth_slo=\"slo1\"}\n* on()\nsum(rate(http_request_duration_seconds_count{job=\"myservice\",code=~\"(5..|429)\"}[1h]))\n)\n/\n(sum(rate(http_request_duration_seconds_count{job=\"myservice\"}[1h])))\n",
+							Expr:   "(\nslo:numerator_correction:ratio1h{sloth_id=\"svc01-slo1\", sloth_service=\"svc01\", sloth_slo=\"slo1\"}\n* on()\n(sum(rate(http_request_duration_seconds_count{job=\"myservice\",code=~\"(5..|429)\"}[1h])))\n)\n/\n(sum(rate(http_request_duration_seconds_count{job=\"myservice\"}[1h])))\n",
 							Labels: map[string]string{
 								"global01k1":    "global01v1",
 								"global02k1":    "global02v1",
@@ -175,7 +175,7 @@ func TestProcessSLO(t *testing.T) {
 						},
 						{
 							Record: "slo:sli_error:ratio_rate2h",
-							Expr:   "(\nslo:numerator_correction:ratio2h{sloth_id=\"svc01-slo1\", sloth_service=\"svc01\", sloth_slo=\"slo1\"}\n* on()\nsum(rate(http_request_duration_seconds_count{job=\"myservice\",code=~\"(5..|429)\"}[2h]))\n)\n/\n(sum(rate(http_request_duration_seconds_count{job=\"myservice\"}[2h])))\n",
+							Expr:   "(\nslo:numerator_correction:ratio2h{sloth_id=\"svc01-slo1\", sloth_service=\"svc01\", sloth_slo=\"slo1\"}\n* on()\n(sum(rate(http_request_duration_seconds_count{job=\"myservice\",code=~\"(5..|429)\"}[2h])))\n)\n/\n(sum(rate(http_request_duration_seconds_count{job=\"myservice\"}[2h])))\n",
 							Labels: map[string]string{
 								"global01k1":    "global01v1",
 								"global02k1":    "global02v1",
@@ -187,7 +187,7 @@ func TestProcessSLO(t *testing.T) {
 						},
 						{
 							Record: "slo:sli_error:ratio_rate6h",
-							Expr:   "(\nslo:numerator_correction:ratio6h{sloth_id=\"svc01-slo1\", sloth_service=\"svc01\", sloth_slo=\"slo1\"}\n* on()\nsum(rate(http_request_duration_seconds_count{job=\"myservice\",code=~\"(5..|429)\"}[6h]))\n)\n/\n(sum(rate(http_request_duration_seconds_count{job=\"myservice\"}[6h])))\n",
+							Expr:   "(\nslo:numerator_correction:ratio6h{sloth_id=\"svc01-slo1\", sloth_service=\"svc01\", sloth_slo=\"slo1\"}\n* on()\n(sum(rate(http_request_duration_seconds_count{job=\"myservice\",code=~\"(5..|429)\"}[6h])))\n)\n/\n(sum(rate(http_request_duration_seconds_count{job=\"myservice\"}[6h])))\n",
 							Labels: map[string]string{
 								"global01k1":    "global01v1",
 								"global02k1":    "global02v1",
@@ -199,7 +199,7 @@ func TestProcessSLO(t *testing.T) {
 						},
 						{
 							Record: "slo:sli_error:ratio_rate1d",
-							Expr:   "(\nslo:numerator_correction:ratio1d{sloth_id=\"svc01-slo1\", sloth_service=\"svc01\", sloth_slo=\"slo1\"}\n* on()\nsum(rate(http_request_duration_seconds_count{job=\"myservice\",code=~\"(5..|429)\"}[1d]))\n)\n/\n(sum(rate(http_request_duration_seconds_count{job=\"myservice\"}[1d])))\n",
+							Expr:   "(\nslo:numerator_correction:ratio1d{sloth_id=\"svc01-slo1\", sloth_service=\"svc01\", sloth_slo=\"slo1\"}\n* on()\n(sum(rate(http_request_duration_seconds_count{job=\"myservice\",code=~\"(5..|429)\"}[1d])))\n)\n/\n(sum(rate(http_request_duration_seconds_count{job=\"myservice\"}[1d])))\n",
 							Labels: map[string]string{
 								"global01k1":    "global01v1",
 								"global02k1":    "global02v1",
@@ -211,7 +211,7 @@ func TestProcessSLO(t *testing.T) {
 						},
 						{
 							Record: "slo:sli_error:ratio_rate3d",
-							Expr:   "(\nslo:numerator_correction:ratio3d{sloth_id=\"svc01-slo1\", sloth_service=\"svc01\", sloth_slo=\"slo1\"}\n* on()\nsum(rate(http_request_duration_seconds_count{job=\"myservice\",code=~\"(5..|429)\"}[3d]))\n)\n/\n(sum(rate(http_request_duration_seconds_count{job=\"myservice\"}[3d])))\n",
+							Expr:   "(\nslo:numerator_correction:ratio3d{sloth_id=\"svc01-slo1\", sloth_service=\"svc01\", sloth_slo=\"slo1\"}\n* on()\n(sum(rate(http_request_duration_seconds_count{job=\"myservice\",code=~\"(5..|429)\"}[3d])))\n)\n/\n(sum(rate(http_request_duration_seconds_count{job=\"myservice\"}[3d])))\n",
 							Labels: map[string]string{
 								"global01k1":    "global01v1",
 								"global02k1":    "global02v1",
@@ -328,7 +328,7 @@ func TestProcessSLO(t *testing.T) {
 					SLIErrorRecRules: model.PromRuleGroup{Rules: []rulefmt.Rule{
 						{
 							Record: "slo:sli_error:ratio_rate5m",
-							Expr:   "(\nslo:numerator_correction:ratio5m{sloth_id=\"svc01-slo1\", sloth_service=\"svc01\", sloth_slo=\"slo1\"}\n* on()\nsum(rate(http_request_duration_seconds_count{job=\"myservice\",code=~\"(5..|429)\"}[5m]))\n)\n/\n(sum(rate(http_request_duration_seconds_count{job=\"myservice\"}[5m])))\n",
+							Expr:   "(\nslo:numerator_correction:ratio5m{sloth_id=\"svc01-slo1\", sloth_service=\"svc01\", sloth_slo=\"slo1\"}\n* on()\n(sum(rate(http_request_duration_seconds_count{job=\"myservice\",code=~\"(5..|429)\"}[5m])))\n)\n/\n(sum(rate(http_request_duration_seconds_count{job=\"myservice\"}[5m])))\n",
 							Labels: map[string]string{
 								"global01k1":    "global01v1",
 								"global02k1":    "global02v1",
@@ -340,7 +340,7 @@ func TestProcessSLO(t *testing.T) {
 						},
 						{
 							Record: "slo:sli_error:ratio_rate30m",
-							Expr:   "(\nslo:numerator_correction:ratio30m{sloth_id=\"svc01-slo1\", sloth_service=\"svc01\", sloth_slo=\"slo1\"}\n* on()\nsum(rate(http_request_duration_seconds_count{job=\"myservice\",code=~\"(5..|429)\"}[30m]))\n)\n/\n(sum(rate(http_request_duration_seconds_count{job=\"myservice\"}[30m])))\n",
+							Expr:   "(\nslo:numerator_correction:ratio30m{sloth_id=\"svc01-slo1\", sloth_service=\"svc01\", sloth_slo=\"slo1\"}\n* on()\n(sum(rate(http_request_duration_seconds_count{job=\"myservice\",code=~\"(5..|429)\"}[30m])))\n)\n/\n(sum(rate(http_request_duration_seconds_count{job=\"myservice\"}[30m])))\n",
 							Labels: map[string]string{
 								"global01k1":    "global01v1",
 								"global02k1":    "global02v1",
@@ -352,7 +352,7 @@ func TestProcessSLO(t *testing.T) {
 						},
 						{
 							Record: "slo:sli_error:ratio_rate1h",
-							Expr:   "(\nslo:numerator_correction:ratio1h{sloth_id=\"svc01-slo1\", sloth_service=\"svc01\", sloth_slo=\"slo1\"}\n* on()\nsum(rate(http_request_duration_seconds_count{job=\"myservice\",code=~\"(5..|429)\"}[1h]))\n)\n/\n(sum(rate(http_request_duration_seconds_count{job=\"myservice\"}[1h])))\n",
+							Expr:   "(\nslo:numerator_correction:ratio1h{sloth_id=\"svc01-slo1\", sloth_service=\"svc01\", sloth_slo=\"slo1\"}\n* on()\n(sum(rate(http_request_duration_seconds_count{job=\"myservice\",code=~\"(5..|429)\"}[1h])))\n)\n/\n(sum(rate(http_request_duration_seconds_count{job=\"myservice\"}[1h])))\n",
 							Labels: map[string]string{
 								"global01k1":    "global01v1",
 								"global02k1":    "global02v1",
@@ -364,7 +364,7 @@ func TestProcessSLO(t *testing.T) {
 						},
 						{
 							Record: "slo:sli_error:ratio_rate2h",
-							Expr:   "(\nslo:numerator_correction:ratio2h{sloth_id=\"svc01-slo1\", sloth_service=\"svc01\", sloth_slo=\"slo1\"}\n* on()\nsum(rate(http_request_duration_seconds_count{job=\"myservice\",code=~\"(5..|429)\"}[2h]))\n)\n/\n(sum(rate(http_request_duration_seconds_count{job=\"myservice\"}[2h])))\n",
+							Expr:   "(\nslo:numerator_correction:ratio2h{sloth_id=\"svc01-slo1\", sloth_service=\"svc01\", sloth_slo=\"slo1\"}\n* on()\n(sum(rate(http_request_duration_seconds_count{job=\"myservice\",code=~\"(5..|429)\"}[2h])))\n)\n/\n(sum(rate(http_request_duration_seconds_count{job=\"myservice\"}[2h])))\n",
 							Labels: map[string]string{
 								"global01k1":    "global01v1",
 								"global02k1":    "global02v1",
@@ -376,7 +376,7 @@ func TestProcessSLO(t *testing.T) {
 						},
 						{
 							Record: "slo:sli_error:ratio_rate6h",
-							Expr:   "(\nslo:numerator_correction:ratio6h{sloth_id=\"svc01-slo1\", sloth_service=\"svc01\", sloth_slo=\"slo1\"}\n* on()\nsum(rate(http_request_duration_seconds_count{job=\"myservice\",code=~\"(5..|429)\"}[6h]))\n)\n/\n(sum(rate(http_request_duration_seconds_count{job=\"myservice\"}[6h])))\n",
+							Expr:   "(\nslo:numerator_correction:ratio6h{sloth_id=\"svc01-slo1\", sloth_service=\"svc01\", sloth_slo=\"slo1\"}\n* on()\n(sum(rate(http_request_duration_seconds_count{job=\"myservice\",code=~\"(5..|429)\"}[6h])))\n)\n/\n(sum(rate(http_request_duration_seconds_count{job=\"myservice\"}[6h])))\n",
 							Labels: map[string]string{
 								"global01k1":    "global01v1",
 								"global02k1":    "global02v1",
@@ -388,7 +388,7 @@ func TestProcessSLO(t *testing.T) {
 						},
 						{
 							Record: "slo:sli_error:ratio_rate1d",
-							Expr:   "(\nslo:numerator_correction:ratio1d{sloth_id=\"svc01-slo1\", sloth_service=\"svc01\", sloth_slo=\"slo1\"}\n* on()\nsum(rate(http_request_duration_seconds_count{job=\"myservice\",code=~\"(5..|429)\"}[1d]))\n)\n/\n(sum(rate(http_request_duration_seconds_count{job=\"myservice\"}[1d])))\n",
+							Expr:   "(\nslo:numerator_correction:ratio1d{sloth_id=\"svc01-slo1\", sloth_service=\"svc01\", sloth_slo=\"slo1\"}\n* on()\n(sum(rate(http_request_duration_seconds_count{job=\"myservice\",code=~\"(5..|429)\"}[1d])))\n)\n/\n(sum(rate(http_request_duration_seconds_count{job=\"myservice\"}[1d])))\n",
 							Labels: map[string]string{
 								"global01k1":    "global01v1",
 								"global02k1":    "global02v1",
@@ -400,7 +400,7 @@ func TestProcessSLO(t *testing.T) {
 						},
 						{
 							Record: "slo:sli_error:ratio_rate3d",
-							Expr:   "(\nslo:numerator_correction:ratio3d{sloth_id=\"svc01-slo1\", sloth_service=\"svc01\", sloth_slo=\"slo1\"}\n* on()\nsum(rate(http_request_duration_seconds_count{job=\"myservice\",code=~\"(5..|429)\"}[3d]))\n)\n/\n(sum(rate(http_request_duration_seconds_count{job=\"myservice\"}[3d])))\n",
+							Expr:   "(\nslo:numerator_correction:ratio3d{sloth_id=\"svc01-slo1\", sloth_service=\"svc01\", sloth_slo=\"slo1\"}\n* on()\n(sum(rate(http_request_duration_seconds_count{job=\"myservice\",code=~\"(5..|429)\"}[3d])))\n)\n/\n(sum(rate(http_request_duration_seconds_count{job=\"myservice\"}[3d])))\n",
 							Labels: map[string]string{
 								"global01k1":    "global01v1",
 								"global02k1":    "global02v1",
@@ -498,6 +498,210 @@ func TestProcessSLO(t *testing.T) {
 								"global02k1":    "global02v1",
 								"sloth_id":      "svc01-slo1",
 								"sloth_service": "svc01",
+								"sloth_slo":     "slo1",
+							},
+						},
+					}},
+				},
+			},
+		},
+
+		"Having an SLO with error query containing subtraction (total - good) should create correct recording rules with proper parentheses.": {
+			pluginConfig: plugin.PluginConfig{DisableOptimized: true},
+			req: pluginslov1.Request{
+				SLO: model.PromSLO{
+					ID:         "svc02-slo1",
+					Name:       "slo1",
+					Service:    "svc02",
+					TimeWindow: 30 * 24 * time.Hour,
+					SLI: model.PromSLI{
+						Events: &model.PromSLIEvents{
+							ErrorQuery: `sum(rate(http_requests_total{job="myservice"}[{{.window}}])) - sum(rate(http_requests_good{job="myservice"}[{{.window}}]))`,
+							TotalQuery: `sum(rate(http_requests_total{job="myservice"}[{{.window}}]))`,
+						},
+					},
+					Labels: map[string]string{
+						"global01k1": "global01v1",
+						"global02k1": "global02v1",
+					},
+				},
+				MWMBAlertGroup: baseAlertGroup(),
+			},
+			expRes: pluginslov1.Result{
+				SLORules: model.PromSLORules{
+					SLIErrorRecRules: model.PromRuleGroup{Rules: []rulefmt.Rule{
+						{
+							Record: "slo:sli_error:ratio_rate5m",
+							Expr:   "(\nslo:numerator_correction:ratio5m{sloth_id=\"svc02-slo1\", sloth_service=\"svc02\", sloth_slo=\"slo1\"}\n* on()\n(sum(rate(http_requests_total{job=\"myservice\"}[5m])) - sum(rate(http_requests_good{job=\"myservice\"}[5m])))\n)\n/\n(sum(rate(http_requests_total{job=\"myservice\"}[5m])))\n",
+							Labels: map[string]string{
+								"global01k1":    "global01v1",
+								"global02k1":    "global02v1",
+								"sloth_id":      "svc02-slo1",
+								"sloth_service": "svc02",
+								"sloth_slo":     "slo1",
+								"sloth_window":  "5m",
+							},
+						},
+						{
+							Record: "slo:sli_error:ratio_rate30m",
+							Expr:   "(\nslo:numerator_correction:ratio30m{sloth_id=\"svc02-slo1\", sloth_service=\"svc02\", sloth_slo=\"slo1\"}\n* on()\n(sum(rate(http_requests_total{job=\"myservice\"}[30m])) - sum(rate(http_requests_good{job=\"myservice\"}[30m])))\n)\n/\n(sum(rate(http_requests_total{job=\"myservice\"}[30m])))\n",
+							Labels: map[string]string{
+								"global01k1":    "global01v1",
+								"global02k1":    "global02v1",
+								"sloth_id":      "svc02-slo1",
+								"sloth_service": "svc02",
+								"sloth_slo":     "slo1",
+								"sloth_window":  "30m",
+							},
+						},
+						{
+							Record: "slo:sli_error:ratio_rate1h",
+							Expr:   "(\nslo:numerator_correction:ratio1h{sloth_id=\"svc02-slo1\", sloth_service=\"svc02\", sloth_slo=\"slo1\"}\n* on()\n(sum(rate(http_requests_total{job=\"myservice\"}[1h])) - sum(rate(http_requests_good{job=\"myservice\"}[1h])))\n)\n/\n(sum(rate(http_requests_total{job=\"myservice\"}[1h])))\n",
+							Labels: map[string]string{
+								"global01k1":    "global01v1",
+								"global02k1":    "global02v1",
+								"sloth_id":      "svc02-slo1",
+								"sloth_service": "svc02",
+								"sloth_slo":     "slo1",
+								"sloth_window":  "1h",
+							},
+						},
+						{
+							Record: "slo:sli_error:ratio_rate2h",
+							Expr:   "(\nslo:numerator_correction:ratio2h{sloth_id=\"svc02-slo1\", sloth_service=\"svc02\", sloth_slo=\"slo1\"}\n* on()\n(sum(rate(http_requests_total{job=\"myservice\"}[2h])) - sum(rate(http_requests_good{job=\"myservice\"}[2h])))\n)\n/\n(sum(rate(http_requests_total{job=\"myservice\"}[2h])))\n",
+							Labels: map[string]string{
+								"global01k1":    "global01v1",
+								"global02k1":    "global02v1",
+								"sloth_id":      "svc02-slo1",
+								"sloth_service": "svc02",
+								"sloth_slo":     "slo1",
+								"sloth_window":  "2h",
+							},
+						},
+						{
+							Record: "slo:sli_error:ratio_rate6h",
+							Expr:   "(\nslo:numerator_correction:ratio6h{sloth_id=\"svc02-slo1\", sloth_service=\"svc02\", sloth_slo=\"slo1\"}\n* on()\n(sum(rate(http_requests_total{job=\"myservice\"}[6h])) - sum(rate(http_requests_good{job=\"myservice\"}[6h])))\n)\n/\n(sum(rate(http_requests_total{job=\"myservice\"}[6h])))\n",
+							Labels: map[string]string{
+								"global01k1":    "global01v1",
+								"global02k1":    "global02v1",
+								"sloth_id":      "svc02-slo1",
+								"sloth_service": "svc02",
+								"sloth_slo":     "slo1",
+								"sloth_window":  "6h",
+							},
+						},
+						{
+							Record: "slo:sli_error:ratio_rate1d",
+							Expr:   "(\nslo:numerator_correction:ratio1d{sloth_id=\"svc02-slo1\", sloth_service=\"svc02\", sloth_slo=\"slo1\"}\n* on()\n(sum(rate(http_requests_total{job=\"myservice\"}[1d])) - sum(rate(http_requests_good{job=\"myservice\"}[1d])))\n)\n/\n(sum(rate(http_requests_total{job=\"myservice\"}[1d])))\n",
+							Labels: map[string]string{
+								"global01k1":    "global01v1",
+								"global02k1":    "global02v1",
+								"sloth_id":      "svc02-slo1",
+								"sloth_service": "svc02",
+								"sloth_slo":     "slo1",
+								"sloth_window":  "1d",
+							},
+						},
+						{
+							Record: "slo:sli_error:ratio_rate3d",
+							Expr:   "(\nslo:numerator_correction:ratio3d{sloth_id=\"svc02-slo1\", sloth_service=\"svc02\", sloth_slo=\"slo1\"}\n* on()\n(sum(rate(http_requests_total{job=\"myservice\"}[3d])) - sum(rate(http_requests_good{job=\"myservice\"}[3d])))\n)\n/\n(sum(rate(http_requests_total{job=\"myservice\"}[3d])))\n",
+							Labels: map[string]string{
+								"global01k1":    "global01v1",
+								"global02k1":    "global02v1",
+								"sloth_id":      "svc02-slo1",
+								"sloth_service": "svc02",
+								"sloth_slo":     "slo1",
+								"sloth_window":  "3d",
+							},
+						},
+						{
+							Record: "slo:sli_error:ratio_rate30d",
+							Expr:   "(sum(rate(http_requests_total{job=\"myservice\"}[30d])) - sum(rate(http_requests_good{job=\"myservice\"}[30d])))\n/\n(sum(rate(http_requests_total{job=\"myservice\"}[30d])))\n",
+							Labels: map[string]string{
+								"global01k1":    "global01v1",
+								"global02k1":    "global02v1",
+								"sloth_id":      "svc02-slo1",
+								"sloth_service": "svc02",
+								"sloth_slo":     "slo1",
+								"sloth_window":  "30d",
+							},
+						},
+					}},
+					MetadataRecRules: model.PromRuleGroup{Rules: []rulefmt.Rule{
+						{
+							Record: "slo:numerator_correction:ratio5m",
+							Expr:   `(sum(rate(http_requests_total{job="myservice"}[5m])))/(sum(rate(http_requests_total{job="myservice"}[30d])))`,
+							Labels: map[string]string{
+								"global01k1":    "global01v1",
+								"global02k1":    "global02v1",
+								"sloth_id":      "svc02-slo1",
+								"sloth_service": "svc02",
+								"sloth_slo":     "slo1",
+							},
+						},
+						{
+							Record: "slo:numerator_correction:ratio30m",
+							Expr:   `(sum(rate(http_requests_total{job="myservice"}[30m])))/(sum(rate(http_requests_total{job="myservice"}[30d])))`,
+							Labels: map[string]string{
+								"global01k1":    "global01v1",
+								"global02k1":    "global02v1",
+								"sloth_id":      "svc02-slo1",
+								"sloth_service": "svc02",
+								"sloth_slo":     "slo1",
+							},
+						},
+						{
+							Record: "slo:numerator_correction:ratio1h",
+							Expr:   `(sum(rate(http_requests_total{job="myservice"}[1h])))/(sum(rate(http_requests_total{job="myservice"}[30d])))`,
+							Labels: map[string]string{
+								"global01k1":    "global01v1",
+								"global02k1":    "global02v1",
+								"sloth_id":      "svc02-slo1",
+								"sloth_service": "svc02",
+								"sloth_slo":     "slo1",
+							},
+						},
+						{
+							Record: "slo:numerator_correction:ratio2h",
+							Expr:   `(sum(rate(http_requests_total{job="myservice"}[2h])))/(sum(rate(http_requests_total{job="myservice"}[30d])))`,
+							Labels: map[string]string{
+								"global01k1":    "global01v1",
+								"global02k1":    "global02v1",
+								"sloth_id":      "svc02-slo1",
+								"sloth_service": "svc02",
+								"sloth_slo":     "slo1",
+							},
+						},
+						{
+							Record: "slo:numerator_correction:ratio6h",
+							Expr:   `(sum(rate(http_requests_total{job="myservice"}[6h])))/(sum(rate(http_requests_total{job="myservice"}[30d])))`,
+							Labels: map[string]string{
+								"global01k1":    "global01v1",
+								"global02k1":    "global02v1",
+								"sloth_id":      "svc02-slo1",
+								"sloth_service": "svc02",
+								"sloth_slo":     "slo1",
+							},
+						},
+						{
+							Record: "slo:numerator_correction:ratio1d",
+							Expr:   `(sum(rate(http_requests_total{job="myservice"}[1d])))/(sum(rate(http_requests_total{job="myservice"}[30d])))`,
+							Labels: map[string]string{
+								"global01k1":    "global01v1",
+								"global02k1":    "global02v1",
+								"sloth_id":      "svc02-slo1",
+								"sloth_service": "svc02",
+								"sloth_slo":     "slo1",
+							},
+						},
+						{
+							Record: "slo:numerator_correction:ratio3d",
+							Expr:   `(sum(rate(http_requests_total{job="myservice"}[3d])))/(sum(rate(http_requests_total{job="myservice"}[30d])))`,
+							Labels: map[string]string{
+								"global01k1":    "global01v1",
+								"global02k1":    "global02v1",
+								"sloth_id":      "svc02-slo1",
+								"sloth_service": "svc02",
 								"sloth_slo":     "slo1",
 							},
 						},

@@ -15,4 +15,8 @@ var (
 
 	// ErrAlreadyExists will be used when a resource already exists.
 	ErrAlreadyExists = fmt.Errorf("already exists")
+
+	// ErrUnsupportedSpecType will be used when a spec doesn't match any of the known Sloth spec
+	// types.
+	ErrUnsupportedSpecType = fmt.Errorf("unsupported spec type")
 )

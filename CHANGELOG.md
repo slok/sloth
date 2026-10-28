@@ -4,6 +4,7 @@
 
 ### Added
 
+- `validate`: Support ignoring discovered specs that are not Sloth supported spec types with `--ignore-unsupported-specs`.
 - `server`: Support HTTP request/response MCP with the `--mcp-enabled` and `--mcp-path` flags.
 - MCP: Add the `context`, `list_slos` and `get_slo` tools.
 

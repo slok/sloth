@@ -15,6 +15,7 @@ import (
 	k8stransformpromopv1 "github.com/slok/sloth/internal/plugin/k8stransform/prom_operator_prometheus_rule_v1"
 	storagefs "github.com/slok/sloth/internal/storage/fs"
 	storageio "github.com/slok/sloth/internal/storage/io"
+	commonerrors "github.com/slok/sloth/pkg/common/errors"
 	"github.com/slok/sloth/pkg/common/model"
 	utilsdata "github.com/slok/sloth/pkg/common/utils/data"
 	kubernetesv1 "github.com/slok/sloth/pkg/kubernetes/api/sloth/v1"
@@ -188,7 +189,7 @@ func (p PrometheusSLOGenerator) GenerateFromRaw(ctx context.Context, data []byte
 		return p.GenerateFromOpenSLOV1Alpha(ctx, *apiSpec)
 
 	default:
-		return nil, fmt.Errorf("invalid spec, could not load with any of the supported spec types")
+		return nil, fmt.Errorf("invalid spec, could not load with any of the supported spec types: %w", commonerrors.ErrUnsupportedSpecType)
 	}
 }
 

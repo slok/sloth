@@ -2,6 +2,7 @@ package commands
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"io/fs"
@@ -30,6 +31,7 @@ type validateCommand struct {
 	sloPlugins               []string
 	disableDefaultSLOPlugins bool
 	ignoreSloDuplicates      bool
+	ignoreUnsupportedSpecs   bool
 }
 
 // NewValidateCommand returns the validate command.
@@ -46,6 +48,7 @@ func NewValidateCommand(app *kingpin.Application) Command {
 	cmd.Flag("slo-plugins", `SLO plugins chain declaration in JSON format '{"id": "foo","priority": 0,"config": "{}"}' (Can be repeated).`).Short('s').StringsVar(&c.sloPlugins)
 	cmd.Flag("disable-default-slo-plugins", `Disables the default SLO plugins, normally used along with custom SLO plugins to fully customize Sloth behavior`).BoolVar(&c.disableDefaultSLOPlugins)
 	cmd.Flag("ignore-slo-duplicates", "Flag to ignore SLO duplicates in specs (service and name used as an SLO/SLI identifier).").Default("false").BoolVar(&c.ignoreSloDuplicates)
+	cmd.Flag("ignore-unsupported-specs", "Flag to ignore the discovered specs that are not any of the supported Sloth spec types instead of failing (e.g other tools specs living in the same directory).").Default("false").BoolVar(&c.ignoreUnsupportedSpecs)
 
 	return c
 }
@@ -120,6 +123,7 @@ func (v validateCommand) Run(ctx context.Context, config RootConfig) error {
 	// For every file load the data and start the validation process:
 	validations := []*fileValidation{}
 	totalValidations := 0
+	totalIgnoredSpecs := 0
 	sloIDs := make(map[string]string)
 	for _, input := range sloPaths {
 		// Get SLO spec data.
@@ -136,8 +140,6 @@ func (v validateCommand) Run(ctx context.Context, config RootConfig) error {
 		validation := &fileValidation{File: input}
 		validations = append(validations, validation)
 		for _, data := range splittedSLOsData {
-			totalValidations++
-			_ = data
 			genTarget := generateTarget{
 				SLOData: data,
 				Out:     io.Discard,
@@ -146,21 +148,33 @@ func (v validateCommand) Run(ctx context.Context, config RootConfig) error {
 			// Generate SLOs.
 			sloGroupResult, err := genService.GenerateFromRaw(ctx, []byte(genTarget.SLOData))
 			if err != nil {
+				// The discovered files may contain specs that don't belong to Sloth (e.g other tools
+				// specs living in the same directory), on demand we ignore them instead of failing.
+				if v.ignoreUnsupportedSpecs && errors.Is(err, commonerrors.ErrUnsupportedSpecType) {
+					totalIgnoredSpecs++
+					logger.WithValues(log.Kv{"file": validation.File}).Debugf("Ignored spec, not a Sloth supported spec type")
+					continue
+				}
+
+				totalValidations++
 				validation.Errs = append(validation.Errs, fmt.Errorf("invalid SLO: %w", err))
-			} else {
-				// Check for SLO duplicates
-				if !v.ignoreSloDuplicates {
-					for _, sloResult := range sloGroupResult.SLOResults {
-						slo := sloResult.SLO
-						if sloFile, exists := sloIDs[slo.ID]; !exists {
-							sloIDs[slo.ID] = validation.File
-						} else {
-							err := fmt.Errorf(
-								"SLO duplicated. SLO{service=%s, name=%s}, ID=%s already exists in a file: %s: %w",
-								slo.Service, slo.Name, slo.ID, sloFile, commonerrors.ErrAlreadyExists,
-							)
-							validation.Errs = append(validation.Errs, err)
-						}
+				continue
+			}
+
+			totalValidations++
+
+			// Check for SLO duplicates.
+			if !v.ignoreSloDuplicates {
+				for _, sloResult := range sloGroupResult.SLOResults {
+					slo := sloResult.SLO
+					if sloFile, exists := sloIDs[slo.ID]; !exists {
+						sloIDs[slo.ID] = validation.File
+					} else {
+						err := fmt.Errorf(
+							"SLO duplicated. SLO{service=%s, name=%s}, ID=%s already exists in a file: %s: %w",
+							slo.Service, slo.Name, slo.ID, sloFile, commonerrors.ErrAlreadyExists,
+						)
+						validation.Errs = append(validation.Errs, err)
 					}
 				}
 			}
@@ -181,7 +195,13 @@ func (v validateCommand) Run(ctx context.Context, config RootConfig) error {
 		}
 	}
 
-	logger.WithValues(log.Kv{"slo-specs": totalValidations}).Infof("Validation succeeded")
+	// All the discovered specs could have been ignored, we don't want to succeed silently on
+	// setups where the user thinks Sloth specs are being validated.
+	if totalValidations == 0 {
+		return fmt.Errorf("0 slo specs have been validated")
+	}
+
+	logger.WithValues(log.Kv{"slo-specs": totalValidations, "ignored-specs": totalIgnoredSpecs}).Infof("Validation succeeded")
 	return nil
 }
 

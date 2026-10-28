@@ -49,6 +49,21 @@ func TestPrometheusValidate(t *testing.T) {
 			valCmdArgs: "--input ./testdata/validate --fs-exclude bad --fs-include .*-aa.* --ignore-slo-duplicates",
 		},
 
+		"Discovery of specs with unsupported spec types should validate with failures.": {
+			valCmdArgs: "--input ./testdata/validate_unsupported",
+			expErr:     true,
+		},
+
+		"Discovery of specs with unsupported spec types and ignore flag should validate correctly.": {
+			valCmdArgs: "--input ./testdata/validate_unsupported --ignore-unsupported-specs",
+			expErr:     false,
+		},
+
+		"Discovery of only unsupported spec types with ignore flag should fail because 0 specs validated.": {
+			valCmdArgs: "--input ./testdata/validate_unsupported --fs-include unsupported --ignore-unsupported-specs",
+			expErr:     true,
+		},
+
 		"Discovery of specs with duplicates should validate with failures.": {
 			valCmdArgs: "--input ./testdata/validate_with_duplicates",
 			expErr:     true,

@@ -10,6 +10,17 @@ type AlertApplyConfiguration struct {
 	// Disable disables the alert and makes Sloth not generating this alert. This
 	// can be helpful for example to disable ticket(warning) alerts.
 	Disable *bool `json:"disable,omitempty"`
+	// For is the time the alert expression must be true before the alert fires,
+	// the Prometheus rule `for` field (e.g `5m`). Without it the alert fires on
+	// the first evaluation that matches.
+	For *string `json:"for,omitempty"`
+	// KeepFiringFor is the time the alert keeps firing after its expression stops
+	// being true, the Prometheus rule `keep_firing_for` field (e.g `2h`). Useful
+	// for burn rate alerts, that resolve and fire again while an incident is
+	// still ongoing.
+	// Requires Prometheus operator v0.63 or above, older ones prune the field
+	// from the generated rule without failing.
+	KeepFiringFor *string `json:"keepFiringFor,omitempty"`
 	// Labels are the Prometheus labels for the specific alert. For example can be
 	// useful to route the Page alert to specific Slack channel.
 	Labels map[string]string `json:"labels,omitempty"`
@@ -28,6 +39,22 @@ func Alert() *AlertApplyConfiguration {
 // If called multiple times, the Disable field is set to the value of the last call.
 func (b *AlertApplyConfiguration) WithDisable(value bool) *AlertApplyConfiguration {
 	b.Disable = &value
+	return b
+}
+
+// WithFor sets the For field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the For field is set to the value of the last call.
+func (b *AlertApplyConfiguration) WithFor(value string) *AlertApplyConfiguration {
+	b.For = &value
+	return b
+}
+
+// WithKeepFiringFor sets the KeepFiringFor field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the KeepFiringFor field is set to the value of the last call.
+func (b *AlertApplyConfiguration) WithKeepFiringFor(value string) *AlertApplyConfiguration {
+	b.KeepFiringFor = &value
 	return b
 }
 

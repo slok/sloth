@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	prommodel "github.com/prometheus/common/model"
 	"github.com/stretchr/testify/assert"
 
 	pluginenginesli "github.com/slok/sloth/internal/pluginengine/sli"
@@ -525,6 +526,100 @@ func TestSlothPrometheusYAMLSpecLoaderIsSpecType(t *testing.T) {
 			got := loader.IsSpecType(context.TODO(), []byte(test.specYaml))
 
 			assert.Equal(test.exp, got)
+		})
+	}
+}
+
+func TestSlothPrometheusYAMLSpecLoaderAlertDurations(t *testing.T) {
+	tests := map[string]struct {
+		specYaml            string
+		expPageFor          prommodel.Duration
+		expPageKeepFiring   prommodel.Duration
+		expTicketFor        prommodel.Duration
+		expTicketKeepFiring prommodel.Duration
+		expErr              bool
+	}{
+		"Alert for and keep_firing_for should be mapped to the model.": {
+			specYaml: `
+version: "prometheus/v1"
+service: "test-svc"
+slos:
+  - name: "slo1"
+    objective: 99.9
+    sli:
+      events:
+        error_query: test_expr_error_1
+        total_query: test_expr_total_1
+    alerting:
+      name: testAlert
+      page_alert:
+        for: 5m
+        keep_firing_for: 2h
+      ticket_alert:
+        for: 10m
+        keep_firing_for: 6h
+`,
+			expPageFor:          prommodel.Duration(5 * time.Minute),
+			expPageKeepFiring:   prommodel.Duration(2 * time.Hour),
+			expTicketFor:        prommodel.Duration(10 * time.Minute),
+			expTicketKeepFiring: prommodel.Duration(6 * time.Hour),
+		},
+
+		"Alerts without durations should leave them unset.": {
+			specYaml: `
+version: "prometheus/v1"
+service: "test-svc"
+slos:
+  - name: "slo1"
+    objective: 99.9
+    sli:
+      events:
+        error_query: test_expr_error_1
+        total_query: test_expr_total_1
+    alerting:
+      name: testAlert
+`,
+		},
+
+		"An invalid alert duration should fail.": {
+			specYaml: `
+version: "prometheus/v1"
+service: "test-svc"
+slos:
+  - name: "slo1"
+    objective: 99.9
+    sli:
+      events:
+        error_query: test_expr_error_1
+        total_query: test_expr_total_1
+    alerting:
+      name: testAlert
+      page_alert:
+        for: 5 minutes
+`,
+			expErr: true,
+		},
+	}
+
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			assert := assert.New(t)
+
+			loader := io.NewSlothPrometheusYAMLSpecLoader(testMemPluginsRepo(map[string]pluginenginesli.SLIPlugin{}), 30*24*time.Hour)
+			gotModel, err := loader.LoadSpec(context.TODO(), []byte(test.specYaml))
+
+			if test.expErr {
+				assert.Error(err)
+				return
+			}
+
+			if assert.NoError(err) {
+				assert.Len(gotModel.SLOs, 1)
+				assert.Equal(test.expPageFor, gotModel.SLOs[0].PageAlertMeta.For)
+				assert.Equal(test.expPageKeepFiring, gotModel.SLOs[0].PageAlertMeta.KeepFiringFor)
+				assert.Equal(test.expTicketFor, gotModel.SLOs[0].TicketAlertMeta.For)
+				assert.Equal(test.expTicketKeepFiring, gotModel.SLOs[0].TicketAlertMeta.KeepFiringFor)
+			}
 		})
 	}
 }

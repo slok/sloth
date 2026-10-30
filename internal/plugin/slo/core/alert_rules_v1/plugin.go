@@ -114,10 +114,12 @@ func defaultSLOAlertGenerator(slo model.PromSLO, sloAlert model.PromAlertMeta, q
 	}
 
 	return &rulefmt.Rule{
-		Alert:       sloAlert.Name,
-		Expr:        expr.String(),
-		Annotations: utilsdata.MergeLabels(extraAnnotations, sloAlert.Annotations),
-		Labels:      utilsdata.MergeLabels(extraLabels, sloAlert.Labels),
+		Alert:         sloAlert.Name,
+		Expr:          expr.String(),
+		For:           sloAlert.For,
+		KeepFiringFor: sloAlert.KeepFiringFor,
+		Annotations:   utilsdata.MergeLabels(extraAnnotations, sloAlert.Annotations),
+		Labels:        utilsdata.MergeLabels(extraLabels, sloAlert.Labels),
 	}, nil
 }
 

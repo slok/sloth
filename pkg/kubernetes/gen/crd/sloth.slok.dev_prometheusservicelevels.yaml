@@ -165,6 +165,21 @@ spec:
                                 Disable disables the alert and makes Sloth not generating this alert. This
                                 can be helpful for example to disable ticket(warning) alerts.
                               type: boolean
+                            for:
+                              description: |-
+                                For is the time the alert expression must be true before the alert fires,
+                                the Prometheus rule `for` field (e.g `5m`). Without it the alert fires on
+                                the first evaluation that matches.
+                              type: string
+                            keepFiringFor:
+                              description: |-
+                                KeepFiringFor is the time the alert keeps firing after its expression stops
+                                being true, the Prometheus rule `keep_firing_for` field (e.g `2h`). Useful
+                                for burn rate alerts, that resolve and fire again while an incident is
+                                still ongoing.
+                                Requires Prometheus operator v0.63 or above, older ones prune the field
+                                from the generated rule without failing.
+                              type: string
                             labels:
                               additionalProperties:
                                 type: string
@@ -188,6 +203,21 @@ spec:
                                 Disable disables the alert and makes Sloth not generating this alert. This
                                 can be helpful for example to disable ticket(warning) alerts.
                               type: boolean
+                            for:
+                              description: |-
+                                For is the time the alert expression must be true before the alert fires,
+                                the Prometheus rule `for` field (e.g `5m`). Without it the alert fires on
+                                the first evaluation that matches.
+                              type: string
+                            keepFiringFor:
+                              description: |-
+                                KeepFiringFor is the time the alert keeps firing after its expression stops
+                                being true, the Prometheus rule `keep_firing_for` field (e.g `2h`). Useful
+                                for burn rate alerts, that resolve and fire again while an incident is
+                                still ongoing.
+                                Requires Prometheus operator v0.63 or above, older ones prune the field
+                                from the generated rule without failing.
+                              type: string
                             labels:
                               additionalProperties:
                                 type: string

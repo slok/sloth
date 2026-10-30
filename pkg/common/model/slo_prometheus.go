@@ -4,6 +4,7 @@ import (
 	"time"
 
 	openslov1alpha "github.com/OpenSLO/oslo/pkg/manifest/v1alpha"
+	prommodel "github.com/prometheus/common/model"
 	"github.com/prometheus/prometheus/model/rulefmt"
 
 	k8sprometheusv1 "github.com/slok/sloth/pkg/kubernetes/api/sloth/v1"
@@ -27,10 +28,14 @@ type PromSLIEvents struct {
 
 // AlertMeta is the metadata of an alert settings.
 type PromAlertMeta struct {
-	Disable     bool
-	Name        string
-	Labels      map[string]string
-	Annotations map[string]string
+	Disable bool
+	Name    string
+	// For is how long the alert expression must be true before the alert fires.
+	For prommodel.Duration
+	// KeepFiringFor is how long the alert keeps firing after its expression stops being true.
+	KeepFiringFor prommodel.Duration
+	Labels        map[string]string
+	Annotations   map[string]string
 }
 
 // PromSLO represents a service level objective configuration.
